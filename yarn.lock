@@ -2773,6 +2773,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@calcom/livekitvideo@workspace:packages/app-store/livekitvideo":
+  version: 0.0.0-use.local
+  resolution: "@calcom/livekitvideo@workspace:packages/app-store/livekitvideo"
+  dependencies:
+    "@calcom/lib": "workspace:*"
+    "@calcom/types": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@calcom/lyra@workspace:packages/app-store/lyra":
   version: 0.0.0-use.local
   resolution: "@calcom/lyra@workspace:packages/app-store/lyra"

@@ -41,6 +41,7 @@ export const apiHandlers = {
   jitsivideo: import("./jitsivideo/api"),
   larkcalendar: import("./larkcalendar/api"),
   linear: import("./linear/api"),
+  livekitvideo: import("./livekitvideo/api"),
   lyra: import("./lyra/api"),
   make: import("./make/api"),
   matomo: import("./matomo/api"),
