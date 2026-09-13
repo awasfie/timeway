@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "name": "@calcom/livekitvideo",
+  "version": "0.0.0",
+  "main": "./index.ts",
+  "description": "Camv - LiveKit-powered self-hosted video meeting rooms, TW-T7 per Execution Bible v11.1",
+  "dependencies": {
+    "@calcom/lib": "workspace:*"
+  },
+  "devDependencies": {
+    "@calcom/types": "workspace:*"
+  }
+}
