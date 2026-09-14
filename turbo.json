@@ -312,7 +312,8 @@
     "B2_APPLICATION_KEY_ID",
     "B2_APPLICATION_KEY",
     "B2_BUCKET_ID",
-    "B2_BUCKET_NAME"
+    "B2_BUCKET_NAME",
+    "CAMV_INTERNAL_SECRET"
   ],
   "tasks": {
     "@calcom/web#copy-app-store-static": {
