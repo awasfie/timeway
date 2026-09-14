@@ -35,7 +35,11 @@ const LiveKitVideoApiAdapter = (): VideoApiAdapter => {
         );
       }
       const roomName = roomNameForBooking(bookingUid);
-      const url = `${CAMV_BASE_URL}/rooms/${roomName}`;
+      // hq=true: real bookings should default to the higher-quality video
+      // preset (up to 1080p simulcast / 4K capture) rather than the demo
+      // page's conservative default (720p capture / 540p-216p simulcast).
+      // Per Ahmed: "screen resolution is not good" on real calls.
+      const url = `${CAMV_BASE_URL}/rooms/${roomName}?hq=true`;
 
       return Promise.resolve({
         type: metadata.type,
