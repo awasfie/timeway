@@ -47,6 +47,26 @@ function detectTransport(): SendmailTransport.Options | SMTPConnection.Options |
     return transport;
   }
 
+  // Reuses the SendGrid API key already configured for workflow/reminder
+  // emails (see packages/features/ee/workflows/lib/reminders/providers/
+  // sendgridProvider.ts) via SendGrid's SMTP relay, so booking confirmation
+  // emails don't silently fall through to the local sendmail binary that
+  // doesn't exist in this Docker image (see SEND_BOOKING_CONFIRMATION_ERROR
+  // / spawn /usr/sbin/sendmail ENOENT in prod logs).
+  if (process.env.SENDGRID_API_KEY) {
+    const transport = {
+      host: "smtp.sendgrid.net",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "apikey",
+        pass: process.env.SENDGRID_API_KEY,
+      },
+    };
+
+    return transport;
+  }
+
   return {
     sendmail: true,
     newline: "unix",
@@ -56,6 +76,6 @@ function detectTransport(): SendmailTransport.Options | SMTPConnection.Options |
 
 export const serverConfig = {
   transport: detectTransport(),
-  from: process.env.EMAIL_FROM,
+  from: process.env.EMAIL_FROM || process.env.SENDGRID_EMAIL,
   headers: getAdditionalEmailHeaders()[process.env.EMAIL_SERVER_HOST || ""] || undefined,
 };
