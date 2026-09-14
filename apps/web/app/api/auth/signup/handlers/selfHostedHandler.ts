@@ -23,6 +23,8 @@ import {
   validateAndGetCorrectedUsernameForTeam,
 } from "@calcom/features/auth/signup/utils/token";
 
+import { installDefaultConferencingApp } from "../utils/installDefaultConferencingApp";
+
 export default async function handler(body: Record<string, string>) {
   const { email, password, language, token } = signupSchema.parse(body);
 
@@ -155,6 +157,8 @@ export default async function handler(body: Record<string, string>) {
         team,
       });
 
+      await installDefaultConferencingApp(user.id);
+
       // Accept any child team invites for orgs.
       if (team.parent) {
         await joinAnyChildTeamOnOrgInvite({
@@ -185,8 +189,9 @@ export default async function handler(body: Record<string, string>) {
       }
     }
 
+    let createdUser: { id: number };
     try {
-      await prisma.user.create({
+      createdUser = await prisma.user.create({
         data: {
           username: correctedUsername,
           email: userEmail,
@@ -205,6 +210,8 @@ export default async function handler(body: Record<string, string>) {
       }
       throw error;
     }
+
+    await installDefaultConferencingApp(createdUser.id);
 
     if (process.env.AVATARAPI_USERNAME && process.env.AVATARAPI_PASSWORD) {
       await prefillAvatar({ email: userEmail });
