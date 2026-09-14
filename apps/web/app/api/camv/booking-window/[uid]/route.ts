@@ -12,7 +12,7 @@ import prisma from "@calcom/prisma";
  *
  * Room name convention: tw-<bookingUid> (see packages/app-store/livekitvideo).
  */
-export async function GET(request: Request, { params }: { params: { uid: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ uid: string }> }) {
   const sharedSecret = process.env.CAMV_INTERNAL_SECRET;
   if (!sharedSecret) {
     return NextResponse.json({ error: "CAMV_INTERNAL_SECRET not configured" }, { status: 500 });
@@ -22,7 +22,7 @@ export async function GET(request: Request, { params }: { params: { uid: string 
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const { uid } = params;
+  const { uid } = await params;
   if (!uid) {
     return NextResponse.json({ error: "missing uid" }, { status: 400 });
   }
