@@ -23,6 +23,8 @@ import { NextResponse } from "next/server";
 import { getUserRepository } from "@calcom/features/di/containers/UserRepository";
 import { CreationSource } from "@calcom/prisma/enums";
 
+import { installDefaultConferencingApp } from "../utils/installDefaultConferencingApp";
+
 export default async function handler(body: Record<string, string>) {
   const { email, password, language, token } = signupSchema.parse(body);
 
@@ -139,6 +141,8 @@ export default async function handler(body: Record<string, string>) {
         team,
       });
 
+      await installDefaultConferencingApp(user.id);
+
       // Accept any child team invites for orgs.
       if (team.parent) {
         await joinAnyChildTeamOnOrgInvite({
@@ -159,8 +163,9 @@ export default async function handler(body: Record<string, string>) {
     if (!isUsernameAvailable) {
       return NextResponse.json({ message: "A user exists with that username" }, { status: 409 });
     }
+    let createdUser: { id: number };
     try {
-      await userRepository.create({
+      createdUser = await userRepository.create({
         username: correctedUsername,
         email: userEmail,
         hashedPassword,
@@ -179,6 +184,8 @@ export default async function handler(body: Record<string, string>) {
       }
       throw error;
     }
+
+    await installDefaultConferencingApp(createdUser.id);
 
     if (process.env.AVATARAPI_USERNAME && process.env.AVATARAPI_PASSWORD) {
       await prefillAvatar({ email: userEmail });
