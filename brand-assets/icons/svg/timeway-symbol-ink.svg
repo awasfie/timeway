@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500" role="img" aria-labelledby="title desc">
+  <title id="title">Timeway ink emblem</title>
+  <desc id="desc">Timeway approved brand mark.</desc>
+  <g transform="translate(0 0) scale(1)">
+  <path fill="#16395E" d="M154 58h192c60 0 96 38 96 98v188c0 60-38 98-98 98H156c-60 0-98-38-98-98V156c0-60 38-98 96-98Z"/>
+  <path fill="#FFFFFF" d="M112 356c48 18 93 6 120-26 23-27 26-59 34-92 11-45 39-74 91-92l34 66c-34 12-51 29-57 54-10 40-13 78-48 118-48 55-117 72-174 43v-71Z"/>
+  <g fill="#FFFFFF"><circle cx="377" cy="153" r="52"/></g>
+</g>
+</svg>

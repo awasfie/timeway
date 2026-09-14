@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: 'DM Sans'; src: url('../fonts/DM_Sans/DM-Sans-Regular.ttf') format('truetype'); font-weight:400; }
+  @font-face { font-family: 'DM Sans'; src: url('../fonts/DM_Sans/DM-Sans-Medium.ttf') format('truetype'); font-weight:500; }
+  :root { --ink:#16395E; --seafoam:#79BBAE; --paper:#F8F8F4; --line:#E3E6E3; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; width:1800px; height:1200px; background:var(--paper); }
+  body { font-family:'DM Sans', sans-serif; color:var(--ink); }
+  main { padding:76px 90px; width:1800px; height:1200px; }
+  header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:40px; }
+  h1 { margin:0; font-size:25px; letter-spacing:4px; font-weight:500; }
+  header span { font-size:20px; letter-spacing:3px; color:#66807D; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:42px; }
+  .card { height:355px; border-radius:32px; background:#fff; padding:45px; display:flex; flex-direction:column; justify-content:space-between; }
+  .card.dark { background:var(--ink); }
+  .card h2 { margin:0; font-size:17px; letter-spacing:3px; color:#6D8882; font-weight:400; }
+  .card.dark h2 { color:#B6D4CC; }
+  .card img.logo { width:100%; max-height:190px; object-fit:contain; object-position:left center; }
+  .card img.icon { width:190px; height:190px; object-fit:contain; }
+  .lower { display:grid; grid-template-columns:1.45fr 1fr; gap:30px; margin-top:30px; }
+  .small { height:260px; }
+  .icon-row { display:flex; gap:35px; align-items:center; }
+  .icons { display:flex; gap:25px; align-items:center; }
+  .icons img { width:128px; height:128px; }
+  .note { font-size:27px; line-height:1.35; max-width:500px; }
+  .caption { margin:0; font-size:16px; letter-spacing:2px; color:#6D8882; }
+</style>
+</head>
+<body>
+<main>
+  <header><h1>TIMEWAY&nbsp;&nbsp;/&nbsp;&nbsp;APPROVED LOGO SYSTEM</h1><span>BRAND v1</span></header>
+  <section class="grid">
+    <article class="card"><h2>PRIMARY</h2><img class="logo" src="../logos/svg/timeway-primary.svg" alt="Primary Timeway logo"><p class="caption">For white and Paper surfaces</p></article>
+    <article class="card dark"><h2>REVERSE</h2><img class="logo" src="../logos/svg/timeway-reverse.svg" alt="Reverse Timeway logo"><p class="caption">For Ink surfaces</p></article>
+  </section>
+  <section class="lower">
+    <article class="card small"><h2>APP &amp; FAVICON</h2><div class="icons"><img src="../icons/svg/timeway-app-icon.svg" alt="Timeway app icon"><img src="../icons/svg/timeway-favicon.svg" alt="Timeway favicon"><span class="note">The same compact mark supports product navigation, browser tabs, and social avatars.</span></div></article>
+    <article class="card small"><h2>MONOCHROME</h2><div class="icon-row"><img class="icon" src="../icons/svg/timeway-symbol-ink.svg" alt="Timeway ink emblem"><span class="note">Use only where production requires one colour.</span></div></article>
+  </section>
+</main>
+</body>
+</html>

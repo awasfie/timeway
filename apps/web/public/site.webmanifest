@@ -1,7 +1,7 @@
 {
-    "name": "Cal.diy",
-    "short_name": "Cal.diy",
-    "description": "Scheduling infrastructure for absolutely everyone.",
+    "name": "Timeway",
+    "short_name": "Timeway",
+    "description": "Find a time that works.",
     "icons": [
         {
             "src": "/api/logo?type=android-chrome-192",
