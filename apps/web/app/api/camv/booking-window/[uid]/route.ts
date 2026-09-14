@@ -14,6 +14,12 @@ import prisma from "@calcom/prisma";
  */
 export async function GET(request: Request, { params }: { params: { uid: string } }) {
   const sharedSecret = process.env.CAMV_INTERNAL_SECRET;
+  console.log(
+    "[camv/booking-window] sharedSecret present:",
+    !!sharedSecret,
+    "length:",
+    sharedSecret?.length ?? 0,
+  );
   if (!sharedSecret) {
     return NextResponse.json({ error: "CAMV_INTERNAL_SECRET not configured" }, { status: 500 });
   }
