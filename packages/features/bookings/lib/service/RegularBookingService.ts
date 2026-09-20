@@ -1522,7 +1522,6 @@ async function handler(
   const eventName = getEventName(eventNameObject);
 
   const builtEvt = new CalendarEventBuilder()
-    .withUid(uid)
     .withBasicDetails({
       bookerUrl,
       title: eventName,
