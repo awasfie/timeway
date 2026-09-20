@@ -92,6 +92,17 @@ jobs:
               return;
             }
 
+            // Check 2b: Known first-party GitHub App bots (Builder/Auditor) have no
+            // author_association and no collaborator-permission entry because they're
+            // App installations, not users — allowlist them explicitly by login rather
+            // than trusting any Bot type, so a random installed app can't self-approve.
+            const trustedBotLogins = ['simon-awstreams-hermes[bot]', 'gosi-agent[bot]'];
+            if (pr.user.type === 'Bot' && trustedBotLogins.includes(pr.user.login)) {
+              console.log(`Author is a trusted first-party App bot: ${pr.user.login}`);
+              core.setOutput('is-trusted', true);
+              return;
+            }
+
             // Check 3: Was 'run-ci' label added AFTER this SHA was pushed by someone with write access?
             // This enables re-runs triggered by the run-ci.yml workflow
             // NOTE: We use workflow run created_at instead of commit timestamp because
