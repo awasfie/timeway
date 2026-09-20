@@ -15,7 +15,7 @@ jobs:
   trigger-devin:
     name: Trigger Devin to Address Cubic AI Review
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     steps:
       - name: Download review context artifact
         uses: actions/github-script@v7
