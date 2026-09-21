@@ -97,7 +97,7 @@ export const OrganizationCreationEmail = (
         <p style={{ fontWeight: 400, margin: 0 }}>
           <>
             {props.language("have_any_questions")}{" "}
-            <a href="mailto:help@timeway.com" style={{ color: "#3E3E3E" }} target="_blank" rel="noreferrer">
+            <a href="mailto:help@timeway.co" style={{ color: "#3E3E3E" }} target="_blank" rel="noreferrer">
               <>{props.language("contact")}</>
             </a>{" "}
             {props.language("our_support_team")}
