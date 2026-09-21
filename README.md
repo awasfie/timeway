@@ -659,6 +659,15 @@ Cal.diy is fully open source, licensed under the [MIT License](https://opensourc
 
 Unlike Cal.com's "Open Core" model, Cal.diy has **no commercial/enterprise code**. The entire codebase is available under the same open-source license.
 
+### Fork base / ops log (D-R39)
+
+Timeway is a fork of [Cal.diy](https://github.com/calcom/cal.diy) (upstream relicensed to 100% MIT, EE removed). Current fork base:
+
+- **Upstream base commit:** `54343aa685` (post-relicense, MIT, zero `ee/` trees)
+- **Rebase branch:** `rebase/caldiy-54343aa685`
+- **Verified:** `git merge-base --is-ancestor` confirms base is a genuine descendant of the pre-relicense tip and an ancestor of both `main` and this branch; whole-tree scan shows 0 `ee/` paths and 0 `Cal.com Commercial License` files.
+- **License:** root `LICENSE` is byte-identical MIT to upstream's post-relicense `LICENSE`.
+
 ## Enabling Content Security Policy
 
 - Set CSP_POLICY="non-strict" env variable, which enables [Strict CSP](https://web.dev/strict-csp/) except for `unsafe-inline` in `style-src`. If you have custom changes in your instance, you may need to modify your code to make it CSP-compatible. Currently, strict CSP is enabled only on the login page. On other SSR pages, it is enabled in report-only mode to detect potential issues. It is not yet supported on SSG pages.
