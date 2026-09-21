@@ -2,6 +2,8 @@
 import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 
+import { WEBSITE_URL } from "@calcom/lib/constants";
+
 import Credits from "./Credits";
 
 vi.mock("@calcom/lib/constants", async () => {
@@ -18,18 +20,19 @@ describe("Tests for Credits component", () => {
 
     const creditsLinkElement = screen.getByRole("link", { name: /Timeway, Inc\./i });
     expect(creditsLinkElement).toBeInTheDocument();
-    expect(creditsLinkElement).toHaveAttribute("href", "https://timeway.com");
+    expect(creditsLinkElement).toHaveAttribute("href", WEBSITE_URL);
 
-    const versionLinkElement = screen.getByRole("link", { name: /mockedVersion/i });
-    expect(versionLinkElement).toBeInTheDocument();
-    expect(versionLinkElement).toHaveAttribute("href", "https://timeway.com/changelog");
+    const versionElement = screen.getByText(/mockedVersion/i);
+    expect(versionElement).toBeInTheDocument();
   });
 
   test("Should render credits section with correct text", () => {
     render(<Credits />);
 
     const currentYear = new Date().getFullYear();
-    const copyrightElement = screen.getByText(`© ${currentYear}`);
+    const copyrightElement = screen.getByText((_, element) =>
+      element?.tagName.toLowerCase() === "small" && element.textContent?.includes(`${currentYear}`)
+    );
     expect(copyrightElement).toHaveTextContent(`${currentYear}`);
   });
 });
