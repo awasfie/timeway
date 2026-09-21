@@ -16,13 +16,13 @@ describe("Tests for Credits component", () => {
   test("Should render credits section with links", () => {
     render(<Credits />);
 
-    const creditsLinkElement = screen.getByRole("link", { name: /Cal\.com, Inc\./i });
+    const creditsLinkElement = screen.getByRole("link", { name: /Timeway, Inc\./i });
     expect(creditsLinkElement).toBeInTheDocument();
-    expect(creditsLinkElement).toHaveAttribute("href", "https://go.cal.com/credits");
+    expect(creditsLinkElement).toHaveAttribute("href", "https://timeway.com");
 
     const versionLinkElement = screen.getByRole("link", { name: /mockedVersion/i });
     expect(versionLinkElement).toBeInTheDocument();
-    expect(versionLinkElement).toHaveAttribute("href", "https://go.cal.com/releases");
+    expect(versionLinkElement).toHaveAttribute("href", "https://timeway.com/changelog");
   });
 
   test("Should render credits section with correct text", () => {
