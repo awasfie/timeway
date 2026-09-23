@@ -83,19 +83,18 @@ export default function PayPalSetup() {
               </div>
             </form>
             <div>
-              <p className="text-lgf text-default mt-5 font-bold">Getting started with the PayPal app</p>
-              <p className="text-default font-semi mt-2">
-                Cal.diy offers PayPal as one of its payment gateways. You can use your own PayPal
-                Business account to receive payments from your customers by setting a price and currency
-                for each of your event types.
-              </p>
+              <p className="text-lgf text-default mt-5 font-bold">{t("paypal_getting_started")}</p>
+
+              <p className="text-default font-semi mt-2">{t("paypal_description")}</p>
 
               <p className="text-lgf text-default mt-5 inline-flex font-bold">
-                <CircleAlertIcon className="mr-2 mt-1 h-4 w-4" /> Important requirements:
+                <CircleAlertIcon className="mr-2 mt-1 h-4 w-4" />
+                {t("important_requirements")}
               </p>
+
               <ul className="text-default ml-1 mt-2 list-disc pl-2">
-                <li>PayPal Business account</li>
-                <li>PayPal Developer account</li>
+                <li>{t("paypal_business_account")}</li>
+                <li>{t("paypal_developer_account")}</li>
               </ul>
 
               <p className="text-default mb-2 mt-5 font-bold">Resources:</p>
