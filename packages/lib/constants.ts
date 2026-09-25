@@ -37,7 +37,8 @@ export const BASE_URL = WEBAPP_URL;
 export const WEBSITE_URL = ensureProtocol(process.env.NEXT_PUBLIC_WEBSITE_URL) || "https://timeway.co";
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Timeway";
 export const SUPPORT_MAIL_ADDRESS = process.env.NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS || "help@timeway.co";
-export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "Timeway, Inc.";
+// CM-T6: the legal entity behind Timeway is AWSTREAMS DMCC (Bible v12.1; there is no "Timeway, Inc.").
+export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "AWSTREAMS DMCC";
 export const SENDER_ID = process.env.NEXT_PUBLIC_SENDER_ID || "Timeway";
 export const SENDER_NAME = process.env.NEXT_PUBLIC_SENDGRID_SENDER_NAME || "Timeway";
 export const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || APP_NAME;
@@ -188,9 +189,10 @@ export const ORG_MINIMUM_PUBLISHED_TEAMS_SELF_SERVE = 0;
 export const ORG_MINIMUM_PUBLISHED_TEAMS_SELF_SERVE_HELPER_DIALOGUE = 1;
 
 export const CALCOM_PRIVATE_API_ROUTE = process.env.CALCOM_PRIVATE_API_ROUTE || "https://goblin.cal.com";
+// CM-T6: Timeway's own legal pages (apps/web/app/{terms,privacy}); never cal.com's.
 export const WEBSITE_PRIVACY_POLICY_URL =
-  process.env.NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL || "https://cal.com/privacy";
-export const WEBSITE_TERMS_URL = process.env.NEXT_PUBLIC_WEBSITE_TERMS_URL || "https://cal.com/terms";
+  process.env.NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL || `${WEBSITE_URL}/privacy`;
+export const WEBSITE_TERMS_URL = process.env.NEXT_PUBLIC_WEBSITE_TERMS_URL || `${WEBSITE_URL}/terms`;
 export const LINGO_DOT_DEV_API_KEY = process.env.LINGO_DOT_DEV_API_KEY;
 
 /**
