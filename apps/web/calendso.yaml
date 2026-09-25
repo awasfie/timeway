@@ -9,7 +9,7 @@ info:
     name: MIT License
     url: "https://opensource.org/licenses/MIT"
   version: 1.0.0
-  termsOfService: "https://cal.com/terms"
+  termsOfService: "https://timeway.co/terms"
 server:
   url: "http://localhost:{port}"
   description: Local Development Server
