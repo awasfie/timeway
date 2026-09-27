@@ -18,7 +18,7 @@ describe("Tests for Credits component", () => {
   test("Should render credits section with links", () => {
     render(<Credits />);
 
-    const creditsLinkElement = screen.getByRole("link", { name: /Timeway, Inc\./i });
+    const creditsLinkElement = screen.getByRole("link", { name: /AWSTREAMS DMCC/i });
     expect(creditsLinkElement).toBeInTheDocument();
     expect(creditsLinkElement).toHaveAttribute("href", WEBSITE_URL);
 
