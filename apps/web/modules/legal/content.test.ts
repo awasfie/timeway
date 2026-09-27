@@ -36,6 +36,16 @@ describe("CM-T6 Timeway legal content", () => {
     expect(terms).toMatch(/end of day 14/);
   });
 
+  it("matches CM.0-5 trial reminders and CM.0-6 dunning/retention", () => {
+    expect(terms).toMatch(/day 7, on day 12, and on day 13/);
+    expect(terms).toMatch(/the trial ends/);
+    expect(terms).toMatch(/up to 4 times over 7 days/);
+    expect(terms).toMatch(/read-only/);
+    expect(terms).toMatch(/21 days/);
+    expect(terms).toContain("we pause your workspace for 90 days before anything is deleted");
+    expect(privacy).toContain("we pause your workspace for 90 days before anything is deleted");
+  });
+
   it("has no cal.com / Cal.diy / upstream-brand leaks", () => {
     for (const t of [terms, privacy]) {
       expect(t).not.toMatch(/cal\.com|cal\.diy|calcom|Timeway, Inc\./i);

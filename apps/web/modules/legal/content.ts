@@ -5,7 +5,9 @@
  * Entity: AWSTREAMS DMCC for every product until Ahmed says otherwise (Bible item 8, D-R54-1),
  * with the Stripe account's details: Stripe Tax head-office address (line1 "1308 …, 13th floor, Tiffany Tower,
  * Cluster W", city Dubai, AE) and the UAE VAT TRN on the account.
- * Refund rule: CM.0-7 verbatim, and the UX.3.x FAQ answer.
+ * Refund rule: CM.0-7 verbatim, and the UX.3.x FAQ answer. Trial: CM.0-4/CM.0-5 (reminders day 7/12/13;
+ * an upgrade ends the trial). Dunning + retention: CM.0-6 (4 retries/7 days, read-only, day-21 cancel,
+ * 90-day pause, then a 90-day notice sequence), plus the UX.3.8 line "We pause your workspace for 90 days".
  * Copy style (UX voice): plain sentences, no hype, no "Oops".
  *
  * Changing any fact here (entity, address, TRN, processors, refund rule) is a Bible-level
@@ -74,9 +76,9 @@ export function termsContent(
         paragraphs: [
           "Prices are in US dollars. VAT is included where applicable: a customer in the United Arab Emirates pays the list price with 5% VAT inside it, and a customer elsewhere pays the list price with no VAT line.",
           "Paid plans renew automatically, monthly or yearly, until you cancel. Payments are processed by Stripe; we never see or store your full card number.",
-          "Our lowest paid plan comes with a 14-day free trial. We ask for a card when the trial starts and charge it at the end of day 14 unless you cancel first. We email you before that charge with the amount and the date.",
+          "Our lowest paid plan comes with a 14-day free trial. We ask for a card when the trial starts and charge it at the end of day 14 unless you cancel first. We email you on day 7, on day 12, and on day 13 with the amount, the charge date and a one-click cancel link. If you move to a higher plan during the trial, the trial ends and the new plan is charged straight away.",
           "Upgrades take effect straight away and you pay the prorated difference that day. Downgrades take effect at the end of your current billing period.",
-          "If a payment fails we retry it and email you. If it still fails, your account becomes read-only until the payment goes through.",
+          "If a payment fails, we retry it up to 4 times over 7 days and email you. While it is unpaid your account is read-only: you can see your data, but no new bookings or messages go out. If it is still unpaid 21 days after it failed, the subscription is cancelled.",
         ],
       },
       {
@@ -114,7 +116,7 @@ export function termsContent(
         id: "ending",
         heading: "10. Closing your account",
         paragraphs: [
-          "You can close your account at any time. If your subscription ends, your data is kept for 90 days so you can come back, and then deleted, after we have emailed you notice.",
+          "You can close your account at any time. When a subscription ends, we pause your workspace for 90 days before anything is deleted, so you can come back. Nothing is deleted until we have sent you a series of notice emails over those 90 days.",
         ],
       },
       {
@@ -212,7 +214,7 @@ export function privacyContent(appName: string, supportEmail: string): LegalDocu
         id: "retention",
         heading: "7. How long we keep it",
         paragraphs: [
-          "We keep account and scheduling data while your account is active. If your subscription ends, we keep it for 90 days so you can come back, then delete it after emailing you notice. You can ask us to delete your account sooner at any time.",
+          "We keep account and scheduling data while your account is active. When a subscription ends, we pause your workspace for 90 days before anything is deleted, and we email you notice during that time. You can ask us to delete your account sooner at any time.",
           "We keep invoices and payment records for as long as tax law requires. Server logs are kept for a short period for security.",
         ],
       },
