@@ -1,6 +1,5 @@
 import { _generateMetadataForStaticPage } from "app/_utils";
 import type { Metadata } from "next";
-import type { JSX } from "react";
 
 import { APP_NAME, SUPPORT_MAIL_ADDRESS, WEBSITE_URL } from "@calcom/lib/constants";
 
@@ -19,7 +18,7 @@ export const generateMetadata = async (): Promise<Metadata> =>
     "/terms"
   );
 
-export default function TermsPage(): JSX.Element {
+export default function TermsPage(){
   return (
     <LegalDocument content={termsContent(APP_NAME, SUPPORT_MAIL_ADDRESS, WEBSITE_URL)} appName={APP_NAME} />
   );

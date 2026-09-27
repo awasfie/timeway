@@ -1,6 +1,5 @@
 import { _generateMetadataForStaticPage } from "app/_utils";
 import type { Metadata } from "next";
-import type { JSX } from "react";
 
 import { APP_NAME, SUPPORT_MAIL_ADDRESS } from "@calcom/lib/constants";
 
@@ -19,6 +18,6 @@ export const generateMetadata = async (): Promise<Metadata> =>
     "/privacy"
   );
 
-export default function PrivacyPage(): JSX.Element {
+export default function PrivacyPage(){
   return <LegalDocument content={privacyContent(APP_NAME, SUPPORT_MAIL_ADDRESS)} appName={APP_NAME} />;
 }

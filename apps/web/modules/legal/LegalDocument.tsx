@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { JSX } from "react";
 
 import { LEGAL_ENTITY, LEGAL_LAST_UPDATED, type LegalDocumentContent } from "./content";
 
@@ -10,7 +9,7 @@ export function LegalDocument({
 }: {
   content: LegalDocumentContent;
   appName: string;
-}): JSX.Element {
+}){
   return (
     <main className="min-h-screen bg-default text-default">
       <article className="mx-auto max-w-3xl px-6 py-12 md:py-16">
