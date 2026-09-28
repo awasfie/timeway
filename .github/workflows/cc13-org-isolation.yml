@@ -1,0 +1,53 @@
+name: CC-13 org isolation
+# TW-T9 / Bible v12.3 CC-13: cross-org probe suite in CI from the first commit.
+# Runs against a throwaway Postgres service only; no secrets, no live DB.
+on:
+  pull_request:
+    paths:
+      - "packages/prisma/**"
+      - ".github/workflows/cc13-org-isolation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/prisma/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cc13:
+    name: CC-13 (DB layer)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cc13
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cc13
+      DATABASE_DIRECT_URL: postgresql://postgres:postgres@localhost:5432/cc13
+      CC13_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cc13
+      CC13_ALLOW: ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: ./.github/actions/cache-checkout
+      - uses: ./.github/actions/yarn-install
+      - name: Apply all migrations to the throwaway DB
+        working-directory: packages/prisma
+        run: npx prisma migrate deploy
+      - name: CC-13 probe
+        working-directory: packages/prisma
+        run: node conformance/cc13-org-isolation.mjs

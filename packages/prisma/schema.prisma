@@ -468,6 +468,8 @@ model User {
   // organizationId is deprecated. Instead, rely on the Profile to search profiles by organizationId and then get user from the profile.
   organizationId     Int?
   organization       Team?              @relation("scope", fields: [organizationId], references: [id], onDelete: SetNull)
+  // TW-T9 (Timeway-owned org layer, original work): memberships in Timeway Organizations
+  twOrganizationMemberships OrganizationMember[]
   accessCodes        AccessCode[]
   bookingRedirects   OutOfOfficeEntry[]
   bookingRedirectsTo OutOfOfficeEntry[] @relation(name: "toUser")
@@ -2848,4 +2850,79 @@ model AttributeSyncFieldMapping {
 
   @@unique([integrationAttributeSyncId, attributeId])
   @@index([integrationAttributeSyncId])
+}
+
+// ---------------------------------------------------------------------------
+// TW-T9 — Timeway Organizations (Bible v12.3 PART TW / Q2-B, D-R37).
+// Original work (TW.LEGAL: no cal.com EE code). Additive only: new tables,
+// no upstream table is rewritten. The expand step for `organizationId` on
+// users/EventType/Booking/Schedule/Credential is a later slice
+// (expand -> backfill -> contract, docs/tw/tw-t9-organizations.md).
+// Isolation: RLS FORCED on these tables keyed on `app.tw_org_id` (CC-13);
+// the Prisma extension setting it per transaction is slice 2.
+// ---------------------------------------------------------------------------
+
+enum OrganizationStatus {
+  active
+  suspended
+  closed
+}
+
+enum OrganizationIdentityMode {
+  local
+  passport
+}
+
+enum OrganizationMemberRole {
+  owner
+  admin
+  member
+}
+
+model Organization {
+  id           String                   @id @default(uuid()) @db.Uuid
+  slug         String                   @unique
+  name         String
+  logoUrl      String?
+  brand        Json?
+  planCode     String?
+  status       OrganizationStatus       @default(active)
+  identityMode OrganizationIdentityMode @default(local)
+  externalRef  String?                  @unique
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+
+  members OrganizationMember[]
+  apiKeys OrgApiKey[]
+
+  @@map("tw_organization")
+}
+
+model OrganizationMember {
+  id        String                 @id @default(uuid()) @db.Uuid
+  orgId     String                 @db.Uuid
+  org       Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      OrganizationMemberRole @default(member)
+  createdAt DateTime               @default(now())
+
+  @@unique([orgId, userId])
+  @@index([userId])
+  @@map("tw_organization_member")
+}
+
+model OrgApiKey {
+  id         String       @id @default(uuid()) @db.Uuid
+  orgId      String       @db.Uuid
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  prefix     String       @unique
+  hashedKey  String
+  scopes     String[]
+  createdAt  DateTime     @default(now())
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+
+  @@index([orgId])
+  @@map("tw_org_api_key")
 }
