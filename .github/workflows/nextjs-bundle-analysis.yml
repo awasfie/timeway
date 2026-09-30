@@ -1,11 +1,9 @@
 name: "Next.js Bundle Analysis"
 
+# Timeway (Q1-R7): upstream-only on push. It needs Cal.com's CI_* secret set (NEXTAUTH_SECRET etc.), which this fork doesn't hold; kept for manual runs and callers.
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 permissions:
   actions: write
