@@ -2,18 +2,19 @@ name: Check breaking changes and run E2E
 on:
   workflow_call:
 env:
+  # CI-only fallbacks (TW-T9): the DB URL is the job's own postgres service; NEXTAUTH/CALENDSO values are public dummies never used outside CI.
   ALLOWED_HOSTNAMES: ${{ vars.CI_ALLOWED_HOSTNAMES }}
   API_KEY_PREFIX: ${{ secrets.CI_API_KEY_PREFIX }}
   API_PORT: ${{ vars.CI_API_V2_PORT }}
   CALCOM_LICENSE_KEY: ${{ secrets.CI_CALCOM_LICENSE_KEY }}
   DAILY_API_KEY: ${{ secrets.CI_DAILY_API_KEY }}
-  DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
-  DATABASE_READ_URL: ${{ secrets.CI_DATABASE_URL }}
-  DATABASE_WRITE_URL: ${{ secrets.CI_DATABASE_URL }}
-  DATABASE_DIRECT_URL: ${{ secrets.CI_DATABASE_URL }}
+  DATABASE_URL: ${{ secrets.CI_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/calendso' }}
+  DATABASE_READ_URL: ${{ secrets.CI_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/calendso' }}
+  DATABASE_WRITE_URL: ${{ secrets.CI_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/calendso' }}
+  DATABASE_DIRECT_URL: ${{ secrets.CI_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/calendso' }}
   GOOGLE_API_CREDENTIALS: ${{ secrets.CI_GOOGLE_API_CREDENTIALS }}
   IS_E2E: true
-  NEXTAUTH_SECRET: ${{ secrets.CI_NEXTAUTH_SECRET }}
+  NEXTAUTH_SECRET: ${{ secrets.CI_NEXTAUTH_SECRET || 'EI4qqDpcfdvf4A+0aQEEx8JjHxHSy4uWiZw/F32K+pA=' }}
   NEXTAUTH_URL: ${{ secrets.CI_NEXTAUTH_URL }}
   NODE_OPTIONS: --max-old-space-size=29000
   REDIS_URL: "redis://localhost:6379"

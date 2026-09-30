@@ -7,6 +7,7 @@ permissions:
   contents: read
 
 env:
+  # CI-only fallbacks (TW-T9): the DB URL is the job's own postgres service; NEXTAUTH/CALENDSO values are public dummies never used outside CI.
   NODE_OPTIONS: --max-old-space-size=8096
   ATOMS_E2E_OAUTH_CLIENT_ID: ${{ secrets.ATOMS_E2E_OAUTH_CLIENT_ID }}
   ATOMS_E2E_OAUTH_CLIENT_SECRET: ${{ secrets.ATOMS_E2E_OAUTH_CLIENT_SECRET }}
@@ -15,8 +16,8 @@ env:
   ATOMS_E2E_OAUTH_CLIENT_ID_BOOKER_EMBED: ${{ secrets.ATOMS_E2E_OAUTH_CLIENT_ID_BOOKER_EMBED }}
   ATOMS_E2E_APPLE_ID: ${{ secrets.ATOMS_E2E_APPLE_ID }}
   ATOMS_E2E_APPLE_CONNECT_APP_SPECIFIC_PASSCODE: ${{ secrets.ATOMS_E2E_APPLE_CONNECT_APP_SPECIFIC_PASSCODE }}
-  DATABASE_DIRECT_URL: ${{ secrets.CI_DATABASE_URL }}
-  DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+  DATABASE_DIRECT_URL: ${{ secrets.CI_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/calendso' }}
+  DATABASE_URL: ${{ secrets.CI_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/calendso' }}
 
 jobs:
   e2e-atoms:
