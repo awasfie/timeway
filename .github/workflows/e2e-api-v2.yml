@@ -2,10 +2,9 @@ name: Check breaking changes and run E2E
 on:
   workflow_call:
 env:
+  # API_KEY_PREFIX, API_PORT, JWT_SECRET, SLOTS_CACHE_TTL come from apps/api/v2/test/setEnvVars.ts (a workflow value would override it).
   # CI-only fallbacks (TW-T9): the DB URL is the job's own postgres service; NEXTAUTH/CALENDSO values are public dummies never used outside CI.
-  ALLOWED_HOSTNAMES: ${{ vars.CI_ALLOWED_HOSTNAMES }}
-  API_KEY_PREFIX: ${{ secrets.CI_API_KEY_PREFIX || 'cal_' }}
-  API_PORT: ${{ vars.CI_API_V2_PORT }}
+  ALLOWED_HOSTNAMES: ${{ vars.CI_ALLOWED_HOSTNAMES || '"cal.local:3000","localhost:3000"' }}
   CALCOM_LICENSE_KEY: ${{ secrets.CI_CALCOM_LICENSE_KEY }}
   DAILY_API_KEY: ${{ secrets.CI_DAILY_API_KEY }}
   DATABASE_URL: ${{ secrets.CI_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/calendso' }}
@@ -23,11 +22,9 @@ env:
   STRIPE_API_KEY: ${{ secrets.CI_STRIPE_PRIVATE_KEY }}
   STRIPE_CLIENT_ID: ${{ secrets.CI_STRIPE_CLIENT_ID }}
   STRIPE_WEBHOOK_SECRET: ${{ secrets.CI_STRIPE_WEBHOOK_SECRET }}
-  SLOTS_CACHE_TTL: ${{ secrets.CI_SLOTS_CACHE_TTL || '1' }}
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
   VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
-  JWT_SECRET: ${{ secrets.CI_JWT_SECRET || 'ci-only-dummy-jwt-secret-not-used-anywhere-else' }}
-  NODE_ENV: ${{ vars.CI_NODE_ENV }}
+  NODE_ENV: ${{ vars.CI_NODE_ENV || 'test' }}
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 jobs:
