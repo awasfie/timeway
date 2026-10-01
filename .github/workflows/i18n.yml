@@ -10,7 +10,8 @@ concurrency:
 jobs:
   i18n:
     name: Run i18n
-    if: ${{ secrets.CI_LINGO_DOT_DEV_API_KEY != '' }}
+    # Timeway (Q1-R7): `secrets` isn't allowed in a job-level `if`, which made every push fail at parse time; gate on a repo variable instead.
+    if: ${{ vars.CI_LINGO_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       actions: write

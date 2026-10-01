@@ -5,6 +5,8 @@ permissions:
   packages: write
 
 env:
+  # Timeway (Q1-R7): step `if` can't read `secrets`; this env flag carries whether the webhook is set.
+  SLACK_ENABLED: ${{ secrets.CI_SLACK_WEBHOOK_URL != '' }}
   POSTGRES_USER: "unicorn_user"
   POSTGRES_PASSWORD: "magical_password"
   POSTGRES_DB: "calendso"
@@ -106,7 +108,7 @@ jobs:
           use-as-latest: "true"
 
       - name: Notify Slack on Success
-        if: success() && secrets.CI_SLACK_WEBHOOK_URL != ''
+        if: success() && env.SLACK_ENABLED == 'true'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
@@ -117,7 +119,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.CI_SLACK_WEBHOOK_URL }}
 
       - name: Notify Slack on Failure
-        if: failure() && secrets.CI_SLACK_WEBHOOK_URL != ''
+        if: failure() && env.SLACK_ENABLED == 'true'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
@@ -154,7 +156,7 @@ jobs:
           push-image: ${{ (github.event_name == 'push' || inputs.PUSH_IMAGE) && 'true' || 'false' }}
 
       - name: Notify Slack on Success
-        if: success() && secrets.CI_SLACK_WEBHOOK_URL != ''
+        if: success() && env.SLACK_ENABLED == 'true'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
@@ -165,7 +167,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.CI_SLACK_WEBHOOK_URL }}
 
       - name: Notify Slack on Failure
-        if: failure() && secrets.CI_SLACK_WEBHOOK_URL != ''
+        if: failure() && env.SLACK_ENABLED == 'true'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |

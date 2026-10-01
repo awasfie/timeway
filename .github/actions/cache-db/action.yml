@@ -27,6 +27,12 @@ runs:
       with:
         path: ${{ inputs.path }}
         key: ${{ steps.cache-key.outputs.key }}
+    # node_modules cache hits skip the root postinstall, so the Prisma client
+    # (packages/prisma/generated, not cached) must be generated before seeding.
+    - name: Generate Prisma client
+      if: steps.cache-db.outputs.cache-hit != 'true'
+      run: yarn prisma generate
+      shell: bash
     - run: yarn db-seed
       if: steps.cache-db.outputs.cache-hit != 'true'
       shell: bash
