@@ -28,7 +28,7 @@ const sendVerificationRequest = async ({
   const emailTemplate = Handlebars.compile(emailFile);
   // async transporter
   transporter.sendMail({
-    from: `${process.env.EMAIL_FROM}` || APP_NAME,
+    from: process.env.EMAIL_FROM || APP_NAME,
     to: identifier,
     subject: `Your sign-in link for ${APP_NAME}`,
     html: emailTemplate({

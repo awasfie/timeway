@@ -240,7 +240,8 @@ test.describe("Payment app", () => {
     await page.getByRole("button", { name: "Setup" }).click();
 
     await expect(page).toHaveURL(/\/apps\/paypal\/setup/);
-    await expect(page.getByText("Getting started with the PayPal app")).toBeVisible();
+    // en `paypal_getting_started` (apps/web/components/apps/paypal/Setup.tsx:86)
+    await expect(page.getByText("Getting started with Paypal APP")).toBeVisible();
   });
 
   /**

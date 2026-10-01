@@ -3,7 +3,8 @@ on:
   workflow_call:
 
 env:
-  DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+  # CI-only fallbacks (TW-T9): the DB URL is the job's own postgres service; NEXTAUTH/CALENDSO values are public dummies never used outside CI.
+  DATABASE_URL: ${{ secrets.CI_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/calendso' }}
 
 jobs:
   check-prisma-migrations:
@@ -12,9 +13,6 @@ jobs:
     services:
       postgres:
         image: postgres:18
-        credentials:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

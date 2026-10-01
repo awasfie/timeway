@@ -24,7 +24,7 @@ jobs:
 
             console.log(`Sender: ${adder} (type: ${senderType})`);
 
-            const trustedBotLogins = ['graphite-app[bot]'];
+            const trustedBotLogins = ['graphite-app[bot]', 'gosi-agent[bot]', 'simon-awstreams-hermes[bot]'];
             let isAuthorized = false;
 
             if (senderType === 'Bot' && trustedBotLogins.includes(adder)) {
