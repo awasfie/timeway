@@ -1,0 +1,43 @@
+name: Seed Playwright cache (main)
+
+# Timeway (Q1-R7, Ahmed 2026-10-01: "if the Playwright install stalls again, that's a workflow fix (cache the
+# browsers), not a re-run"). Caches are ref-scoped: a PR run can restore caches from its own ref or from the base
+# branch, never from a sibling branch, and pull_request_target jobs cannot save ("cache write denied: token has no
+# writable scopes", timeway#12 run 36895797202 Prepare). The only Linux-playwright-<v> cache lived on
+# refs/heads/ci/e2e-email-from, so every #12 job missed it and ran `playwright install --with-deps` (125 MB of
+# apt archives), which stalled past the 20-minute job timeout twice (E2E Embed Core 110490688575, 110501940560).
+# This job saves the same key (.github/actions/yarn-playwright-install) in main's scope, readable by every PR.
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - yarn.lock
+      - .github/actions/yarn-playwright-install/**
+      - .github/workflows/playwright-cache.yml
+  schedule:
+    - cron: "17 3 * * 1" # weekly: GitHub evicts caches unused for 7 days
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: playwright-cache-main
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    name: Seed Playwright cache
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/yarn-install
+      - uses: ./.github/actions/yarn-playwright-install
+      - name: Report cache key
+        run: |
+          echo "key: ${RUNNER_OS}-playwright-$(node -e "console.log(require('./package.json').devDependencies['@playwright/test'])")"
+          du -sh ~/.cache/ms-playwright 2>/dev/null || true
