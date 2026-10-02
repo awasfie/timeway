@@ -155,6 +155,7 @@ const commons = {
   updatedAt: null,
   rrHostSubsetEnabled: false,
   enablePerHostLocations: false,
+  twOrgId: null,
 };
 
 export const dynamicEvent = {
