@@ -74,6 +74,7 @@ export class BookingSeatRepository {
             updatedAt: true,
             eventTypeId: true,
             creationSource: true,
+            twOrgId: true,
             attendees: {
               select: {
                 name: true,

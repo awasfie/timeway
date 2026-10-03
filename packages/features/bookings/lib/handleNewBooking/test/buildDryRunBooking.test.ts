@@ -74,6 +74,7 @@ describe("buildDryRunBooking", () => {
       id: -101,
       uid: "DRY_RUN_UID",
       iCalUID: "DRY_RUN_ICAL_UID",
+      twOrgId: null,
       status: BookingStatus.ACCEPTED,
       eventTypeId: baseInputs.eventTypeId,
       userId: baseOrganizerUser.id,

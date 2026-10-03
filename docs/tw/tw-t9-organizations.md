@@ -9,8 +9,8 @@ used for this layer.
 | Slice | What | Status |
 |---|---|---|
 | 1 | `tw_organization`, `tw_organization_member`, `tw_org_api_key` + enums; RLS **forced** on all three; CC-13 DB-layer probe in CI | timeway#12 |
-| 2 | `packages/prisma/tw-org-context.ts`: `withTwOrg` / `withTwPlatform` set `app.tw_org_id` / `app.tw_platform` per interactive transaction; UUID-only, fail-closed; unit tests | this PR |
-| 3 | Expand: nullable `organizationId` (UUID) on users / EventType / Booking / Schedule / Credential, indexed | next |
+| 2 | `packages/prisma/tw-org-context.ts`: `withTwOrg` / `withTwPlatform` set `app.tw_org_id` / `app.tw_platform` per interactive transaction; UUID-only, fail-closed; unit tests | timeway#16 |
+| 3 | Expand: nullable `twOrgId` (UUID) on users / EventType / Booking / Schedule / Credential, indexed (named `twOrgId` because upstream `users.organizationId` is an Int Team id) | this PR |
 | 4 | Backfill: `spenai-pilot` org, existing rows assigned (runs on live DB = effect step, Ahmed/Gosi) | effect |
 | 5 | Contract: non-null on org-scoped rows; CC-13 extended to pages, tRPC, API v2, webhook config | later |
 | + | Team/TeamMember, Plan + OrgEntitlementOverride land with TW-T11 / TW-T12 | later |

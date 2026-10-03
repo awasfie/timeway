@@ -227,6 +227,7 @@ export const buildDryRunBooking = ({
     noShowHost: null,
     cancelledBy: null,
     creationSource: CreationSource.WEBAPP,
+    twOrgId: null,
     references: [],
     payment: [],
   } satisfies ReturnTypeCreateBooking;
