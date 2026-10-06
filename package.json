@@ -119,6 +119,7 @@
     "vitest-mock-extended": "3.1.0"
   },
   "resolutions": {
+    "proxy-addr": "2.0.8",
     "websocket-driver": "0.7.5",
     "webpack": "5.104.1",
     "systeminformation": "5.31.0",
