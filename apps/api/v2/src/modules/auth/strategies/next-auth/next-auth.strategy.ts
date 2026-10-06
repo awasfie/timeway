@@ -8,7 +8,10 @@ import { getToken } from "next-auth/jwt";
 
 @Injectable()
 export class NextAuthStrategy extends PassportStrategy(NextAuthPassportStrategy, "next-auth") {
-  constructor(private readonly userRepository: UsersRepository, private readonly config: ConfigService) {
+  constructor(
+    private readonly userRepository: UsersRepository,
+    private readonly config: ConfigService
+  ) {
     super();
   }
 
@@ -25,10 +28,15 @@ export class NextAuthStrategy extends PassportStrategy(NextAuthPassportStrategy,
         throw new UnauthorizedException("NextAuthStrategy - Email not found in the authentication token.");
       }
 
-      const user = await this.userRepository.findByEmailWithProfile(payload.email);
-      if (!user) {
+      // CVE-2026-23478 (GHSA-7hg4-x4pr-3hrg): resolve the user by the token subject, never by its email.
+      const userId = Number(payload.sub);
+      if (!Number.isInteger(userId) || userId <= 0) {
+        throw new UnauthorizedException("NextAuthStrategy - Invalid subject in the authentication token.");
+      }
+      const user = await this.userRepository.findByIdWithProfile(userId);
+      if (!user || user.email.toLowerCase() !== payload.email.toLowerCase()) {
         throw new UnauthorizedException(
-          "NextAuthStrategy - User associated with the authentication token email not found."
+          "NextAuthStrategy - User associated with the authentication token not found."
         );
       }
 

@@ -145,6 +145,33 @@ const checkIfUserShouldBelongToOrg = async (idP: IdentityProvider, email: string
 };
 
 /**
+ * CVE-2026-23478 / GHSA-7hg4-x4pr-3hrg: `useSession().update({ email })` is client-controlled POST data.
+ * The token keeps its email unless the requested one is the email the database already holds for the
+ * token's own user (token.sub). This is the legitimate case: verify-email-change updates the DB first.
+ */
+export async function resolveUpdatedTokenEmail(
+  token: { sub?: string | null; email?: string | null },
+  requestedEmail: unknown
+): Promise<string | null | undefined> {
+  if (typeof requestedEmail !== "string" || requestedEmail === token.email) {
+    return token.email;
+  }
+  const userId = Number(token.sub);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return token.email;
+  }
+  const owner = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  if (owner && owner.email.toLowerCase() === requestedEmail.toLowerCase()) {
+    return owner.email;
+  }
+  log.warn("callbacks:jwt:update - rejected client-supplied email change", { userId });
+  return token.email;
+}
+
+/**
  * Authorize function for credentials provider
  * Extracted for testability
  */
@@ -437,7 +464,8 @@ export const getOptions = ({
           locale: session?.locale ?? token.locale ?? "en",
           name: session?.name ?? token.name,
           username: session?.username ?? token.username,
-          email: session?.email ?? token.email,
+          // CVE-2026-23478 (GHSA-7hg4-x4pr-3hrg): never trust a client-supplied email.
+          email: await resolveUpdatedTokenEmail(token, session?.email),
         } as JWT;
       }
       const autoMergeIdentities = async () => {
