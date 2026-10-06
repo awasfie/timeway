@@ -151,7 +151,10 @@ export class ApiAuthStrategy extends PassportStrategy(BaseStrategy, "api-auth") 
     }
   }
 
-  async authenticateNextAuth(token: { email?: string | null }, request: ApiAuthGuardRequest) {
+  async authenticateNextAuth(
+    token: { email?: string | null; sub?: string | null },
+    request: ApiAuthGuardRequest
+  ) {
     const user = await this.nextAuthStrategy(token, request);
     return this.success(this.getSuccessUser(user));
   }
@@ -298,17 +301,27 @@ export class ApiAuthStrategy extends PassportStrategy(BaseStrategy, "api-auth") 
     return user;
   }
 
-  async nextAuthStrategy(token: { email?: string | null }, request: ApiAuthGuardRequest) {
+  async nextAuthStrategy(
+    token: { email?: string | null; sub?: string | null },
+    request: ApiAuthGuardRequest
+  ) {
     if (!token.email) {
       throw new UnauthorizedException(
         "ApiAuthStrategy - next auth - Email not found in the authentication token."
       );
     }
 
-    const user = await this.userRepository.findByEmailWithProfile(token.email);
-    if (!user) {
+    // CVE-2026-23478 (GHSA-7hg4-x4pr-3hrg): resolve the user by the token subject, never by its email.
+    const userId = Number(token.sub);
+    if (!Number.isInteger(userId) || userId <= 0) {
       throw new UnauthorizedException(
-        "ApiAuthStrategy - next auth - User associated with the authentication token email not found."
+        "ApiAuthStrategy - next auth - Invalid subject in the authentication token."
+      );
+    }
+    const user = await this.userRepository.findByIdWithProfile(userId);
+    if (!user || user.email.toLowerCase() !== token.email.toLowerCase()) {
+      throw new UnauthorizedException(
+        "ApiAuthStrategy - next auth - User associated with the authentication token not found."
       );
     }
     const organizationId = this.usersService.getUserMainOrgId(user) as number;

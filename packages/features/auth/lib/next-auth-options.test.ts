@@ -1287,3 +1287,70 @@ describe("Azure AD JWT callback", () => {
     });
   });
 });
+
+// CVE-2026-23478 / GHSA-7hg4-x4pr-3hrg (WC-TW-1): session.update() must not swap the token's identity.
+describe("JWT callback trigger=update (CVE-2026-23478)", () => {
+  let jwtCallback: any;
+  const mockPrismaUserFindUnique = vi.fn();
+  const attackerToken = { sub: "7", email: "attacker@example.com", upId: "usr-7", name: "A" } as any;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    mockPrismaUserFindUnique.mockReset();
+    const prismaModule = await import("@calcom/prisma");
+    const prismaDefault = (prismaModule as any).default;
+    prismaDefault.user = { ...prismaDefault.user, findUnique: mockPrismaUserFindUnique };
+    const authModule = await import("./next-auth-options");
+    const options = authModule.getOptions({ getDubId: () => undefined, getTrackingData: () => ({}) as any });
+    jwtCallback = options.callbacks!.jwt!;
+  });
+
+  it("keeps the token email when the client asks for another user's email", async () => {
+    mockPrismaUserFindUnique.mockResolvedValue({ email: "attacker@example.com" });
+    const result = await jwtCallback({
+      token: attackerToken,
+      trigger: "update",
+      session: { email: "victim@example.com" },
+    });
+    expect(result.email).toBe("attacker@example.com");
+    expect(result.sub).toBe("7");
+    expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({ where: { id: 7 }, select: { email: true } });
+  });
+
+  it("accepts an email change that the database already holds for the token's own user", async () => {
+    mockPrismaUserFindUnique.mockResolvedValue({ email: "attacker-new@example.com" });
+    const result = await jwtCallback({
+      token: attackerToken,
+      trigger: "update",
+      session: { email: "Attacker-New@example.com" },
+    });
+    expect(result.email).toBe("attacker-new@example.com");
+  });
+
+  it("does not hit the database when no email is supplied", async () => {
+    const result = await jwtCallback({ token: attackerToken, trigger: "update", session: { name: "B" } });
+    expect(result.email).toBe("attacker@example.com");
+    expect(result.name).toBe("B");
+    expect(mockPrismaUserFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("keeps the token email when token.sub is not a valid user id", async () => {
+    const result = await jwtCallback({
+      token: { ...attackerToken, sub: "abc" },
+      trigger: "update",
+      session: { email: "victim@example.com" },
+    });
+    expect(result.email).toBe("attacker@example.com");
+    expect(mockPrismaUserFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("ignores a non-string email", async () => {
+    const result = await jwtCallback({
+      token: attackerToken,
+      trigger: "update",
+      session: { email: { $ne: null } },
+    });
+    expect(result.email).toBe("attacker@example.com");
+    expect(mockPrismaUserFindUnique).not.toHaveBeenCalled();
+  });
+});
