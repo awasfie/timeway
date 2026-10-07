@@ -6,6 +6,7 @@
   "main": "./index.ts",
   "exports": {
     "./classNames": "./classNames.ts",
+    "./brand-tokens": "./brand-tokens.ts",
     "./styles": "./styles/index.ts",
     "./components/address": "./components/address/index.ts",
     "./components/alert": "./components/alert/index.ts",

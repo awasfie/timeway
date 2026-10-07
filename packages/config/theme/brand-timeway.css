@@ -1,0 +1,27 @@
+/* UX-T0 — Timeway brand tokens (Bible v12.6 UX.1.2), mirrored from packages/ui/brand-tokens.ts.
+   Self-hosted fonts in apps/web/public/fonts/brand (woff2 from brand-assets + OFL). Tailwind v4 utilities:
+   bg-brand-primary, text-brand-ink, rounded-brand-md, font-brand, font-brand-ar … */
+@font-face { font-family: "DM Sans"; src: url("/fonts/brand/DMSans-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("/fonts/brand/DMSans-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("/fonts/brand/DMSans-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Noto Sans Arabic"; src: url("/fonts/brand/NotoSansArabic-wght.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+@theme {
+  --color-brand-primary: #16395E;
+  --color-brand-accent: #79BBAE;
+  --color-brand-surface: #F8F8F4;
+  --color-brand-surface-alt: #FFFFFF;
+  --color-brand-ink: #16395E;
+  --color-brand-ink-muted: #5C6F86;
+  --color-brand-border: #E3E4DD;
+  --color-brand-success: #2E8B6E;
+  --color-brand-warning: #B7791F;
+  --color-brand-danger: #B42318;
+  --color-brand-info: #16395E;
+  --radius-brand-sm: 8px;
+  --radius-brand-md: 10px;
+  --radius-brand-lg: 16px;
+  --radius-brand-full: 999px;
+  --font-brand: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-brand-ar: "Noto Sans Arabic", "DM Sans", ui-sans-serif, sans-serif;
+}
