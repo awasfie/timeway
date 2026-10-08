@@ -83,6 +83,22 @@ export class CalendarSubscriptionService {
         syncSubscribedErrorAt: null,
         syncSubscribedErrorCount: 0,
       });
+      // WC-TW-2: Google channel dedupe — a renewed watch creates a new channel; stop the
+      // superseded one so one calendar never holds two live channels (best effort).
+      if (
+        selectedCalendar.integration === "google_calendar" &&
+        selectedCalendar.channelId &&
+        selectedCalendar.channelResourceId &&
+        res?.id &&
+        selectedCalendar.channelId !== res.id
+      ) {
+        await calendarSubscriptionAdapter.unsubscribe(selectedCalendar, credential).catch((err: unknown) => {
+          log.warn("Stopping superseded Google channel failed", {
+            selectedCalendarId,
+            error: err instanceof Error ? err.message : "Unknown error",
+          });
+        });
+      }
     } catch (error: unknown) {
       const nextErrorCount = Math.min(
         CalendarSubscriptionService.MAX_SUBSCRIBE_ERRORS,
