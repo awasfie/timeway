@@ -136,6 +136,32 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
     };
 
     const client = await this.getGraphClient(credential);
+
+    // WC-TW-2: renew an existing, unexpired subscription in place (PATCH expirationDateTime);
+    // fall back to a fresh POST only when Graph no longer knows it (404).
+    const existingId = selectedCalendar.channelId;
+    const existingExp = selectedCalendar.channelExpiration;
+    if (existingId && existingExp && new Date(existingExp).getTime() > Date.now()) {
+      try {
+        const renewed = await this.request<MicrosoftGraphSubscriptionRes>(
+          client,
+          "PATCH",
+          `/subscriptions/${existingId}`,
+          { expirationDateTime }
+        );
+        return {
+          provider: "office365_calendar",
+          id: renewed.id ?? existingId,
+          resourceId: renewed.resource ?? selectedCalendar.channelResourceId,
+          resourceUri: `${this.baseUrl}/${renewed.resource ?? selectedCalendar.channelResourceId}`,
+          expiration: new Date(renewed.expirationDateTime ?? expirationDateTime),
+        };
+      } catch (err) {
+        if (!(err instanceof Error) || !err.message.startsWith("Graph 404")) throw err;
+        log.warn("Graph subscription gone on renew; re-creating", { existingId });
+      }
+    }
+
     const res = await this.request<MicrosoftGraphSubscriptionRes>(client, "POST", "/subscriptions", body);
 
     return {
@@ -148,7 +174,8 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
   }
 
   async unsubscribe(selectedCalendar: SelectedCalendar, credential: CalendarCredential): Promise<void> {
-    const subId = selectedCalendar.channelResourceId;
+    // Graph subscription id is stored in channelId (channelResourceId holds the resource path).
+    const subId = selectedCalendar.channelId;
     if (!subId) return;
 
     const client = await this.getGraphClient(credential);
