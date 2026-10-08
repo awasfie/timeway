@@ -69,7 +69,8 @@ export async function detectContentType(buffer: Buffer): Promise<string | null> 
   // Fallback to sharp metadata detection
   try {
     const meta = await sharp(buffer).metadata();
-    switch (meta?.format) {
+    // sharp >=0.35 narrows FormatEnum (no "avif"/"jpg" keys); compare as string to keep detection.
+    switch (meta?.format as string | undefined) {
       case "avif":
         return AVIF;
       case "webp":
