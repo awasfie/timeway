@@ -2749,7 +2749,7 @@ __metadata:
     jimp: "npm:0.16.1"
     lingo.dev: "npm:0.117.14"
     rrule: "npm:2.7.1"
-    sharp: "npm:0.33.5"
+    sharp: "npm:0.35.5"
     tsdav: "npm:2.0.3"
     tslog: "npm:4.9.2"
     typescript: "npm:5.9.3"
@@ -37309,7 +37309,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sharp@npm:^0.34.3 || ^0.35.4, sharp@npm:^0.35.4":
+"sharp@npm:0.35.5, sharp@npm:^0.34.3 || ^0.35.4, sharp@npm:^0.35.4":
   version: 0.35.5
   resolution: "sharp@npm:0.35.5"
   dependencies:
