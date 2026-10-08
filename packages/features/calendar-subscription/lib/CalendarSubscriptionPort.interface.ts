@@ -37,6 +37,8 @@ export type CalendarSubscriptionEvent = {
   provider: CalendarSubscriptionProvider;
   syncToken: string | null;
   items: CalendarSubscriptionEventItem[];
+  /** true when the provider invalidated the sync token (Google 410) and this is a full window re-sync; callers wipe the cache first */
+  fullResync?: boolean;
 };
 
 export type CalendarCredential = CredentialForCalendarServiceWithEmail;

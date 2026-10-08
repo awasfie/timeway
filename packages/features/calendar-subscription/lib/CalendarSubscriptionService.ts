@@ -324,6 +324,10 @@ export class CalendarSubscriptionService {
 
     if (cacheEnabled && cacheEnabledForUser) {
       log.debug("Caching events", { count: events.items.length });
+      if (events.fullResync) {
+        // provider invalidated the sync token: drop this calendar's cache before re-filling it
+        await this.deps.calendarCacheEventService.cleanupCache(selectedCalendar);
+      }
       await this.deps.calendarCacheEventService.handleEvents(selectedCalendar, events.items);
       result.eventsCached = events.items.length;
 

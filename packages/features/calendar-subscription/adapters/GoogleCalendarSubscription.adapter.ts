@@ -107,48 +107,47 @@ export class GoogleCalendarSubscriptionAdapter implements ICalendarSubscriptionP
   ): Promise<CalendarSubscriptionEvent> {
     log.info("Attempt to fetch events from Google Calendar", { externalId: selectedCalendar.externalId });
     const client = await this.getClient(credential);
+    const storedToken = selectedCalendar.syncToken || undefined;
+    try {
+      return await this.listAll(client, selectedCalendar.externalId, storedToken);
+    } catch (err) {
+      // 410 Gone: sync token invalidated -> wipe cache and full-sync the window (singleEvents fixed)
+      if (storedToken && getStatus(err) === 410) {
+        log.warn("Google syncToken invalidated (410); full resync", { externalId: selectedCalendar.externalId });
+        const full = await this.listAll(client, selectedCalendar.externalId, undefined);
+        return { ...full, fullResync: true };
+      }
+      throw err;
+    }
+  }
 
-    let syncToken = selectedCalendar.syncToken || undefined;
-    let pageToken;
-
-    const params: calendar_v3.Params$Resource$Events$List = {
-      calendarId: selectedCalendar.externalId,
-      pageToken,
-      singleEvents: true,
-    };
-
+  private async listAll(
+    client: calendar_v3.Calendar,
+    calendarId: string,
+    initialSyncToken: string | undefined
+  ): Promise<CalendarSubscriptionEvent> {
+    let syncToken = initialSyncToken;
+    const params: calendar_v3.Params$Resource$Events$List = { calendarId, singleEvents: true };
     if (!syncToken) {
       const now = dayjs().startOf("day");
-      // first sync or unsync (3 months)
       const monthsAhead = now.add(CalendarCacheEventService.MONTHS_AHEAD, "month").endOf("day");
-
-      const timeMinISO = now.toISOString();
-      const timeMaxISO = monthsAhead.toISOString();
-      params.timeMin = timeMinISO;
-      params.timeMax = timeMaxISO;
+      params.timeMin = now.toISOString();
+      params.timeMax = monthsAhead.toISOString();
     } else {
-      // incremental sync
       params.syncToken = syncToken;
     }
-
     const events: calendar_v3.Schema$Event[] = [];
+    let pageToken: string | null = null;
     do {
-      const { data }: { data: calendar_v3.Schema$Events } = await client.events.list(params);
-
+      const { data }: { data: calendar_v3.Schema$Events } = await withGoogleBackoff(() =>
+        client.events.list({ ...params })
+      );
       syncToken = data.nextSyncToken || syncToken;
       pageToken = data.nextPageToken ?? null;
-      if (pageToken) {
-        params.pageToken = pageToken;
-      }
-
+      if (pageToken) params.pageToken = pageToken;
       events.push(...(data.items || []));
     } while (pageToken);
-
-    return {
-      provider: "google_calendar",
-      syncToken: syncToken || null,
-      items: this.parseEvents(events),
-    };
+    return { provider: "google_calendar", syncToken: syncToken || null, items: this.parseEvents(events) };
   }
 
   private parseEvents(events: calendar_v3.Schema$Event[]): CalendarSubscriptionEventItem[] {
@@ -212,5 +211,30 @@ export class GoogleCalendarSubscriptionAdapter implements ICalendarSubscriptionP
   private async getClient(credential: CalendarCredential) {
     const auth = new CalendarAuth(credential);
     return await auth.getClient();
+  }
+}
+
+function getStatus(err: unknown): number | undefined {
+  const e = err as { code?: number | string; status?: number; response?: { status?: number } };
+  const c = e?.response?.status ?? e?.status ?? (typeof e?.code === "number" ? e.code : Number(e?.code));
+  return Number.isFinite(c) ? (c as number) : undefined;
+}
+
+export const GOOGLE_MAX_RETRIES = 5;
+
+/** Jittered exponential backoff on 403 (rate limit) / 429, at most 5 retries. */
+export async function withGoogleBackoff<T>(
+  fn: () => Promise<T>,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms))
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const status = getStatus(err);
+      if ((status !== 403 && status !== 429) || attempt >= GOOGLE_MAX_RETRIES) throw err;
+      const base = Math.min(32000, 1000 * 2 ** attempt);
+      await sleep(Math.floor(Math.random() * base));
+    }
   }
 }
