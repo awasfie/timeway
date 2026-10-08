@@ -40,6 +40,7 @@ interface MicrosoftGraphSubscriptionReq {
   notificationUrl: string;
   expirationDateTime: string;
   clientState?: string;
+  lifecycleNotificationUrl?: string;
 }
 
 interface MicrosoftGraphSubscriptionRes {
@@ -62,6 +63,13 @@ type AdapterConfig = {
  * @see https://docs.microsoft.com/en-us/graph/api/resources/subscription
  */
 export class Office365CalendarSubscriptionAdapter implements ICalendarSubscriptionPort {
+  /** WC-TW-2: lifecycle notifications hit the same route with ?lifecycle=1. */
+  static lifecycleUrl(webhookUrl: string): string {
+    const u = new URL(webhookUrl);
+    u.searchParams.set("lifecycle", "1");
+    return u.toString();
+  }
+
   private readonly baseUrl: string;
   private readonly webhookToken?: string | null;
   private readonly webhookUrl?: string | null;
@@ -133,6 +141,7 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
       notificationUrl: this.webhookUrl,
       expirationDateTime,
       clientState: this.webhookToken,
+      lifecycleNotificationUrl: Office365CalendarSubscriptionAdapter.lifecycleUrl(this.webhookUrl),
     };
 
     const client = await this.getGraphClient(credential);
