@@ -37,7 +37,7 @@ export class CalendarCacheEventRepository implements ICalendarCacheEventReposito
     }
     // lack of upsertMany in prisma
     return Promise.allSettled(
-      [...byKey.values()].map((event) => {
+      Array.from(byKey.values()).map((event) => {
         return this.prismaClient.calendarCacheEvent.upsert({
           where: {
             selectedCalendarId_externalId: {
