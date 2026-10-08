@@ -14,7 +14,7 @@ import { prisma } from "@calcom/prisma";
 import { defaultResponderForAppDir } from "@calcom/web/app/api/defaultResponderForAppDir";
 import type { Params } from "app/_types";
 import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 
 const log = logger.getSubLogger({ prefix: ["calendar-webhook"] });
 
@@ -46,6 +46,14 @@ async function postHandler(request: NextRequest, ctx: { params: Promise<Params> 
     return NextResponse.json({ message: "Unsupported provider" }, { status: 400 });
   }
 
+  // WC-TW-2: Graph validation handshake — echo the token as text/plain, 200, no I/O.
+  const searchParams = request.nextUrl?.searchParams ?? new URL(request.url).searchParams;
+  const validationToken = searchParams.get("validationToken");
+  if (providerFromParams === "office365_calendar" && validationToken) {
+    return new Response(validationToken, { status: 200, headers: { "Content-Type": "text/plain" } });
+  }
+  const isGraphLifecycle = providerFromParams === "office365_calendar" && searchParams.get("lifecycle") === "1";
+
   try {
     // instantiate dependencies
     const bookingRepository = new BookingRepository(prisma);
@@ -76,6 +84,20 @@ async function postHandler(request: NextRequest, ctx: { params: Promise<Params> 
     if (!isCacheEnabled && !isSyncEnabled) {
       log.debug("No cache or sync enabled");
       return NextResponse.json({ message: "No cache or sync enabled" }, { status: 200 });
+    }
+
+    if (isGraphLifecycle) {
+      // ack fast (202), process after the response
+      const body = (await request.json().catch(() => ({}))) as { value?: unknown[] };
+      const notifications = (Array.isArray(body?.value) ? body.value : []) as Parameters<
+        CalendarSubscriptionService["processGraphLifecycle"]
+      >[0];
+      const work = calendarSubscriptionService
+        .processGraphLifecycle(notifications, process.env.MICROSOFT_WEBHOOK_TOKEN)
+        .catch((error) => log.error("Graph lifecycle failed", { error }));
+      if (typeof after === "function") after(() => work);
+      else await work;
+      return NextResponse.json({ message: "Accepted" }, { status: 202 });
     }
 
     await calendarSubscriptionService.processWebhook(providerFromParams, request);

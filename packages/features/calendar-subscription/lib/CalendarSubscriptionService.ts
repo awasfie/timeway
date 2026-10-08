@@ -101,6 +101,55 @@ export class CalendarSubscriptionService {
   }
 
   /**
+   * WC-TW-2: Microsoft Graph lifecycle notifications.
+   * - reauthorizationRequired → renew in place (adapter PATCHes expirationDateTime)
+   * - subscriptionRemoved → re-create (PATCH 404 falls back to POST)
+   * - missed → delta resync of the calendar
+   * Notifications whose clientState does not match the webhook token are ignored.
+   */
+  async processGraphLifecycle(
+    notifications: Array<{ subscriptionId?: string; lifecycleEvent?: string; clientState?: string }>,
+    webhookToken: string | null | undefined
+  ): Promise<{ handled: number; skipped: number }> {
+    let handled = 0;
+    let skipped = 0;
+    for (const n of notifications ?? []) {
+      if (!webhookToken || n?.clientState !== webhookToken || !n.subscriptionId || !n.lifecycleEvent) {
+        skipped++;
+        continue;
+      }
+      const selectedCalendar = await this.deps.selectedCalendarRepository.findByChannelId(n.subscriptionId);
+      if (!selectedCalendar) {
+        skipped++;
+        continue;
+      }
+      try {
+        if (n.lifecycleEvent === "reauthorizationRequired") {
+          await this.subscribe(selectedCalendar.id);
+        } else if (n.lifecycleEvent === "subscriptionRemoved") {
+          await this.deps.selectedCalendarRepository.updateSubscription(selectedCalendar.id, {
+            channelExpiration: null,
+          });
+          await this.subscribe(selectedCalendar.id);
+        } else if (n.lifecycleEvent === "missed") {
+          await this.processEvents(selectedCalendar);
+        } else {
+          skipped++;
+          continue;
+        }
+        handled++;
+      } catch (error) {
+        log.error("Graph lifecycle handling failed", {
+          lifecycleEvent: n.lifecycleEvent,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+        skipped++;
+      }
+    }
+    return { handled, skipped };
+  }
+
+  /**
    * Unsubscribe from a calendar
    */
   async unsubscribe(selectedCalendarId: string): Promise<void> {
@@ -324,6 +373,10 @@ export class CalendarSubscriptionService {
 
     if (cacheEnabled && cacheEnabledForUser) {
       log.debug("Caching events", { count: events.items.length });
+      if (events.fullResync) {
+        // provider invalidated the sync token: drop this calendar's cache before re-filling it
+        await this.deps.calendarCacheEventService.cleanupCache(selectedCalendar);
+      }
       await this.deps.calendarCacheEventService.handleEvents(selectedCalendar, events.items);
       result.eventsCached = events.items.length;
 
