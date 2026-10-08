@@ -29,9 +29,15 @@ export class CalendarCacheEventRepository implements ICalendarCacheEventReposito
     if (events.length === 0) {
       return;
     }
+    // WC-TW-2: idempotent — collapse duplicates in one batch (last write per
+    // provider event id wins) and refresh every provider-owned field, incl. iCalUID.
+    const byKey = new Map<string, CalendarCacheEvent>();
+    for (const event of events) {
+      byKey.set(`${event.selectedCalendarId}\u0000${event.externalId}`, event);
+    }
     // lack of upsertMany in prisma
     return Promise.allSettled(
-      events.map((event) => {
+      [...byKey.values()].map((event) => {
         return this.prismaClient.calendarCacheEvent.upsert({
           where: {
             selectedCalendarId_externalId: {
@@ -47,6 +53,13 @@ export class CalendarCacheEventRepository implements ICalendarCacheEventReposito
             location: event.location,
             isAllDay: event.isAllDay,
             timeZone: event.timeZone,
+            externalEtag: event.externalEtag,
+            iCalUID: event.iCalUID,
+            iCalSequence: event.iCalSequence,
+            status: event.status,
+            recurringEventId: event.recurringEventId,
+            originalStartTime: event.originalStartTime,
+            externalUpdatedAt: event.externalUpdatedAt,
           },
           create: event,
         });
