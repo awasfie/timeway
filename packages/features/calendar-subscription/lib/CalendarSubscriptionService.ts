@@ -9,6 +9,10 @@ import type {
 } from "@calcom/features/calendar-subscription/lib/CalendarSubscriptionPort.interface";
 import type { CalendarCacheEventService } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService";
 import type { CalendarSyncService } from "@calcom/features/calendar-subscription/lib/sync/CalendarSyncService";
+import {
+  incSyncTokenInvalidated,
+  observeSyncLag,
+} from "@calcom/features/calendar-subscription/lib/telemetry/syncMetrics";
 import type { IFeatureRepository } from "@calcom/features/flags/repositories/PrismaFeatureRepository";
 import type { ITeamFeatureRepository } from "@calcom/features/flags/repositories/PrismaTeamFeatureRepository";
 import type { IUserFeatureRepository } from "@calcom/features/flags/repositories/PrismaUserFeatureRepository";
@@ -362,6 +366,13 @@ export class CalendarSubscriptionService {
       syncErrorCount: 0,
     });
 
+    if (events?.fullResync && selectedCalendar.syncToken) {
+      incSyncTokenInvalidated(selectedCalendar.integration);
+      metrics.count("calendar.subscription.sync_token.invalidated", 1, {
+        attributes: { provider: selectedCalendar.integration },
+      });
+    }
+
     if (!events?.items?.length) {
       log.debug("No events fetched", { channelId: selectedCalendar.channelId });
       return result;
@@ -377,6 +388,14 @@ export class CalendarSubscriptionService {
     });
 
     const now = Date.now();
+    // A full window sync returns every event, however old its last change, so only incremental
+    // fetches measure how far behind the provider we are.
+    if (selectedCalendar.syncToken && !events.fullResync) {
+      for (const item of events.items) {
+        const changedAt = item.updatedAt ?? item.createdAt;
+        if (changedAt) observeSyncLag(selectedCalendar.integration, (now - changedAt.getTime()) / 1000);
+      }
+    }
     const lagStats = this.calculatePropagationLag(events.items, now);
     if (lagStats) {
       result.propagationLagMs = lagStats;

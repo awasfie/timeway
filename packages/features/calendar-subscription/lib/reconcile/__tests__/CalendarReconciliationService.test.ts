@@ -8,6 +8,7 @@ vi.mock("@sentry/nextjs", () => ({
 import type { SelectedCalendar } from "@calcom/prisma/client";
 import { captureMessage, metrics } from "@sentry/nextjs";
 import type { CalendarSubscriptionEventItem } from "../../CalendarSubscriptionPort.interface";
+import { renderSyncMetrics, resetSyncMetrics } from "../../telemetry/syncMetrics";
 import {
   type CalendarReconciliationDeps,
   CalendarReconciliationService,
@@ -70,6 +71,7 @@ describe("CalendarReconciliationService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetSyncMetrics();
     fetchEvents = vi.fn();
     deps = {
       adapterFactory: {
@@ -119,6 +121,10 @@ describe("CalendarReconciliationService", () => {
 
     expect(fetchEvents.mock.calls[0][0].syncToken).toBeNull();
     expect(diff).toEqual({ added: 1, removed: 2, changed: 1 });
+    const prom = renderSyncMetrics();
+    expect(prom).toContain('timeway_reconciliation_diff_total{kind="removed",provider="google_calendar"} 2');
+    expect(prom).toContain('timeway_reconciliation_diff_total{kind="added",provider="google_calendar"} 1');
+    expect(prom).toContain('timeway_reconciliation_diff_total{kind="changed",provider="google_calendar"} 1');
     expect(deps.calendarCacheEventRepository.deleteMany).toHaveBeenCalledWith([
       { externalId: "gone", selectedCalendarId: "cal-1" },
       { externalId: "orphan", selectedCalendarId: "cal-1" },
