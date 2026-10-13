@@ -354,6 +354,14 @@ export class CalendarSubscriptionService {
       throw err;
     }
 
+    // A successful fetch with no changes still means the cache is current (WC-TW-3 staleness).
+    await this.deps.selectedCalendarRepository.updateSyncStatus(selectedCalendar.id, {
+      syncToken: events?.syncToken || selectedCalendar.syncToken,
+      syncedAt: new Date(),
+      syncErrorAt: null,
+      syncErrorCount: 0,
+    });
+
     if (!events?.items?.length) {
       log.debug("No events fetched", { channelId: selectedCalendar.channelId });
       // An empty round can still hand back a new token (e.g. a rolled Graph window); persist it so the
@@ -392,13 +400,6 @@ export class CalendarSubscriptionService {
         attributes: { provider: selectedCalendar.integration },
       });
     }
-
-    await this.deps.selectedCalendarRepository.updateSyncStatus(selectedCalendar.id, {
-      syncToken: events.syncToken || selectedCalendar.syncToken,
-      syncedAt: new Date(),
-      syncErrorAt: null,
-      syncErrorCount: 0,
-    });
 
     if (cacheEnabled && cacheEnabledForUser) {
       log.debug("Caching events", { count: events.items.length });
