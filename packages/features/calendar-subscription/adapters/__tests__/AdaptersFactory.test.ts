@@ -1,5 +1,4 @@
-import { describe, test, expect, beforeEach } from "vitest";
-
+import { beforeEach, describe, expect, test } from "vitest";
 import { DefaultAdapterFactory } from "../AdaptersFactory";
 import { GoogleCalendarSubscriptionAdapter } from "../GoogleCalendarSubscription.adapter";
 import { Office365CalendarSubscriptionAdapter } from "../Office365CalendarSubscription.adapter";
@@ -42,13 +41,30 @@ describe("DefaultAdapterFactory", () => {
     test("should return all available providers", () => {
       const providers = factory.getProviders();
 
-      expect(providers).toEqual(["google_calendar"]);
+      expect(providers).toEqual(["google_calendar", "office365_calendar"]);
     });
 
     test("should return array with correct length", () => {
       const providers = factory.getProviders();
 
-      expect(providers).toHaveLength(1);
+      expect(providers).toHaveLength(2);
+    });
+
+    test("every provider resolves to an adapter (WC-TW-2: office365 is subscribed by the cron)", () => {
+      for (const provider of factory.getProviders()) {
+        expect(() => factory.get(provider)).not.toThrow();
+      }
+    });
+  });
+
+  describe("getGenericCalendarSuffixes", () => {
+    test("keeps the Google exclusions and adds none for office365 (Graph ids are opaque)", () => {
+      expect(factory.getGenericCalendarSuffixes()).toEqual([
+        "@group.v.calendar.google.com",
+        "@group.calendar.google.com",
+        "@import.calendar.google.com",
+        "@resource.calendar.google.com",
+      ]);
     });
   });
 });

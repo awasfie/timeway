@@ -1,8 +1,7 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-
-import { Office365CalendarSubscriptionAdapter } from "../Office365CalendarSubscription.adapter";
-
+import process from "node:process";
 import type { SelectedCalendar } from "@calcom/prisma/client";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { Office365CalendarSubscriptionAdapter } from "../Office365CalendarSubscription.adapter";
 
 const _mockSelectedCalendar: SelectedCalendar = {
   id: "test-calendar-id",
@@ -49,7 +48,13 @@ function ok(body: unknown, status = 200) {
   return { ok: true, status, json: async () => body, text: async () => "" } as unknown as Response;
 }
 function fail(status: number) {
-  return { ok: false, status, statusText: "x", json: async () => ({}), text: async () => "" } as unknown as Response;
+  return {
+    ok: false,
+    status,
+    statusText: "x",
+    json: async () => ({}),
+    text: async () => "",
+  } as unknown as Response;
 }
 
 describe("Office365CalendarSubscriptionAdapter (WC-TW-2 renew)", () => {
@@ -60,7 +65,7 @@ describe("Office365CalendarSubscriptionAdapter (WC-TW-2 renew)", () => {
     process.env.MICROSOFT_WEBHOOK_TOKEN = "tok";
     vi.stubGlobal("fetch", fetchMock);
     fetchMock.mockReset();
-    adapter = new Office365CalendarSubscriptionAdapter();
+    adapter = new Office365CalendarSubscriptionAdapter({ getAccessToken: async () => "access" });
   });
   afterEach(() => vi.unstubAllGlobals());
   const cred = { ..._mockCredential, key: "access" } as never;
@@ -81,7 +86,9 @@ describe("Office365CalendarSubscriptionAdapter (WC-TW-2 renew)", () => {
   test("falls back to POST when PATCH returns 404", async () => {
     fetchMock
       .mockResolvedValueOnce(fail(404))
-      .mockResolvedValueOnce(ok({ id: "new-id", resource: "r", expirationDateTime: new Date().toISOString() }));
+      .mockResolvedValueOnce(
+        ok({ id: "new-id", resource: "r", expirationDateTime: new Date().toISOString() })
+      );
     const res = await adapter.subscribe(_mockSelectedCalendar, cred);
     expect(fetchMock.mock.calls.map((c) => c[1].method)).toEqual(["PATCH", "POST"]);
     expect(res.id).toBe("new-id");
@@ -93,7 +100,9 @@ describe("Office365CalendarSubscriptionAdapter (WC-TW-2 renew)", () => {
   });
 
   test("creates with POST when there is no live subscription", async () => {
-    fetchMock.mockResolvedValueOnce(ok({ id: "n", resource: "r", expirationDateTime: new Date().toISOString() }));
+    fetchMock.mockResolvedValueOnce(
+      ok({ id: "n", resource: "r", expirationDateTime: new Date().toISOString() })
+    );
     await adapter.subscribe({ ..._mockSelectedCalendar, channelId: null, channelExpiration: null }, cred);
     expect(fetchMock.mock.calls[0][1].method).toBe("POST");
   });
@@ -102,5 +111,138 @@ describe("Office365CalendarSubscriptionAdapter (WC-TW-2 renew)", () => {
     fetchMock.mockResolvedValueOnce(ok({}, 204));
     await adapter.unsubscribe(_mockSelectedCalendar, cred);
     expect(String(fetchMock.mock.calls[0][0])).toContain("/subscriptions/test-channel-id");
+  });
+});
+
+describe("Office365CalendarSubscriptionAdapter auth (WC-TW-2 wire)", () => {
+  const fetchMock = vi.fn();
+  beforeEach(() => {
+    process.env.MICROSOFT_WEBHOOK_URL = "https://example.test/hook";
+    process.env.MICROSOFT_WEBHOOK_TOKEN = "tok";
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockReset();
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  test("sends the refreshed OAuth access token as Bearer, never the raw credential.key", async () => {
+    const getAccessToken = vi.fn().mockResolvedValue("fresh-access");
+    const adapter = new Office365CalendarSubscriptionAdapter({ getAccessToken });
+    fetchMock.mockResolvedValueOnce(
+      ok({ value: [], "@odata.deltaLink": "https://graph.microsoft.com/v1.0/d" })
+    );
+    await adapter.fetchEvents(_mockSelectedCalendar, _mockCredential as never);
+    expect(getAccessToken).toHaveBeenCalledWith(_mockCredential);
+    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
+    expect(headers.Authorization).toBe("Bearer fresh-access");
+    expect(headers.Prefer).toBe('outlook.timezone="UTC"');
+  });
+});
+
+describe("Office365CalendarSubscriptionAdapter fetchEvents (WC-TW-2 delta)", () => {
+  const fetchMock = vi.fn();
+  let adapter: Office365CalendarSubscriptionAdapter;
+  const cred = { ..._mockCredential } as never;
+  const base = "https://graph.microsoft.com/v1.0";
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockReset();
+    adapter = new Office365CalendarSubscriptionAdapter({ getAccessToken: async () => "access" });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const busyEvent = {
+    id: "e1",
+    iCalUId: "ical-1",
+    subject: "Busy",
+    showAs: "busy",
+    start: { dateTime: "2030-01-02T09:00:00.0000000", timeZone: "UTC" },
+    end: { dateTime: "2030-01-02T10:00:00.0000000", timeZone: "UTC" },
+    seriesMasterId: "master-1",
+    createdDateTime: "2029-12-01T00:00:00Z",
+    lastModifiedDateTime: "2029-12-02T00:00:00Z",
+  };
+
+  test("first sync walks calendarView/delta over the cache window and stores the deltaLink as syncToken", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        ok({ value: [busyEvent], "@odata.nextLink": `${base}/me/calendarView/delta?$skiptoken=p2` })
+      )
+      .mockResolvedValueOnce(
+        ok({ value: [], "@odata.deltaLink": `${base}/me/calendarView/delta?$deltatoken=d1` })
+      );
+    const res = await adapter.fetchEvents({ ..._mockSelectedCalendar, syncToken: null }, cred);
+
+    const first = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(first.pathname).toBe(
+      `/v1.0/me/calendars/${encodeURIComponent("test@example.com")}/calendarView/delta`
+    );
+    const start = new Date(first.searchParams.get("startDateTime") as string);
+    const end = new Date(first.searchParams.get("endDateTime") as string);
+    expect(end.getTime() - start.getTime()).toBeGreaterThan(80 * 86400000);
+    expect(String(fetchMock.mock.calls[1][0])).toBe(`${base}/me/calendarView/delta?$skiptoken=p2`);
+    expect(res.provider).toBe("office365_calendar");
+    expect(res.syncToken).toBe(`${base}/me/calendarView/delta?$deltatoken=d1`);
+    expect(res.fullResync).toBeUndefined();
+    expect(res.items).toHaveLength(1);
+    expect(res.items[0]).toMatchObject({
+      id: "e1",
+      iCalUID: "ical-1",
+      busy: true,
+      status: "confirmed",
+      recurringEventId: "master-1",
+    });
+    expect(res.items[0].start?.toISOString()).toBe("2030-01-02T09:00:00.000Z");
+    expect(res.items[0].end?.toISOString()).toBe("2030-01-02T10:00:00.000Z");
+  });
+
+  test("incremental sync resumes from the stored deltaLink and keeps it when Graph returns a new one", async () => {
+    fetchMock.mockResolvedValueOnce(
+      ok({ value: [], "@odata.deltaLink": `${base}/me/calendarView/delta?$deltatoken=d2` })
+    );
+    const res = await adapter.fetchEvents(
+      { ..._mockSelectedCalendar, syncToken: `${base}/me/calendarView/delta?$deltatoken=d1` },
+      cred
+    );
+    expect(String(fetchMock.mock.calls[0][0])).toBe(`${base}/me/calendarView/delta?$deltatoken=d1`);
+    expect(res.syncToken).toBe(`${base}/me/calendarView/delta?$deltatoken=d2`);
+  });
+
+  test("410 on a stored deltaLink triggers a full window resync flagged fullResync", async () => {
+    fetchMock
+      .mockResolvedValueOnce(fail(410))
+      .mockResolvedValueOnce(ok({ value: [busyEvent], "@odata.deltaLink": `${base}/d-new` }));
+    const res = await adapter.fetchEvents({ ..._mockSelectedCalendar, syncToken: `${base}/d-old` }, cred);
+    expect(String(fetchMock.mock.calls[1][0])).toContain("/calendarView/delta?startDateTime=");
+    expect(res.fullResync).toBe(true);
+    expect(res.syncToken).toBe(`${base}/d-new`);
+  });
+
+  test("non-410 errors propagate", async () => {
+    fetchMock.mockResolvedValueOnce(fail(500));
+    await expect(adapter.fetchEvents(_mockSelectedCalendar, cred)).rejects.toThrow("Graph 500");
+  });
+
+  test("@removed and free/workingElsewhere events are non-busy; tentative/oof count as busy", async () => {
+    fetchMock.mockResolvedValueOnce(
+      ok({
+        value: [
+          { id: "gone", "@removed": { reason: "deleted" } },
+          { ...busyEvent, id: "free", showAs: "free" },
+          { ...busyEvent, id: "we", showAs: "workingElsewhere" },
+          { ...busyEvent, id: "tent", showAs: "tentative" },
+          { ...busyEvent, id: "oof", showAs: "oof" },
+          { ...busyEvent, id: "cxl", isCancelled: true },
+        ],
+        "@odata.deltaLink": `${base}/d`,
+      })
+    );
+    const res = await adapter.fetchEvents(_mockSelectedCalendar, cred);
+    const byId = Object.fromEntries(res.items.map((i) => [i.id, i]));
+    expect(byId.gone).toMatchObject({ busy: false, status: "cancelled" });
+    expect(byId.free.busy).toBe(false);
+    expect(byId.we.busy).toBe(false);
+    expect(byId.tent.busy).toBe(true);
+    expect(byId.oof.busy).toBe(true);
+    expect(byId.cxl.status).toBe("cancelled");
   });
 });
