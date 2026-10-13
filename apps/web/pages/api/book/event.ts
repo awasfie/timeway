@@ -43,6 +43,8 @@ async function handler(req: NextApiRequest & { userId?: number; traceContext: Tr
   /* To mimic API behavior and comply with types */
   req.body = {
     ...req.body,
+    // Embeds may not get the reserveSlot cookie (third-party context), so the body value wins.
+    reservedSlotUid: req.body.reservedSlotUid ?? req.cookies?.uid,
     creationSource: CreationSource.WEBAPP,
   };
 
