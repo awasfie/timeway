@@ -1,12 +1,15 @@
+import process from "node:process";
+import { getOffice365AccessToken } from "@calcom/app-store/office365calendar/lib/getOffice365AccessToken";
+import dayjs from "@calcom/dayjs";
+import { CalendarCacheEventService } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService";
 import logger from "@calcom/lib/logger";
 import type { SelectedCalendar } from "@calcom/prisma/client";
-
 import type {
-  CalendarSubscriptionEvent,
-  ICalendarSubscriptionPort,
-  CalendarSubscriptionResult,
   CalendarCredential,
+  CalendarSubscriptionEvent,
   CalendarSubscriptionEventItem,
+  CalendarSubscriptionResult,
+  ICalendarSubscriptionPort,
 } from "../lib/CalendarSubscriptionPort.interface";
 
 const log = logger.getSubLogger({ prefix: ["MicrosoftCalendarSubscriptionAdapter"] });
@@ -26,6 +29,10 @@ interface MicrosoftGraphEvent {
   isAllDay?: boolean;
   isCancelled?: boolean;
   type?: string;
+  seriesMasterId?: string;
+  createdDateTime?: string;
+  lastModifiedDateTime?: string;
+  "@removed"?: { reason?: string };
 }
 
 interface MicrosoftGraphEventsResponse {
@@ -49,12 +56,35 @@ interface MicrosoftGraphSubscriptionRes {
   expirationDateTime: string;
 }
 
+type StoredDeltaState = { v: 1; windowEnd: string; deltaLink: string };
+
+/** Re-run the window once the cache horizon has moved this far past the stored window end. */
+const DELTA_WINDOW_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+
 type AdapterConfig = {
   baseUrl?: string;
   webhookToken?: string | null;
   webhookUrl?: string | null;
   subscriptionTtlMs?: number;
+  getAccessToken?: (credential: CalendarCredential) => Promise<string>;
 };
+
+class GraphHttpError extends Error {
+  constructor(
+    readonly status: number,
+    statusText: string
+  ) {
+    super(`Graph ${status} ${statusText}`);
+  }
+}
+
+/** Graph returns wall-clock `dateTime` plus `timeZone`; with `Prefer: outlook.timezone="UTC"` that is UTC. */
+function parseGraphDateTime(value?: { dateTime: string; timeZone: string }): Date | undefined {
+  if (!value?.dateTime) return undefined;
+  const hasOffset = /(Z|[+-]\d{2}:\d{2})$/.test(value.dateTime);
+  const d = new Date(hasOffset ? value.dateTime : `${value.dateTime}Z`);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
 
 /**
  * Office365 Calendar Subscription Adapter
@@ -74,12 +104,14 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
   private readonly webhookToken?: string | null;
   private readonly webhookUrl?: string | null;
   private readonly subscriptionTtlMs: number;
+  private readonly getAccessToken: (credential: CalendarCredential) => Promise<string>;
 
   constructor(cfg: AdapterConfig = {}) {
     this.baseUrl = cfg.baseUrl ?? "https://graph.microsoft.com/v1.0";
     this.webhookToken = cfg.webhookToken ?? process.env.MICROSOFT_WEBHOOK_TOKEN ?? null;
     this.webhookUrl = cfg.webhookUrl ?? process.env.MICROSOFT_WEBHOOK_URL ?? null;
     this.subscriptionTtlMs = cfg.subscriptionTtlMs ?? 3 * 24 * 60 * 60 * 1000;
+    this.getAccessToken = cfg.getAccessToken ?? getOffice365AccessToken;
   }
 
   async validate(request: Request): Promise<boolean> {
@@ -166,7 +198,7 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
           expiration: new Date(renewed.expirationDateTime ?? expirationDateTime),
         };
       } catch (err) {
-        if (!(err instanceof Error) || !err.message.startsWith("Graph 404")) throw err;
+        if (!(err instanceof GraphHttpError && err.status === 404)) throw err;
         log.warn("Graph subscription gone on renew; re-creating", { existingId });
       }
     }
@@ -196,70 +228,145 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
     credential: CalendarCredential
   ): Promise<CalendarSubscriptionEvent> {
     const client = await this.getGraphClient(credential);
+    const calendarId = selectedCalendar.externalId;
+    const hadToken = !!selectedCalendar.syncToken;
+    const stored = Office365CalendarSubscriptionAdapter.decodeSyncToken(selectedCalendar.syncToken);
 
-    let deltaLink = selectedCalendar.syncToken ?? null;
-    const items: MicrosoftGraphEvent[] = [];
-
-    if (deltaLink) {
-      const path = this.stripBase(deltaLink);
-      const r = await this.request<MicrosoftGraphEventsResponse>(client, "GET", path);
-      items.push(...r.value);
-      deltaLink = r["@odata.deltaLink"] ?? deltaLink;
-    } else {
-      let next: string | null = `/me/calendars/${selectedCalendar.externalId}/events/delta`;
-      while (next) {
-        const r: MicrosoftGraphEventsResponse = await this.request<MicrosoftGraphEventsResponse>(
-          client,
-          "GET",
-          next
-        );
-        items.push(...r.value);
-        deltaLink = r["@odata.deltaLink"] ?? deltaLink;
-        next = r["@odata.nextLink"] ? this.stripBase(r["@odata.nextLink"]) : null;
+    // The calendarView window is baked into the deltaLink, so a link reused for weeks stops covering
+    // the far end of the cache window and those Outlook events would read as free. Legacy bare
+    // deltaLinks carry no window end and are treated as stale.
+    if (!stored || this.isWindowStale(stored.windowEnd)) {
+      if (hadToken) {
+        log.info("Graph delta window stale or unversioned; starting a new round", {
+          externalId: calendarId,
+          windowEnd: stored?.windowEnd.toISOString() ?? null,
+        });
       }
+      const full = await this.fullRound(client, calendarId);
+      return hadToken ? { ...full, fullResync: true } : full;
     }
 
+    try {
+      return await this.deltaRound(
+        client,
+        this.stripBase(stored.deltaLink),
+        stored.deltaLink,
+        stored.windowEnd
+      );
+    } catch (err) {
+      // Expired/invalid delta token: Graph answers 410 Gone; wipe and full-sync the window.
+      if (err instanceof GraphHttpError && err.status === 410) {
+        log.warn("Graph deltaLink invalidated (410); full resync", { externalId: calendarId });
+        const full = await this.fullRound(client, calendarId);
+        return { ...full, fullResync: true };
+      }
+      throw err;
+    }
+  }
+
+  /** syncToken = JSON {v, windowEnd, deltaLink}; the adapter alone reads or writes it. */
+  static encodeSyncToken(deltaLink: string, windowEnd: Date): string {
+    const state: StoredDeltaState = { v: 1, windowEnd: windowEnd.toISOString(), deltaLink };
+    return JSON.stringify(state);
+  }
+
+  static decodeSyncToken(raw: string | null | undefined): { deltaLink: string; windowEnd: Date } | null {
+    if (!raw || !raw.startsWith("{")) return null;
+    try {
+      const parsed = JSON.parse(raw) as Partial<StoredDeltaState>;
+      if (parsed.v !== 1 || typeof parsed.deltaLink !== "string" || typeof parsed.windowEnd !== "string") {
+        return null;
+      }
+      const windowEnd = new Date(parsed.windowEnd);
+      if (Number.isNaN(windowEnd.getTime())) return null;
+      return { deltaLink: parsed.deltaLink, windowEnd };
+    } catch {
+      return null;
+    }
+  }
+
+  private cacheWindow(): { start: Date; end: Date } {
+    const start = dayjs().startOf("day");
+    const end = start.add(CalendarCacheEventService.MONTHS_AHEAD, "month").endOf("day");
+    return { start: start.toDate(), end: end.toDate() };
+  }
+
+  private isWindowStale(windowEnd: Date): boolean {
+    return windowEnd.getTime() < this.cacheWindow().end.getTime() - DELTA_WINDOW_STALE_MS;
+  }
+
+  private async fullRound(client: GraphClient, calendarId: string): Promise<CalendarSubscriptionEvent> {
+    const { start, end } = this.cacheWindow();
+    const qs = new URLSearchParams({ startDateTime: start.toISOString(), endDateTime: end.toISOString() });
+    const path = `/me/calendars/${encodeURIComponent(calendarId)}/calendarView/delta?${qs.toString()}`;
+    return this.deltaRound(client, path, null, end);
+  }
+
+  /**
+   * One delta round over the calendarView window. v1.0 only offers delta on calendarView
+   * (`/calendars/{id}/events/delta` is beta), and the window is encoded in the returned links.
+   */
+  private async deltaRound(
+    client: GraphClient,
+    firstPath: string,
+    previousDeltaLink: string | null,
+    windowEnd: Date
+  ): Promise<CalendarSubscriptionEvent> {
+    let next: string | null = firstPath;
+    let latestDeltaLink = previousDeltaLink;
+    const items: MicrosoftGraphEvent[] = [];
+    while (next) {
+      const r: MicrosoftGraphEventsResponse = await this.request<MicrosoftGraphEventsResponse>(
+        client,
+        "GET",
+        next
+      );
+      items.push(...(r.value ?? []));
+      latestDeltaLink = r["@odata.deltaLink"] ?? latestDeltaLink;
+      next = r["@odata.nextLink"] ? this.stripBase(r["@odata.nextLink"]) : null;
+    }
     return {
       provider: "office365_calendar",
-      syncToken: deltaLink,
+      syncToken: latestDeltaLink
+        ? Office365CalendarSubscriptionAdapter.encodeSyncToken(latestDeltaLink, windowEnd)
+        : null,
       items: this.parseEvents(items),
     };
   }
 
   private parseEvents(events: MicrosoftGraphEvent[]): CalendarSubscriptionEventItem[] {
     return events
+      .filter((e) => !!e.id)
       .map((e) => {
-        const busy = e.showAs === "busy" || e.showAs === "tentative" || e.showAs === "oof";
-        const start = e.start?.dateTime ? new Date(e.start.dateTime) : new Date();
-        const end = e.end?.dateTime ? new Date(e.end.dateTime) : new Date();
-
+        const removed = !!e["@removed"];
+        // Same rule as Office365CalendarService.getAvailability, so cached and live busy times agree.
+        const busy = !removed && e.showAs !== "free" && e.showAs !== "workingElsewhere";
         return {
           id: e.id,
           iCalUID: e.iCalUId ?? null,
-          start,
-          end,
+          start: parseGraphDateTime(e.start),
+          end: parseGraphDateTime(e.end),
           busy,
           etag: null,
           summary: e.subject ?? null,
           description: e.bodyPreview ?? null,
           location: e.location?.displayName ?? null,
           kind: e.type ?? "microsoftgraph#event",
-          status: e.isCancelled ? "cancelled" : "confirmed",
+          status: removed || e.isCancelled ? "cancelled" : "confirmed",
           isAllDay: e.isAllDay ?? false,
           timeZone: e.start?.timeZone ?? null,
-          recurringEventId: null,
+          recurringEventId: e.seriesMasterId ?? null,
           originalStartDate: null,
-          createdAt: null,
-          updatedAt: null,
+          createdAt: e.createdDateTime ? new Date(e.createdDateTime) : null,
+          updatedAt: e.lastModifiedDateTime ? new Date(e.lastModifiedDateTime) : null,
         };
       })
-      .filter(({ id }) => !!id);
+      .filter((item) => item.status === "cancelled" || (!!item.start && !!item.end));
   }
 
   private async getGraphClient(credential: CalendarCredential): Promise<GraphClient> {
-    const accessToken = credential.delegatedTo?.serviceAccountKey?.private_key ?? (credential.key as string);
-    if (!accessToken) throw new Error("Missing Microsoft access token");
-    return { accessToken };
+    // credential.key is the stored OAuth token object, never a bearer string; refresh through OAuthManager.
+    return { accessToken: await this.getAccessToken(credential) };
   }
 
   private stripBase(urlOrPath: string): string {
@@ -276,6 +383,7 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
     const headers: Record<string, string> = {
       Authorization: `Bearer ${client.accessToken}`,
       "Content-Type": "application/json",
+      Prefer: 'outlook.timezone="UTC"',
     };
 
     const init: RequestInit = { method, headers };
@@ -288,7 +396,7 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       log.error("Graph API error", { method, endpoint: this.stripBase(url), status: res.status, text });
-      throw new Error(`Graph ${res.status} ${res.statusText}`);
+      throw new GraphHttpError(res.status, res.statusText);
     }
 
     if (method === "DELETE" || res.status === 204) return {} as T;

@@ -1,9 +1,7 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
-
 import type { CalendarSubscriptionEventItem } from "@calcom/features/calendar-subscription/lib/CalendarSubscriptionPort.interface";
 import type { ICalendarCacheEventRepository } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventRepository.interface";
 import type { SelectedCalendar } from "@calcom/prisma/client";
-
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { CalendarCacheEventService } from "../CalendarCacheEventService";
 
 const mockSelectedCalendar: SelectedCalendar = {
@@ -338,10 +336,10 @@ describe("CalendarCacheEventService", () => {
   describe("isCalendarTypeSupported", () => {
     test("should return true for supported calendar types", () => {
       expect(CalendarCacheEventService.isCalendarTypeSupported("google_calendar")).toBe(true);
+      expect(CalendarCacheEventService.isCalendarTypeSupported("office365_calendar")).toBe(true);
     });
 
     test("should return false for unsupported calendar types", () => {
-      expect(CalendarCacheEventService.isCalendarTypeSupported("office365_calendar")).toBe(false);
       expect(CalendarCacheEventService.isCalendarTypeSupported("outlook_calendar")).toBe(false);
       expect(CalendarCacheEventService.isCalendarTypeSupported("apple_calendar")).toBe(false);
       expect(CalendarCacheEventService.isCalendarTypeSupported("unknown_calendar")).toBe(false);

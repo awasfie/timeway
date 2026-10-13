@@ -16,6 +16,7 @@ export const GENERIC_CALENDAR_SUFFIXES: Record<CalendarSubscriptionProvider, str
     "@import.calendar.google.com",
     "@resource.calendar.google.com",
   ],
+  // Graph calendar ids are opaque, so shared/holiday calendars can't be told apart by suffix.
   office365_calendar: [],
 };
 
@@ -54,7 +55,7 @@ export class DefaultAdapterFactory implements AdapterFactory {
    * @returns
    */
   getProviders(): CalendarSubscriptionProvider[] {
-    const providers: CalendarSubscriptionProvider[] = ["google_calendar"];
+    const providers: CalendarSubscriptionProvider[] = ["google_calendar", "office365_calendar"];
     return providers;
   }
 

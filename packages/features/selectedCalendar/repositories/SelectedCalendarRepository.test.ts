@@ -7,6 +7,7 @@ import prisma from "@calcom/prisma";
 import type { Prisma, SelectedCalendar } from "@calcom/prisma/client";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
+
 vi.mock("@calcom/app-store/delegationCredential", () => ({
   enrichHostsWithDelegationCredentials: vi.fn(),
   getUsersCredentialsIncludeServiceAccountKey: vi.fn(),
@@ -162,6 +163,38 @@ describe("SelectedCalendarRepository", () => {
       });
 
       expect(result).toEqual(mockCalendars);
+    });
+
+    test("WC-TW-2: selects office365 rows from the real factory providers with a 15-minute renew window", async () => {
+      const { DefaultAdapterFactory } = await import(
+        "@calcom/features/calendar-subscription/adapters/AdaptersFactory"
+      );
+      const office365Row = { ...mockSelectedCalendar, id: "o365-row", integration: "office365_calendar" };
+      vi.mocked(mockPrismaClient.selectedCalendar.findMany).mockResolvedValue([office365Row]);
+      const factory = new DefaultAdapterFactory();
+      const before = Date.now();
+
+      const result = await repository.findNextSubscriptionBatch({
+        take: 100,
+        teamIds: [7],
+        integrations: factory.getProviders(),
+        genericCalendarSuffixes: factory.getGenericCalendarSuffixes(),
+      });
+
+      const where = vi.mocked(mockPrismaClient.selectedCalendar.findMany).mock.calls[0][0]?.where as {
+        integration: { in: string[] };
+        AND: Array<{ OR?: Array<{ integration?: string; channelExpiration?: { lte: Date } }> }>;
+      };
+      expect(where.integration.in).toContain("office365_calendar");
+      const windows = Object.fromEntries(
+        (where.AND[0].OR ?? [])
+          .filter((f) => f.integration)
+          .map((f) => [f.integration, (f.channelExpiration?.lte as Date).getTime() - before])
+      );
+      expect(windows.office365_calendar).toBeGreaterThanOrEqual(15 * 60 * 1000 - 1000);
+      expect(windows.office365_calendar).toBeLessThanOrEqual(15 * 60 * 1000 + 1000);
+      expect(windows.google_calendar).toBeGreaterThan(11 * 60 * 60 * 1000);
+      expect(result).toEqual([office365Row]);
     });
 
     test("should handle empty integrations array", async () => {

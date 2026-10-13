@@ -356,6 +356,19 @@ export class CalendarSubscriptionService {
 
     if (!events?.items?.length) {
       log.debug("No events fetched", { channelId: selectedCalendar.channelId });
+      // An empty round can still hand back a new token (e.g. a rolled Graph window); persist it so the
+      // next run does not repeat the round, and drop the cache if the provider asked for a full resync.
+      if (events?.syncToken && events.syncToken !== selectedCalendar.syncToken) {
+        await this.deps.selectedCalendarRepository.updateSyncStatus(selectedCalendar.id, {
+          syncToken: events.syncToken,
+          syncedAt: new Date(),
+          syncErrorAt: null,
+          syncErrorCount: 0,
+        });
+      }
+      if (events?.fullResync && cacheEnabled && cacheEnabledForUser) {
+        await this.deps.calendarCacheEventService.cleanupCache(selectedCalendar);
+      }
       return result;
     }
 
