@@ -27,6 +27,7 @@ import type { IUserFeatureRepository } from "@calcom/features/flags/repositories
 import type { ISelectedCalendarRepository } from "@calcom/features/selectedCalendar/repositories/SelectedCalendarRepository.interface";
 import type { SelectedCalendar } from "@calcom/prisma/client";
 import { CalendarSubscriptionService } from "../CalendarSubscriptionService";
+import { renderSyncMetrics, resetSyncMetrics } from "../telemetry/syncMetrics";
 
 const mockSelectedCalendar: SelectedCalendar = {
   id: "test-calendar-id",
@@ -427,6 +428,44 @@ describe("CalendarSubscriptionService", () => {
           increment: 1,
         },
       });
+    });
+
+    test("WC-TW-3: records sync lag per event on incremental syncs", async () => {
+      resetSyncMetrics();
+      const changedAt = new Date(Date.now() - 30_000);
+      mockAdapter.fetchEvents.mockResolvedValue({
+        ...mockEvents,
+        items: [{ ...mockEvents.items[0], updatedAt: changedAt }],
+      });
+
+      await service.processEvents(mockSelectedCalendar);
+
+      const out = renderSyncMetrics();
+      expect(out).toContain('timeway_sync_lag_seconds_count{provider="google_calendar"} 1');
+      expect(out).toContain('timeway_sync_lag_seconds_bucket{provider="google_calendar",le="15"} 0');
+      expect(out).toContain('timeway_sync_lag_seconds_bucket{provider="google_calendar",le="45"} 1');
+    });
+
+    test("WC-TW-3: a 410 full resync counts an invalidated token and records no lag", async () => {
+      resetSyncMetrics();
+      mockAdapter.fetchEvents.mockResolvedValue({ ...mockEvents, fullResync: true });
+
+      await service.processEvents(mockSelectedCalendar);
+
+      const out = renderSyncMetrics();
+      expect(out).toContain('timeway_sync_token_invalidated_total{provider="google_calendar"} 1');
+      expect(out).not.toContain("timeway_sync_lag_seconds_count");
+      expect(mockCalendarCacheEventService.cleanupCache).toHaveBeenCalledWith(mockSelectedCalendar);
+    });
+
+    test("WC-TW-3: the first full sync (no stored token) records no lag", async () => {
+      resetSyncMetrics();
+
+      await service.processEvents({ ...mockSelectedCalendar, syncToken: null });
+
+      const out = renderSyncMetrics();
+      expect(out).not.toContain("timeway_sync_lag_seconds_count");
+      expect(out).not.toContain("timeway_sync_token_invalidated_total{");
     });
 
     test("should return early when no events are fetched", async () => {
