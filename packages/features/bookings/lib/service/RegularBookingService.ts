@@ -40,6 +40,7 @@ import { getEventName, updateHostInEventName } from "@calcom/features/eventtypes
 import { getFullName } from "@calcom/features/form-builder/utils";
 import type { HashedLinkService } from "@calcom/features/hashedLink/lib/service/HashedLinkService";
 import { ProfileRepository } from "@calcom/features/profile/repositories/ProfileRepository";
+import { PrismaSelectedSlotRepository } from "@calcom/features/selectedSlots/repositories/PrismaSelectedSlotRepository";
 import { handleAnalyticsEvents } from "@calcom/features/tasker/tasks/analytics/handleAnalyticsEvents";
 import type { UserRepository } from "@calcom/features/users/repositories/UserRepository";
 import { UsersRepository } from "@calcom/features/users/users.repository";
@@ -89,6 +90,11 @@ import getBookingDataSchema from "../getBookingDataSchema";
 import type { LuckyUserService } from "../getLuckyUser";
 import { checkActiveBookingsLimitForBooker } from "../handleNewBooking/checkActiveBookingsLimitForBooker";
 import { checkIfBookerEmailIsBlocked } from "../handleNewBooking/checkIfBookerEmailIsBlocked";
+import {
+  assertSlotNotReservedByOthers,
+  didProviderCalendarWriteFail,
+  failBookingOnCalendarWriteFailure,
+} from "../handleNewBooking/conflictGuards";
 import type { Booking } from "../handleNewBooking/createBooking";
 import { createBooking } from "../handleNewBooking/createBooking";
 import { ensureAvailableUsers } from "../handleNewBooking/ensureAvailableUsers";
@@ -861,6 +867,15 @@ async function handler(
   }
 
   //checks what users are available
+  if (isFirstSeat && !eventType.seatsPerTimeSlot && !skipAvailabilityCheck && !isDryRun) {
+    await assertSlotNotReservedByOthers({
+      selectedSlotRepository: new PrismaSelectedSlotRepository(deps.prismaClient),
+      eventTypeId: eventType.id,
+      startTime: dayjs(reqBody.start).utc().toDate(),
+      endTime: dayjs(reqBody.end).utc().toDate(),
+      reservedSlotUid: reqBody.reservedSlotUid,
+    });
+  }
   if (isFirstSeat) {
     const eventTypeWithUsers: Omit<getEventTypeResponse, "users"> & {
       users: IsFixedAwareUserWithCredentials[];
@@ -2073,6 +2088,19 @@ async function handler(
     referencesToCreate = createManager.referencesToCreate;
     videoCallUrl = evt.videoCallData?.url ? evt.videoCallData.url : null;
 
+    if (!isDryRun && !shouldSkipCalendarEvents && didProviderCalendarWriteFail(results)) {
+      await failBookingOnCalendarWriteFailure({
+        prismaClient: deps.prismaClient,
+        bookingId: booking.id,
+        cleanup: (references) =>
+          eventManager instanceof EventManager
+            ? eventManager.deleteEventsAndMeetings({ event: evt, bookingReferences: references })
+            : Promise.resolve(),
+        results,
+        referencesToCreate,
+        logger: tracingLogger,
+      });
+    }
     if (results.length > 0 && results.every((res) => !res.success)) {
       const error = {
         errorCode: "BookingCreatingMeetingFailed",

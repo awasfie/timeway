@@ -1,8 +1,6 @@
 import type { PrismaClient } from "@calcom/prisma";
 import type { Prisma } from "@calcom/prisma/client";
-
-import type { ISelectedSlotRepository } from "./ISelectedSlotRepository";
-import type { TimeSlot } from "./ISelectedSlotRepository";
+import type { ISelectedSlotRepository, TimeSlot } from "./ISelectedSlotRepository";
 
 export class PrismaSelectedSlotRepository implements ISelectedSlotRepository {
   constructor(private prismaClient: PrismaClient) {}
@@ -24,8 +22,9 @@ export class PrismaSelectedSlotRepository implements ISelectedSlotRepository {
   }) {
     return await this.findFirst({
       where: {
-        slotUtcStartDate: slot.utcStartIso,
-        slotUtcEndDate: slot.utcEndIso,
+        // Date objects (not ISO strings) so the comparison is type-exact on every Prisma client.
+        slotUtcStartDate: new Date(slot.utcStartIso),
+        slotUtcEndDate: new Date(slot.utcEndIso),
         eventTypeId,
         uid: { not: uid },
         releaseAt: { gt: new Date() },
