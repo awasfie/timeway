@@ -196,6 +196,22 @@ describe("CalendarSubscriptionService", () => {
   });
 
   describe("subscribe", () => {
+    test("WC-TW-2: stops the superseded Google channel on renewal, not the new one", async () => {
+      mockSelectedCalendarRepository.findById.mockResolvedValue({
+        ...mockSelectedCalendar,
+        channelId: "old-channel-id",
+        channelResourceId: "old-resource-id",
+      });
+      await service.subscribe("test-calendar-id");
+      expect(mockAdapter.unsubscribe).toHaveBeenCalledTimes(1);
+      expect(mockAdapter.unsubscribe.mock.calls[0][0].channelId).toBe("old-channel-id");
+
+      mockAdapter.unsubscribe.mockClear();
+      mockSelectedCalendarRepository.findById.mockResolvedValue(mockSelectedCalendar);
+      await service.subscribe("test-calendar-id");
+      expect(mockAdapter.unsubscribe).not.toHaveBeenCalled();
+    });
+
     test("should successfully subscribe to a calendar", async () => {
       await service.subscribe("test-calendar-id");
 

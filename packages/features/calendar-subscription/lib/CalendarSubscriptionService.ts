@@ -83,6 +83,22 @@ export class CalendarSubscriptionService {
         syncSubscribedErrorAt: null,
         syncSubscribedErrorCount: 0,
       });
+      // WC-TW-2: Google channel dedupe — a renewed watch creates a new channel; stop the
+      // superseded one so one calendar never holds two live channels (best effort).
+      if (
+        selectedCalendar.integration === "google_calendar" &&
+        selectedCalendar.channelId &&
+        selectedCalendar.channelResourceId &&
+        res?.id &&
+        selectedCalendar.channelId !== res.id
+      ) {
+        await calendarSubscriptionAdapter.unsubscribe(selectedCalendar, credential).catch((err: unknown) => {
+          log.warn("Stopping superseded Google channel failed", {
+            selectedCalendarId,
+            error: err instanceof Error ? err.message : "Unknown error",
+          });
+        });
+      }
     } catch (error: unknown) {
       const nextErrorCount = Math.min(
         CalendarSubscriptionService.MAX_SUBSCRIBE_ERRORS,
@@ -98,6 +114,55 @@ export class CalendarSubscriptionService {
     }
 
     await this.processEvents(selectedCalendar);
+  }
+
+  /**
+   * WC-TW-2: Microsoft Graph lifecycle notifications.
+   * - reauthorizationRequired → renew in place (adapter PATCHes expirationDateTime)
+   * - subscriptionRemoved → re-create (PATCH 404 falls back to POST)
+   * - missed → delta resync of the calendar
+   * Notifications whose clientState does not match the webhook token are ignored.
+   */
+  async processGraphLifecycle(
+    notifications: Array<{ subscriptionId?: string; lifecycleEvent?: string; clientState?: string }>,
+    webhookToken: string | null | undefined
+  ): Promise<{ handled: number; skipped: number }> {
+    let handled = 0;
+    let skipped = 0;
+    for (const n of notifications ?? []) {
+      if (!webhookToken || n?.clientState !== webhookToken || !n.subscriptionId || !n.lifecycleEvent) {
+        skipped++;
+        continue;
+      }
+      const selectedCalendar = await this.deps.selectedCalendarRepository.findByChannelId(n.subscriptionId);
+      if (!selectedCalendar) {
+        skipped++;
+        continue;
+      }
+      try {
+        if (n.lifecycleEvent === "reauthorizationRequired") {
+          await this.subscribe(selectedCalendar.id);
+        } else if (n.lifecycleEvent === "subscriptionRemoved") {
+          await this.deps.selectedCalendarRepository.updateSubscription(selectedCalendar.id, {
+            channelExpiration: null,
+          });
+          await this.subscribe(selectedCalendar.id);
+        } else if (n.lifecycleEvent === "missed") {
+          await this.processEvents(selectedCalendar);
+        } else {
+          skipped++;
+          continue;
+        }
+        handled++;
+      } catch (error) {
+        log.error("Graph lifecycle handling failed", {
+          lifecycleEvent: n.lifecycleEvent,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+        skipped++;
+      }
+    }
+    return { handled, skipped };
   }
 
   /**
@@ -324,6 +389,10 @@ export class CalendarSubscriptionService {
 
     if (cacheEnabled && cacheEnabledForUser) {
       log.debug("Caching events", { count: events.items.length });
+      if (events.fullResync) {
+        // provider invalidated the sync token: drop this calendar's cache before re-filling it
+        await this.deps.calendarCacheEventService.cleanupCache(selectedCalendar);
+      }
       await this.deps.calendarCacheEventService.handleEvents(selectedCalendar, events.items);
       result.eventsCached = events.items.length;
 

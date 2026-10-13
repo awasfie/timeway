@@ -1,3 +1,4 @@
+import { renewBefore } from "@calcom/features/calendar-subscription/lib/renewalPolicy";
 import type { ISelectedCalendarRepository } from "@calcom/features/selectedCalendar/repositories/SelectedCalendarRepository.interface";
 import { buildCredentialPayloadForPrisma } from "@calcom/lib/server/buildCredentialPayloadForCalendar";
 import type { PrismaClient } from "@calcom/prisma";
@@ -69,7 +70,16 @@ export class SelectedCalendarRepository implements ISelectedCalendarRepository {
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     const needsSubscriptionFilter: Prisma.SelectedCalendarWhereInput = {
-      OR: [{ syncSubscribedAt: null }, { channelExpiration: null }, { channelExpiration: { lte: now } }],
+      OR: [
+        { syncSubscribedAt: null },
+        { channelExpiration: null },
+        // WC-TW-2: renew inside each provider's window, not only after expiry
+        ...integrations.map<Prisma.SelectedCalendarWhereInput>((integration) => ({
+          integration,
+          channelExpiration: { lte: renewBefore(integration, now) },
+        })),
+        { channelExpiration: { lte: now } },
+      ],
     };
 
     const retryableWindowFilter: Prisma.SelectedCalendarWhereInput = {

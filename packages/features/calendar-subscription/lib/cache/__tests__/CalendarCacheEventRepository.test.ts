@@ -105,9 +105,24 @@ describe("CalendarCacheEventRepository", () => {
           location: mockCalendarCacheEvent.location,
           isAllDay: mockCalendarCacheEvent.isAllDay,
           timeZone: mockCalendarCacheEvent.timeZone,
+          externalEtag: mockCalendarCacheEvent.externalEtag,
+          iCalUID: mockCalendarCacheEvent.iCalUID,
+          iCalSequence: mockCalendarCacheEvent.iCalSequence,
+          status: mockCalendarCacheEvent.status,
+          recurringEventId: mockCalendarCacheEvent.recurringEventId,
+          originalStartTime: mockCalendarCacheEvent.originalStartTime,
+          externalUpdatedAt: mockCalendarCacheEvent.externalUpdatedAt,
         },
         create: mockCalendarCacheEvent,
       });
+    });
+
+    test("WC-TW-2: duplicate provider event ids in one batch upsert once (last wins)", async () => {
+      const later = { ...mockCalendarCacheEvent, externalEtag: "etag-2", summary: "Moved" };
+      vi.mocked(mockPrismaClient.calendarCacheEvent.upsert).mockClear();
+      await repository.upsertMany([mockCalendarCacheEvent, later]);
+      expect(mockPrismaClient.calendarCacheEvent.upsert).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(mockPrismaClient.calendarCacheEvent.upsert).mock.calls[0][0].update.summary).toBe("Moved");
     });
 
     test("should return early when events array is empty", async () => {

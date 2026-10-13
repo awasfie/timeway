@@ -145,6 +145,8 @@ describe("SelectedCalendarRepository", () => {
               OR: [
                 { syncSubscribedAt: null },
                 { channelExpiration: null },
+                { integration: "google_calendar", channelExpiration: { lte: expect.any(Date) } },
+                { integration: "office365_calendar", channelExpiration: { lte: expect.any(Date) } },
                 { channelExpiration: { lte: expect.any(Date) } },
               ],
             },
@@ -234,6 +236,7 @@ describe("SelectedCalendarRepository", () => {
               OR: [
                 { syncSubscribedAt: null },
                 { channelExpiration: null },
+                { integration: "google_calendar", channelExpiration: { lte: expect.any(Date) } },
                 { channelExpiration: { lte: expect.any(Date) } },
               ],
             },
