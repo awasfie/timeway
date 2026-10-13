@@ -8,7 +8,8 @@
 export const tokens = {
   /** Timeway Ink — wordmark, headings, primary buttons, dark surfaces. */
   primary: "#16395E",
-  /** Timeway Seafoam — progress, selected slot, success moment; never body text (2.2:1 on white). */
+  /** Timeway Seafoam — progress, selected slot, success moment; never body text (2.2:1 on white).
+   * Tailwind utility: brand-seafoam (upstream owns brand-accent). */
   accent: "#79BBAE",
   /** Timeway Paper — page background. */
   surface: "#F8F8F4",
