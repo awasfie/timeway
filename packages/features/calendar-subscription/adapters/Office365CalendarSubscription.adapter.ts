@@ -56,6 +56,11 @@ interface MicrosoftGraphSubscriptionRes {
   expirationDateTime: string;
 }
 
+type StoredDeltaState = { v: 1; windowEnd: string; deltaLink: string };
+
+/** Re-run the window once the cache horizon has moved this far past the stored window end. */
+const DELTA_WINDOW_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+
 type AdapterConfig = {
   baseUrl?: string;
   webhookToken?: string | null;
@@ -223,20 +228,78 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
     credential: CalendarCredential
   ): Promise<CalendarSubscriptionEvent> {
     const client = await this.getGraphClient(credential);
-    const storedDeltaLink = selectedCalendar.syncToken || null;
+    const calendarId = selectedCalendar.externalId;
+    const hadToken = !!selectedCalendar.syncToken;
+    const stored = Office365CalendarSubscriptionAdapter.decodeSyncToken(selectedCalendar.syncToken);
+
+    // The calendarView window is baked into the deltaLink, so a link reused for weeks stops covering
+    // the far end of the cache window and those Outlook events would read as free. Legacy bare
+    // deltaLinks carry no window end and are treated as stale.
+    if (!stored || this.isWindowStale(stored.windowEnd)) {
+      if (hadToken) {
+        log.info("Graph delta window stale or unversioned; starting a new round", {
+          externalId: calendarId,
+          windowEnd: stored?.windowEnd.toISOString() ?? null,
+        });
+      }
+      const full = await this.fullRound(client, calendarId);
+      return hadToken ? { ...full, fullResync: true } : full;
+    }
+
     try {
-      return await this.deltaRound(client, selectedCalendar.externalId, storedDeltaLink);
+      return await this.deltaRound(
+        client,
+        this.stripBase(stored.deltaLink),
+        stored.deltaLink,
+        stored.windowEnd
+      );
     } catch (err) {
       // Expired/invalid delta token: Graph answers 410 Gone; wipe and full-sync the window.
-      if (storedDeltaLink && err instanceof GraphHttpError && err.status === 410) {
-        log.warn("Graph deltaLink invalidated (410); full resync", {
-          externalId: selectedCalendar.externalId,
-        });
-        const full = await this.deltaRound(client, selectedCalendar.externalId, null);
+      if (err instanceof GraphHttpError && err.status === 410) {
+        log.warn("Graph deltaLink invalidated (410); full resync", { externalId: calendarId });
+        const full = await this.fullRound(client, calendarId);
         return { ...full, fullResync: true };
       }
       throw err;
     }
+  }
+
+  /** syncToken = JSON {v, windowEnd, deltaLink}; the adapter alone reads or writes it. */
+  static encodeSyncToken(deltaLink: string, windowEnd: Date): string {
+    const state: StoredDeltaState = { v: 1, windowEnd: windowEnd.toISOString(), deltaLink };
+    return JSON.stringify(state);
+  }
+
+  static decodeSyncToken(raw: string | null | undefined): { deltaLink: string; windowEnd: Date } | null {
+    if (!raw || !raw.startsWith("{")) return null;
+    try {
+      const parsed = JSON.parse(raw) as Partial<StoredDeltaState>;
+      if (parsed.v !== 1 || typeof parsed.deltaLink !== "string" || typeof parsed.windowEnd !== "string") {
+        return null;
+      }
+      const windowEnd = new Date(parsed.windowEnd);
+      if (Number.isNaN(windowEnd.getTime())) return null;
+      return { deltaLink: parsed.deltaLink, windowEnd };
+    } catch {
+      return null;
+    }
+  }
+
+  private cacheWindow(): { start: Date; end: Date } {
+    const start = dayjs().startOf("day");
+    const end = start.add(CalendarCacheEventService.MONTHS_AHEAD, "month").endOf("day");
+    return { start: start.toDate(), end: end.toDate() };
+  }
+
+  private isWindowStale(windowEnd: Date): boolean {
+    return windowEnd.getTime() < this.cacheWindow().end.getTime() - DELTA_WINDOW_STALE_MS;
+  }
+
+  private async fullRound(client: GraphClient, calendarId: string): Promise<CalendarSubscriptionEvent> {
+    const { start, end } = this.cacheWindow();
+    const qs = new URLSearchParams({ startDateTime: start.toISOString(), endDateTime: end.toISOString() });
+    const path = `/me/calendars/${encodeURIComponent(calendarId)}/calendarView/delta?${qs.toString()}`;
+    return this.deltaRound(client, path, null, end);
   }
 
   /**
@@ -245,11 +308,12 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
    */
   private async deltaRound(
     client: GraphClient,
-    calendarId: string,
-    deltaLink: string | null
+    firstPath: string,
+    previousDeltaLink: string | null,
+    windowEnd: Date
   ): Promise<CalendarSubscriptionEvent> {
-    let next: string | null = deltaLink ? this.stripBase(deltaLink) : this.initialDeltaPath(calendarId);
-    let latestDeltaLink = deltaLink;
+    let next: string | null = firstPath;
+    let latestDeltaLink = previousDeltaLink;
     const items: MicrosoftGraphEvent[] = [];
     while (next) {
       const r: MicrosoftGraphEventsResponse = await this.request<MicrosoftGraphEventsResponse>(
@@ -261,14 +325,13 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
       latestDeltaLink = r["@odata.deltaLink"] ?? latestDeltaLink;
       next = r["@odata.nextLink"] ? this.stripBase(r["@odata.nextLink"]) : null;
     }
-    return { provider: "office365_calendar", syncToken: latestDeltaLink, items: this.parseEvents(items) };
-  }
-
-  private initialDeltaPath(calendarId: string): string {
-    const now = dayjs().startOf("day");
-    const end = now.add(CalendarCacheEventService.MONTHS_AHEAD, "month").endOf("day");
-    const qs = new URLSearchParams({ startDateTime: now.toISOString(), endDateTime: end.toISOString() });
-    return `/me/calendars/${encodeURIComponent(calendarId)}/calendarView/delta?${qs.toString()}`;
+    return {
+      provider: "office365_calendar",
+      syncToken: latestDeltaLink
+        ? Office365CalendarSubscriptionAdapter.encodeSyncToken(latestDeltaLink, windowEnd)
+        : null,
+      items: this.parseEvents(items),
+    };
   }
 
   private parseEvents(events: MicrosoftGraphEvent[]): CalendarSubscriptionEventItem[] {

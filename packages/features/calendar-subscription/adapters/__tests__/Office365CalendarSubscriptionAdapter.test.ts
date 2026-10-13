@@ -181,7 +181,9 @@ describe("Office365CalendarSubscriptionAdapter fetchEvents (WC-TW-2 delta)", () 
     expect(end.getTime() - start.getTime()).toBeGreaterThan(80 * 86400000);
     expect(String(fetchMock.mock.calls[1][0])).toBe(`${base}/me/calendarView/delta?$skiptoken=p2`);
     expect(res.provider).toBe("office365_calendar");
-    expect(res.syncToken).toBe(`${base}/me/calendarView/delta?$deltatoken=d1`);
+    const stored = Office365CalendarSubscriptionAdapter.decodeSyncToken(res.syncToken);
+    expect(stored?.deltaLink).toBe(`${base}/me/calendarView/delta?$deltatoken=d1`);
+    expect(stored?.windowEnd.toISOString()).toBe(end.toISOString());
     expect(res.fullResync).toBeUndefined();
     expect(res.items).toHaveLength(1);
     expect(res.items[0]).toMatchObject({
@@ -195,26 +197,91 @@ describe("Office365CalendarSubscriptionAdapter fetchEvents (WC-TW-2 delta)", () 
     expect(res.items[0].end?.toISOString()).toBe("2030-01-02T10:00:00.000Z");
   });
 
-  test("incremental sync resumes from the stored deltaLink and keeps it when Graph returns a new one", async () => {
+  const daysFromNow = (days: number) => new Date(Date.now() + days * 86400000);
+  const encode = (link: string, windowEnd: Date) =>
+    Office365CalendarSubscriptionAdapter.encodeSyncToken(link, windowEnd);
+
+  test("fresh window: incremental sync reuses the stored deltaLink and keeps the window end", async () => {
+    const windowEnd = daysFromNow(88);
     fetchMock.mockResolvedValueOnce(
       ok({ value: [], "@odata.deltaLink": `${base}/me/calendarView/delta?$deltatoken=d2` })
     );
     const res = await adapter.fetchEvents(
-      { ..._mockSelectedCalendar, syncToken: `${base}/me/calendarView/delta?$deltatoken=d1` },
+      {
+        ..._mockSelectedCalendar,
+        syncToken: encode(`${base}/me/calendarView/delta?$deltatoken=d1`, windowEnd),
+      },
       cred
     );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0][0])).toBe(`${base}/me/calendarView/delta?$deltatoken=d1`);
-    expect(res.syncToken).toBe(`${base}/me/calendarView/delta?$deltatoken=d2`);
+    expect(res.fullResync).toBeUndefined();
+    const stored = Office365CalendarSubscriptionAdapter.decodeSyncToken(res.syncToken);
+    expect(stored?.deltaLink).toBe(`${base}/me/calendarView/delta?$deltatoken=d2`);
+    expect(stored?.windowEnd.toISOString()).toBe(windowEnd.toISOString());
   });
 
-  test("410 on a stored deltaLink triggers a full window resync flagged fullResync", async () => {
+  test("stale window: a window end > 7 days behind the cache horizon starts a new round flagged fullResync", async () => {
+    fetchMock.mockResolvedValueOnce(ok({ value: [busyEvent], "@odata.deltaLink": `${base}/d-rolled` }));
+    const res = await adapter.fetchEvents(
+      { ..._mockSelectedCalendar, syncToken: encode(`${base}/d-old`, daysFromNow(60)) },
+      cred
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const first = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(first.pathname).toContain("/calendarView/delta");
+    const end = new Date(first.searchParams.get("endDateTime") as string);
+    expect(end.getTime()).toBeGreaterThan(daysFromNow(85).getTime());
+    expect(res.fullResync).toBe(true);
+    const stored = Office365CalendarSubscriptionAdapter.decodeSyncToken(res.syncToken);
+    expect(stored?.deltaLink).toBe(`${base}/d-rolled`);
+    expect(stored?.windowEnd.toISOString()).toBe(end.toISOString());
+  });
+
+  test("legacy bare deltaLink is treated as stale: new round flagged fullResync", async () => {
+    fetchMock.mockResolvedValueOnce(ok({ value: [], "@odata.deltaLink": `${base}/d-new` }));
+    const res = await adapter.fetchEvents(
+      { ..._mockSelectedCalendar, syncToken: `${base}/me/calendarView/delta?$deltatoken=legacy` },
+      cred
+    );
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/calendarView/delta?startDateTime=");
+    expect(String(fetchMock.mock.calls[0][0])).not.toContain("legacy");
+    expect(res.fullResync).toBe(true);
+    expect(Office365CalendarSubscriptionAdapter.decodeSyncToken(res.syncToken)?.deltaLink).toBe(
+      `${base}/d-new`
+    );
+  });
+
+  test("decodeSyncToken rejects bare links, bad JSON, wrong version and invalid dates", () => {
+    expect(Office365CalendarSubscriptionAdapter.decodeSyncToken(null)).toBeNull();
+    expect(Office365CalendarSubscriptionAdapter.decodeSyncToken(`${base}/d`)).toBeNull();
+    expect(Office365CalendarSubscriptionAdapter.decodeSyncToken("{not json")).toBeNull();
+    expect(
+      Office365CalendarSubscriptionAdapter.decodeSyncToken(
+        JSON.stringify({ v: 2, windowEnd: new Date().toISOString(), deltaLink: "x" })
+      )
+    ).toBeNull();
+    expect(
+      Office365CalendarSubscriptionAdapter.decodeSyncToken(
+        JSON.stringify({ v: 1, windowEnd: "nope", deltaLink: "x" })
+      )
+    ).toBeNull();
+  });
+
+  test("410 on a fresh stored deltaLink triggers a full window resync flagged fullResync", async () => {
     fetchMock
       .mockResolvedValueOnce(fail(410))
       .mockResolvedValueOnce(ok({ value: [busyEvent], "@odata.deltaLink": `${base}/d-new` }));
-    const res = await adapter.fetchEvents({ ..._mockSelectedCalendar, syncToken: `${base}/d-old` }, cred);
+    const res = await adapter.fetchEvents(
+      { ..._mockSelectedCalendar, syncToken: encode(`${base}/d-old`, daysFromNow(88)) },
+      cred
+    );
+    expect(String(fetchMock.mock.calls[0][0])).toBe(`${base}/d-old`);
     expect(String(fetchMock.mock.calls[1][0])).toContain("/calendarView/delta?startDateTime=");
     expect(res.fullResync).toBe(true);
-    expect(res.syncToken).toBe(`${base}/d-new`);
+    expect(Office365CalendarSubscriptionAdapter.decodeSyncToken(res.syncToken)?.deltaLink).toBe(
+      `${base}/d-new`
+    );
   });
 
   test("non-410 errors propagate", async () => {

@@ -446,6 +446,29 @@ describe("CalendarSubscriptionService", () => {
       expect(mockCalendarSyncService.handleEvents).not.toHaveBeenCalled();
     });
 
+    test("empty round with a new token and fullResync persists the token and drops the cache", async () => {
+      mockFeatureRepository.checkIfFeatureIsEnabledGlobally
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true);
+      mockUserFeatureRepository.checkIfUserHasFeature.mockResolvedValue(true);
+
+      mockAdapter.fetchEvents.mockResolvedValue({
+        ...mockEvents,
+        syncToken: "rolled-window-token",
+        fullResync: true,
+        items: [],
+      });
+
+      await service.processEvents(mockSelectedCalendar);
+
+      expect(mockSelectedCalendarRepository.updateSyncStatus).toHaveBeenCalledWith(
+        mockSelectedCalendar.id,
+        expect.objectContaining({ syncToken: "rolled-window-token", syncErrorCount: 0 })
+      );
+      expect(mockCalendarCacheEventService.cleanupCache).toHaveBeenCalledWith(mockSelectedCalendar);
+      expect(mockCalendarCacheEventService.handleEvents).not.toHaveBeenCalled();
+    });
+
     test("should return early when selected calendar has no credentialId or delegationCredentialId", async () => {
       const calendarWithoutCredential = {
         ...mockSelectedCalendar,
