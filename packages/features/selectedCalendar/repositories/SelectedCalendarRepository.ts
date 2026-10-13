@@ -119,6 +119,30 @@ export class SelectedCalendarRepository implements ISelectedCalendarRepository {
     });
   }
 
+  /**
+   * WC-TW-3: subscribed calendars to reconcile against the provider, least recently synced first.
+   * With staleBefore, only calendars whose last sync is older than it (or never synced).
+   */
+  async findForReconciliation({
+    integrations,
+    staleBefore,
+    take,
+  }: {
+    integrations: string[];
+    staleBefore?: Date;
+    take: number;
+  }) {
+    return this.prismaClient.selectedCalendar.findMany({
+      where: {
+        integration: { in: integrations },
+        syncSubscribedAt: { not: null },
+        ...(staleBefore ? { OR: [{ syncedAt: null }, { syncedAt: { lt: staleBefore } }] } : {}),
+      },
+      orderBy: { syncedAt: { sort: "asc", nulls: "first" } },
+      take,
+    });
+  }
+
   async updateSyncStatus(
     id: string,
     data: Pick<
