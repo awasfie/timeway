@@ -57,7 +57,7 @@ export type CalendarReconciliationDeps = {
     deleteMany(events: Pick<CalendarCacheEvent, "externalId" | "selectedCalendarId">[]): Promise<unknown>;
   };
   calendarCacheEventService: Pick<CalendarCacheEventService, "handleEvents">;
-  getCredential: (selectedCalendar: SelectedCalendar) => Promise<CalendarCredential | null>;
+  getCredential: (selectedCalendar: SelectedCalendar) => Promise<CalendarCredential | null | undefined>;
 };
 
 const keepsCacheRow = (item: CalendarSubscriptionEventItem): boolean =>
