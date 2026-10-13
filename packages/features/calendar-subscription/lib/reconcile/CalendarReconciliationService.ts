@@ -7,6 +7,7 @@ import type {
   CalendarSubscriptionEventItem,
 } from "@calcom/features/calendar-subscription/lib/CalendarSubscriptionPort.interface";
 import { CalendarCacheEventService } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService";
+import { addReconciliationDiff } from "@calcom/features/calendar-subscription/lib/telemetry/syncMetrics";
 import logger from "@calcom/lib/logger";
 import type { CalendarCacheEvent, SelectedCalendar } from "@calcom/prisma/client";
 import { captureMessage, metrics } from "@sentry/nextjs";
@@ -134,8 +135,9 @@ export class CalendarReconciliationService {
       syncErrorCount: 0,
     });
 
-    for (const [kind, value] of Object.entries(diff)) {
+    for (const [kind, value] of Object.entries(diff) as [keyof ReconciliationDiff, number][]) {
       metrics.distribution("calendar.reconciliation.diff", value, { attributes: { provider, kind } });
+      addReconciliationDiff(provider, kind, value);
     }
     return diff;
   }
