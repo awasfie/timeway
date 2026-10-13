@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "../../../packages/config/theme/shared-sources.css";
 @import "../../../packages/config/theme/tokens.css";
+@import "../../../packages/config/theme/brand-timeway.css";
 @import "../../../packages/coss-ui/src/styles/globals.css";
 @import "./raqb.css";
 
