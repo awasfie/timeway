@@ -1,0 +1,71 @@
+name: RLS (timeway_app real pool)
+# TW-T9.2a (WC-PE-6 timeway, proof CC-89 line): migrate as timeway_owner, then run the
+# real-pool spec with the production prisma client as timeway_app (NOSUPERUSER
+# NOBYPASSRLS, owns nothing) on a pool of one. Throwaway Postgres only, no secrets.
+# A gate is never satisfied by a skipped test: the job fails on any skip.
+on:
+  pull_request:
+    paths:
+      - "packages/prisma/**"
+      - "vitest.rls.config.mts"
+      - ".github/workflows/rls.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/prisma/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rls:
+    name: rls
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      ADMIN_URL: postgresql://postgres:postgres@localhost:5432/timeway
+      OWNER_URL: postgresql://timeway_owner:ci-owner-only@localhost:5432/timeway
+      APP_URL: postgresql://timeway_app:ci-app-only@localhost:5432/timeway
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: ./.github/actions/cache-checkout
+      - uses: ./.github/actions/yarn-install
+      - name: Roles (CI only; mirrors prod - owner migrates, app owns nothing)
+        run: |
+          P="psql postgresql://postgres:postgres@localhost:5432/postgres -v ON_ERROR_STOP=1"
+          $P -c "create role timeway_owner login password 'ci-owner-only' nosuperuser nobypassrls"
+          $P -c "create role timeway_app login password 'ci-app-only' nosuperuser nobypassrls"
+          $P -c "create database timeway owner timeway_owner"
+          psql "$ADMIN_URL" -v ON_ERROR_STOP=1 \
+            -c "alter schema public owner to timeway_owner" \
+            -c "grant usage on schema public to timeway_app" \
+            -c "alter default privileges for role timeway_owner in schema public grant select, insert, update, delete on tables to timeway_app" \
+            -c "alter default privileges for role timeway_owner in schema public grant usage, select, update on sequences to timeway_app"
+      - name: Migrate as timeway_owner
+        working-directory: packages/prisma
+        run: DATABASE_URL="$OWNER_URL" DATABASE_DIRECT_URL="$OWNER_URL" npx prisma migrate deploy
+      - run: yarn prisma generate
+      - name: Real-pool spec as timeway_app (pool of one), 0 skipped
+        run: |
+          set -o pipefail
+          DATABASE_URL="$APP_URL" DATABASE_POOL_MAX=1 RLS_ADMIN_DATABASE_URL="$ADMIN_URL" \
+            yarn vitest run --config vitest.rls.config.mts --reporter=verbose 2>&1 | tee rls.log
+          grep -qE "Tests +[0-9]+ passed" rls.log
+          ! grep -qiE "skipped|todo" rls.log

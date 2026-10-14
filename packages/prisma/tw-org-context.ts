@@ -13,6 +13,8 @@
  * as each surface lands (TW-T10+).
  */
 
+import { AsyncLocalStorage } from "node:async_hooks";
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /** Minimal shape of a Prisma client we need; keeps this file free of generated types. */
@@ -65,4 +67,42 @@ export async function withTwPlatform<Tx extends RawCapableTx, R>(
     await tx.$executeRaw`select set_config('app.tw_platform', 'on', true)`;
     return fn(tx);
   }, options);
+}
+
+/**
+ * TW-T9.2a — request-scoped org context.
+ *
+ * The ~280 Cal.com files that query users/EventType/Booking/Schedule/Credential do
+ * not take a transaction client, so the org cannot be threaded through each call.
+ * Instead the entry point (session, org API key, platform job) opens a scope with
+ * `runWithTwOrg` / `runWithTwPlatform`, and the Prisma extension in
+ * `extensions/tw-org-context.ts` reads it for every operation. No scope means no
+ * `set_config`, which after RLS (TW-T9.2d) means zero rows: fail closed.
+ */
+export type TwOrgContext = { kind: "org"; orgId: string } | { kind: "platform"; reason: string };
+
+const twOrgStore = new AsyncLocalStorage<TwOrgContext>();
+
+export function getTwOrgContext(): TwOrgContext | undefined {
+  return twOrgStore.getStore();
+}
+
+/*
+ * Prisma queries are lazy thenables: `() => prisma.user.count()` sends nothing until
+ * someone calls `.then`, which would happen after `store.run` returned and the scope
+ * was gone. Awaiting inside the scope makes the query start while the store is set.
+ */
+function runInScope<R>(ctx: TwOrgContext, fn: () => R | PromiseLike<R>): Promise<R> {
+  return twOrgStore.run(ctx, async () => await fn());
+}
+
+export function runWithTwOrg<R>(orgId: string, fn: () => R | PromiseLike<R>): Promise<R> {
+  assertTwOrgId(orgId);
+  return runInScope({ kind: "org", orgId }, fn);
+}
+
+/** Platform scope: provisioning, crons, webhooks with no org yet. Call sites are reviewed by name. */
+export function runWithTwPlatform<R>(reason: string, fn: () => R | PromiseLike<R>): Promise<R> {
+  if (!reason || !reason.trim()) throw new TwOrgContextError("TW-T9: platform context needs a reason");
+  return runInScope({ kind: "platform", reason }, fn);
 }
