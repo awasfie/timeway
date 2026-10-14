@@ -65,7 +65,14 @@ jobs:
       - name: Real-pool spec as timeway_app (pool of one), 0 skipped
         run: |
           set -o pipefail
-          DATABASE_URL="$APP_URL" DATABASE_POOL_MAX=1 RLS_ADMIN_DATABASE_URL="$ADMIN_URL" \
-            yarn vitest run --config vitest.rls.config.mts --reporter=verbose 2>&1 | tee rls.log
-          grep -qE "Tests +[0-9]+ passed" rls.log
-          ! grep -qiE "skipped|todo" rls.log
+          DATABASE_URL="$APP_URL" DATABASE_POOL_MAX=1 RLS_ADMIN_DATABASE_URL="$ADMIN_URL" NO_COLOR=1 \
+            yarn vitest run --config vitest.rls.config.mts --reporter=verbose \
+              --reporter=json --outputFile.json=rls.json 2>&1 | tee rls.log
+          # Gate on the structured result, not on coloured console text.
+          node -e '
+            const r = require("./rls.json");
+            const s = { total: r.numTotalTests, passed: r.numPassedTests, failed: r.numFailedTests,
+              pending: r.numPendingTests, todo: r.numTodoTests };
+            console.log("rls gate:", JSON.stringify(s));
+            if (!s.total || s.passed !== s.total || s.failed || s.pending || s.todo) process.exit(1);
+          '
