@@ -4,6 +4,8 @@
 // So, we need to persist it in top window as first party cookie in that case.
 let slotReservationId: null | string = null;
 
+export const getSlotReservationId = (): string | null => slotReservationId;
+
 export const useSlotReservationId = () => {
   function set(uid: string) {
     slotReservationId = uid;

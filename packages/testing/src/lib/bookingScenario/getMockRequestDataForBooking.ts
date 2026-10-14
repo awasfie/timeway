@@ -36,6 +36,7 @@ type CommonPropsMockRequestData = {
   _isDryRun?: boolean;
   hashedLink?: string;
   hasHashedBookingLink?: boolean;
+  reservedSlotUid?: string;
 };
 
 export function getMockRequestDataForBooking({
