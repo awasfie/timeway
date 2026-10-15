@@ -51,7 +51,6 @@ services:
         NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
         CALENDSO_ENCRYPTION_KEY: ${CALENDSO_ENCRYPTION_KEY}
         DATABASE_URL: ${DATABASE_URL}
-        DATABASE_DIRECT_URL: ${DATABASE_URL}
         CSP_POLICY: ${CSP_POLICY}
     restart: always
     networks:
@@ -61,7 +60,22 @@ services:
     env_file: .env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DATABASE_HOST}/${POSTGRES_DB}
-      - DATABASE_DIRECT_URL=${DATABASE_URL}
+    depends_on:
+      database:
+        condition: service_started
+      calcom-migrate:
+        condition: service_completed_successfully
+
+  # TW-T9.2e: migrations run once, before the app, in their own container (scripts/migrate.sh deploy).
+  # In production TIMEWAY_MIGRATE_DATABASE_URL is the DDL role and is never in the app env.
+  calcom-migrate:
+    image: calcom.docker.scarf.sh/calcom/cal.diy
+    restart: "no"
+    networks:
+      - stack
+    environment:
+      - TIMEWAY_MIGRATE_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DATABASE_HOST}/${POSTGRES_DB}
+    command: ["/calcom/scripts/migrate.sh", "deploy"]
     depends_on:
       - database
 

@@ -103,10 +103,7 @@ export type EventPayloadType = Omit<CalendarEvent, "assignmentReason"> &
       | null;
   };
 
-export type WebhookPayloadType =
-  | EventPayloadType
-  | OOOEntryPayloadType
-  | BookingNoShowUpdatedPayload;
+export type WebhookPayloadType = EventPayloadType | OOOEntryPayloadType | BookingNoShowUpdatedPayload;
 
 type WebhookDataType = WebhookPayloadType & { triggerEvent: string; createdAt: string };
 
@@ -238,10 +235,7 @@ const sendPayload = async (
   }
 
   if (body === undefined) {
-    if (
-      template &&
-      (isOOOEntryPayload(data) || isEventPayload(data) || isNoShowPayload(data))
-    ) {
+    if (template && (isOOOEntryPayload(data) || isEventPayload(data) || isNoShowPayload(data))) {
       body = applyTemplate(template, { ...data, triggerEvent, createdAt }, contentType);
     } else {
       body = JSON.stringify({
@@ -252,8 +246,54 @@ const sendPayload = async (
     }
   }
 
-  return _sendPayload(secretKey, webhook, body, contentType);
+  const finalBody: string = body;
+  return logDelivery({ webhook, triggerEvent, bookingUid: bookingUidOf(data) }, () =>
+    _sendPayload(secretKey, webhook, finalBody, contentType)
+  );
 };
+
+function bookingUidOf(data: WebhookPayloadType): string | null {
+  if (isNoShowPayload(data)) return data.bookingUid;
+  if (isEventPayload(data)) return data.uid ?? null;
+  return null;
+}
+
+// Timeway (FIX-TW-AWS-2-WH): synchronous deliveries left no trace in the container
+// logs, so a subscriber's response could not be audited. One info line per delivery,
+// written with console.info so it is not dropped by the tslog default level (warn).
+// Host only (never the full URL: subscriber URLs can carry tokens), never the secret.
+export async function logDelivery<T extends { status: number }>(
+  ctx: {
+    webhook: Pick<WebhookForPayload, "subscriberUrl">;
+    triggerEvent: string;
+    bookingUid?: string | null;
+  },
+  send: () => Promise<T>
+): Promise<T> {
+  let subscriberHost = "invalid-url";
+  try {
+    subscriberHost = new URL(ctx.webhook.subscriberUrl).host;
+  } catch {
+    // keep the placeholder; the send below fails on its own
+  }
+  const line = {
+    level: "info",
+    msg: "webhook_delivery",
+    subscriberHost,
+    triggerEvent: ctx.triggerEvent,
+    bookingUid: ctx.bookingUid ?? null,
+  };
+  try {
+    const result = await send();
+    console.info(JSON.stringify({ ...line, status: result.status }));
+    return result;
+  } catch (error) {
+    console.info(
+      JSON.stringify({ ...line, status: null, error: error instanceof Error ? error.message : String(error) })
+    );
+    throw error;
+  }
+}
 
 export const sendGenericWebhookPayload = async ({
   secretKey,
@@ -290,7 +330,12 @@ export const sendGenericWebhookPayload = async ({
     body = JSON.stringify(defaultPayload);
   }
 
-  return _sendPayload(secretKey, webhook, body, contentType);
+  let bookingUid: string | null = null;
+  if (typeof data.uid === "string") bookingUid = data.uid;
+  else if (typeof data.bookingUid === "string") bookingUid = data.bookingUid;
+  return logDelivery({ webhook, triggerEvent, bookingUid }, () =>
+    _sendPayload(secretKey, webhook, body, contentType)
+  );
 };
 
 export const createWebhookSignature = (params: { secret?: string | null; body: string }) =>
