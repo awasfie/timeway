@@ -1,10 +1,11 @@
-import { NextAuthPassportStrategy } from "@/lib/passport/strategies/types";
-import { UsersRepository } from "@/modules/users/users.repository";
 import { Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import type { Request } from "express";
 import { getToken } from "next-auth/jwt";
+import { inAuthPrincipalScope } from "../../tw-org-scope/auth-principal-scope";
+import { NextAuthPassportStrategy } from "@/lib/passport/strategies/types";
+import { UsersRepository } from "@/modules/users/users.repository";
 
 @Injectable()
 export class NextAuthStrategy extends PassportStrategy(NextAuthPassportStrategy, "next-auth") {
@@ -33,7 +34,7 @@ export class NextAuthStrategy extends PassportStrategy(NextAuthPassportStrategy,
       if (!Number.isInteger(userId) || userId <= 0) {
         throw new UnauthorizedException("NextAuthStrategy - Invalid subject in the authentication token.");
       }
-      const user = await this.userRepository.findByIdWithProfile(userId);
+      const user = await inAuthPrincipalScope(() => this.userRepository.findByIdWithProfile(userId));
       if (!user || user.email.toLowerCase() !== payload.email.toLowerCase()) {
         throw new UnauthorizedException(
           "NextAuthStrategy - User associated with the authentication token not found."

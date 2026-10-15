@@ -2,20 +2,29 @@ import { UserRepository } from "@calcom/features/users/repositories/UserReposito
 import { getUserAvatarUrl } from "@calcom/lib/getAvatarUrl";
 import logger from "@calcom/lib/logger";
 import { safeStringify } from "@calcom/lib/safeStringify";
+import { runWithSessionTwOrg, twOrgIdOf } from "@calcom/lib/server/tw-org-scope/session";
 import prisma from "@calcom/prisma";
 import { LRUCache } from "lru-cache";
 import type { GetServerSidePropsContext, NextApiRequest } from "next";
 import type { AuthOptions, Session } from "next-auth";
-import { getToken } from "next-auth/jwt";
+import { getToken, type JWT } from "next-auth/jwt";
 
 class LicenseKeySingleton {
-  static async getInstance(..._args: unknown[]) { return new LicenseKeySingleton(); }
-  async checkLicense() { return true; }
-  async validateLicenseKey() { return true; }
+  static async getInstance(..._args: unknown[]) {
+    return new LicenseKeySingleton();
+  }
+  async checkLicense() {
+    return true;
+  }
+  async validateLicenseKey() {
+    return true;
+  }
 }
 class DeploymentRepository {
   constructor(_prisma?: unknown) {}
-  async findFirst(..._args: unknown[]) { return null; }
+  async findFirst(..._args: unknown[]) {
+    return null;
+  }
 }
 
 const log = logger.getSubLogger({ prefix: ["getServerSession"] });
@@ -61,6 +70,11 @@ export async function getServerSession(options: {
     return cachedSession;
   }
 
+  const twOrgId = twOrgIdOf(token);
+  return runWithSessionTwOrg(twOrgId, () => buildSessionFromToken(token, twOrgId));
+}
+
+async function buildSessionFromToken(token: JWT, twOrgId: string | null): Promise<Session | null> {
   const userId = token.sub ? Number(token.sub) : null;
 
   if (!userId || userId <= 0) {
@@ -115,6 +129,7 @@ export async function getServerSession(options: {
         avatarUrl: user.avatarUrl,
       }),
       belongsToActiveTeam: token.belongsToActiveTeam,
+      twOrgId,
       org: token.org,
       orgAwareUsername: token.orgAwareUsername,
       locale: user.locale ?? undefined,
