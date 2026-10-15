@@ -8,6 +8,7 @@ on:
     paths:
       - "packages/prisma/**"
       - "vitest.rls.config.mts"
+      - "scripts/tw-t9/**"
       - ".github/workflows/rls.yml"
   push:
     branches: [main]
@@ -61,6 +62,17 @@ jobs:
       - name: Migrate as timeway_owner
         working-directory: packages/prisma
         run: DATABASE_URL="$OWNER_URL" DATABASE_DIRECT_URL="$OWNER_URL" npx prisma migrate deploy
+      - name: CC-89 catalog + pool audit (TW-T9.2d; vendored salesos harness, 0 FAIL)
+        run: python3 scripts/tw-t9/rls-audit/rls_audit.py --dsn timeway="$ADMIN_URL" --only timeway --json rls-audit.json
+      - name: Rollback script round trip (down twice, migration SQL twice, audit again)
+        run: |
+          set -e
+          M=packages/prisma/migrations/20261016120000_tw_t9_2d_rls_core_tables/migration.sql
+          for i in 1 2; do psql "$OWNER_URL" -v ON_ERROR_STOP=1 -q --single-transaction -f scripts/tw-t9/rls-2d-down.sql; done
+          n=$(psql "$ADMIN_URL" -Atc "select count(*) from pg_class where relnamespace='public'::regnamespace and relname in ('users','EventType','Booking','Schedule','Credential') and (relrowsecurity or relforcerowsecurity)")
+          test "$n" = 0
+          for i in 1 2; do psql "$OWNER_URL" -v ON_ERROR_STOP=1 -q --single-transaction -f "$M"; done
+          python3 scripts/tw-t9/rls-audit/rls_audit.py --dsn timeway="$ADMIN_URL" --only timeway
       - run: yarn prisma generate
       - name: Real-pool spec as timeway_app (pool of one), 0 skipped
         run: |
