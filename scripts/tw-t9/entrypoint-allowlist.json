@@ -1,0 +1,4 @@
+{
+  "$comment": "TW-T9.2b4: DB-reaching entry points that run without a tw org scope, each with a reason. Checked by packages/lib/server/tw-org-scope/entrypoints.test.ts (fails on unlisted files and stale entries).",
+  "entries": []
+}
