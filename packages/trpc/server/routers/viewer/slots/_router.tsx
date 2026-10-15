@@ -1,5 +1,7 @@
+import { publicLookupForSchedule, resolvePublicTwOrg } from "@calcom/lib/server/tw-org-scope/public";
+import { runWithTwOrg } from "@calcom/prisma/tw-org-context";
+import { TRPCError } from "@trpc/server";
 import type { NextApiRequest, NextApiResponse } from "next";
-
 import publicProcedure from "../../../procedures/publicProcedure";
 import { router } from "../../../trpc";
 import { ZIsAvailableInputSchema, ZIsAvailableOutputSchema } from "./isAvailable.schema";
@@ -18,10 +20,16 @@ export const slotsRouter = router({
   getSchedule: publicProcedure.input(ZGetScheduleInputSchema).query(async ({ input, ctx }) => {
     const { getScheduleHandler } = await import("./getSchedule.handler");
 
-    return getScheduleHandler({
-      ctx,
-      input,
-    });
+    // TW-T9.2b2: usernameList (team slug when isTeamEvent) resolves the org; orgSlug is ignored.
+    const twOrgId = await resolvePublicTwOrg(ctx.prisma, publicLookupForSchedule(input));
+    if (!twOrgId) throw new TRPCError({ code: "NOT_FOUND", message: "Not found" });
+
+    return runWithTwOrg(twOrgId, () =>
+      getScheduleHandler({
+        ctx,
+        input,
+      })
+    );
   }),
   reserveSlot: publicProcedure.input(ZReserveSlotInputSchema).mutation(async ({ input, ctx }) => {
     const { reserveSlotHandler } = await import("./reserveSlot.handler");
