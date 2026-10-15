@@ -81,12 +81,12 @@ jobs:
             | docker run --rm -i --network "$NET" --env-file /dev/stdin "$IMG" /calcom/scripts/migrate.sh deploy 2>&1 | tee migrate.log
           grep -q "result exit=0" migrate.log
           if grep -q "postgresql://" migrate.log; then echo "FAIL: URL in log"; exit 1; fi
-          repo=$(ls packages/prisma/migrations | grep -cE '^[0-9]{14}_')
+          repo=$(ls packages/prisma/migrations/*/migration.sql | wc -l | tr -d ' ')
           Q="docker exec tw-db psql -U postgres -d timeway -XAt -c"
           applied=$($Q "select count(*) from _prisma_migrations where finished_at is not null and rolled_back_at is null")
           not_owner=$($Q "select count(*) from pg_tables where schemaname='public' and tableowner <> 'timeway_owner'")
           echo "migrations in repo=$repo applied=$applied tables_not_owned_by_timeway_owner=$not_owner"
-          [ "$repo" = "$applied" ] && [ "$not_owner" = "0" ]
+          if [ "$repo" != "$applied" ] || [ "$not_owner" != "0" ]; then echo "FAIL: applied/ownership mismatch"; exit 1; fi
           printf 'TIMEWAY_MIGRATE_DATABASE_URL=%s\n' "$OWNER_URL" \
             | docker run --rm -i --network "$NET" --env-file /dev/stdin "$IMG" /calcom/scripts/migrate.sh deploy 2>&1 | tee migrate2.log
           grep -q "No pending migrations" migrate2.log
