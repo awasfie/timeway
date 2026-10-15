@@ -81,7 +81,16 @@ export async function withTwPlatform<Tx extends RawCapableTx, R>(
  */
 export type TwOrgContext = { kind: "org"; orgId: string } | { kind: "platform"; reason: string };
 
-const twOrgStore = new AsyncLocalStorage<TwOrgContext>();
+/*
+ * One store per process, not per module copy: API v2 loads this file from source and again
+ * inside the bundled @calcom/platform-libraries, and a scope opened by one copy must be
+ * visible to queries issued through the other (TW-T9.2b1).
+ */
+const TW_ORG_STORE_KEY = Symbol.for("timeway.tw-org-context.store");
+const globalStore = globalThis as typeof globalThis & {
+  [TW_ORG_STORE_KEY]?: AsyncLocalStorage<TwOrgContext>;
+};
+const twOrgStore = (globalStore[TW_ORG_STORE_KEY] ??= new AsyncLocalStorage<TwOrgContext>());
 
 export function getTwOrgContext(): TwOrgContext | undefined {
   return twOrgStore.getStore();
