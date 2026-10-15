@@ -1,15 +1,16 @@
 // page can be a server component
-import type { GetServerSidePropsContext } from "next";
-import { URLSearchParams } from "node:url";
-import { z } from "zod";
 
+import { URLSearchParams } from "node:url";
 import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
 import { buildEventUrlFromBooking } from "@calcom/features/bookings/lib/buildEventUrlFromBooking";
 import { determineReschedulePreventionRedirect } from "@calcom/features/bookings/lib/reschedule/determineReschedulePreventionRedirect";
 import { getDefaultEvent } from "@calcom/features/eventtypes/lib/defaultEvents";
 import { UserRepository } from "@calcom/features/users/repositories/UserRepository";
 import { maybeGetBookingUidFromSeat } from "@calcom/lib/server/maybeGetBookingUidFromSeat";
+import { publicLookupsForBookingUid, runSsrWithPublicTwOrg } from "@calcom/lib/server/tw-org-scope/public";
 import prisma, { bookingMinimalSelect } from "@calcom/prisma";
+import type { GetServerSidePropsContext } from "next";
+import { z } from "zod";
 
 const querySchema = z.object({
   uid: z.string(),
@@ -21,7 +22,15 @@ const querySchema = z.object({
     .optional(),
 });
 
+// TW-T9.2b2: the booking uid (or seat reference) resolves the org.
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const parsed = querySchema.safeParse(context.query);
+  if (!parsed.success) return { notFound: true } as const;
+  const lookups = await publicLookupsForBookingUid(prisma, parsed.data.uid);
+  return runSsrWithPublicTwOrg(prisma, lookups, () => getReschedulePageProps(context));
+}
+
+async function getReschedulePageProps(context: GetServerSidePropsContext) {
   const session = await getServerSession({ req: context.req });
 
   const {

@@ -10,6 +10,7 @@ import { getTeamFeatureRepository } from "@calcom/features/di/containers/TeamFea
 import { getUserFeatureRepository } from "@calcom/features/di/containers/UserFeatureRepository";
 import { SelectedCalendarRepository } from "@calcom/features/selectedCalendar/repositories/SelectedCalendarRepository";
 import logger from "@calcom/lib/logger";
+import { selectedCalendarTwOrgScope } from "@calcom/lib/server/tw-org-scope/unattended";
 import { prisma } from "@calcom/prisma";
 import { defaultResponderForAppDir } from "@calcom/web/app/api/defaultResponderForAppDir";
 import type { Params } from "app/_types";
@@ -73,6 +74,8 @@ async function postHandler(request: NextRequest, ctx: { params: Promise<Params> 
       userFeatureRepository: getUserFeatureRepository(),
       calendarSyncService,
       calendarCacheEventService,
+      // TW-T9.2b3: channel -> SelectedCalendar.credentialId -> org; no org = 200 ack, no work.
+      twOrgScope: selectedCalendarTwOrgScope(prisma),
     });
 
     // are features globally enabled
