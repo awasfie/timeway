@@ -1,5 +1,6 @@
 import process from "node:process";
 import { getCspHeader, getCspNonce } from "@lib/csp";
+import { PATHNAME_HEADER } from "@lib/i18n/pathnameHeader";
 import { get } from "@vercel/edge-config";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -69,6 +70,8 @@ const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
   const url = req.nextUrl;
   const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });
   const requestHeaders = new Headers(reqWithEnrichedHeaders.headers);
+  // Always overwrite: the root layout uses it to pick <html lang/dir> for booking pages.
+  requestHeaders.set(PATHNAME_HEADER, url.pathname);
 
   if (url.pathname.startsWith("/api/auth/signup")) {
     const isSignupDisabled = await safeGet<boolean>("isSignupDisabled");
@@ -163,7 +166,16 @@ function enrichRequestWithHeaders({ req }: { req: NextRequest }) {
 }
 
 export const config = {
-  matcher: ["/auth/login", "/login", "/apps/installed", "/auth/logout", "/:path*/embed", "/availability", "/api/auth/signup"],
+  matcher: [
+    "/auth/login",
+    "/login",
+    "/apps/installed",
+    "/auth/logout",
+    "/:path*/embed",
+    "/team/:path*",
+    "/availability",
+    "/api/auth/signup",
+  ],
 };
 
 export default proxy;
