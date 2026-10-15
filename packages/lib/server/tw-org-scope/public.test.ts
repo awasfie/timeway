@@ -2,6 +2,7 @@ import { getTwOrgContext } from "@calcom/prisma/tw-org-context";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpError } from "../../http-error";
 import {
+  publicLookupForEventTypeIds,
   publicLookupForSchedule,
   publicLookupsForBookingBody,
   publicLookupsForBookingUid,
@@ -132,21 +133,110 @@ describe("TW-T9.2b2 public org scope", () => {
     });
   });
 
-  it("booking uid: a seat reference adds its booking uid as a second lookup", async () => {
-    const seatClient = {
-      bookingSeat: {
-        findUnique: vi.fn(async ({ where }: { where: { referenceUid: string } }) =>
-          where.referenceUid === "seat1" ? { booking: { uid: "bk1" } } : null
-        ),
-      },
-    };
-    expect(await publicLookupsForBookingUid(seatClient, "bk1")).toEqual([
+  it("booking uid: tries the booking resolver, then the seat resolver; no plain BookingSeat read", async () => {
+    expect(publicLookupsForBookingUid("bk1")).toEqual([
       { resolver: "booking_uid", keys: ["bk1"] },
+      { resolver: "seat_reference", keys: ["bk1"] },
     ]);
-    expect(await publicLookupsForBookingUid(seatClient, "seat1")).toEqual([
-      { resolver: "booking_uid", keys: ["seat1"] },
-      { resolver: "booking_uid", keys: ["bk1"] },
+    expect(publicLookupsForBookingUid("")).toEqual([]);
+    expect(publicLookupsForBookingUid(null)).toEqual([]);
+
+    const { client, calls } = fakeClient({ "tw_resolve_org_for_booking_uid:bk1": [{ id: 9, twOrgId: ORG }] });
+    const seen = await runSsrWithPublicTwOrg(client, publicLookupsForBookingUid("bk1"), () =>
+      getTwOrgContext()
+    );
+    expect(seen).toEqual({ kind: "org", orgId: ORG });
+    expect(calls.map((c) => c.fn)).toEqual(["tw_resolve_org_for_booking_uid"]);
+  });
+});
+
+describe("TW-T9.2b2f seat reference resolver", () => {
+  const lookup = { resolver: "seat_reference", keys: ["seat1"] } as const;
+
+  it("one org: the seat link runs in its booking's org via tw_resolve_org_for_seat_reference", async () => {
+    const { client, calls } = fakeClient({
+      "tw_resolve_org_for_seat_reference:seat1": [{ id: 31, twOrgId: ORG }],
+    });
+    const seen = await runSsrWithPublicTwOrg(client, publicLookupsForBookingUid("seat1"), () =>
+      getTwOrgContext()
+    );
+    expect(seen).toEqual({ kind: "org", orgId: ORG });
+    expect(calls).toEqual([
+      { fn: "tw_resolve_org_for_booking_uid", key: "seat1" },
+      { fn: "tw_resolve_org_for_seat_reference", key: "seat1" },
     ]);
-    expect(await publicLookupsForBookingUid(seatClient, "")).toEqual([]);
+  });
+
+  it("zero rows: notFound, fn never runs", async () => {
+    const { client } = fakeClient({});
+    const fn = vi.fn();
+    expect(await runSsrWithPublicTwOrg(client, publicLookupsForBookingUid("seat1"), fn)).toEqual({
+      notFound: true,
+    });
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it("NULL org (booking not backfilled): not found, no platform fallback", async () => {
+    const { client } = fakeClient({ "tw_resolve_org_for_seat_reference:seat1": [{ id: 31, twOrgId: null }] });
+    expect(await resolvePublicTwOrg(client, lookup)).toBeNull();
+  });
+
+  it("two orgs: not found", async () => {
+    const { client } = fakeClient({
+      "tw_resolve_org_for_seat_reference:seat1": [
+        { id: 31, twOrgId: ORG },
+        { id: 31, twOrgId: OTHER_ORG },
+      ],
+    });
+    expect(await resolvePublicTwOrg(client, lookup)).toBeNull();
+  });
+});
+
+describe("TW-T9.2b2f event type id resolver", () => {
+  it("one org: resolves through tw_resolve_org_for_event_type_id with an int key", async () => {
+    const { client, calls } = fakeClient({
+      "tw_resolve_org_for_event_type_id:42": [{ id: 42, twOrgId: ORG }],
+    });
+    const seen = await runWithPublicTwOrg(client, publicLookupForEventTypeIds([42]), () => getTwOrgContext());
+    expect(seen).toEqual({ kind: "org", orgId: ORG });
+    expect(calls).toEqual([{ fn: "tw_resolve_org_for_event_type_id", key: 42 }]);
+  });
+
+  it("zero rows: 404 and fn never runs; no id: no query at all", async () => {
+    const { client, calls } = fakeClient({});
+    const fn = vi.fn();
+    await expect(runWithPublicTwOrg(client, publicLookupForEventTypeIds([42]), fn)).rejects.toMatchObject({
+      statusCode: 404,
+    });
+    expect(publicLookupForEventTypeIds([])).toBeNull();
+    expect(publicLookupForEventTypeIds([null, undefined, 1.5])).toBeNull();
+    await expect(runWithPublicTwOrg(client, publicLookupForEventTypeIds([]), fn)).rejects.toMatchObject({
+      statusCode: 404,
+    });
+    expect(calls).toHaveLength(1);
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it("NULL org: not found", async () => {
+    const { client } = fakeClient({ "tw_resolve_org_for_event_type_id:42": [{ id: 42, twOrgId: null }] });
+    expect(await resolvePublicTwOrg(client, publicLookupForEventTypeIds([42]))).toBeNull();
+  });
+
+  it("two orgs (a reservation spanning event types of two orgs): not found; same org: resolves", async () => {
+    const { client } = fakeClient({
+      "tw_resolve_org_for_event_type_id:1": [{ id: 1, twOrgId: ORG }],
+      "tw_resolve_org_for_event_type_id:2": [{ id: 2, twOrgId: OTHER_ORG }],
+      "tw_resolve_org_for_event_type_id:3": [{ id: 3, twOrgId: ORG }],
+    });
+    expect(await resolvePublicTwOrg(client, publicLookupForEventTypeIds([1, 2]))).toBeNull();
+    expect(await resolvePublicTwOrg(client, publicLookupForEventTypeIds([1, 3]))).toBe(ORG);
+  });
+
+  it("a non-int32 key never reaches SQL", async () => {
+    const { client, calls } = fakeClient({});
+    for (const key of ["0", "-1", "1e3", "2147483648", "1; drop"]) {
+      expect(await resolvePublicTwOrg(client, { resolver: "event_type_id", keys: [key] })).toBeNull();
+    }
+    expect(calls).toEqual([]);
   });
 });
