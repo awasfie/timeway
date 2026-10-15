@@ -3,6 +3,7 @@ import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from "@ne
 import { ConfigService } from "@nestjs/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { withTwOrgScope } from "./tw-org-scoped-client";
 
 const DB_MAX_POOL_CONNECTION = 10;
 
@@ -52,12 +53,14 @@ export class PrismaReadService implements OnModuleInit, OnModuleDestroy {
       });
 
       const adapter = new PrismaPg(this.pool);
-      this.prisma = new PrismaClient({ adapter });
+      this.prisma = withTwOrgScope(new PrismaClient({ adapter }));
     } else {
       const adapter = new PrismaPg({ connectionString: dbUrl });
-      this.prisma = new PrismaClient({
-        adapter,
-      });
+      this.prisma = withTwOrgScope(
+        new PrismaClient({
+          adapter,
+        })
+      );
     }
   }
 
