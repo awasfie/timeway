@@ -9,7 +9,6 @@ vi.mock("@calcom/prisma", () => {
   const client = {
     booking: { findUnique: (...a: unknown[]) => findUnique(...a) },
     $queryRaw: (...a: unknown[]) => queryRaw(...(a as [])),
-    bookingSeat: { findUnique: async () => null },
   };
   return { default: client, prisma: client };
 });
