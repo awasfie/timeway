@@ -26,19 +26,28 @@ const getWebhooks = async (
   const orgId = options.orgId ?? 0;
   const oAuthClientId = options.oAuthClientId ?? "";
 
-  const managedChildEventType = await prisma.eventType.findFirst({
-    where: {
-      id: eventTypeId,
-      parentId: {
-        not: null,
-      },
-    },
-    select: {
-      parentId: true,
-    },
-  });
+  // Timeway (FIX-TW-AWS-2-WH): the Cal.diy refactor (ab21c7f805) made every booking
+  // caller pass teamId/orgId as null, so team- and org-scoped webhooks never fired for
+  // team event types. Derive the owning team (and its org) from the event type here,
+  // once, so every caller (create, reschedule, cancel, confirm, request) is covered.
+  const eventTypeScope = eventTypeId
+    ? await prisma.eventType.findUnique({
+        where: { id: eventTypeId },
+        select: {
+          parentId: true,
+          teamId: true,
+          team: { select: { parentId: true } },
+          parent: { select: { teamId: true, team: { select: { parentId: true } } } },
+        },
+      })
+    : null;
 
-  const managedParentEventTypeId = managedChildEventType?.parentId ?? 0;
+  const managedParentEventTypeId = eventTypeScope?.parentId ?? 0;
+  const eventTypeTeamId = eventTypeScope?.teamId ?? eventTypeScope?.parent?.teamId ?? null;
+  const eventTypeOrgId = eventTypeScope?.team?.parentId ?? eventTypeScope?.parent?.team?.parentId ?? null;
+  const scopedTeamIds = [...teamIds, orgId];
+  if (eventTypeTeamId) scopedTeamIds.push(eventTypeTeamId);
+  if (eventTypeOrgId) scopedTeamIds.push(eventTypeOrgId);
 
   // if we have userId and teamId it is a managed event type and should trigger for team and user
   const allWebhooks = await prisma.webhook.findMany({
@@ -58,7 +67,7 @@ const getWebhooks = async (
         },
         {
           teamId: {
-            in: [...teamIds, orgId],
+            in: scopedTeamIds,
           },
         },
         { platformOAuthClientId: oAuthClientId },
