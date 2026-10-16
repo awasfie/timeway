@@ -1,10 +1,9 @@
 import { WebhookTriggerEvents } from "@calcom/prisma/enums";
-
-import type { WebhookSubscriber, WebhookDeliveryResult } from "../dto/types";
-import { createWebhookHeaders } from "../webhookSignature";
+import type { WebhookDeliveryResult, WebhookSubscriber } from "../dto/types";
 import type { WebhookPayload } from "../factory/types";
-import type { ITasker, ILogger } from "../interface/infrastructure";
+import type { ILogger, ITasker } from "../interface/infrastructure";
 import type { IWebhookRepository, IWebhookService } from "../interface/services";
+import { createWebhookHeaders } from "../webhookSignature";
 
 export class WebhookService implements IWebhookService {
   private readonly log: ILogger;

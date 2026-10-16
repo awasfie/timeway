@@ -1,11 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
+import type { PrismaClient } from "@calcom/prisma";
 import { generateSecret } from "@family/webhooks";
 import { Webhook } from "standardwebhooks";
-
-import { DEFAULT_WEBHOOK_VERSION } from "./interface/IWebhookRepository";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handleWebhookScheduledTriggers } from "./handleWebhookScheduledTriggers";
-import type { PrismaClient } from "@calcom/prisma";
+import { DEFAULT_WEBHOOK_VERSION } from "./interface/IWebhookRepository";
 
 describe("handleWebhookScheduledTriggers - X-Cal-Webhook-Version header", () => {
   const mockFetch = vi.fn();
