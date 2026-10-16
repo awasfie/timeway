@@ -16,6 +16,8 @@ import {
 
 const getEventTypesFromDBSelect = {
   id: true,
+  // TW-ORGID-INS: the new Booking row takes its org from the event type.
+  twOrgId: true,
   customInputs: true,
   disableGuests: true,
   restrictionScheduleId: true,
