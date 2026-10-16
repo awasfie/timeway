@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
+import process from "node:process";
 import { WebhookTriggerEvents } from "@calcom/prisma/enums";
-
+import { generateSecret } from "@family/webhooks";
+import { Webhook } from "standardwebhooks";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { WebhookSubscriber } from "../dto/types";
-import { IWebhookRepository, WebhookVersion } from "../interface/IWebhookRepository";
+import type { WebhookPayload } from "../factory/types";
+import { type IWebhookRepository, WebhookVersion } from "../interface/IWebhookRepository";
+import type { ILogger, ITasker } from "../interface/infrastructure";
 import { WebhookService } from "./WebhookService";
-import { ILogger, ITasker } from "../interface/infrastructure";
-import { WebhookPayload } from "../factory/types";
 
 describe("WebhookService", () => {
   let mockFetch: ReturnType<typeof vi.fn>;
@@ -182,6 +183,55 @@ describe("WebhookService", () => {
       expect(taskName).toBe("sendWebhook");
       const parsedPayload = JSON.parse(taskPayload);
       expect(parsedPayload.webhook.version).toBe("2021-10-20");
+    });
+  });
+
+  describe("Standard Webhooks headers (INT-2)", () => {
+    function subscriberWith(secret: string): WebhookSubscriber {
+      return {
+        id: "webhook-1",
+        subscriberUrl: "https://example.com/webhook",
+        payloadTemplate: null,
+        appId: null,
+        secret,
+        eventTriggers: [WebhookTriggerEvents.BOOKING_CREATED],
+        version: WebhookVersion.V_2021_10_20,
+      };
+    }
+    const payload = {
+      createdAt: new Date().toISOString(),
+      payload: { test: "data", triggerEvent: WebhookTriggerEvents.BOOKING_CREATED },
+    } as unknown as WebhookPayload;
+
+    it("signs a whsec_ subscriber's delivery so the reference verifier accepts it", async () => {
+      const service = new WebhookService(
+        mockRepository as unknown as IWebhookRepository,
+        mockTasker as unknown as ITasker,
+        mockLogger as unknown as ILogger
+      );
+      const secret = generateSecret();
+      await service.processWebhooks(WebhookTriggerEvents.BOOKING_CREATED, payload, [subscriberWith(secret)]);
+
+      const [, options] = mockFetch.mock.calls[0];
+      expect(new Webhook(secret).verify(options.body, options.headers)).toMatchObject({
+        triggerEvent: WebhookTriggerEvents.BOOKING_CREATED,
+      });
+      expect(options.headers).toHaveProperty("X-Cal-Signature-256");
+    });
+
+    it("sends no webhook-* headers to a non-whsec_ subscriber", async () => {
+      const service = new WebhookService(
+        mockRepository as unknown as IWebhookRepository,
+        mockTasker as unknown as ITasker,
+        mockLogger as unknown as ILogger
+      );
+      await service.processWebhooks(WebhookTriggerEvents.BOOKING_CREATED, payload, [
+        subscriberWith("test-secret"),
+      ]);
+
+      const [, options] = mockFetch.mock.calls[0];
+      expect(Object.keys(options.headers).filter((h) => h.startsWith("webhook-"))).toEqual([]);
+      expect(options.headers).toHaveProperty("X-Cal-Signature-256");
     });
   });
 });
