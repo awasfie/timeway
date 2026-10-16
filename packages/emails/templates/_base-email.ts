@@ -1,15 +1,17 @@
-import { decodeHTML } from "entities";
-import { z } from "zod";
-
+import process from "node:process";
 import dayjs from "@calcom/dayjs";
 import { FeaturesRepository } from "@calcom/features/flags/features.repository";
 import isSmsCalEmail from "@calcom/lib/isSmsCalEmail";
-import { serverConfig } from "@calcom/lib/serverConfig";
 import { getServerErrorFromUnknown } from "@calcom/lib/server/getServerErrorFromUnknown";
+import { serverConfig } from "@calcom/lib/serverConfig";
 import { setTestEmail } from "@calcom/lib/testEmails";
 import { prisma } from "@calcom/prisma";
-
+import { decodeHTML } from "entities";
+import { z } from "zod";
+import { maskRecipient } from "../lib/maskRecipient";
 import { sanitizeDisplayName } from "../lib/sanitizeDisplayName";
+
+type SentInfo = { messageId?: string; response?: string };
 
 export default class BaseEmail {
   name = "";
@@ -72,7 +74,7 @@ export default class BaseEmail {
       ...(parseSubject.success && { subject: decodeHTML(parseSubject.data) }),
     };
     const { createTransport } = await import("nodemailer");
-    await new Promise((resolve, reject) =>
+    await new Promise<SentInfo | undefined>((resolve, reject) =>
       createTransport(this.getMailerOptions().transport).sendMail(
         payloadWithUnEscapedSubject,
         (_err, info) => {
@@ -85,14 +87,16 @@ export default class BaseEmail {
           }
         }
       )
-    ).catch((e) =>
-      console.error(
-        "sendEmail",
-        `from: ${"from" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.from : ""}`,
-        `subject: ${"subject" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.subject : ""}`,
-        e
-      )
-    );
+    )
+      .then((info) => this.logSent(info, sanitizedTo, payloadWithUnEscapedSubject.subject))
+      .catch((e) =>
+        console.error(
+          "sendEmail",
+          `from: ${"from" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.from : ""}`,
+          `subject: ${"subject" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.subject : ""}`,
+          e
+        )
+      );
     return new Promise((resolve) => resolve("send mail async"));
   }
   protected getMailerOptions() {
@@ -101,6 +105,17 @@ export default class BaseEmail {
       from: serverConfig.from,
       headers: serverConfig.headers,
     };
+  }
+  /** Proofs need the transport's message id (SendGrid X-Message-Id); log only what the transport returned. */
+  protected logSent(info: SentInfo | undefined, to: string, subject: unknown): void {
+    const messageId = info?.messageId ?? "";
+    const response =
+      typeof info?.response === "string" ? info.response.replace(/\s+/g, " ").slice(0, 80) : "";
+    console.log(
+      `sendEmail ok messageId=${messageId} to=${maskRecipient(to)} subject=${
+        typeof subject === "string" ? subject : ""
+      } response=${response}`
+    );
   }
   protected printNodeMailerError(error: Error): void {
     /** Don't clog the logs with unsent emails in E2E */
