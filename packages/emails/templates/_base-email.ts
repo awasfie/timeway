@@ -8,7 +8,7 @@ import { setTestEmail } from "@calcom/lib/testEmails";
 import { prisma } from "@calcom/prisma";
 import { decodeHTML } from "entities";
 import { z } from "zod";
-import { maskRecipient } from "../lib/maskRecipient";
+import { recipientDomains } from "../lib/maskRecipient";
 import { sanitizeDisplayName } from "../lib/sanitizeDisplayName";
 
 type SentInfo = { messageId?: string; response?: string };
@@ -88,7 +88,7 @@ export default class BaseEmail {
         }
       )
     )
-      .then((info) => this.logSent(info, sanitizedTo, payloadWithUnEscapedSubject.subject))
+      .then((info) => this.logSent(info, sanitizedTo))
       .catch((e) =>
         console.error(
           "sendEmail",
@@ -106,15 +106,23 @@ export default class BaseEmail {
       headers: serverConfig.headers,
     };
   }
-  /** Proofs need the transport's message id (SendGrid X-Message-Id); log only what the transport returned. */
-  protected logSent(info: SentInfo | undefined, to: string, subject: unknown): void {
-    const messageId = info?.messageId ?? "";
-    const response =
-      typeof info?.response === "string" ? info.response.replace(/\s+/g, " ").slice(0, 80) : "";
+  /** Booking uid when the template carries a calEvent; read-only, no template changes needed. */
+  protected getBookingUid(): string | undefined {
+    const uid = (this as { calEvent?: { uid?: unknown } }).calEvent?.uid;
+    return typeof uid === "string" && uid.length > 0 ? uid : undefined;
+  }
+  /**
+   * One structured line per sent email so a send can be proven by id (TW-MAIL-ID).
+   * Logs template, booking uid, nodemailer messageId, SendGrid X-Message-Id (from the SMTP
+   * "250 Ok: queued as <id>" reply) and recipient domain(s) only. No address, subject or body.
+   */
+  protected logSent(info: SentInfo | undefined, to: string): void {
+    const clean = (v: string) => v.replace(/\s+/g, "");
+    const messageId = typeof info?.messageId === "string" && info.messageId ? clean(info.messageId) : "-";
+    const queued = typeof info?.response === "string" ? /queued as\s+(\S+)/i.exec(info.response) : null;
+    const sgMessageId = queued?.[1] ? clean(queued[1]) : "-";
     console.log(
-      `sendEmail ok messageId=${messageId} to=${maskRecipient(to)} subject=${
-        typeof subject === "string" ? subject : ""
-      } response=${response}`
+      `sendEmail ok template=${this.name || "-"} bookingUid=${this.getBookingUid() ?? "-"} messageId=${messageId} sgMessageId=${sgMessageId} toDomain=${recipientDomains(to)}`
     );
   }
   protected printNodeMailerError(error: Error): void {

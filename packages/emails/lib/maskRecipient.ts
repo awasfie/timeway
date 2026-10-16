@@ -12,3 +12,13 @@ export function maskRecipient(to: string): string {
   if (!addresses || addresses.length === 0) return to ? "***" : "";
   return addresses.map(maskAddress).join(",");
 }
+
+/** Recipient domains only (lower-cased, de-duplicated): the mail log never carries a local part. */
+export function recipientDomains(to: string): string {
+  const addresses = to.match(EMAIL_PATTERN);
+  if (!addresses || addresses.length === 0) return "-";
+  const domains = addresses
+    .map((a) => a.slice(a.lastIndexOf("@") + 1).toLowerCase())
+    .filter((d) => d.length > 0);
+  return domains.length > 0 ? Array.from(new Set(domains)).join(",") : "-";
+}
