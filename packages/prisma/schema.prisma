@@ -157,8 +157,6 @@ model EventType {
   id                Int     @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
   twOrgId           String? @db.Uuid
-
-  @@index([twOrgId])
   /// @zod.string.min(1)
   title             String
   /// @zod.import(["import { eventTypeSlug } from '../../zod-utils'"]).custom.use(eventTypeSlug)
@@ -299,6 +297,7 @@ model EventType {
   @@unique([userId, slug])
   @@unique([teamId, slug])
   @@unique([userId, parentId])
+  @@index([twOrgId])
   @@index([userId])
   @@index([teamId])
   @@index([profileId])
@@ -313,8 +312,6 @@ model Credential {
   id           Int     @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
   twOrgId      String? @db.Uuid
-
-  @@index([twOrgId])
   // @@type is deprecated
   type         String
   key          Json
@@ -342,6 +339,7 @@ model Credential {
   integrationAttributeSyncs IntegrationAttributeSync[]
   hostLocations             HostLocation[]
 
+  @@index([twOrgId])
   @@index([appId])
   @@index([subscriptionId])
   @@index([invalid])
@@ -410,8 +408,6 @@ model User {
   id                  Int                  @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Distinct from upstream Int `organizationId` (Team). Nullable until the contract slice.
   twOrgId             String?              @db.Uuid
-
-  @@index([twOrgId])
   uuid                String               @unique @default(uuid()) @db.Uuid
   username            String?
   name                String?
@@ -466,25 +462,25 @@ model User {
   requiresBookerEmailVerification Boolean? @default(false)
 
   /// @zod.import(["import { userMetadata } from '../../zod-utils'"]).custom.use(userMetadata)
-  metadata           Json?
-  verified           Boolean?           @default(false)
-  role               UserPermissionRole @default(USER)
-  apiKeys            ApiKey[]
-  accounts           Account[]
-  sessions           Session[]
-  Feedback           Feedback[]
-  ownedEventTypes    EventType[]        @relation("owner")
-  verifiedNumbers    VerifiedNumber[]
-  verifiedEmails     VerifiedEmail[]
-  hosts              Host[]
+  metadata                  Json?
+  verified                  Boolean?             @default(false)
+  role                      UserPermissionRole   @default(USER)
+  apiKeys                   ApiKey[]
+  accounts                  Account[]
+  sessions                  Session[]
+  Feedback                  Feedback[]
+  ownedEventTypes           EventType[]          @relation("owner")
+  verifiedNumbers           VerifiedNumber[]
+  verifiedEmails            VerifiedEmail[]
+  hosts                     Host[]
   // organizationId is deprecated. Instead, rely on the Profile to search profiles by organizationId and then get user from the profile.
-  organizationId     Int?
-  organization       Team?              @relation("scope", fields: [organizationId], references: [id], onDelete: SetNull)
+  organizationId            Int?
+  organization              Team?                @relation("scope", fields: [organizationId], references: [id], onDelete: SetNull)
   // TW-T9 (Timeway-owned org layer, original work): memberships in Timeway Organizations
   twOrganizationMemberships OrganizationMember[]
-  accessCodes        AccessCode[]
-  bookingRedirects   OutOfOfficeEntry[]
-  bookingRedirectsTo OutOfOfficeEntry[] @relation(name: "toUser")
+  accessCodes               AccessCode[]
+  bookingRedirects          OutOfOfficeEntry[]
+  bookingRedirectsTo        OutOfOfficeEntry[]   @relation(name: "toUser")
 
   // Used to lock the user account
   locked                         Boolean                       @default(false)
@@ -528,6 +524,7 @@ model User {
   @@unique([email, username])
   @@unique([username, organizationId])
   @@unique([movedToProfileId])
+  @@index([twOrgId])
   @@index([username])
   @@index([emailVerified])
   @@index([identityProvider])
@@ -866,8 +863,6 @@ model Booking {
   id                     Int                        @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
   twOrgId                String?                    @db.Uuid
-
-  @@index([twOrgId])
   uid                    String                     @unique
   // (optional) UID based on slot start/end time & email against duplicates
   idempotencyKey         String?                    @unique
@@ -933,6 +928,7 @@ model Booking {
 
   // @@partial_index([reassignById])
 
+  @@index([twOrgId])
   @@index([eventTypeId])
   @@index([userId])
   @@index([destinationCalendarId])
@@ -964,8 +960,6 @@ model Schedule {
   id                   Int            @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
   twOrgId              String?        @db.Uuid
-
-  @@index([twOrgId])
   user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId               Int
   eventType            EventType[]
@@ -976,6 +970,7 @@ model Schedule {
   availability         Availability[]
   Host                 Host[]
 
+  @@index([twOrgId])
   @@index([userId])
 }
 
@@ -1101,6 +1096,7 @@ model ResetPasswordRequest {
 
 enum ReminderType {
   PENDING_BOOKING_CONFIRMATION
+  BOOKING_REMINDER
 }
 
 model ReminderMail {
