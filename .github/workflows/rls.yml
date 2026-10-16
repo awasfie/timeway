@@ -8,6 +8,7 @@ on:
     paths:
       - "packages/prisma/**"
       - "vitest.rls.config.mts"
+      - "apps/web/test/tw-rls/**"
       - "scripts/tw-t9/**"
       - ".github/workflows/rls.yml"
   push:
