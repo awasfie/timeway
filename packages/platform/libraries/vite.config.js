@@ -206,6 +206,10 @@ export default defineConfig({
     },
   },
   plugins: [react(), dts()],
+  // @family/webhooks is ESM-only; inlining it keeps this CommonJS bundle loadable on api-v2's node:20 image.
+  ssr: {
+    noExternal: ["@family/webhooks"],
+  },
   resolve: {
     conditions: ["node", "import", "require", "default"],
     alias: {

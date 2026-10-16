@@ -1,4 +1,3 @@
-import { createHmac } from "node:crypto";
 import { compile } from "handlebars";
 
 import type { TGetTranscriptAccessLink } from "@calcom/app-store/dailyvideo/zod";
@@ -6,6 +5,8 @@ import { getHumanReadableLocationValue } from "@calcom/app-store/locations";
 import type { WebhookSubscriber, PaymentData } from "@calcom/features/webhooks/lib/dto/types";
 import { getUTCOffsetByTimezone } from "@calcom/lib/dayjs";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
+
+import { createWebhookHeaders } from "./webhookSignature";
 
 // Minimal webhook shape for sending payloads (subset of WebhookSubscriber)
 type WebhookForPayload = Pick<WebhookSubscriber, "subscriberUrl" | "appId" | "payloadTemplate" | "version">;
@@ -338,10 +339,7 @@ export const sendGenericWebhookPayload = async ({
   );
 };
 
-export const createWebhookSignature = (params: { secret?: string | null; body: string }) =>
-  params.secret
-    ? createHmac("sha256", params.secret).update(`${params.body}`).digest("hex")
-    : "no-secret-provided";
+export { createWebhookSignature } from "./webhookSignature";
 
 const _sendPayload = async (
   secretKey: string | null,
@@ -358,7 +356,7 @@ const _sendPayload = async (
     method: "POST",
     headers: {
       "Content-Type": contentType,
-      "X-Cal-Signature-256": createWebhookSignature({ secret: secretKey, body }),
+      ...createWebhookHeaders({ secret: secretKey, body }),
       "X-Cal-Webhook-Version": version,
     },
     redirect: "manual",

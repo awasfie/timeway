@@ -3,7 +3,8 @@ import logger from "@calcom/lib/logger";
 import type { PrismaClient } from "@calcom/prisma";
 
 import { DEFAULT_WEBHOOK_VERSION } from "./interface/IWebhookRepository";
-import { createWebhookSignature, jsonParse } from "./sendPayload";
+import { jsonParse } from "./sendPayload";
+import { createWebhookHeaders } from "./webhookSignature";
 
 export async function handleWebhookScheduledTriggers(prisma: PrismaClient) {
   await prisma.webhookScheduledTriggers.deleteMany({
@@ -61,7 +62,7 @@ export async function handleWebhookScheduledTriggers(prisma: PrismaClient) {
     };
 
     if (webhook) {
-      headers["X-Cal-Signature-256"] = createWebhookSignature({ secret: webhook.secret, body: job.payload });
+      Object.assign(headers, createWebhookHeaders({ secret: webhook.secret, body: job.payload }));
     }
     fetchPromises.push(
       fetch(job.subscriberUrl, {
