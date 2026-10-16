@@ -1153,7 +1153,8 @@ async function handler(
 
   // TW-HOST-1: collective events keep a deterministic order so the highest-priority fixed host
   // (Ahmed) is always the organizer, regardless of which email is requested or DB row order.
-  if (eventType.schedulingType === SchedulingType.COLLECTIVE) {
+  // Dynamic group bookings keep URL order (organizer = first username in the URL).
+  if (eventType.schedulingType === SchedulingType.COLLECTIVE && !eventType.isDynamic) {
     users = [...users].sort(
       (a, b) =>
         ((b as { priority?: number | null }).priority ?? 0) - ((a as { priority?: number | null }).priority ?? 0) ||
