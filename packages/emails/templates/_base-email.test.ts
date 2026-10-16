@@ -42,6 +42,16 @@ class TestEmail extends BaseEmail {
   }
 }
 
+/** Mirrors the booking templates (AttendeeScheduledEmail etc.), which expose `calEvent`. */
+class TestBookingEmail extends TestEmail {
+  calEvent: { uid?: string | null };
+  constructor(to: string, uid: string | null) {
+    super(to);
+    this.name = "SEND_BOOKING_CONFIRMATION";
+    this.calEvent = { uid };
+  }
+}
+
 describe("BaseEmail.sendEmail logging", () => {
   const originalMode = process.env.INTEGRATION_TEST_MODE;
   let log: MockInstance<typeof console.log>;
@@ -60,33 +70,51 @@ describe("BaseEmail.sendEmail logging", () => {
     vi.restoreAllMocks();
   });
 
-  it("logs the transport messageId with a masked recipient on success", async () => {
+  it("logs one structured line with template, booking uid, messageId, SendGrid id and recipient domain", async () => {
     sendMail.mockImplementation((_payload, cb) =>
-      cb(null, { messageId: "<abc@x>", response: "250 Ok: queued as XYZ" })
+      cb(null, { messageId: "<abc@timeway.co>", response: "250 Ok: queued as SgXmsgId_123.filter" })
     );
 
-    const result = await new TestEmail("ahmedwasfie@awstreams.com").sendEmail();
+    const result = await new TestBookingEmail("ahmedwasfie@AWstreams.com", "bk_uid_42").sendEmail();
 
     expect(result).toBe("send mail async");
-    const [okLine] = okLines();
-    expect(okLine).toBe(
-      "sendEmail ok messageId=<abc@x> to=ah***@awstreams.com subject=Booking confirmed response=250 Ok: queued as XYZ"
-    );
-    expect(okLine).not.toContain("ahmedwasfie");
-    expect(okLine).not.toContain("secret body content");
+    expect(okLines()).toEqual([
+      "sendEmail ok template=SEND_BOOKING_CONFIRMATION bookingUid=bk_uid_42 messageId=<abc@timeway.co> sgMessageId=SgXmsgId_123.filter toDomain=awstreams.com",
+    ]);
     expect(error).not.toHaveBeenCalled();
   });
 
-  it("truncates the transport response to 80 chars", async () => {
+  it("never logs the address local part, subject or body", async () => {
     sendMail.mockImplementation((_payload, cb) =>
-      cb(null, { messageId: "<id@x>", response: "x".repeat(200) })
+      cb(null, { messageId: "<abc@timeway.co>", response: "250 Ok: queued as XYZ" })
     );
+
+    await new TestBookingEmail('"Ahmed W" <ahmedwasfie@awstreams.com>, bob@x.io', "bk_1").sendEmail();
+
+    const all = log.mock.calls.map((c) => c.map(String).join(" ")).join("\n");
+    expect(all).not.toContain("ahmedwasfie");
+    expect(all).not.toContain("bob@");
+    expect(all).not.toContain("Booking confirmed");
+    expect(all).not.toContain("secret body content");
+    expect(okLines()[0]).toContain("toDomain=awstreams.com,x.io");
+  });
+
+  it("uses '-' for a non-booking email, a missing SendGrid id and a missing messageId", async () => {
+    sendMail.mockImplementation((_payload, cb) => cb(null, { response: "250 2.0.0 OK" }));
 
     await new TestEmail("bo@example.com").sendEmail();
 
-    const [okLine] = okLines();
-    expect(okLine).toContain("to=bo***@example.com");
-    expect(okLine?.endsWith(`response=${"x".repeat(80)}`)).toBe(true);
+    expect(okLines()).toEqual([
+      "sendEmail ok template=TEST_EMAIL bookingUid=- messageId=- sgMessageId=- toDomain=example.com",
+    ]);
+  });
+
+  it("uses '-' for a booking email whose calEvent has no uid", async () => {
+    sendMail.mockImplementation((_payload, cb) => cb(null, { messageId: "<id@x>" }));
+
+    await new TestBookingEmail("bo@example.com", null).sendEmail();
+
+    expect(okLines()[0]).toContain("bookingUid=- messageId=<id@x> sgMessageId=-");
   });
 
   it("keeps the error path: logs sendEmail error, no ok line", async () => {
