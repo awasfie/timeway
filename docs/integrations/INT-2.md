@@ -24,6 +24,8 @@ Standard Webhooks details (from `@family/webhooks` `signHeaders`): `webhook-id` 
 
 `@family/webhooks` 0.1.0, vendored as `packages/features/vendor/family-webhooks-0.1.0.tgz`, built from `awasfie/passport` `e271205` with `cd packages/webhooks && npx tsc -p tsconfig.json && npm pack`. sha256 `2341ef7310f793f9d4ca2a202143edd5364ddb21e814c84a9d2d8c9952191544` (byte-identical to the salesos copy). ESM-only: in Timeway it is consumed by Next.js / Vite bundling and Vitest, not by a CommonJS `require`, so the Node 20 image is unaffected. No source is copied into this repo.
 
+Docker build (card FIX-timeway-tgz-prune): the root `Dockerfile` no longer runs `npx turbo@2.7.1 prune --scope=@calcom/web --scope=@calcom/trpc --docker`. turbo's berry lockfile parser (2.7.1 and 2.11.9 alike) fails on the `@family/webhooks@file:vendor/...tgz::locator=...` entry with "Unable to find any locator", which failed Coolify deployment `xvgfkree5wdxalvnbg46svxh`. A root `resolutions` entry and a `file:./` spec fail the same way. The step was dead weight: its `out/` tree was never copied, so the image is built from the full workspace as before and its contents are unchanged. The tarball bytes and the dependency spec stay as above. The `docker-migrate-job` workflow builds the image on every PR that touches the `Dockerfile`.
+
 ## Payload (Cal.com shape)
 
 ```json

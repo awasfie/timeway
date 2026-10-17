@@ -46,7 +46,8 @@ COPY apps/api/v2 ./apps/api/v2
 COPY packages ./packages
 
 RUN yarn config set httpTimeout 1200000
-RUN npx turbo@2.7.1 prune --scope=@calcom/web --scope=@calcom/trpc --docker
+# No `turbo prune` here: its out/ tree was never copied, so it changed nothing in the image, and turbo's berry
+# lockfile parser cannot resolve the relative file: tarball @family/webhooks (INT-2), which failed the build.
 RUN yarn install
 # Build and make embed servable from web/public/embed folder
 RUN yarn workspace @calcom/trpc run build
