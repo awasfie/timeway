@@ -1151,6 +1151,17 @@ async function handler(
     throw new Error(ErrorCode.RoundRobinHostsUnavailableForBooking);
   }
 
+  // TW-HOST-1: collective events keep a deterministic order so the highest-priority fixed host
+  // (Ahmed) is always the organizer, regardless of which email is requested or DB row order.
+  // Dynamic group bookings keep URL order (organizer = first username in the URL).
+  if (eventType.schedulingType === SchedulingType.COLLECTIVE && !eventType.isDynamic) {
+    users = [...users].sort(
+      (a, b) =>
+        ((b as { priority?: number | null }).priority ?? 0) - ((a as { priority?: number | null }).priority ?? 0) ||
+        a.id - b.id
+    );
+  }
+
   // If the team member is requested then they should be the organizer
   const organizerUser = reqBody.teamMemberEmail
     ? (users.find((user) => user.email === reqBody.teamMemberEmail) ?? users[0])
@@ -2072,6 +2083,30 @@ async function handler(
         `EventManager.create failure in some of the integrations ${organizerUser.username}`,
         safeStringify({ error, results })
       );
+
+      // TW-MAIL-2: the booking row is already ACCEPTED. A calendar/meeting failure (e.g. a Google
+      // rate limit) must not swallow the attendee's confirmation email, so send it anyway.
+      if (!noEmail && !isDryRun && !(eventType.seatsPerTimeSlot && rescheduleUid)) {
+        try {
+          await emailsAndSmsHandler.send({
+            action: BookingActionMap.confirmed,
+            data: {
+              eventType: {
+                metadata: eventType.metadata,
+                schedulingType: eventType.schedulingType,
+              },
+              eventNameObject,
+              evt,
+              additionalInformation: {},
+              additionalNotes,
+              customInputs,
+            },
+          });
+          bookingEmailsAndSmsTaskerAction = BookingActionMap.confirmed;
+        } catch (err) {
+          tracingLogger.error("confirmation email after calendar failure failed", safeStringify(err));
+        }
+      }
     } else {
       const additionalInformation: AdditionalInformation = {};
 
