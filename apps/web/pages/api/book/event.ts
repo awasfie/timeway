@@ -9,6 +9,7 @@ import getIP from "@calcom/lib/getIP";
 import { checkCfTurnstileToken } from "@calcom/lib/server/checkCfTurnstileToken";
 import { defaultResponder } from "@calcom/lib/server/defaultResponder";
 import { piiHasher } from "@calcom/lib/server/PiiHasher";
+import { publicLookupsForBookingBody, runWithPublicTwOrg } from "@calcom/lib/server/tw-org-scope/public";
 import type { TraceContext } from "@calcom/lib/tracing";
 import { prisma } from "@calcom/prisma";
 import { CreationSource } from "@calcom/prisma/enums";
@@ -60,4 +61,10 @@ async function handler(req: NextApiRequest & { userId?: number; traceContext: Tr
   return booking;
 }
 
-export default defaultResponder(handler, "/api/book/event");
+// TW-T9.2b2: the booked username(s) or team slug resolve the org; a reschedule must be in it too.
+async function handlerInPublicOrg(req: NextApiRequest & { userId?: number; traceContext: TraceContext }) {
+  const lookups = publicLookupsForBookingBody(req.body);
+  return runWithPublicTwOrg(prisma, lookups, () => handler(req));
+}
+
+export default defaultResponder(handlerInPublicOrg, "/api/book/event");
