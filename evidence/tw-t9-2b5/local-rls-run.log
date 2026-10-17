@@ -1,0 +1,24 @@
+ RUN  v4.1.8 /Users/ahmedwasfie/.hermes/kanban/boards/spenai/workspaces/t_a9908d21/timeway
+ ✓ apps/web/test/tw-rls/e2e-smoke.rls-test.ts > TW-T9.2b5 e2e smoke as timeway_app with FORCE RLS (6 flows) > (1) login: authorizeCredentials returns A's user in A's org; B's password does not open A 858ms
+ ✓ apps/web/test/tw-rls/e2e-smoke.rls-test.ts > TW-T9.2b5 e2e smoke as timeway_app with FORCE RLS (6 flows) > (2) own event types: tRPC viewer.eventTypes.list in A's session lists A's only 163ms
+ ✓ apps/web/test/tw-rls/e2e-smoke.rls-test.ts > TW-T9.2b5 e2e smoke as timeway_app with FORCE RLS (6 flows) > (3) public user booking: POST /api/book/event with user = A's username books into A 1453ms
+ ✓ apps/web/test/tw-rls/e2e-smoke.rls-test.ts > TW-T9.2b5 e2e smoke as timeway_app with FORCE RLS (6 flows) > (4) public team booking: the same handler with A's team slug books into A 67ms
+ ✓ apps/web/test/tw-rls/e2e-smoke.rls-test.ts > TW-T9.2b5 e2e smoke as timeway_app with FORCE RLS (6 flows) > (5) cancel by uid: /api/cancel cancels A's booking in A; B's booking is untouched 67ms
+ ✓ apps/web/test/tw-rls/e2e-smoke.rls-test.ts > TW-T9.2b5 e2e smoke as timeway_app with FORCE RLS (6 flows) > (6) calendar webhook: processWebhook with selectedCalendarTwOrgScope caches A's events in A only 48ms
+ ✓ packages/prisma/tw-rls-core-tables.rls-test.ts > TW-T9.2d FORCE RLS on the five Cal.com tables (timeway_app, real pool) > catalog: the five tables are ENABLE + FORCE with one NULLIF isolation policy and a SELECT-only owner policy 3ms
+ ✓ packages/prisma/tw-rls-core-tables.rls-test.ts > TW-T9.2d FORCE RLS on the five Cal.com tables (timeway_app, real pool) > org A scope sees exactly A's row in each table; released, the same backend sees none 73ms
+ ✓ packages/prisma/tw-rls-core-tables.rls-test.ts > TW-T9.2d FORCE RLS on the five Cal.com tables (timeway_app, real pool) > org B scope sees exactly B's row; the NULL-org row is visible only in a platform scope 11ms
+ ✓ packages/prisma/tw-rls-core-tables.rls-test.ts > TW-T9.2d FORCE RLS on the five Cal.com tables (timeway_app, real pool) > rejects a cross-org insert for org B under A in each table 34ms
+ ✓ packages/prisma/tw-rls-core-tables.rls-test.ts > TW-T9.2d FORCE RLS on the five Cal.com tables (timeway_app, real pool) > rejects moving A's row to org B (WITH CHECK); B's and the NULL-org rows cannot be updated or deleted from A 10ms
+ ✓ packages/prisma/tw-rls-core-tables.rls-test.ts > TW-T9.2d FORCE RLS on the five Cal.com tables (timeway_app, real pool) > an insert in A's scope that does not name twOrgId lands in org A (column default) 2ms
+ ✓ packages/prisma/tw-rls-core-tables.rls-test.ts > TW-T9.2d FORCE RLS on the five Cal.com tables (timeway_app, real pool) > pre-tenant definer lookups still read the RLS tables (owner SELECT policy), NULL org included 1ms
+ ✓ packages/prisma/tw-org-context.rls-test.ts > TW-T9.2a org context on the real pool (timeway_app) > runs as timeway_app: not superuser, no BYPASSRLS 47ms
+ ✓ packages/prisma/tw-org-context.rls-test.ts > TW-T9.2a org context on the real pool (timeway_app) > org A scope sees only A; released, the same backend sees '' and 0 rows 20ms
+ ✓ packages/prisma/tw-org-context.rls-test.ts > TW-T9.2a org context on the real pool (timeway_app) > platform scope sees both orgs and leaves nothing behind 1ms
+ ✓ packages/prisma/tw-org-context.rls-test.ts > TW-T9.2a org context on the real pool (timeway_app) > rejects a cross-org write and a write with no scope 11ms
+ ✓ packages/prisma/tw-org-context.rls-test.ts > TW-T9.2a org context on the real pool (timeway_app) > pre-tenant lookups: definer functions callable by timeway_app, ids and org only 6ms
+ ✓ packages/prisma/tw-org-context.rls-test.ts > TW-T9.2a org context on the real pool (timeway_app) > TW-T9.2b2f lookups: event type id and seat reference resolve for timeway_app, ids and org only 2ms
+ ✓ packages/prisma/tw-org-context.rls-test.ts > TW-T9.2a org context on the real pool (timeway_app) > definer functions: owned by timeway_owner, pinned search_path, EXECUTE for timeway_app only 1ms
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Duration  3.64s (transform 1.85s, setup 0ms, import 119ms, tests 3.35s, environment 0ms)

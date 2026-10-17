@@ -156,7 +156,7 @@ enum CancellationReasonRequirement {
 model EventType {
   id                Int     @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId           String? @db.Uuid
+  twOrgId           String? @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
 
   @@index([twOrgId])
   /// @zod.string.min(1)
@@ -312,7 +312,7 @@ model EventType {
 model Credential {
   id           Int     @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId      String? @db.Uuid
+  twOrgId      String? @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
 
   @@index([twOrgId])
   // @@type is deprecated
@@ -409,7 +409,7 @@ model TravelSchedule {
 model User {
   id                  Int                  @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Distinct from upstream Int `organizationId` (Team). Nullable until the contract slice.
-  twOrgId             String?              @db.Uuid
+  twOrgId             String?              @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
 
   @@index([twOrgId])
   uuid                String               @unique @default(uuid()) @db.Uuid
@@ -865,7 +865,7 @@ enum BookingStatus {
 model Booking {
   id                     Int                        @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId                String?                    @db.Uuid
+  twOrgId                String?                    @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
 
   @@index([twOrgId])
   uid                    String                     @unique
@@ -963,7 +963,7 @@ model Tracking {
 model Schedule {
   id                   Int            @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId              String?        @db.Uuid
+  twOrgId              String?        @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
 
   @@index([twOrgId])
   user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)

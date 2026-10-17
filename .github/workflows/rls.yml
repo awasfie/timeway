@@ -1,0 +1,91 @@
+name: RLS (timeway_app real pool)
+# TW-T9.2a (WC-PE-6 timeway, proof CC-89 line): migrate as timeway_owner, then run the
+# real-pool spec with the production prisma client as timeway_app (NOSUPERUSER
+# NOBYPASSRLS, owns nothing) on a pool of one. Throwaway Postgres only, no secrets.
+# A gate is never satisfied by a skipped test: the job fails on any skip.
+on:
+  pull_request:
+    paths:
+      - "packages/prisma/**"
+      - "vitest.rls.config.mts"
+      - "apps/web/test/tw-rls/**"
+      - "scripts/tw-t9/**"
+      - ".github/workflows/rls.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/prisma/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rls:
+    name: rls
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      ADMIN_URL: postgresql://postgres:postgres@localhost:5432/timeway
+      OWNER_URL: postgresql://timeway_owner:ci-owner-only@localhost:5432/timeway
+      APP_URL: postgresql://timeway_app:ci-app-only@localhost:5432/timeway
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: ./.github/actions/cache-checkout
+      - uses: ./.github/actions/yarn-install
+      - name: Roles (CI only; mirrors prod - owner migrates, app owns nothing)
+        run: |
+          P="psql postgresql://postgres:postgres@localhost:5432/postgres -v ON_ERROR_STOP=1"
+          $P -c "create role timeway_owner login password 'ci-owner-only' nosuperuser nobypassrls"
+          $P -c "create role timeway_app login password 'ci-app-only' nosuperuser nobypassrls"
+          $P -c "create database timeway owner timeway_owner"
+          psql "$ADMIN_URL" -v ON_ERROR_STOP=1 \
+            -c "alter schema public owner to timeway_owner" \
+            -c "grant usage on schema public to timeway_app" \
+            -c "alter default privileges for role timeway_owner in schema public grant select, insert, update, delete on tables to timeway_app" \
+            -c "alter default privileges for role timeway_owner in schema public grant usage, select, update on sequences to timeway_app"
+      - name: Migrate as timeway_owner
+        working-directory: packages/prisma
+        run: DATABASE_URL="$OWNER_URL" DATABASE_DIRECT_URL="$OWNER_URL" npx prisma migrate deploy
+      - name: CC-89 catalog + pool audit (TW-T9.2d; vendored salesos harness, 0 FAIL)
+        run: python3 scripts/tw-t9/rls-audit/rls_audit.py --dsn timeway="$ADMIN_URL" --only timeway --json rls-audit.json
+      - name: Rollback script round trip (down twice, migration SQL twice, audit again)
+        run: |
+          set -e
+          M=packages/prisma/migrations/20261016120000_tw_t9_2d_rls_core_tables/migration.sql
+          for i in 1 2; do psql "$OWNER_URL" -v ON_ERROR_STOP=1 -q --single-transaction -f scripts/tw-t9/rls-2d-down.sql; done
+          n=$(psql "$ADMIN_URL" -Atc "select count(*) from pg_class where relnamespace='public'::regnamespace and relname in ('users','EventType','Booking','Schedule','Credential') and (relrowsecurity or relforcerowsecurity)")
+          test "$n" = 0
+          for i in 1 2; do psql "$OWNER_URL" -v ON_ERROR_STOP=1 -q --single-transaction -f "$M"; done
+          python3 scripts/tw-t9/rls-audit/rls_audit.py --dsn timeway="$ADMIN_URL" --only timeway
+      - run: yarn prisma generate
+      - name: Real-pool spec as timeway_app (pool of one), 0 skipped
+        run: |
+          set -o pipefail
+          DATABASE_URL="$APP_URL" DATABASE_POOL_MAX=1 RLS_ADMIN_DATABASE_URL="$ADMIN_URL" NO_COLOR=1 \
+            yarn vitest run --config vitest.rls.config.mts --reporter=verbose \
+              --reporter=json --outputFile.json=rls.json 2>&1 | tee rls.log
+          # Gate on the structured result, not on coloured console text.
+          node -e '
+            const r = require("./rls.json");
+            const s = { total: r.numTotalTests, passed: r.numPassedTests, failed: r.numFailedTests,
+              pending: r.numPendingTests, todo: r.numTodoTests };
+            console.log("rls gate:", JSON.stringify(s));
+            if (!s.total || s.passed !== s.total || s.failed || s.pending || s.todo) process.exit(1);
+          '
