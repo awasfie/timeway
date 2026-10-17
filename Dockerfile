@@ -80,11 +80,21 @@ ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
 
 RUN scripts/replace-placeholder.sh http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER ${NEXT_PUBLIC_WEBAPP_URL}
 
-FROM node:20 AS runner
+# IMGSCAN-A1 (WC-PE-7 step 4, CC-93): the runtime stage is the slim Debian 12 Node base, pinned by digest, so the
+# full node:20 image's -dev/headers packages (imagemagick, mariadb, linux-libc-dev) and toolchain never ship.
+# `apt-get upgrade` lands perl/gnutls on the security revisions published at build time. npm/npx are removed:
+# nothing at runtime calls them (start.sh and migrate.sh use the local node_modules/.bin), and npm's bundled tar
+# was a CRITICAL finding. openssl provides libssl3 for the Prisma engines; netcat for wait-for-it; wget for the
+# HEALTHCHECK.
+FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 AS runner
 
 WORKDIR /calcom
 
-RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd wget && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+  && apt-get upgrade -y \
+  && apt-get install -y --no-install-recommends netcat-openbsd wget openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 COPY --from=builder-two /calcom ./
 ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000

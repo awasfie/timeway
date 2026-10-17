@@ -27,7 +27,7 @@ run_prisma() {
   # $1 = URL, rest = prisma args. pipefail is not POSIX: keep Prisma's exit code via a status file.
   url="$1"; shift
   rcfile="$(mktemp)"
-  { DATABASE_URL="$url" DATABASE_DIRECT_URL="$url" npx prisma "$@" --schema "$schema" 2>&1; echo $? >"$rcfile"; } | redact
+  { DATABASE_URL="$url" DATABASE_DIRECT_URL="$url" /calcom/node_modules/.bin/prisma "$@" --schema "$schema" 2>&1; echo $? >"$rcfile"; } | redact
   rc="$(cat "$rcfile")"; rm -f "$rcfile"
   return "$rc"
 }

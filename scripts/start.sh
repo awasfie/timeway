@@ -15,5 +15,5 @@ if ! scripts/migrate.sh status; then
   exit 1
 fi
 
-npx ts-node --transpile-only /calcom/scripts/seed-app-store.ts
+/calcom/node_modules/.bin/ts-node --transpile-only /calcom/scripts/seed-app-store.ts
 yarn start
