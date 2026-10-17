@@ -311,6 +311,8 @@ describe("/api/webhooks/calendar-subscription/[provider]", () => {
         userFeatureRepository: expect.any(Object),
         calendarSyncService: expect.any(Object),
         calendarCacheEventService: expect.any(Object),
+        // TW-T9.2b3: per-calendar org scope (credential -> tw_resolve_org_for_credential)
+        twOrgScope: expect.objectContaining({ run: expect.any(Function) }),
       });
     });
   });
