@@ -14,6 +14,7 @@ import type { ITeamFeatureRepository } from "@calcom/features/flags/repositories
 import type { IUserFeatureRepository } from "@calcom/features/flags/repositories/PrismaUserFeatureRepository";
 import type { ISelectedCalendarRepository } from "@calcom/features/selectedCalendar/repositories/SelectedCalendarRepository.interface";
 import logger from "@calcom/lib/logger";
+import type { SelectedCalendarTwOrgScope } from "@calcom/lib/server/tw-org-scope/unattended";
 import type { SelectedCalendar } from "@calcom/prisma/client";
 import { metrics } from "@sentry/nextjs";
 
@@ -36,8 +37,23 @@ export class CalendarSubscriptionService {
       };
       calendarCacheEventService: CalendarCacheEventService;
       calendarSyncService: CalendarSyncService;
+      /** TW-T9.2b3: webhook work on a calendar runs in its credential's org; absent = unscoped (tests, crons). */
+      twOrgScope?: SelectedCalendarTwOrgScope;
     }
   ) {}
+
+  /** Runs calendar work in the calendar's org; false when the org is unknown (caller acks, does nothing). */
+  private async inCalendarOrg(
+    selectedCalendar: SelectedCalendar,
+    fn: () => Promise<unknown>
+  ): Promise<boolean> {
+    if (!this.deps.twOrgScope) {
+      await fn();
+      return true;
+    }
+    const outcome = await this.deps.twOrgScope.run(selectedCalendar, fn);
+    return outcome.ran;
+  }
 
   /**
    * Subscribe to a calendar
@@ -139,17 +155,25 @@ export class CalendarSubscriptionService {
         skipped++;
         continue;
       }
+      const lifecycleEvent = n.lifecycleEvent;
+      if (!["reauthorizationRequired", "subscriptionRemoved", "missed"].includes(lifecycleEvent)) {
+        skipped++;
+        continue;
+      }
       try {
-        if (n.lifecycleEvent === "reauthorizationRequired") {
-          await this.subscribe(selectedCalendar.id);
-        } else if (n.lifecycleEvent === "subscriptionRemoved") {
-          await this.deps.selectedCalendarRepository.updateSubscription(selectedCalendar.id, {
-            channelExpiration: null,
-          });
-          await this.subscribe(selectedCalendar.id);
-        } else if (n.lifecycleEvent === "missed") {
-          await this.processEvents(selectedCalendar);
-        } else {
+        const ran = await this.inCalendarOrg(selectedCalendar, async () => {
+          if (lifecycleEvent === "reauthorizationRequired") {
+            await this.subscribe(selectedCalendar.id);
+          } else if (lifecycleEvent === "subscriptionRemoved") {
+            await this.deps.selectedCalendarRepository.updateSubscription(selectedCalendar.id, {
+              channelExpiration: null,
+            });
+            await this.subscribe(selectedCalendar.id);
+          } else {
+            await this.processEvents(selectedCalendar);
+          }
+        });
+        if (!ran) {
           skipped++;
           continue;
         }
@@ -244,7 +268,16 @@ export class CalendarSubscriptionService {
         return null;
       }
 
-      const eventsProcessed = await this.processEvents(selectedCalendar);
+      let eventsProcessed: Awaited<ReturnType<CalendarSubscriptionService["processEvents"]>> | undefined;
+      const ran = await this.inCalendarOrg(selectedCalendar, async () => {
+        eventsProcessed = await this.processEvents(selectedCalendar);
+      });
+      if (!ran || !eventsProcessed) {
+        metrics.count("calendar.subscription.webhook.skipped", 1, {
+          attributes: { provider, reason: "org_unresolved" },
+        });
+        return null;
+      }
 
       const durationMs = performance.now() - startTime;
 

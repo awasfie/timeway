@@ -346,6 +346,51 @@ describe("CalendarSubscriptionService", () => {
 
       expect(_result).toBeNull();
     });
+
+    test("TW-T9.2b3: processes the calendar inside its org scope", async () => {
+      const twOrgScope = {
+        run: vi.fn(async (_sc: unknown, fn: () => unknown) => ({ ran: true as const, value: await fn() })),
+      };
+      const scoped = new CalendarSubscriptionService({
+        adapterFactory: mockAdapterFactory,
+        selectedCalendarRepository: mockSelectedCalendarRepository,
+        featureRepository: mockFeatureRepository,
+        teamFeatureRepository: mockTeamFeatureRepository,
+        userFeatureRepository: mockUserFeatureRepository,
+        calendarCacheEventService: mockCalendarCacheEventService,
+        calendarSyncService: mockCalendarSyncService,
+        twOrgScope,
+      });
+      const processEvents = vi.spyOn(scoped, "processEvents");
+
+      await scoped.processWebhook("google_calendar", new Request("http://example.com"));
+
+      expect(twOrgScope.run).toHaveBeenCalledWith(mockSelectedCalendar, expect.any(Function));
+      expect(processEvents).toHaveBeenCalledWith(mockSelectedCalendar);
+    });
+
+    test("TW-T9.2b3: unresolved org acks with no work (returns null, no throw)", async () => {
+      const twOrgScope = {
+        run: vi.fn(async () => ({ ran: false as const, reason: "org-unresolved" as const })),
+      };
+      const scoped = new CalendarSubscriptionService({
+        adapterFactory: mockAdapterFactory,
+        selectedCalendarRepository: mockSelectedCalendarRepository,
+        featureRepository: mockFeatureRepository,
+        teamFeatureRepository: mockTeamFeatureRepository,
+        userFeatureRepository: mockUserFeatureRepository,
+        calendarCacheEventService: mockCalendarCacheEventService,
+        calendarSyncService: mockCalendarSyncService,
+        twOrgScope,
+      });
+      const processEvents = vi.spyOn(scoped, "processEvents");
+
+      await expect(
+        scoped.processWebhook("google_calendar", new Request("http://example.com"))
+      ).resolves.toBeNull();
+      expect(processEvents).not.toHaveBeenCalled();
+      expect(mockAdapter.fetchEvents).not.toHaveBeenCalled();
+    });
   });
 
   describe("processEvents", () => {

@@ -2,6 +2,7 @@ import { defaultResponderForAppDir } from "app/api/defaultResponderForAppDir";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import dayjs from "@calcom/dayjs";
 import { ScheduleRepository } from "@calcom/features/schedules/repositories/ScheduleRepository";
 import prisma from "@calcom/prisma";
@@ -170,4 +171,5 @@ async function postHandler(request: NextRequest) {
   return NextResponse.json({ timeZonesChanged });
 }
 
-export const POST = defaultResponderForAppDir(postHandler);
+// TW-T9.2b3: cross-org job, platform scope "changeTimeZone".
+export const POST = defaultResponderForAppDir(withTwPlatformJob("changeTimeZone", postHandler));
