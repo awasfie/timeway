@@ -48,6 +48,12 @@ jobs:
           if grep -E '^(DATABASE_URL|DATABASE_DIRECT_URL|TIMEWAY_MIGRATE_DATABASE_URL)$' env-names.txt; then
             echo "FAIL: database URL baked into the image"; exit 1
           fi
+      - name: 1b) runtime image has no npm, no -dev packages, 0 CRITICAL with fix (IMGSCAN-A1, CC-93)
+        run: |
+          docker run --rm --entrypoint sh "$IMG" -c 'for b in npm npx; do if command -v $b; then echo "FAIL: $b in runtime"; exit 1; fi; done; dpkg-query -W -f="\${Package}\n" | grep -E -- "-dev$|^imagemagick|^libmagick|^(gcc|g\+\+|cpp)(-[0-9]+)?$|^make$" && exit 1; echo "no npm, no -dev/toolchain packages"'
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa \
+            image --scanners vuln --severity CRITICAL --ignore-unfixed --exit-code 1 --no-progress "$IMG"
       - name: Throwaway Postgres with prod-shaped roles
         run: |
           docker network create "$NET"
