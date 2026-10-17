@@ -97,6 +97,10 @@ RUN apt-get update \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 COPY --from=builder-two /calcom ./
+# Build-time Go binaries (esbuild via vite/tsx/trigger.dev, depot CLI) are never executed by the app; they carried
+# the Go-stdlib/moby CRITICALs that ignore.trivyignore.yaml listed with "prune is the fix".
+RUN rm -rf node_modules/@depot node_modules/@esbuild/linux-x64/bin/esbuild \
+  node_modules/trigger.dev/node_modules/@esbuild/linux-x64/bin/esbuild
 ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
   BUILT_NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL
