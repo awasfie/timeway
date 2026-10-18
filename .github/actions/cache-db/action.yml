@@ -42,12 +42,12 @@ runs:
         mkdir -p $(dirname "${{ inputs.path }}")
         docker run --rm --network host \
           -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} \
-          postgres:18 pg_dump "${{ inputs.DATABASE_URL }}" -O -f ${{ inputs.path }}
+          postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336 pg_dump "${{ inputs.DATABASE_URL }}" -O -f ${{ inputs.path }}
       shell: bash
     - name: Postgres Backup Restore
       if: steps.cache-db.outputs.cache-hit == 'true'
       run: |
         docker run --rm -i --network host \
           -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} \
-          postgres:18 psql "${{ inputs.DATABASE_URL }}" -f ${{ inputs.path }}
+          postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336 psql "${{ inputs.DATABASE_URL }}" -f ${{ inputs.path }}
       shell: bash
