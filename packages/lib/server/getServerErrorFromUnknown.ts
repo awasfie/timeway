@@ -1,10 +1,8 @@
-import type { ZodIssue } from "zod";
-import { ZodError } from "zod";
-
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
 import { Prisma } from "@calcom/prisma/client";
-
+import type { ZodIssue } from "zod";
+import { ZodError } from "zod";
 import { HttpError } from "../http-error";
 import { redactError } from "../redactError";
 import { stripeInvalidRequestErrorSchema } from "../stripe-error";
@@ -171,6 +169,12 @@ export function getHttpStatusCode(cause: Error | ErrorWithCode): number {
     case ErrorCode.BookingNotFound:
     case ErrorCode.RestrictionScheduleNotFound:
       return 404;
+    // 422 Unprocessable Content
+    case ErrorCode.ResidencyCellRequired:
+    case ErrorCode.ResidencyCellUnknown:
+    case ErrorCode.ResidencyCellNotActive:
+    case ErrorCode.ResidencyCellMismatch:
+      return 422;
     case ErrorCode.UnableToSubscribeToThePlatform:
     case ErrorCode.UpdatingOauthClientError:
     case ErrorCode.CreatingOauthClientError:

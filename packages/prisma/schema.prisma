@@ -652,6 +652,11 @@ model Team {
 
   autoOptInFeatures Boolean @default(false)
 
+  // WC-31 clinic-tenant residency (uae-cell.md section 7); guarded by packages/features/residency.
+  vertical      String?
+  handlesPhi    Boolean?
+  residencyCell String?
+
   // Monthly proration tracking
   seatChangeLogs    SeatChangeLog[]
   monthlyProrations MonthlyProration[]
