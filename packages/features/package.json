@@ -22,6 +22,7 @@
     "@calcom/ui": "workspace:*",
     "@coss/ui": "workspace:*",
     "@evyweb/ioctopus": "1.2.0",
+    "@family/residency": "file:vendor/family-residency-0.1.0.tgz",
     "@family/webhooks": "file:vendor/family-webhooks-0.1.0.tgz",
     "@tanstack/react-table": "8.20.6",
     "@tanstack/react-virtual": "3.10.9",

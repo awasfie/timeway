@@ -206,9 +206,9 @@ export default defineConfig({
     },
   },
   plugins: [react(), dts()],
-  // @family/webhooks is ESM-only; inlining it keeps this CommonJS bundle loadable on api-v2's node:20 image.
+  // @family/* packages are ESM-only; inlining them keeps this CommonJS bundle loadable on api-v2's node:20 image.
   ssr: {
-    noExternal: ["@family/webhooks"],
+    noExternal: ["@family/webhooks", "@family/residency"],
   },
   resolve: {
     conditions: ["node", "import", "require", "default"],

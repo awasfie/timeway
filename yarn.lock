@@ -2519,6 +2519,7 @@ __metadata:
     "@calcom/ui": "workspace:*"
     "@coss/ui": "workspace:*"
     "@evyweb/ioctopus": "npm:1.2.0"
+    "@family/residency": "file:vendor/family-residency-0.1.0.tgz"
     "@family/webhooks": "file:vendor/family-webhooks-0.1.0.tgz"
     "@tanstack/react-table": "npm:8.20.6"
     "@tanstack/react-virtual": "npm:3.10.9"
@@ -4813,6 +4814,13 @@ __metadata:
   version: 8.4.1
   resolution: "@faker-js/faker@npm:8.4.1"
   checksum: 10/5983c2ea64f26055ad6648de748878e11ebe2fb751e3c7435ae141cdffabc2dccfe4c4f49da69a3d2add71e21b415c683ac5fba196fab0d5ed6779fbec436c80
+  languageName: node
+  linkType: hard
+
+"@family/residency@file:vendor/family-residency-0.1.0.tgz::locator=%40calcom%2Ffeatures%40workspace%3Apackages%2Ffeatures":
+  version: 0.1.0
+  resolution: "@family/residency@file:vendor/family-residency-0.1.0.tgz#vendor/family-residency-0.1.0.tgz::hash=37ca14&locator=%40calcom%2Ffeatures%40workspace%3Apackages%2Ffeatures"
+  checksum: 10/8b174275b1109573389c890c8645f07de9326a39eaa4c261c87d1393ec407e8015ca6a673033361a9b41b31303da450d33b1a1f9f2b39c1a722c5718dd2db13c
   languageName: node
   linkType: hard
 

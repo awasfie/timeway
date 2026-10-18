@@ -41,4 +41,9 @@ export enum ErrorCode {
   BookerEmailRequiresLogin = "booker_email_requires_login",
   InvalidVerificationCode = "invalid_verification_code",
   UnableToValidateVerificationCode = "unable_to_validate_verification_code",
+  // WC-31 clinic-tenant residency refusals; values are the @family/residency codes verbatim.
+  ResidencyCellRequired = "residency_cell_required",
+  ResidencyCellUnknown = "residency_cell_unknown",
+  ResidencyCellNotActive = "residency_cell_not_active",
+  ResidencyCellMismatch = "residency_cell_mismatch",
 }
