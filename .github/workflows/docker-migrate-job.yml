@@ -57,7 +57,7 @@ jobs:
       - name: Throwaway Postgres with prod-shaped roles
         run: |
           docker network create "$NET"
-          docker run -d --name tw-db --network "$NET" -e POSTGRES_PASSWORD=postgres postgres:16
+          docker run -d --name tw-db --network "$NET" -e POSTGRES_PASSWORD=postgres postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
           for i in $(seq 1 60); do docker exec tw-db pg_isready -U postgres -q && break; sleep 1; done
           sleep 2
           P="docker exec -i tw-db psql -U postgres -v ON_ERROR_STOP=1 -X"
