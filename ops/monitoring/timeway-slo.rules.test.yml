@@ -41,6 +41,7 @@ tests:
         alertname: TimewayBurnRateTicket
         exp_alerts:
           - exp_labels: { severity: ticket, slo: timeway-availability-99.5, product: timeway, instance: timeway }
+            exp_annotations: { summary: "timeway: error budget burning >= 1x over 6 h (6h=0.9722%)" }
   # Exporter gone: ProbeMissing pages after 10 min.
   - interval: 30s
     input_series:
@@ -50,5 +51,5 @@ tests:
       - eval_time: 15m
         alertname: TimewayProbeMissing
         exp_alerts:
-          - exp_labels: { severity: page, instance: timeway, product: timeway }
+          - exp_labels: { severity: page, instance: timeway, product: timeway, job: timeway-blackbox }
             exp_annotations: { summary: "timeway: no blackbox probe data for 10m (g3-blackbox-timeway down or scrape job gone) - monitoring is blind" }
