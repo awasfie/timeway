@@ -1,0 +1,35 @@
+# R1-TW-MONITORING (t_1ee20514): Timeway availability SLO 99.5 % (error budget 0.005), Bible WC-30 WC-PE-4 step 4 shape:
+# multi-window burn rate, 5x over 1 h pages, 1x over 6 h opens a ticket. SLI = share of failed blackbox probes,
+# averaged over the probes of one product. Delivery: g3-alerts-poller promRuleAlerts() forwards severity=page|ticket
+# to n8n "G3 - Generic Alert -> Telegram" (Spenai Alerts group on Ahmed's phone). Rules are `by (product)`, so the
+# drill product `timeway-drill` exercises the same expressions without touching Timeway.
+groups:
+  - name: timeway-slo-recording
+    interval: 30s
+    rules:
+      - record: product:probe_error:ratio_rate5m
+        expr: label_replace(1 - avg by (product) (avg_over_time(probe_success{job="timeway-blackbox"}[5m])), "instance", "$1", "product", "(.*)")
+      - record: product:probe_error:ratio_rate30m
+        expr: label_replace(1 - avg by (product) (avg_over_time(probe_success{job="timeway-blackbox"}[30m])), "instance", "$1", "product", "(.*)")
+      - record: product:probe_error:ratio_rate1h
+        expr: label_replace(1 - avg by (product) (avg_over_time(probe_success{job="timeway-blackbox"}[1h])), "instance", "$1", "product", "(.*)")
+      - record: product:probe_error:ratio_rate6h
+        expr: label_replace(1 - avg by (product) (avg_over_time(probe_success{job="timeway-blackbox"}[6h])), "instance", "$1", "product", "(.*)")
+
+  - name: timeway-slo-alerts
+    rules:
+      - alert: TimewayBurnRatePage
+        expr: product:probe_error:ratio_rate1h > (5 * 0.005) and product:probe_error:ratio_rate5m > (5 * 0.005)
+        for: 2m
+        labels: { severity: page, slo: timeway-availability-99.5 }
+        annotations: { summary: "{{ $labels.product }}: error budget burning >= 5x over 1 h (1h={{ $value | humanizePercentage }}) - check https://timeway.co/api/version and https://status.spenai.net" }
+      - alert: TimewayBurnRateTicket
+        expr: product:probe_error:ratio_rate6h > (1 * 0.005) and product:probe_error:ratio_rate30m > (1 * 0.005)
+        for: 15m
+        labels: { severity: ticket, slo: timeway-availability-99.5 }
+        annotations: { summary: "{{ $labels.product }}: error budget burning >= 1x over 6 h (6h={{ $value | humanizePercentage }})" }
+      - alert: TimewayProbeMissing
+        expr: absent(probe_success{job="timeway-blackbox", product="timeway"})
+        for: 10m
+        labels: { severity: page, instance: timeway, product: timeway }
+        annotations: { summary: "timeway: no blackbox probe data for 10m (g3-blackbox-timeway down or scrape job gone) - monitoring is blind" }
