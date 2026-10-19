@@ -1,6 +1,7 @@
 import process from "node:process";
 import dayjs from "@calcom/dayjs";
 import { BookingRepository } from "@calcom/features/bookings/repositories/BookingRepository";
+import { enqueuePlatformFeeUsage } from "@calcom/features/payments/gateway/platformFee";
 import tasker from "@calcom/features/tasker";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
@@ -342,6 +343,9 @@ class StripePaymentService implements IAbstractPaymentService {
       if (!paymentData) {
         throw new Error();
       }
+
+      // HOLD capture marks the payment paid here, outside handlePaymentSuccess (WC-TW-13e).
+      await enqueuePlatformFeeUsage({ paymentId: paymentData.id, kind: "charge" });
 
       return paymentData;
     } catch (error) {
