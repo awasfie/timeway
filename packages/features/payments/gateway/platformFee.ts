@@ -184,12 +184,6 @@ export async function enqueuePlatformFeeUsage(
   }
 }
 
-/** Retry delay after `attempts` failed sends: 2, 4, 8 ... minutes, capped at 6 h (12 tries < 35 days). */
-export function platformFeeBackoffMins(attempts: number): number {
-  const n = Math.max(1, attempts);
-  return Math.min(2 ** n, 360);
-}
-
 export type PassportUsageResponse = { status: number; body: unknown };
 
 export type SendDeps = {
@@ -255,7 +249,7 @@ export function toPassportUsageBody(payload: PlatformFeeUsagePayload, passportOr
 }
 
 /**
- * Task handler. Throwing makes TaskProcessor retry with platformFeeBackoffMins; returning marks the
+ * Task handler. Throwing makes TaskProcessor retry on the tasksConfig backoff; returning marks the
  * line sent. 2xx is sent; everything else (5xx, 4xx, network, org not linked yet) retries so the line
  * stays visible in the Task table until it lands or exhausts its attempts.
  */
