@@ -1,5 +1,13 @@
 import type { PrismaClient } from "@calcom/prisma";
-import { withTwOrg, withTwPlatform } from "@calcom/prisma/tw-org-context";
+import type { Prisma } from "@calcom/prisma/client";
+import { withTwOrg as withTwOrgRaw, withTwPlatform as withTwPlatformRaw } from "@calcom/prisma/tw-org-context";
+
+type Tx = Prisma.TransactionClient;
+
+const withTwOrg = <R>(prisma: PrismaClient, orgId: string, fn: (tx: Tx) => Promise<R>) =>
+  withTwOrgRaw<Tx, R>(prisma, orgId, fn);
+const withTwPlatform = <R>(prisma: PrismaClient, reason: string, fn: (tx: Tx) => Promise<R>) =>
+  withTwPlatformRaw<Tx, R>(prisma, reason, fn);
 
 export type CustomHostnameStatus = "pending_dns" | "active" | "failed";
 
