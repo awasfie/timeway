@@ -2874,6 +2874,7 @@
   "add_times_to_your_email": "Select a few available times and embed them in your email",
   "select_time": "Select time",
   "select_date": "Select date",
+  "show_hijri_dates": "Show Hijri dates",
   "only_show_if_parameter_set": "Only show if a parameter is set",
   "add_parameter": "Add parameter",
   "connecting_you_to_someone": "We are connecting you to someone from {{orgName}}.",

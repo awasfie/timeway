@@ -2854,6 +2854,7 @@
   "add_times_to_your_email": "حدّد بعض الفترات المتاحة وأدرجها في رسالتك الإلكترونية",
   "select_time": "اختيار الوقت",
   "select_date": "اختيار التاريخ",
+  "show_hijri_dates": "إظهار التاريخ الهجري",
   "only_show_if_parameter_set": "إظهار فقط في حالة تعيين المعامل",
   "add_parameter": "إضافة معامل",
   "connecting_you_to_someone": "نقوم بربطك بشخص من {{orgName}}.",
