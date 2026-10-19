@@ -12,11 +12,10 @@ import prisma, { bookingMinimalSelect } from "@calcom/prisma";
 import { BookingStatus, ReminderType } from "@calcom/prisma/enums";
 import type { EventTypeMetadata } from "@calcom/prisma/zod-utils";
 import type { CalendarEvent } from "@calcom/types/Calendar";
+import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 
 async function postHandler(request: NextRequest) {
-  const apiKey = request.headers.get("authorization") || request.nextUrl.searchParams.get("apiKey");
-
-  if (process.env.CRON_API_KEY !== apiKey) {
+  if (!isCronAuthorized(request, { allowBearerSecret: false })) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
   }
 

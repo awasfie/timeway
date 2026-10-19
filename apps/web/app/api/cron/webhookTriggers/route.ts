@@ -4,11 +4,10 @@ import { NextResponse } from "next/server";
 
 import { handleWebhookScheduledTriggers } from "@calcom/features/webhooks/lib/handleWebhookScheduledTriggers";
 import prisma from "@calcom/prisma";
+import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 
 async function postHandler(req: NextRequest) {
-  const apiKey = req.headers.get("authorization") || req.nextUrl.searchParams.get("apiKey");
-
-  if (process.env.CRON_API_KEY !== apiKey) {
+  if (!isCronAuthorized(req, { allowBearerSecret: false })) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
   }
 
