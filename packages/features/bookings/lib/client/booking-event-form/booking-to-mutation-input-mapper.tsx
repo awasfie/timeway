@@ -1,9 +1,9 @@
-import { v4 as uuidv4 } from "uuid";
-
 import dayjs from "@calcom/dayjs";
+import { getSlotReservationId } from "@calcom/features/bookings/Booker/useSlotReservationId";
 import { isBookingDryRun } from "@calcom/features/bookings/Booker/utils/isBookingDryRun";
 import { getRoutedTeamMemberIdsFromSearchParams } from "@calcom/lib/bookings/getRoutedTeamMemberIdsFromSearchParams";
 import { parseRecurringDates } from "@calcom/lib/parse-dates";
+import { v4 as uuidv4 } from "uuid";
 import type { BookerEvent, BookingCreateBody, RecurringBookingCreateBody } from "../../../types";
 import type { Tracking } from "../../handleNewBooking/types";
 
@@ -91,6 +91,8 @@ export const mapBookingToMutationInput = ({
     _isDryRun,
     dub_id,
     verificationCode,
+    // WC-TW-3: lets the server tell the booker's own 5-minute hold apart from someone else's.
+    reservedSlotUid: getSlotReservationId() ?? undefined,
   };
 };
 

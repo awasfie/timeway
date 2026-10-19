@@ -164,6 +164,8 @@ export function getHttpStatusCode(cause: Error | ErrorWithCode): number {
     case ErrorCode.BookingConflict:
     case ErrorCode.PaymentCreationFailure:
       return 409;
+    case ErrorCode.CalendarWriteFailed:
+      return 502;
     // 404 Not Found
     case ErrorCode.EventTypeNotFound:
     case ErrorCode.BookingNotFound:

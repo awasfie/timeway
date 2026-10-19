@@ -30,6 +30,8 @@ export enum ErrorCode {
   CreatingOauthClientError = "creating_oauth_client_error",
   BookingTimeOutOfBounds = "booking_time_out_of_bounds_error",
   BookingConflict = "booking_conflict_error",
+  // WC-TW-3: the host calendar rejected the event, so the booking was rolled back
+  CalendarWriteFailed = "booking_calendar_write_failed_error",
   BookerLimitExceeded = "booker_limit_exceeded_error",
   BookerLimitExceededReschedule = "booker_limit_exceeded_error_reschedule",
   BookingNotAllowedByRestrictionSchedule = "booking_not_allowed_by_restriction_schedule_error",

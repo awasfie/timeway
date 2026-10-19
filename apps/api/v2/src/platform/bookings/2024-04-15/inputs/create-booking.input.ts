@@ -11,6 +11,7 @@ import {
   IsString,
   IsTimeZone,
   isEmail,
+  MaxLength,
   registerDecorator,
   Validate,
   ValidateNested,
@@ -159,6 +160,17 @@ export class CreateBookingInput_2024_04_15 {
   @IsOptional()
   @ApiPropertyOptional()
   seatReferenceUid?: string;
+
+  // WC-TW-3: the booker's own slot hold must not block their booking. Cross-origin atoms cannot rely on
+  // the `uid` cookie set by /slots/reserve, so the hold uid travels in the body.
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  @ApiPropertyOptional({
+    description:
+      "uid returned by /v2/slots/reserve for this slot, so the caller's own hold does not block it.",
+  })
+  reservedSlotUid?: string;
 
   @ApiProperty({ type: Response })
   @ValidateNested()
