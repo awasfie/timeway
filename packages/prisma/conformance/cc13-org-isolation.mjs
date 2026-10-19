@@ -31,7 +31,7 @@ if (!["localhost", "127.0.0.1", "postgres"].includes(host)) {
 
 const ROLE = "cc13_probe";
 const PW = "cc13_probe_pw";
-const TABLES = ["tw_organization", "tw_organization_member", "tw_org_api_key"];
+const TABLES = ["tw_organization", "tw_organization_member", "tw_org_api_key", "tw_custom_hostname"];
 const results = [];
 const check = (name, ok, detail = "") => {
   results.push({ name, ok });
@@ -89,6 +89,7 @@ const orgA = orgs.find((o) => o.slug === "cc13-a").id;
 const orgB = orgs.find((o) => o.slug === "cc13-b").id;
 await app.query(`insert into tw_organization_member (id,"orgId","userId",role) values (gen_random_uuid(),$1,$2,'owner'),(gen_random_uuid(),$3,$4,'owner')`, [orgA, userA, orgB, userB]);
 await app.query(`insert into tw_org_api_key (id,"orgId",prefix,"hashedKey",scopes) values (gen_random_uuid(),$1,'cc13a_','h',ARRAY['*']),(gen_random_uuid(),$2,'cc13b_','h',ARRAY['*'])`, [orgA, orgB]);
+await app.query(`insert into tw_custom_hostname (id,"orgId",hostname,"updatedAt") values (gen_random_uuid(),$1,'book.cc13-a.invalid',now()),(gen_random_uuid(),$2,'book.cc13-b.invalid',now())`, [orgA, orgB]);
 await app.query("commit");
 
 // 1. No context at all -> zero rows everywhere (fail-closed).
@@ -118,10 +119,13 @@ await tx({ "app.tw_org_id": orgA }, async () => {
   check("S3 A delete B api keys -> 0 rows", del.rowCount === 0);
   const upm = await app.query(`update tw_organization_member set role='member' where "orgId"=$1`, [orgB]);
   check("S3 A demote B owner -> 0 rows", upm.rowCount === 0);
+  const delh = await app.query(`delete from tw_custom_hostname where "orgId"=$1`, [orgB]);
+  check("S3 A delete B custom hostname -> 0 rows", delh.rowCount === 0);
 });
 for (const [name, sql, params] of [
   ["S3 A insert member into B -> denied", `insert into tw_organization_member (id,"orgId","userId",role) values (gen_random_uuid(),$1,$2,'admin')`, [orgB, userA]],
   ["S3 A mint key for B -> denied", `insert into tw_org_api_key (id,"orgId",prefix,"hashedKey",scopes) values (gen_random_uuid(),$1,'cc13x_','h',ARRAY['*'])`, [orgB]],
+  ["S3 A claim hostname for B -> denied", `insert into tw_custom_hostname (id,"orgId",hostname,"updatedAt") values (gen_random_uuid(),$1,'x.cc13-b.invalid',now())`, [orgB]],
   ["S3 A move own member to B -> denied", `update tw_organization_member set "orgId"=$1 where "orgId"=$2`, [orgB, orgA]],
 ]) {
   let denied = false;
