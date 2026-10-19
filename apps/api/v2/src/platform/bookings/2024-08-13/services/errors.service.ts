@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { Logger } from "@nestjs/common";
 
 import { CreateBookingInput } from "@calcom/platform-types";
@@ -48,6 +48,11 @@ export class ErrorsBookingsService_2024_08_13 {
         throw new BadRequestException("Attempting to book a meeting in the past.");
       } else if (error.message === "hosts_unavailable_for_booking") {
         throw new BadRequestException(hostsUnavaile);
+      } else if (error.message === "booking_conflict_error") {
+        // WC-TW-3: someone else holds this slot (POST /v2/slots/reservations); pass reservedSlotUid if it is yours.
+        throw new ConflictException(
+          "booking_conflict_error: this slot is reserved by someone else. If you reserved it, pass its reservationUid as reservedSlotUid."
+        );
       } else if (error.message === "booker_limit_exceeded_error") {
         throw new BadRequestException(
           "Attendee with this email can't book because the maximum number of active bookings has been reached."

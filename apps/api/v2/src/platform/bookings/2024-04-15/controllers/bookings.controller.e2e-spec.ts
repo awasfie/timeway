@@ -10,6 +10,7 @@ import request from "supertest";
 import { ApiKeysRepositoryFixture } from "test/fixtures/repository/api-keys.repository.fixture";
 import { BookingsRepositoryFixture } from "test/fixtures/repository/bookings.repository.fixture";
 import { EventTypesRepositoryFixture } from "test/fixtures/repository/event-types.repository.fixture";
+import { SelectedSlotRepositoryFixture } from "test/fixtures/repository/selected-slot.repository.fixture";
 import { UserRepositoryFixture } from "test/fixtures/repository/users.repository.fixture";
 import { randomString } from "test/utils/randomString";
 import { withApiAuth } from "test/utils/withApiAuth";
@@ -35,6 +36,7 @@ describe("Bookings Endpoints 2024-04-15", () => {
     let schedulesService: SchedulesService_2024_04_15;
     let eventTypesRepositoryFixture: EventTypesRepositoryFixture;
     let apiKeysRepositoryFixture: ApiKeysRepositoryFixture;
+    let selectedSlotRepositoryFixture: SelectedSlotRepositoryFixture;
     let apiKeyString: string;
 
     const userEmail = `bookings-2024-04-15-user-${randomString()}@api.com`;
@@ -63,6 +65,7 @@ describe("Bookings Endpoints 2024-04-15", () => {
       eventTypesRepositoryFixture = new EventTypesRepositoryFixture(moduleRef);
       schedulesService = moduleRef.get<SchedulesService_2024_04_15>(SchedulesService_2024_04_15);
       apiKeysRepositoryFixture = new ApiKeysRepositoryFixture(moduleRef);
+      selectedSlotRepositoryFixture = new SelectedSlotRepositoryFixture(moduleRef);
       user = await userRepositoryFixture.create({
         email: userEmail,
       });
@@ -504,6 +507,75 @@ describe("Bookings Endpoints 2024-04-15", () => {
             expect(booking.creationSource).toEqual("API_V2");
           });
         });
+    });
+
+    describe("WC-TW-3 binding slot hold", () => {
+      const reservedUids: string[] = [];
+
+      const bookingBody = (start: string, end: string, email: string): CreateBookingInput_2024_04_15 => ({
+        start,
+        end,
+        eventTypeId,
+        timeZone: "Europe/London",
+        language: "en",
+        metadata: {},
+        hashedLink: "",
+        responses: {
+          name: "Hold Tester",
+          email,
+          location: { value: "link", optionValue: "" },
+        },
+      });
+
+      const reserve = async (slotUtcStartDate: string, slotUtcEndDate: string): Promise<string> => {
+        const response = await request(app.getHttpServer())
+          .post("/v2/slots/reserve")
+          .send({ eventTypeId, slotUtcStartDate, slotUtcEndDate })
+          .expect(201);
+        const uid: string = response.body.data;
+        expect(uid).toBeDefined();
+        reservedUids.push(uid);
+        return uid;
+      };
+
+      afterAll(async () => {
+        for (const uid of reservedUids) {
+          await selectedSlotRepositoryFixture.deleteByUId(uid);
+        }
+      });
+
+      it("rejects a booking on a slot held by someone else, then lets the holder book it via body uid", async () => {
+        const start = "2040-07-02T09:30:00.000Z";
+        const end = "2040-07-02T10:30:00.000Z";
+        const uid = await reserve(start, end);
+
+        const conflict = await request(app.getHttpServer())
+          .post("/v2/bookings")
+          .send(bookingBody(start, end, "someone-else@example.com"))
+          .expect(409);
+        expect((conflict.body as ApiErrorResponse).error.message).toEqual("booking_conflict_error");
+
+        const response = await request(app.getHttpServer())
+          .post("/v2/bookings")
+          .send({ ...bookingBody(start, end, "holder@example.com"), reservedSlotUid: uid })
+          .expect(201);
+        const responseBody: ApiSuccessResponse<RegularBookingCreateResult> = response.body;
+        expect(responseBody.data.startTime).toEqual(start);
+      });
+
+      it("lets the holder book its own slot via the uid cookie set by /slots/reserve", async () => {
+        const start = "2040-07-02T10:30:00.000Z";
+        const end = "2040-07-02T11:30:00.000Z";
+        const uid = await reserve(start, end);
+
+        const response = await request(app.getHttpServer())
+          .post("/v2/bookings")
+          .set("Cookie", `uid=${uid}`)
+          .send(bookingBody(start, end, "holder@example.com"))
+          .expect(201);
+        const responseBody: ApiSuccessResponse<RegularBookingCreateResult> = response.body;
+        expect(responseBody.data.startTime).toEqual(start);
+      });
     });
 
     describe("event type booking requires authentication", () => {
