@@ -2,6 +2,7 @@ import { defaultResponderForAppDir } from "app/api/defaultResponderForAppDir";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import { getAppWithMetadata } from "@calcom/app-store/_appRegistry";
 import { shouldEnableApp } from "@calcom/app-store/_utils/validateAppKeys";
 import logger from "@calcom/lib/logger";
@@ -76,4 +77,5 @@ async function postHandler(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-export const POST = defaultResponderForAppDir(postHandler);
+// TW-T9.2b3: cross-org job, platform scope "syncAppMeta".
+export const POST = defaultResponderForAppDir(withTwPlatformJob("syncAppMeta", postHandler));
