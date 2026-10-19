@@ -2900,6 +2900,12 @@ enum OrganizationMemberRole {
   member
 }
 
+/// WC-TW-14a (E5): who pays for an org's usage — itself, or its parent (agency) org.
+enum TwBillingAttribution {
+  self
+  parent
+}
+
 model Organization {
   id           String                   @id @default(uuid()) @db.Uuid
   slug         String                   @unique
@@ -2913,9 +2919,20 @@ model Organization {
   createdAt    DateTime                 @default(now())
   updatedAt    DateTime                 @updatedAt
 
+  /// WC-TW-14a (E1/E2): agency parent; one level only (service-enforced). RESTRICT: a parent with sub-orgs cannot be deleted.
+  parentOrgId        String?              @db.Uuid
+  parentOrg          Organization?        @relation("TwSubOrganizations", fields: [parentOrgId], references: [id], onDelete: Restrict)
+  subOrgs            Organization[]       @relation("TwSubOrganizations")
+  /// WC-TW-14a (E4): remove Timeway branding; settable only when entitled (canHideBranding).
+  hideBranding       Boolean              @default(false)
+  billingAttribution TwBillingAttribution @default(self)
+  /// WC-TW-14a (E7): developer sandbox; emits no usage lines (nor do its sub-orgs).
+  isSandbox          Boolean              @default(false)
+
   members OrganizationMember[]
   apiKeys OrgApiKey[]
 
+  @@index([parentOrgId])
   @@map("tw_organization")
 }
 
@@ -2926,6 +2943,8 @@ model OrganizationMember {
   userId    Int
   user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      OrganizationMemberRole @default(member)
+  /// WC-TW-14a (E2): true only for users created through the org API for an integrator (managed-user meter, 14c).
+  managed   Boolean                @default(false)
   createdAt DateTime               @default(now())
 
   @@unique([orgId, userId])
