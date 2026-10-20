@@ -89,6 +89,27 @@ describe("TW-T9.2b5 e2e smoke as timeway_app with FORCE RLS (6 flows)", () => {
       )
     ).rows as { id: number; uid: string; status: string; twOrgId: string | null; eventTypeId: number }[];
 
+  /**
+   * B's side of a booking flow, keyed by what a cross-org write would carry rather than by
+   * the booking's userId: any Booking on B's two event types or stamped with B's org. A row
+   * written under A's scope with userId = A and eventTypeId = B's would show here.
+   */
+  const bookingsTouchingB = async () =>
+    (
+      await admin.query(
+        `select id, uid, status, "userId", "twOrgId", "eventTypeId" from "Booking"
+          where "eventTypeId" = any($1) or "twOrgId" = $2 order by id`,
+        [[seed.B.userEventTypeId, seed.B.teamEventTypeId], seed.B.org]
+      )
+    ).rows as {
+      id: number;
+      uid: string;
+      status: string;
+      userId: number | null;
+      twOrgId: string | null;
+      eventTypeId: number | null;
+    }[];
+
   beforeAll(async () => {
     expect(ADMIN_URL, "RLS_ADMIN_DATABASE_URL must be set; this suite is never skipped").toBeTruthy();
     expect(process.env.DATABASE_POOL_MAX).toBe("1");
@@ -328,26 +349,33 @@ describe("TW-T9.2b5 e2e smoke as timeway_app with FORCE RLS (6 flows)", () => {
   };
 
   it("(3) public user booking: POST /api/book/event with user = A's username books into A", async () => {
-    const before = await bookingsOf(seed.B.userId);
+    const before = await bookingsTouchingB();
+    expect(before.map((b) => b.uid)).toEqual([seed.B.bookingUid]);
     const r = await book(seed.A.username, seed.A.userEventTypeId, "smoke-30", 9);
     expect(r.status, JSON.stringify(r.body).slice(0, 600)).toBe(200);
     const rows = await bookingsOf(seed.A.userId);
     const made = rows.find((b) => b.uid === r.body.uid);
     expect(made).toMatchObject({ twOrgId: seed.A.org, eventTypeId: seed.A.userEventTypeId });
-    expect(await bookingsOf(seed.B.userId)).toEqual(before);
-    // B's event type id under A's username: resolved to A, B's row is invisible -> no booking.
+    expect(await bookingsTouchingB()).toEqual(before);
+    // B's event type id under A's username: the org resolves to A (so not the resolver's
+    // "Not found"), and under FORCE RLS getEventTypesFromDB's findUniqueOrThrow sees no row:
+    // Prisma P2025 -> 404. With isolation removed the event type loads and this goes red.
+    const aBefore = (await bookingsOf(seed.A.userId)).length;
     const cross = await book(seed.A.username, seed.B.userEventTypeId, "smoke-30", 10);
-    expect(cross.status).not.toBe(200);
-    expect(await bookingsOf(seed.B.userId)).toEqual(before);
+    const crossText = JSON.stringify(cross.body).slice(0, 600);
+    expect(cross.status, crossText).toBe(404);
+    expect((cross.body as { message?: string }).message, crossText).toMatch(/No record was found/);
+    expect(await bookingsTouchingB()).toEqual(before);
+    expect((await bookingsOf(seed.A.userId)).length).toBe(aBefore);
   });
 
   it("(4) public team booking: the same handler with A's team slug books into A", async () => {
-    const before = await bookingsOf(seed.B.userId);
+    const before = await bookingsTouchingB();
     const r = await book(seed.A.teamSlug, seed.A.teamEventTypeId, "smoke-team-30", 11);
     expect(r.status, JSON.stringify(r.body).slice(0, 600)).toBe(200);
     const made = (await bookingsOf(seed.A.userId)).find((b) => b.uid === r.body.uid);
     expect(made).toMatchObject({ twOrgId: seed.A.org, eventTypeId: seed.A.teamEventTypeId });
-    expect(await bookingsOf(seed.B.userId)).toEqual(before);
+    expect(await bookingsTouchingB()).toEqual(before);
   });
 
   it("(5) cancel by uid: /api/cancel cancels A's booking in A; B's booking is untouched", async () => {
