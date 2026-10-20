@@ -1938,9 +1938,15 @@ export class BookingRepository implements IBookingRepository {
       tx,
     } = params;
     const client = tx ?? this.prismaClient;
+    // TW-ORGID-INS: the new row takes the target event type's org.
+    const targetEventType = await client.eventType.findUnique({
+      where: { id: eventTypeId },
+      select: { twOrgId: true },
+    });
     return client.booking.create({
       data: {
         uid,
+        twOrgId: targetEventType?.twOrgId ?? null,
         userPrimaryEmail,
         title,
         description,

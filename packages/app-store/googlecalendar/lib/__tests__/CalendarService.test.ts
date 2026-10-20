@@ -868,6 +868,106 @@ describe("createEvent", () => {
 
     log.info("createEvent with hangoutLink patch test passed");
   });
+
+  describe("post-insert hangoutLink PATCH failures (TW-GCAL-RL)", () => {
+    const mockHangoutLink = "https://meet.google.com/rl-test-abc";
+    const insertedEvent = {
+      id: "inserted-event-id",
+      iCalUID: "inserted-event-id@google.com",
+      summary: "Rate limited meeting",
+      start: { dateTime: "2024-06-15T10:00:00Z", timeZone: "UTC" },
+      end: { dateTime: "2024-06-15T11:00:00Z", timeZone: "UTC" },
+      hangoutLink: mockHangoutLink,
+    };
+    const calEvent = {
+      type: "test-event-type",
+      uid: "cal-event-uid-rl",
+      title: "Rate limited meeting",
+      startTime: "2024-06-15T10:00:00Z",
+      endTime: "2024-06-15T11:00:00Z",
+      organizer: {
+        id: 1,
+        name: "Test Organizer",
+        email: "organizer@example.com",
+        timeZone: "UTC",
+        language: { translate: (...args: any[]) => args[0], locale: "en" },
+      },
+      attendees: [],
+      location: "Test Location",
+      calendarDescription: "desc",
+    };
+    const rateLimitError = () =>
+      Object.assign(new Error("Rate Limit Exceeded"), {
+        code: 403,
+        status: 403,
+        errors: [{ domain: "usageLimits", reason: "rateLimitExceeded", message: "Rate Limit Exceeded" }],
+      });
+
+    test("keeps the inserted event id when the PATCH keeps failing with 403 rateLimitExceeded", async () => {
+      const calendarService = BuildCalendarService(mockCredential);
+      setFullMockOAuthManagerRequest();
+      const eventsInsertMock = vi.fn().mockResolvedValue({ data: insertedEvent });
+      const eventsPatchMock = vi.fn().mockRejectedValue(rateLimitError());
+      calendarMock.calendar_v3.Calendar().events.insert = eventsInsertMock;
+      calendarMock.calendar_v3.Calendar().events.patch = eventsPatchMock;
+
+      const result = await calendarService.createEvent(calEvent, mockCredential.id);
+
+      expect(eventsInsertMock).toHaveBeenCalledTimes(1);
+      expect(eventsPatchMock).toHaveBeenCalledTimes(3);
+      expect(result.id).toBe("inserted-event-id");
+      expect(result.iCalUID).toBe("inserted-event-id@google.com");
+      expect(result.additionalInfo?.hangoutLink).toBe(mockHangoutLink);
+    });
+
+    test("retries the PATCH on 429 and succeeds", async () => {
+      const calendarService = BuildCalendarService(mockCredential);
+      setFullMockOAuthManagerRequest();
+      const eventsInsertMock = vi.fn().mockResolvedValue({ data: insertedEvent });
+      const eventsPatchMock = vi
+        .fn()
+        .mockRejectedValueOnce(Object.assign(new Error("Too Many Requests"), { code: 429, status: 429 }))
+        .mockResolvedValueOnce({ data: { ...insertedEvent, location: mockHangoutLink } });
+      calendarMock.calendar_v3.Calendar().events.insert = eventsInsertMock;
+      calendarMock.calendar_v3.Calendar().events.patch = eventsPatchMock;
+
+      const result = await calendarService.createEvent(calEvent, mockCredential.id);
+
+      expect(eventsPatchMock).toHaveBeenCalledTimes(2);
+      expect(result.id).toBe("inserted-event-id");
+    });
+
+    test("does not retry a non-rate-limit PATCH failure but still keeps the event id", async () => {
+      const calendarService = BuildCalendarService(mockCredential);
+      setFullMockOAuthManagerRequest();
+      const eventsInsertMock = vi.fn().mockResolvedValue({ data: insertedEvent });
+      const eventsPatchMock = vi
+        .fn()
+        .mockRejectedValue(
+          Object.assign(new Error("Forbidden"), { code: 403, status: 403, errors: [{ reason: "forbidden" }] })
+        );
+      calendarMock.calendar_v3.Calendar().events.insert = eventsInsertMock;
+      calendarMock.calendar_v3.Calendar().events.patch = eventsPatchMock;
+
+      const result = await calendarService.createEvent(calEvent, mockCredential.id);
+
+      expect(eventsPatchMock).toHaveBeenCalledTimes(1);
+      expect(result.id).toBe("inserted-event-id");
+    });
+
+    test("still throws when the insert itself fails", async () => {
+      const calendarService = BuildCalendarService(mockCredential);
+      setFullMockOAuthManagerRequest();
+      calendarMock.calendar_v3.Calendar().events.insert = vi.fn().mockRejectedValue(rateLimitError());
+      const eventsPatchMock = vi.fn();
+      calendarMock.calendar_v3.Calendar().events.patch = eventsPatchMock;
+
+      await expect(calendarService.createEvent(calEvent, mockCredential.id)).rejects.toThrow(
+        "Rate Limit Exceeded"
+      );
+      expect(eventsPatchMock).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe("updateEvent", () => {
@@ -941,6 +1041,51 @@ describe("updateEvent", () => {
     expect(result.additionalInfo?.hangoutLink).toBe(mockHangoutLink);
 
     log.info("updateEvent with hangoutLink patch test passed");
+  });
+
+  test("keeps the updated event when the hangoutLink PATCH is rate limited (TW-GCAL-RL)", async () => {
+    const calendarService = BuildCalendarService(mockCredential);
+    setFullMockOAuthManagerRequest();
+
+    const mockHangoutLink = "https://meet.google.com/rl-upd-abc";
+    const eventsUpdateMock = vi.fn().mockResolvedValue({
+      data: {
+        id: "existing-event-id",
+        iCalUID: "existing-event-id@google.com",
+        hangoutLink: mockHangoutLink,
+      },
+    });
+    const eventsPatchMock = vi.fn().mockRejectedValue(
+      Object.assign(new Error("Rate Limit Exceeded"), {
+        code: 403,
+        errors: [{ domain: "usageLimits", reason: "rateLimitExceeded" }],
+      })
+    );
+    calendarMock.calendar_v3.Calendar().events.update = eventsUpdateMock;
+    calendarMock.calendar_v3.Calendar().events.patch = eventsPatchMock;
+
+    const testCalEvent = {
+      type: "test-event-type",
+      uid: "existing-event-id",
+      title: "Updated",
+      startTime: "2024-06-15T10:00:00Z",
+      endTime: "2024-06-15T11:00:00Z",
+      organizer: {
+        id: 1,
+        name: "Test Organizer",
+        email: "organizer@example.com",
+        timeZone: "UTC",
+        language: { translate: (...args: any[]) => args[0], locale: "en" },
+      },
+      attendees: [],
+      location: MeetLocationType,
+    };
+
+    const result = await calendarService.updateEvent("existing-event-id", testCalEvent, "primary");
+
+    expect(eventsPatchMock).toHaveBeenCalledTimes(3);
+    expect(result.id).toBe("existing-event-id");
+    expect(result.additionalInfo?.hangoutLink).toBe(mockHangoutLink);
   });
 
   test("should not patch event when hangoutLink is present but location is not MeetLocationType", async () => {

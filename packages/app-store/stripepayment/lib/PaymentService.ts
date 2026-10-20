@@ -1,7 +1,4 @@
-import Stripe from "stripe";
-import { v4 as uuidv4 } from "uuid";
-import z from "zod";
-
+import process from "node:process";
 import dayjs from "@calcom/dayjs";
 import { BookingRepository } from "@calcom/features/bookings/repositories/BookingRepository";
 import tasker from "@calcom/features/tasker";
@@ -15,7 +12,9 @@ import type { Booking, Payment, PaymentOption, Prisma } from "@calcom/prisma/cli
 import type { EventTypeMetadata } from "@calcom/prisma/zod-utils";
 import type { CalendarEvent } from "@calcom/types/Calendar";
 import type { IAbstractPaymentService } from "@calcom/types/PaymentService";
-
+import Stripe from "stripe";
+import { v4 as uuidv4 } from "uuid";
+import z from "zod";
 import { paymentOptionEnum } from "../zod";
 import { retrieveOrCreateStripeCustomerByEmail } from "./customer";
 import type { StripePaymentData, StripeSetupIntentData } from "./server";
@@ -27,6 +26,31 @@ export const stripeCredentialKeysSchema = z.object({
   default_currency: z.string(),
   stripe_publishable_key: z.string(),
 });
+
+export const STRIPE_PLATFORM_ACCOUNT_REFUSED = "stripe_platform_account_refused";
+
+let platformAccountIdPromise: Promise<string> | null = null;
+
+/**
+ * The account behind STRIPE_PRIVATE_KEY (AWstreams). Read once without stripeAccount and cached.
+ * A failed lookup is not cached so the next call retries.
+ */
+function getPlatformAccountId(stripe: Stripe): Promise<string> {
+  if (!platformAccountIdPromise) {
+    platformAccountIdPromise = stripe.accounts
+      .retrieve()
+      .then((account) => account.id)
+      .catch((error: unknown) => {
+        platformAccountIdPromise = null;
+        throw error;
+      });
+  }
+  return platformAccountIdPromise;
+}
+
+export function resetStripePlatformAccountCacheForTests() {
+  platformAccountIdPromise = null;
+}
 
 class StripePaymentService implements IAbstractPaymentService {
   private stripe: Stripe;
@@ -42,6 +66,26 @@ class StripePaymentService implements IAbstractPaymentService {
     this.stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY || "", {
       apiVersion: "2020-08-27",
     });
+  }
+
+  /**
+   * Customer money must settle in the org's own connected account (WC-TW-13 G2/G3), never the
+   * platform account. Returns the connected account id every Stripe call must carry.
+   */
+  private async assertConnectedAccount(stripeAccount: string | null | undefined): Promise<string> {
+    if (!stripeAccount) {
+      throw new ErrorWithCode(ErrorCode.BadRequest, STRIPE_PLATFORM_ACCOUNT_REFUSED, {
+        reason: "missing_connected_account",
+      });
+    }
+    const platformAccountId = await getPlatformAccountId(this.stripe);
+    if (stripeAccount === platformAccountId) {
+      log.error("Refusing Stripe call on the platform account");
+      throw new ErrorWithCode(ErrorCode.BadRequest, STRIPE_PLATFORM_ACCOUNT_REFUSED, {
+        reason: "platform_account",
+      });
+    }
+    return stripeAccount;
   }
 
   private async getPayment(where: Prisma.PaymentWhereInput) {
@@ -79,9 +123,10 @@ class StripePaymentService implements IAbstractPaymentService {
       if (!this.credentials) {
         throw new Error("Stripe credentials not found");
       }
+      const stripeAccount = await this.assertConnectedAccount(this.credentials.stripe_user_id);
 
       const customer = await retrieveOrCreateStripeCustomerByEmail(
-        this.credentials.stripe_user_id,
+        stripeAccount,
         bookerEmail,
         bookerPhoneNumber
       );
@@ -105,9 +150,7 @@ class StripePaymentService implements IAbstractPaymentService {
         }),
       };
 
-      const paymentIntent = await this.stripe.paymentIntents.create(params, {
-        stripeAccount: this.credentials.stripe_user_id,
-      });
+      const paymentIntent = await this.stripe.paymentIntents.create(params, { stripeAccount });
 
       const paymentData = await prisma.payment.create({
         data: {
@@ -127,7 +170,7 @@ class StripePaymentService implements IAbstractPaymentService {
           externalId: paymentIntent.id,
           data: Object.assign({}, paymentIntent, {
             stripe_publishable_key: this.credentials.stripe_publishable_key,
-            stripeAccount: this.credentials.stripe_user_id,
+            stripeAccount,
           }) as unknown as Prisma.InputJsonValue,
           fee: 0,
           refunded: false,
@@ -161,9 +204,10 @@ class StripePaymentService implements IAbstractPaymentService {
       if (paymentOptionEnum.parse(paymentOption) !== "HOLD") {
         throw new Error("Payment option is not compatible with create method");
       }
+      const stripeAccount = await this.assertConnectedAccount(this.credentials.stripe_user_id);
 
       const customer = await retrieveOrCreateStripeCustomerByEmail(
-        this.credentials.stripe_user_id,
+        stripeAccount,
         bookerEmail,
         bookerPhoneNumber
       );
@@ -177,9 +221,7 @@ class StripePaymentService implements IAbstractPaymentService {
         },
       };
 
-      const setupIntent = await this.stripe.setupIntents.create(params, {
-        stripeAccount: this.credentials.stripe_user_id,
-      });
+      const setupIntent = await this.stripe.setupIntents.create(params, { stripeAccount });
 
       const paymentData = await prisma.payment.create({
         data: {
@@ -202,7 +244,7 @@ class StripePaymentService implements IAbstractPaymentService {
             {
               setupIntent,
               stripe_publishable_key: this.credentials.stripe_publishable_key,
-              stripeAccount: this.credentials.stripe_user_id,
+              stripeAccount,
             }
           ) as unknown as Prisma.InputJsonValue,
           fee: 0,
@@ -230,6 +272,8 @@ class StripePaymentService implements IAbstractPaymentService {
         throw new Error("Stripe credentials not found");
       }
 
+      const stripeAccount = await this.assertConnectedAccount(this.credentials.stripe_user_id);
+
       const bookingRepository = new BookingRepository(prisma);
       const booking = await bookingRepository.findByIdIncludeUserAndAttendees(bookingId);
 
@@ -243,10 +287,10 @@ class StripePaymentService implements IAbstractPaymentService {
 
       // Ensure that the stripe customer & payment method still exists
       const customer = await this.stripe.customers.retrieve(setupIntent.customer as string, {
-        stripeAccount: this.credentials.stripe_user_id,
+        stripeAccount,
       });
       const paymentMethod = await this.stripe.paymentMethods.retrieve(setupIntent.payment_method as string, {
-        stripeAccount: this.credentials.stripe_user_id,
+        stripeAccount,
       });
 
       if (!customer) {
@@ -280,9 +324,7 @@ class StripePaymentService implements IAbstractPaymentService {
         }),
       };
 
-      const paymentIntent = await this.stripe.paymentIntents.create(params, {
-        stripeAccount: this.credentials.stripe_user_id,
-      });
+      const paymentIntent = await this.stripe.paymentIntents.create(params, { stripeAccount });
 
       const paymentData = await prisma.payment.update({
         where: {
@@ -347,12 +389,16 @@ class StripePaymentService implements IAbstractPaymentService {
       // refunded already, bail early as success without throwing an error.
       return payment;
     }
+    await this.assertConnectedAccount(this.credentials?.stripe_user_id);
+    const stripeAccount = await this.assertConnectedAccount(
+      (payment.data as unknown as StripePaymentData)["stripeAccount"]
+    );
     try {
       const refund = await this.stripe.refunds.create(
         {
           payment_intent: payment.externalId,
         },
-        { stripeAccount: (payment.data as unknown as StripePaymentData)["stripeAccount"] }
+        { stripeAccount }
       );
 
       if (!refund || refund.status === "failed") {
@@ -414,10 +460,9 @@ class StripePaymentService implements IAbstractPaymentService {
         return false;
       }
 
-      const stripeAccount = (payment.data as unknown as StripePaymentData).stripeAccount;
-      if (!stripeAccount) {
-        throw new Error("Stripe account not found");
-      }
+      const stripeAccount = await this.assertConnectedAccount(
+        (payment.data as unknown as StripePaymentData).stripeAccount
+      );
       // Expire all current sessions
       const sessions = await this.stripe.checkout.sessions.list(
         {

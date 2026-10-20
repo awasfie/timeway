@@ -182,6 +182,7 @@ export class InputBookingsService_2024_08_13 {
       hasHashedBookingLink: false,
       guests,
       verificationCode: inputBooking.emailVerificationCode,
+      reservedSlotUid: inputBooking.reservedSlotUid,
       // note(Lauris): responses with name and email are required by the handleNewBooking
       responses: {
         ...(inputBooking.bookingFieldsResponses || {}),
@@ -480,6 +481,7 @@ export class InputBookingsService_2024_08_13 {
         hasHashedBookingLink: false,
         guests,
         verificationCode: inputBooking.emailVerificationCode,
+        reservedSlotUid: inputBooking.reservedSlotUid,
         // note(Lauris): responses with name and email are required by the handleNewBooking
         responses: {
           ...(inputBooking.bookingFieldsResponses || {}),
@@ -703,6 +705,7 @@ export class InputBookingsService_2024_08_13 {
       },
       rescheduleUid: bookingUid,
       verificationCode: inputBooking.emailVerificationCode,
+      reservedSlotUid: inputBooking.reservedSlotUid,
       rrHostSubsetIds: inputBooking.rrHostSubsetIds,
     };
   }

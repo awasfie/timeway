@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import dayjs from "@calcom/dayjs";
 import { ScheduleRepository } from "@calcom/features/schedules/repositories/ScheduleRepository";
 import prisma from "@calcom/prisma";
+import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 
 const travelScheduleSelect = {
   id: true,
@@ -22,10 +23,8 @@ const travelScheduleSelect = {
 };
 
 async function postHandler(request: NextRequest) {
-  const apiKey = request.headers.get("authorization") || request.nextUrl.searchParams.get("apiKey");
-
-  if (process.env.CRON_API_KEY !== apiKey) {
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+  if (!isCronAuthorized(request, { allowBearerSecret: false })) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   let timeZonesChanged = 0;

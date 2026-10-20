@@ -53,14 +53,18 @@ import {
   expectSuccessfulBookingCreationEmails,
   expectSuccessfulCalendarEventCreationInCalendar,
 } from "@calcom/testing/lib/bookingScenario/expects";
-import { getMockRequestDataForBooking } from "@calcom/testing/lib/bookingScenario/getMockRequestDataForBooking";
+import {
+  getBasicMockRequestDataForBooking,
+  getMockRequestDataForBooking,
+} from "@calcom/testing/lib/bookingScenario/getMockRequestDataForBooking";
 import { setupAndTeardown } from "@calcom/testing/lib/bookingScenario/setupAndTeardown";
 import { testWithAndWithoutOrg } from "@calcom/testing/lib/bookingScenario/test";
 import { test } from "@calcom/testing/lib/fixtures/fixtures";
 import type { Request, Response } from "express";
+import "vitest-fetch-mock";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { describe, expect } from "vitest";
 import type Stripe from "stripe";
+import { describe, expect } from "vitest";
 import { getNewBookingHandler } from "./getNewBookingHandler";
 
 const log = logger.getSubLogger({ prefix: ["[fresh-booking.test]"] });
@@ -586,9 +590,9 @@ describe("handleNewBooking", () => {
       );
 
       test(
-        `an error in creating a calendar event should not stop the booking creation - Current behaviour is wrong as the booking is created but no-one is notified of it`,
+        `WC-TW-3: a provider calendar write failure fails the booking and leaves no orphan`,
 
-        async ({ emails }) => {
+        async () => {
           const handleNewBooking = getNewBookingHandler();
           const booker = getBooker({
             email: "booker@example.com",
@@ -649,52 +653,103 @@ describe("handleNewBooking", () => {
             },
           });
 
-          const createdBooking = await handleNewBooking({
-            bookingData: mockBookingData,
-          });
-          expect(createdBooking.responses).toEqual(
-            expect.objectContaining({
-              email: booker.email,
-              name: booker.name,
+          await expect(
+            handleNewBooking({
+              bookingData: mockBookingData,
             })
+          ).rejects.toThrowError(ErrorCode.CalendarWriteFailed);
+
+          const bookings = await prismaMock.booking.findMany({ where: { eventTypeId: 1 } });
+          expect(bookings).toHaveLength(1);
+          expect(bookings[0].status).toBe(BookingStatus.CANCELLED);
+          expect(bookings[0].cancellationReason).toBe("calendar_write_failed");
+          expect(bookings[0].idempotencyKey ?? null).toBeNull();
+
+          const bookingCreatedWebhookCalls = fetchMock.mock.calls.filter(
+            (call: Parameters<typeof fetch>) =>
+              call[0] === "http://my-webhook.example.com" &&
+              typeof call[1]?.body === "string" &&
+              call[1].body.includes("BOOKING_CREATED")
           );
-
-          expect(createdBooking).toEqual(
-            expect.objectContaining({
-              location: "New York",
-            })
-          );
-
-          await expectBookingToBeInDatabase({
-            description: "",
-
-            uid: createdBooking.uid!,
-            eventTypeId: mockBookingData.eventTypeId,
-            status: BookingStatus.ACCEPTED,
-            references: [
-              {
-                type: appStoreMetadata.googlecalendar.type,
-                // A reference is still created in case of event creation failure, with nullish values. Not sure what's the purpose for this.
-                uid: "",
-                meetingId: null,
-                meetingPassword: null,
-                meetingUrl: null,
-              },
-            ],
-          });
-
-          // FIXME: We should send Broken Integration emails on calendar event creation failure
-          // expectCalendarEventCreationFailureEmails({ booker, organizer, emails });
-
-          expectBookingCreatedWebhookToHaveBeenFired({
-            booker,
-            organizer,
-            location: "New York",
-            subscriberUrl: "http://my-webhook.example.com",
-          });
+          expect(bookingCreatedWebhookCalls).toHaveLength(0);
         },
         timeout
       );
+
+      describe("WC-TW-3: 5-minute slot reservation is binding at confirm time", () => {
+        const setupReservationScenario = async (holderUid: string) => {
+          const organizer = getOrganizer({
+            name: "Organizer",
+            email: "organizer@example.com",
+            id: 101,
+            schedules: [TestData.schedules.IstWorkHours],
+            credentials: [getGoogleCalendarCredential()],
+            selectedCalendars: [TestData.selectedCalendars.google],
+            destinationCalendar: {
+              integration: "google_calendar",
+              externalId: "organizer@google-calendar.com",
+            },
+          });
+          const { start, end } = getBasicMockRequestDataForBooking();
+          await createBookingScenario({
+            ...getScenarioData({
+              eventTypes: [{ id: 1, slotInterval: 30, length: 30, users: [{ id: 101 }] }],
+              organizer,
+              apps: [TestData.apps["google-calendar"], TestData.apps["daily-video"]],
+            }),
+            selectedSlots: [
+              {
+                eventTypeId: 1,
+                userId: 101,
+                slotUtcStartDate: new Date(start),
+                slotUtcEndDate: new Date(end),
+                uid: holderUid,
+                releaseAt: new Date(Date.now() + 5 * 60 * 1000),
+              },
+            ],
+          });
+          await mockCalendarToHaveNoBusySlots("googlecalendar", {
+            create: { id: "MOCKED_GOOGLE_CALENDAR_EVENT_ID" },
+          });
+        };
+        const responses = {
+          email: "booker@example.com",
+          name: "Booker",
+          location: { optionValue: "" as const, value: "New York" },
+        };
+
+        test(
+          "a slot held by another booker is rejected with booking_conflict_error",
+          async () => {
+            await setupReservationScenario("someone-else");
+            const handleNewBooking = getNewBookingHandler();
+            await expect(
+              handleNewBooking({
+                bookingData: getMockRequestDataForBooking({
+                  data: { eventTypeId: 1, responses, reservedSlotUid: "me" },
+                }),
+              })
+            ).rejects.toThrowError(ErrorCode.BookingConflict);
+            expect(await prismaMock.booking.findMany({ where: { eventTypeId: 1 } })).toHaveLength(0);
+          },
+          timeout
+        );
+
+        test(
+          "the booker's own hold does not block them",
+          async () => {
+            await setupReservationScenario("me");
+            const handleNewBooking = getNewBookingHandler();
+            const created = await handleNewBooking({
+              bookingData: getMockRequestDataForBooking({
+                data: { eventTypeId: 1, responses, reservedSlotUid: "me" },
+              }),
+            });
+            expect(created.status).toBe(BookingStatus.ACCEPTED);
+          },
+          timeout
+        );
+      });
 
       test(
         "If destination calendar has no credential ID due to some reason, it should create the event in first connected calendar instead",
@@ -823,7 +878,6 @@ describe("handleNewBooking", () => {
             ],
             iCalUID: createdBooking.iCalUID,
           });
-
 
           expectSuccessfulCalendarEventCreationInCalendar(calendarMock, {
             calendarId: "organizer@google-calendar.com",
@@ -2948,7 +3002,8 @@ describe("handleNewBooking", () => {
           const booker = getBooker({
             email: "booker@example.com",
             name: "Booker",
-          });          const organizer = getOrganizer({
+          });
+          const organizer = getOrganizer({
             name: "Organizer",
             email: "organizer@example.com",
             id: 101,
@@ -3086,7 +3141,8 @@ describe("handleNewBooking", () => {
             7. Booking should still stay in pending state
       `,
 
-        async ({ emails }) => {          const handleNewBooking = getNewBookingHandler();
+        async ({ emails }) => {
+          const handleNewBooking = getNewBookingHandler();
           const subscriberUrl = "http://my-webhook.example.com";
           const booker = getBooker({
             email: "booker@example.com",

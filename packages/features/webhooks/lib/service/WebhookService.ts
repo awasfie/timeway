@@ -1,11 +1,9 @@
-import { createHmac } from "node:crypto";
-
 import { WebhookTriggerEvents } from "@calcom/prisma/enums";
-
-import type { WebhookSubscriber, WebhookDeliveryResult } from "../dto/types";
+import type { WebhookDeliveryResult, WebhookSubscriber } from "../dto/types";
 import type { WebhookPayload } from "../factory/types";
-import type { ITasker, ILogger } from "../interface/infrastructure";
+import type { ILogger, ITasker } from "../interface/infrastructure";
 import type { IWebhookRepository, IWebhookService } from "../interface/services";
+import { createWebhookHeaders } from "../webhookSignature";
 
 export class WebhookService implements IWebhookService {
   private readonly log: ILogger;
@@ -91,15 +89,11 @@ export class WebhookService implements IWebhookService {
       payload: payload.payload,
     });
 
-    const signature = subscriber.secret
-      ? createHmac("sha256", subscriber.secret).update(body).digest("hex")
-      : "no-secret-provided";
-
     const response = await fetch(subscriberUrl, {
       method: "POST",
       headers: {
         "Content-Type": contentType,
-        "X-Cal-Signature-256": signature,
+        ...createWebhookHeaders({ secret: subscriber.secret, body }),
         "X-Cal-Webhook-Version": subscriber.version,
       },
       redirect: "manual",

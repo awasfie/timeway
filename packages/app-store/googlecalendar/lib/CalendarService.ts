@@ -73,6 +73,26 @@ const isGaxiosResponse = (error: unknown): error is GaxiosResponse<calendar_v3.S
   // biome-ignore lint/suspicious/noPrototypeBuiltins: Object.hasOwn not available in all build targets
   typeof error === "object" && !!error && Object.prototype.hasOwnProperty.call(error, "config");
 
+// Backoff between attempts of the cosmetic post-write PATCH; kept short because it runs inside the booking request.
+const POST_WRITE_PATCH_RETRY_DELAYS_MS = [250, 750];
+
+const RATE_LIMIT_REASONS = new Set(["rateLimitExceeded", "userRateLimitExceeded"]);
+
+export function isGoogleRateLimitError(error: unknown): boolean {
+  if (typeof error !== "object" || !error) return false;
+  const err = error as {
+    code?: number | string;
+    status?: number;
+    errors?: { reason?: string }[];
+    response?: { status?: number; data?: { error?: { errors?: { reason?: string }[] } } };
+  };
+  const status = Number(err.status ?? err.response?.status ?? err.code);
+  if (status === 429) return true;
+  if (status !== 403) return false;
+  const reasons = [...(err.errors ?? []), ...(err.response?.data?.error?.errors ?? [])];
+  return reasons.some((e) => !!e.reason && RATE_LIMIT_REASONS.has(e.reason));
+}
+
 class GoogleCalendarService implements Calendar {
   private integrationName = "";
   private auth: CalendarAuth;
@@ -114,6 +134,41 @@ class GoogleCalendarService implements Calendar {
 
   public getCredentialId() {
     return this.credential.id;
+  }
+
+  /**
+   * PATCH an event that has already been written to Google. The write is what Timeway must keep a
+   * handle on (TW-GCAL-RL: a 403 rateLimitExceeded here used to throw away the inserted event id and
+   * orphan the event), so failures are retried on rate limits and otherwise logged, never thrown.
+   */
+  private async patchAfterWrite(
+    calendar: calendar_v3.Calendar,
+    params: calendar_v3.Params$Resource$Events$Patch
+  ): Promise<boolean> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await calendar.events.patch(params);
+        return true;
+      } catch (error) {
+        const retryable = isGoogleRateLimitError(error);
+        if (retryable && attempt < POST_WRITE_PATCH_RETRY_DELAYS_MS.length) {
+          await new Promise((resolve) => setTimeout(resolve, POST_WRITE_PATCH_RETRY_DELAYS_MS[attempt]));
+          continue;
+        }
+        if (isGaxiosResponse(error)) delete error.config.body;
+        this.log.warn(
+          "Post-write PATCH failed; keeping the written event",
+          safeStringify({
+            eventId: params.eventId,
+            calendarId: params.calendarId,
+            attempts: attempt + 1,
+            rateLimited: retryable,
+            error,
+          })
+        );
+        return false;
+      }
+    }
   }
 
   public async authedCalendar(): Promise<calendar_v3.Calendar> {
@@ -265,7 +320,7 @@ class GoogleCalendarService implements Calendar {
               safeStringify({ selectedCalendar, credentialId })
             );
           }
-          await calendar.events.patch({
+          await this.patchAfterWrite(calendar, {
             calendarId: selectedCalendar,
             eventId: event.id || "",
             requestBody: {
@@ -296,7 +351,7 @@ class GoogleCalendarService implements Calendar {
       }
 
       if (event && event.id && event.hangoutLink) {
-        await calendar.events.patch({
+        await this.patchAfterWrite(calendar, {
           // Update the same event but this time we know the hangout link
           calendarId: selectedCalendar,
           eventId: event.id || "",
@@ -417,7 +472,7 @@ class GoogleCalendarService implements Calendar {
       });
 
       if (evt && evt.data.id && evt.data.hangoutLink && event.location === MeetLocationType) {
-        await calendar.events.patch({
+        await this.patchAfterWrite(calendar, {
           // Update the same event but this time we know the hangout link
           calendarId: selectedCalendar,
           eventId: evt.data.id || "",

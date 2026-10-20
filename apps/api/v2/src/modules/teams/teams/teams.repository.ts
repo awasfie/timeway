@@ -1,17 +1,33 @@
-import { teamMetadataSchema } from "@calcom/platform-libraries";
+import { TeamResidencyService, teamMetadataSchema, teamResidencySelect } from "@calcom/platform-libraries";
+import { ErrorWithCode } from "@calcom/platform-libraries/errors";
 import type { Membership, Prisma } from "@calcom/prisma/client";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { PrismaReadService } from "@/modules/prisma/prisma-read.service";
 import { PrismaWriteService } from "@/modules/prisma/prisma-write.service";
 
+/** Runs a WC-31 residency check, turning a refusal into HTTP 422 { message: <residency code> }. */
+export async function withResidencyGuard<T>(check: () => T | Promise<T>): Promise<T> {
+  try {
+    return await check();
+  } catch (e) {
+    if (e instanceof ErrorWithCode && e.code.startsWith("residency_cell_")) {
+      throw new UnprocessableEntityException(e.code);
+    }
+    throw e;
+  }
+}
+
 @Injectable()
 export class TeamsRepository {
+  residency = new TeamResidencyService();
+
   constructor(
     private readonly dbRead: PrismaReadService,
     private readonly dbWrite: PrismaWriteService
   ) {}
 
   async create(team: Prisma.TeamCreateInput) {
+    await withResidencyGuard(() => this.residency.assertCreate(team));
     return this.dbWrite.prisma.team.create({
       data: team,
     });
@@ -75,8 +91,13 @@ export class TeamsRepository {
   }
 
   async update(teamId: number, team: Prisma.TeamUpdateInput) {
+    const pin = await withResidencyGuard(() =>
+      this.residency.assertUpdate(team, () =>
+        this.dbWrite.prisma.team.findUnique({ where: { id: teamId }, select: teamResidencySelect })
+      )
+    );
     return this.dbWrite.prisma.team.update({
-      where: { id: teamId },
+      where: { id: teamId, ...pin },
       data: team,
     });
   }

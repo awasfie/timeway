@@ -1,0 +1,29 @@
+# WC-PE-7 / CC-93 ratchet: image references that are not yet ghcr.io/awasfie/...@sha256. Each line names the card
+# that removes it. check_image_refs.py fails on any reference not listed here AND on any line here whose reference is
+# gone, so this list only shrinks. Format: <path>|<reference>   # <card>
+Dockerfile|node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+Dockerfile|node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+docker-compose.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+docker-compose.yml|redis:latest@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+docker-compose.yml|calcom.docker.scarf.sh/calcom/cal.diy   # WC-PE-7e t_c58f451a: tag of the image this compose file builds (build: .), not a pull; upstream compose kept -> t_969dbe7f
+.github/workflows/api-v2-production-build.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/cc13-org-isolation.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/check-prisma-migrations.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/e2e-api-v2.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/e2e-api-v2.yml|redis:latest@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/e2e-app-store.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/e2e-app-store.yml|mailhog/mailhog:v1.0.1@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/e2e-embed-react.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/e2e-embed.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/e2e-embed.yml|mailhog/mailhog:v1.0.1@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/e2e.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/e2e.yml|mailhog/mailhog:v1.0.1@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/integration-tests.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/integration-tests.yml|mailhog/mailhog:v1.0.1@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/setup-db.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+apps/api/v2/Dockerfile|node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+apps/api/v2/docker-compose.yaml|redis:latest@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+apps/web/test/docker-compose.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+packages/emails/docker-compose.yml|mailhog/mailhog:v1.0.1@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+packages/prisma/docker-compose.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+packages/conformance/Dockerfile|node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0   # WC-TW-4b t_49f8c4ff: same digest as the timeway runner; ghcr mirror swap -> t_969dbe7f

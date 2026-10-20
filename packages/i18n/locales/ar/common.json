@@ -107,6 +107,8 @@
   "invite_team_individual_segment": "دعوة فرد",
   "invite_team_bulk_segment": "استيراد متعدد",
   "invite_team_notifcation_badge": "دعوة",
+  "tw_reminder_title_24h": "تذكير: يبدأ حدثك خلال 24 ساعة",
+  "tw_reminder_title_1h": "تذكير: يبدأ حدثك خلال ساعة واحدة",
   "your_event_has_been_scheduled": "تم جدولة الحدث الخاص بك",
   "your_event_has_been_scheduled_recurring": "تم جدولة الحدث المتكرر الخاص بك",
   "accept_our_license": "اقبل ترخيصنا من خلال تغيير متغير ‎.env المسمى <1>NEXT_PUBLIC_LICENSE_CONSENT</1> إلى '{{agree}}'.",

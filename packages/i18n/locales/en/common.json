@@ -108,6 +108,8 @@
   "invite_team_individual_segment": "Invite individual",
   "invite_team_bulk_segment": "Bulk import",
   "invite_team_notifcation_badge": "Inv.",
+  "tw_reminder_title_24h": "Reminder: your event starts in 24 hours",
+  "tw_reminder_title_1h": "Reminder: your event starts in 1 hour",
   "your_event_has_been_scheduled": "Your event has been scheduled",
   "your_event_has_been_scheduled_recurring": "Your recurring event has been scheduled",
   "accept_our_license": "Accept our license by changing the .env variable <1>NEXT_PUBLIC_LICENSE_CONSENT</1> to '{{agree}}'.",

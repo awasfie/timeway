@@ -353,6 +353,36 @@ describe("Middleware Integration Tests", () => {
     });
   });
 
+  describe("Pathname header (TW-AWS-3)", () => {
+    const forwardedHeaders = (spy: Mock) =>
+      (spy.mock.calls.at(-1)?.[0] as { request?: { headers?: Headers } })?.request?.headers as Headers;
+
+    it.each([
+      "/team/awstreams/intro-call-ar",
+      "/team/awstreams/intro-call-ar/embed",
+    ])("forwards x-tw-pathname for %s so the root layout can set <html lang/dir>", async (path) => {
+      const spy = vi.spyOn(NextResponse, "next");
+      const res = await callProxy(createTestRequest({ url: `${WEBAPP_URL}${path}` }));
+      expectStatus(res, 200);
+      expect(forwardedHeaders(spy as unknown as Mock).get("x-tw-pathname")).toBe(path);
+      spy.mockRestore();
+    });
+
+    it("overwrites a client-supplied x-tw-pathname", async () => {
+      const spy = vi.spyOn(NextResponse, "next");
+      await callProxy(
+        createTestRequest({
+          url: `${WEBAPP_URL}/team/awstreams/intro-call`,
+          headers: { "x-tw-pathname": "/team/awstreams/intro-call-ar" },
+        })
+      );
+      expect(forwardedHeaders(spy as unknown as Mock).get("x-tw-pathname")).toBe(
+        "/team/awstreams/intro-call"
+      );
+      spy.mockRestore();
+    });
+  });
+
   describe("Header sanitization", () => {
     it("sanitizes non-ASCII request header values to prevent Vercel Runtime Malformed Response Header", async () => {
       const spy = vi.spyOn(NextResponse, "next");
@@ -471,6 +501,7 @@ describe("Middleware Matcher Configuration", () => {
       "/apps/installed",
       "/auth/logout",
       "/:path*/embed",
+      "/team/:path*",
       "/availability",
       "/api/auth/signup",
     ]);

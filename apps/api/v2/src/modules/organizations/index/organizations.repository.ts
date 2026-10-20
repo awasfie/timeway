@@ -1,11 +1,15 @@
+import { TeamResidencyService, teamResidencySelect } from "@calcom/platform-libraries";
 import { Prisma } from "@calcom/prisma/client";
 import { Injectable } from "@nestjs/common";
 import { PrismaReadService } from "@/modules/prisma/prisma-read.service";
 import { PrismaWriteService } from "@/modules/prisma/prisma-write.service";
 import { StripeService } from "@/modules/stripe/stripe.service";
+import { withResidencyGuard } from "@/modules/teams/teams/teams.repository";
 
 @Injectable()
 export class OrganizationsRepository {
+  residency = new TeamResidencyService();
+
   constructor(
     private readonly dbRead: PrismaReadService,
     private readonly dbWrite: PrismaWriteService,
@@ -30,7 +34,6 @@ export class OrganizationsRepository {
       },
     });
   }
-
 
   async findTeamIdAndSlugFromClientId(clientId: string) {
     return this.dbRead.prisma.team.findFirstOrThrow({
@@ -110,10 +113,19 @@ export class OrganizationsRepository {
   }
 
   async update(organizationId: number, data: Prisma.TeamUpdateInput) {
+    const pin = await withResidencyGuard(() =>
+      this.residency.assertUpdate(data, () =>
+        this.dbWrite.prisma.team.findUnique({
+          where: { id: organizationId, isOrganization: true },
+          select: teamResidencySelect,
+        })
+      )
+    );
     return this.dbWrite.prisma.team.update({
       where: {
         id: organizationId,
         isOrganization: true,
+        ...pin,
       },
       data,
     });
@@ -137,5 +149,4 @@ export class OrganizationsRepository {
       },
     });
   }
-
 }

@@ -1,5 +1,14 @@
 import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsDateString, IsInt, IsOptional, IsString, isEmail, Validate } from "class-validator";
+import {
+  IsArray,
+  IsDateString,
+  IsInt,
+  IsOptional,
+  IsString,
+  isEmail,
+  MaxLength,
+  Validate,
+} from "class-validator";
 
 export const RESCHEDULED_BY_DOCS = `Email of the person who is rescheduling the booking - only needed when rescheduling a booking that requires a confirmation.
 If event type owner email is provided then rescheduled booking will be automatically confirmed. If attendee email or no email is passed then the event type
@@ -36,6 +45,16 @@ export class RescheduleBookingInput_2024_08_13 {
     example: "123456",
   })
   emailVerificationCode?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      "reservationUid returned by POST /v2/slots/reservations for this slot, so the caller's own hold does not block the booking.",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  reservedSlotUid?: string;
 
   @ApiHideProperty()
   @IsOptional()
