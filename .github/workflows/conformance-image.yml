@@ -1,0 +1,41 @@
+name: Conformance soak image
+# WC-TW-4b: prove packages/conformance/Dockerfile builds and the bundled runner starts (report on an empty volume).
+on:
+  pull_request:
+    paths:
+      - "packages/conformance/**"
+      - ".github/workflows/conformance-image.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-build:
+    name: conformance docker build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker build
+        run: docker build -t timeway-soak:ci packages/conformance
+      - name: Smoke - report on an empty /data/soak exits FAIL with a verdict line
+        run: |
+          set +e
+          out=$(docker run --rm --tmpfs /data/soak:uid=1000 timeway-soak:ci report)
+          code=$?
+          set -e
+          echo "$out"
+          echo "$out" | grep -q "CC-64: FAIL"
+          test "$code" = 1
+      - name: Smoke - run refuses to start without SOAK_HOSTS
+        run: |
+          set +e
+          out=$(docker run --rm timeway-soak:ci run 2>&1)
+          code=$?
+          set -e
+          echo "$out"
+          echo "$out" | grep -q "missing env SOAK_HOSTS"
+          test "$code" = 1
+      - name: Image metadata
+        run: docker image inspect timeway-soak:ci --format '{{.Id}} {{json .Config.Volumes}} {{json .Config.Entrypoint}}'
