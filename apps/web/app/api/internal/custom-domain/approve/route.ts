@@ -1,9 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-
-import { CustomHostnameRepository } from "@calcom/lib/domainManager/customHostnames/repository";
+import process from "node:process";
+import { CustomHostnameRepository } from "@calcom/features/customHostnames/repositories/CustomHostnameRepository";
 import { createFixedWindowLimiter } from "@calcom/lib/domainManager/customHostnames/rateLimit";
 import {
   APPROVE_SECRET_HEADER,
@@ -11,6 +8,8 @@ import {
   isHostnameApproved,
 } from "@calcom/lib/domainManager/customHostnames/service";
 import { prisma } from "@calcom/prisma";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 const limiter = createFixedWindowLimiter({ limit: 600, windowMs: 60_000 });
 
@@ -27,7 +26,8 @@ function callerKey(req: NextRequest) {
   return (fwd ? fwd.split(",")[0].trim() : req.headers.get("x-real-ip")) || "unknown";
 }
 
-const empty = (status: number) => new NextResponse(null, { status, headers: { "cache-control": "no-store" } });
+const empty = (status: number) =>
+  new NextResponse(null, { status, headers: { "cache-control": "no-store" } });
 
 /**
  * WC-TW-12b R4: the proxy's on-demand TLS `ask` hook.

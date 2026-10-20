@@ -25,7 +25,14 @@ const PROBE_TIMEOUT_MS = 5000;
 export const probeHttps: HttpsProbe = (hostname) =>
   new Promise((resolve) => {
     const req = https.request(
-      { host: hostname, servername: hostname, port: 443, method: "HEAD", path: "/", timeout: PROBE_TIMEOUT_MS },
+      {
+        host: hostname,
+        servername: hostname,
+        port: 443,
+        method: "HEAD",
+        path: "/",
+        timeout: PROBE_TIMEOUT_MS,
+      },
       (res) => {
         res.resume();
         resolve({ ok: true });

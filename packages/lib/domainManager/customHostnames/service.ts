@@ -1,15 +1,15 @@
+import process from "node:process";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
-
 import type { CnameLookup, HttpsProbe } from "./probes";
-import type { CustomHostnameRepositoryPort, CustomHostnameRow } from "./repository";
-import { HostnameTakenError } from "./repository";
+import type { CustomHostnameRepositoryPort, CustomHostnameRow } from "./types";
+import { HostnameTakenError } from "./types";
 import { normalizeHostname, validateCustomHostname } from "./validate";
 
-/** R5: customers CNAME their subdomain to this Timeway-owned, DNS-only name. */
 /** Header carrying TW_DOMAIN_APPROVE_SECRET on approval requests (R4). */
 export const APPROVE_SECRET_HEADER = "x-tw-domain-approve-secret";
 
+/** R5: customers CNAME their subdomain to this Timeway-owned, DNS-only name. */
 export const DEFAULT_CNAME_TARGET = "customers.timeway.co";
 
 export function getCnameTarget(): string {
@@ -50,9 +50,13 @@ export class CustomHostnameService {
     }
     const existing = await this.deps.repository.findByOrg(orgId);
     if (existing) {
-      throw new ErrorWithCode(ErrorCode.BadRequest, "organization already has a custom hostname; remove it first", {
-        reason: "one_per_org",
-      });
+      throw new ErrorWithCode(
+        ErrorCode.BadRequest,
+        "organization already has a custom hostname; remove it first",
+        {
+          reason: "one_per_org",
+        }
+      );
     }
     try {
       return await this.deps.repository.create(orgId, result.hostname);

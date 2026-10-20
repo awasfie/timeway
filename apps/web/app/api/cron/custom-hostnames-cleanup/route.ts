@@ -1,10 +1,10 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-
-import { CustomHostnameRepository } from "@calcom/lib/domainManager/customHostnames/repository";
+import process from "node:process";
+import { CustomHostnameRepository } from "@calcom/features/customHostnames/repositories/CustomHostnameRepository";
 import { cleanupStaleHostnames } from "@calcom/lib/domainManager/customHostnames/service";
 import { prisma } from "@calcom/prisma";
 import { defaultResponderForAppDir } from "@calcom/web/app/api/defaultResponderForAppDir";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 /**
  * WC-TW-12b R8: daily removal of custom hostnames never activated 48 h after creation.

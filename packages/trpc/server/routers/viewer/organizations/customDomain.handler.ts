@@ -1,4 +1,4 @@
-import { CustomHostnameRepository } from "@calcom/lib/domainManager/customHostnames/repository";
+import { CustomHostnameRepository } from "@calcom/features/customHostnames/repositories/CustomHostnameRepository";
 import { lookupCname, probeHttps } from "@calcom/lib/domainManager/customHostnames/probes";
 import {
   CustomHostnameService,
@@ -7,9 +7,7 @@ import {
 } from "@calcom/lib/domainManager/customHostnames/service";
 import { prisma } from "@calcom/prisma";
 import type { TrpcSessionUser } from "@calcom/trpc/server/types";
-
 import { TRPCError } from "@trpc/server";
-
 import type { TCustomDomainAddInput, TCustomDomainOrgInput } from "./customDomain.schema";
 
 type Ctx = { user: NonNullable<TrpcSessionUser> };
