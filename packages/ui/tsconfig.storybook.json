@@ -1,0 +1,13 @@
+{
+  "extends": "@calcom/tsconfig/react-library.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"]
+  },
+  "include": [".storybook", "components/**/*.stories.tsx", "vitest.config.ts"],
+  "exclude": ["node_modules", "storybook-static"]
+}
