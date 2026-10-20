@@ -182,13 +182,49 @@ describe("sendPlatformFeeUsage", () => {
         period: "2026-10",
         seq: 82,
         value: 12500,
+        currency: "AED",
         timestamp: 1792483200,
       },
       "tw-fee:pay_uid_41",
       testEnv({})
     );
     expect(Object.keys(toPassportUsageBody(line, PASSPORT_ORG)).sort()).toEqual(
-      ["meter", "organizationId", "period", "seq", "timestamp", "value"].sort()
+      ["currency", "meter", "organizationId", "period", "seq", "timestamp", "value"].sort()
+    );
+  });
+
+  it("refund correction keeps the same shape: negative value, seq paymentId*2+1, currency carried", async () => {
+    const refund: PlatformFeeUsagePayload = {
+      ...line,
+      kind: "refund",
+      idempotencyKey: "tw-fee-refund:pay_uid_41",
+      value: -12500,
+      seq: 83,
+    };
+    const d = sendDeps(202);
+    await sendPlatformFeeUsage(JSON.stringify(refund), d);
+    expect(d.postUsage).toHaveBeenCalledWith(
+      {
+        organizationId: PASSPORT_ORG,
+        meter: "timeway_paid_booking_volume",
+        period: "2026-10",
+        seq: 83,
+        value: -12500,
+        currency: "AED",
+        timestamp: 1792483200,
+      },
+      "tw-fee-refund:pay_uid_41",
+      testEnv({})
+    );
+  });
+
+  it("422 USAGE_CURRENCY_UNSUPPORTED throws (retried) and names only the currency code", async () => {
+    const kwd = JSON.stringify({ ...line, currency: "KWD" });
+    const body = { code: "USAGE_CURRENCY_UNSUPPORTED", message: "currency KWD has no USD rate in Passport yet" };
+    const err = await sendPlatformFeeUsage(kwd, sendDeps(422, body)).catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err.message).toBe(
+      "Passport /v1/usage answered 422 USAGE_CURRENCY_UNSUPPORTED for tw-fee:pay_uid_41 (currency KWD)"
     );
   });
 
@@ -196,7 +232,7 @@ describe("sendPlatformFeeUsage", () => {
     await expect(sendPlatformFeeUsage(raw, sendDeps(status))).resolves.toBeUndefined();
   });
 
-  it.each([500, 502, 503, 400, 401, 429])("Passport %s throws so the Tasker retries", async (status) => {
+  it.each([500, 502, 503, 400, 401, 422, 429])("Passport %s throws so the Tasker retries", async (status) => {
     await expect(sendPlatformFeeUsage(raw, sendDeps(status, { message: "boom" }))).rejects.toThrow(
       new RegExp(`answered ${status} for tw-fee:pay_uid_41`)
     );

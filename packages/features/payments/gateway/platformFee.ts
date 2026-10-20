@@ -234,8 +234,12 @@ const defaultSendDeps: SendDeps = {
 };
 
 /**
- * Body for Passport POST /v1/usage (WC-PE-14a ReportUsageDto). Passport rejects unknown fields, so
- * currency and paymentUid travel in the Idempotency-Key and the Task payload, not the body.
+ * Body for Passport POST /v1/usage (WC-PE-14a ReportUsageDto + WC-PE-14x, passport#60).
+ * timeway_paid_booking_volume is a money meter: `value` is minor units of `currency` (upper-case
+ * ISO 4217, already upper-cased in the payload) and Passport converts it to micro-USD; a missing
+ * currency is 400 USAGE_CURRENCY_REQUIRED. A refund is the negative correction on the same meter
+ * (seq = paymentId*2+1). Passport rejects unknown fields, so paymentUid stays in the
+ * Idempotency-Key and the Task payload, not the body.
  */
 export function toPassportUsageBody(payload: PlatformFeeUsagePayload, passportOrgId: string) {
   return {
@@ -244,14 +248,25 @@ export function toPassportUsageBody(payload: PlatformFeeUsagePayload, passportOr
     period: payload.period,
     seq: payload.seq,
     value: payload.value,
+    currency: payload.currency,
     timestamp: payload.timestamp,
   };
 }
 
+function passportErrorCode(body: unknown): string | undefined {
+  if (body && typeof body === "object" && "code" in body) {
+    const code = (body as { code?: unknown }).code;
+    return typeof code === "string" ? code : undefined;
+  }
+  return undefined;
+}
+
 /**
  * Task handler. Throwing makes TaskProcessor retry on the tasksConfig backoff; returning marks the
- * line sent. 2xx and 409 (already recorded) are sent; everything else (5xx, 4xx, network, org not linked yet) retries so the line
- * stays visible in the Task table until it lands or exhausts its attempts.
+ * line sent. 2xx and 409 (already recorded) are sent; everything else (5xx, 4xx, network, org not
+ * linked yet) retries so the line stays visible in the Task table until it lands or exhausts its
+ * attempts. That includes 422 USAGE_CURRENCY_UNSUPPORTED: the line waits until a Passport card adds
+ * the currency's USD rate.
  */
 export async function sendPlatformFeeUsage(rawPayload: string, deps: Partial<SendDeps> = {}): Promise<void> {
   const d = { ...defaultSendDeps, ...deps };
@@ -270,6 +285,16 @@ export async function sendPlatformFeeUsage(rawPayload: string, deps: Partial<Sen
   if (res.status === 409) {
     log.warn("Platform-fee usage already recorded", safeStringify({ key: payload.idempotencyKey }));
     return;
+  }
+  if (res.status === 422 && passportErrorCode(res.body) === "USAGE_CURRENCY_UNSUPPORTED") {
+    // Log the currency code only; the outbox keeps retrying until Passport carries a rate for it.
+    log.warn(
+      "Passport has no USD rate for the booking currency yet; fee line will retry",
+      safeStringify({ key: payload.idempotencyKey, currency: payload.currency })
+    );
+    throw new Error(
+      `Passport /v1/usage answered 422 USAGE_CURRENCY_UNSUPPORTED for ${payload.idempotencyKey} (currency ${payload.currency})`
+    );
   }
   const detail = (typeof res.body === "string" ? res.body : JSON.stringify(res.body ?? null)).slice(0, 300);
   throw new Error(`Passport /v1/usage answered ${res.status} for ${payload.idempotencyKey}: ${detail}`);
