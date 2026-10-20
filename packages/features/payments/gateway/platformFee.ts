@@ -250,7 +250,7 @@ export function toPassportUsageBody(payload: PlatformFeeUsagePayload, passportOr
 
 /**
  * Task handler. Throwing makes TaskProcessor retry on the tasksConfig backoff; returning marks the
- * line sent. 2xx is sent; everything else (5xx, 4xx, network, org not linked yet) retries so the line
+ * line sent. 2xx and 409 (already recorded) are sent; everything else (5xx, 4xx, network, org not linked yet) retries so the line
  * stays visible in the Task table until it lands or exhausts its attempts.
  */
 export async function sendPlatformFeeUsage(rawPayload: string, deps: Partial<SendDeps> = {}): Promise<void> {
@@ -263,6 +263,12 @@ export async function sendPlatformFeeUsage(rawPayload: string, deps: Partial<Sen
   const res = await d.postUsage(toPassportUsageBody(payload, passportOrgId), payload.idempotencyKey, d.env);
   if (res.status >= 200 && res.status < 300) {
     log.info("Platform-fee usage sent", safeStringify({ key: payload.idempotencyKey, status: res.status }));
+    return;
+  }
+  // Passport's only 409 on /v1/usage is USAGE_IDENTIFIER_REUSED: the identifier (fixed per Payment
+  // and kind) is already held, so the line is counted and retrying can never change the answer.
+  if (res.status === 409) {
+    log.warn("Platform-fee usage already recorded", safeStringify({ key: payload.idempotencyKey }));
     return;
   }
   const detail = (typeof res.body === "string" ? res.body : JSON.stringify(res.body ?? null)).slice(0, 300);
