@@ -2226,6 +2226,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@calcom/conformance@workspace:packages/conformance":
+  version: 0.0.0-use.local
+  resolution: "@calcom/conformance@workspace:packages/conformance"
+  languageName: unknown
+  linkType: soft
+
 "@calcom/dailyvideo@workspace:*, @calcom/dailyvideo@workspace:packages/app-store/dailyvideo":
   version: 0.0.0-use.local
   resolution: "@calcom/dailyvideo@workspace:packages/app-store/dailyvideo"
