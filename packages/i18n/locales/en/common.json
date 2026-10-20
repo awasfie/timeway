@@ -4765,5 +4765,9 @@
   "user_updated_successfully": "User updated successfully.",
   "error_updating_user": "There was an error updating this user.",
   "please_reschedule": "Please reschedule.",
+  "request_id": "Request ID",
+  "bookings_load_error": "We couldn't load your bookings.",
+  "bookings_load_error_next": "Try again. If it keeps failing, share the request ID with support.",
+  "bookings_no_results_description": "No bookings match these filters. Try fewer filters.",
   "ADD_NEW_STRINGS_ABOVE_THIS_LINE_TO_PREVENT_MERGE_CONFLICTS": "↑↑↑↑↑↑↑↑↑↑↑↑↑ Add your new strings above here ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑"
 }

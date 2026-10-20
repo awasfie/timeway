@@ -1,14 +1,11 @@
 "use client";
 
-import type { Table as ReactTable } from "@tanstack/react-table";
-
-import { DataTableWrapper } from "~/data-table/components";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { EmptyScreen } from "@calcom/ui/components/empty-screen";
-
-import SkeletonLoader from "@components/booking/SkeletonLoader";
-
-import type { RowData, BookingListingStatus } from "../types";
+import { Button } from "@calcom/ui/components/button";
+import { Delayed, EmptyState, ListSkeleton } from "@calcom/ui/components/states";
+import type { Table as ReactTable } from "@tanstack/react-table";
+import { DataTableWrapper } from "~/data-table/components";
+import type { BookingListingStatus, RowData } from "../types";
 
 const descriptionByStatus: Record<BookingListingStatus, string> = {
   upcoming: "upcoming_bookings",
@@ -25,6 +22,9 @@ type BookingListViewProps = {
   totalRowCount?: number;
   ErrorView?: React.ReactNode;
   hasError?: boolean;
+  /** A filter or search is active: an empty result is no-results (with Clear filters), not first-use. */
+  isFiltered?: boolean;
+  onClearFilters?: () => void;
 };
 
 export function BookingList({
@@ -34,6 +34,8 @@ export function BookingList({
   totalRowCount,
   ErrorView,
   hasError,
+  isFiltered,
+  onClearFilters,
 }: BookingListViewProps) {
   const { t } = useLocale();
 
@@ -49,17 +51,33 @@ export function BookingList({
       variant="compact"
       paginationMode="standard"
       separatorClassName="py-4 pl-6 text-xs uppercase leading-4"
-      LoaderView={<SkeletonLoader />}
+      // WC-DX-14c2b: states library (salesos 722e786ea5 port). Skeleton only after 200 ms, held >= 400 ms.
+      LoaderView={<Delayed loading fallback={<ListSkeleton rows={5} columns={3} label={t("loading")} />} />}
       EmptyView={
-        <div className="flex items-center justify-center pt-2 xl:pt-0">
-          <EmptyScreen
-            Icon="calendar"
-            headline={t("no_status_bookings_yet", { status: t(status).toLowerCase() })}
-            description={t("no_status_bookings_yet_description", {
-              status: t(status).toLowerCase(),
-              description: t(descriptionByStatus[status]),
-            })}
-          />
+        <div data-testid="empty-screen" className="pt-2 xl:pt-0">
+          {isFiltered ? (
+            <EmptyState
+              variant="no-results"
+              title={t("no_results")}
+              body={t("bookings_no_results_description")}
+              action={
+                onClearFilters ? (
+                  <Button color="secondary" onClick={onClearFilters}>
+                    {t("clear_filters")}
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <EmptyState
+              variant="first-use"
+              title={t("no_status_bookings_yet", { status: t(status).toLowerCase() })}
+              body={t("no_status_bookings_yet_description", {
+                status: t(status).toLowerCase(),
+                description: t(descriptionByStatus[status]),
+              })}
+            />
+          )}
         </div>
       }
       ErrorView={ErrorView}
