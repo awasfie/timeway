@@ -107,7 +107,9 @@ export class TimewayClient {
     username: string,
     eventTypeSlug: string,
     range: SlotRange,
-    timeZone = "UTC"
+    timeZone = "UTC",
+    /** reserveSlot uid sent as the `uid` cookie, so the booker's own hold does not hide the slot from itself */
+    bookerUid?: string
   ): Promise<SlotsByDate> {
     const input = {
       usernameList: [username],
@@ -119,7 +121,7 @@ export class TimewayClient {
     };
     const res = await fetchWithRetry(
       `${this.baseUrl}/api/trpc/slots/getSchedule?input=${trpcInput(input)}`,
-      { method: "GET", headers: this.headers() },
+      { method: "GET", headers: this.headers(bookerUid ? { cookie: `uid=${bookerUid}` } : {}) },
       "timeway getSlots",
       this.opts
     );
@@ -135,12 +137,21 @@ export class TimewayClient {
   }
 
   /** POST /api/trpc/slots/reserveSlot — the 5-minute hold taken when the booker opens the form. */
-  async reserveSlot(input: { eventTypeId: number; start: string; end: string }): Promise<{ uid: string }> {
+  async reserveSlot(input: {
+    eventTypeId: number;
+    start: string;
+    end: string;
+    /** sent as the `uid` cookie; the server keeps it as the hold uid, so the caller knows it before the call */
+    bookerUid?: string;
+  }): Promise<{ uid: string }> {
     const res = await fetchWithRetry(
       `${this.baseUrl}/api/trpc/slots/reserveSlot`,
       {
         method: "POST",
-        headers: this.headers({ "content-type": "application/json" }),
+        headers: this.headers({
+          "content-type": "application/json",
+          ...(input.bookerUid ? { cookie: `uid=${input.bookerUid}` } : {}),
+        }),
         body: JSON.stringify({
           json: { eventTypeId: input.eventTypeId, slotUtcStartDate: input.start, slotUtcEndDate: input.end },
         }),
@@ -250,6 +261,108 @@ export class TimewayClient {
     );
     const result = await expectOk<{ success?: boolean }>(res, "timeway cancel");
     return { success: result?.success === true, status: res.status };
+  }
+}
+
+export type HostBooking = {
+  uid: string;
+  start: string;
+  end: string;
+  status: string;
+  createdAt: string | null;
+};
+
+type TrpcBooking = { uid: string; startTime: string; endTime: string; status: string; createdAt?: string };
+
+/**
+ * The soak host's own view of its bookings: NextAuth credentials login as the soak user, then the tRPC
+ * `bookings.get` list the /bookings page uses. Timeway prod serves neither API v1 nor API v2, so this is the
+ * bookings list the soak user can read with its own login (WC-TW-4b step 3).
+ */
+export class TimewayHostSession {
+  private cookie: string | null = null;
+  private readonly baseUrl: string;
+  private readonly fetchFn: FetchLike;
+  private readonly login: { email: string; password: string };
+  private readonly opts: TimewayClientOptions;
+
+  constructor(login: { email: string; password: string }, opts: TimewayClientOptions = {}) {
+    this.login = login;
+    this.opts = opts;
+    this.baseUrl = (opts.baseUrl ?? TIMEWAY_PROD_URL).replace(/\/$/, "");
+    this.fetchFn = opts.fetch ?? (globalThis.fetch as FetchLike);
+  }
+
+  private static cookiesOf(res: Response): string[] {
+    const h = res.headers as Headers & { getSetCookie?: () => string[] };
+    const raw = h.getSetCookie
+      ? h.getSetCookie()
+      : (res.headers.get("set-cookie") ?? "").split(/,(?=\s*[\w-]+=)/);
+    return raw.map((c) => c.split(";")[0].trim()).filter(Boolean);
+  }
+
+  async signIn(): Promise<void> {
+    const csrfRes = await this.fetchFn(`${this.baseUrl}/api/auth/csrf`, { method: "GET" });
+    const jar = TimewayHostSession.cookiesOf(csrfRes);
+    const { csrfToken } = await expectOk<{ csrfToken: string }>(csrfRes, "timeway auth csrf");
+    const res = await this.fetchFn(`${this.baseUrl}/api/auth/callback/credentials`, {
+      method: "POST",
+      redirect: "manual",
+      headers: { "content-type": "application/x-www-form-urlencoded", cookie: jar.join("; ") },
+      body: new URLSearchParams({
+        csrfToken,
+        email: this.login.email,
+        password: this.login.password,
+        json: "true",
+      }).toString(),
+    });
+    const all = [...jar, ...TimewayHostSession.cookiesOf(res)];
+    const session = all.find((c) => /next-auth\.session-token=/.test(c));
+    if (!session) {
+      throw new SoakHttpError({
+        kind: "auth",
+        status: res.status,
+        body: "",
+        attempts: 1,
+        context: "timeway sign-in: no session cookie",
+      });
+    }
+    this.cookie = session;
+  }
+
+  /** Every booking of the host whose start lies in [from, to), cancelled ones included (status tells). */
+  async listBookings(from: string, to: string): Promise<HostBooking[]> {
+    if (!this.cookie) await this.signIn();
+    const out: HostBooking[] = [];
+    for (const status of ["upcoming", "past", "unconfirmed", "cancelled"] as const) {
+      let offset = 0;
+      for (;;) {
+        const input = { filters: { status, afterStartDate: from, beforeEndDate: to }, limit: 100, offset };
+        const res = await fetchWithRetry(
+          `${this.baseUrl}/api/trpc/bookings/get?input=${trpcInput(input)}`,
+          { method: "GET", headers: { accept: "application/json", cookie: this.cookie ?? "" } },
+          "timeway bookings.get",
+          this.opts
+        );
+        const env = await expectOk<TrpcEnvelope<{ bookings?: TrpcBooking[]; hasMore?: boolean }>>(
+          res,
+          "timeway bookings.get"
+        );
+        const page = env?.result?.data?.json;
+        for (const b of page?.bookings ?? []) {
+          out.push({
+            uid: b.uid,
+            start: new Date(b.startTime).toISOString(),
+            end: new Date(b.endTime).toISOString(),
+            status: String(b.status).toLowerCase(),
+            createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : null,
+          });
+        }
+        if (!page?.hasMore || !page.bookings?.length) break;
+        offset += page.bookings.length;
+      }
+    }
+    return [...new Map(out.map((b) => [b.uid, b])).values()];
   }
 }
 
