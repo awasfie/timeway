@@ -21,9 +21,12 @@ function secretMatches(provided: string, expected: string) {
   return timingSafeEqual(digest(provided), digest(expected));
 }
 
+// The first x-forwarded-for entry is client-supplied; x-real-ip and the last XFF hop are set by our proxy.
 function callerKey(req: NextRequest) {
-  const fwd = req.headers.get("x-forwarded-for");
-  return (fwd ? fwd.split(",")[0].trim() : req.headers.get("x-real-ip")) || "unknown";
+  const realIp = req.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+  const hops = req.headers.get("x-forwarded-for")?.split(",") ?? [];
+  return hops[hops.length - 1]?.trim() || "unknown";
 }
 
 const empty = (status: number) =>
@@ -39,11 +42,12 @@ export async function GET(req: NextRequest) {
   const expected = process.env.TW_DOMAIN_APPROVE_SECRET;
   if (!expected) return empty(503);
 
+  // Limit before the secret check so wrong-secret guesses are throttled too.
+  if (!limiter(callerKey(req))) return empty(429);
+
   const provided = req.headers.get(APPROVE_SECRET_HEADER);
   if (!provided) return empty(401);
   if (!secretMatches(provided, expected)) return empty(403);
-
-  if (!limiter(callerKey(req))) return empty(429);
 
   const domain = req.nextUrl.searchParams.get("domain");
   if (!domain) return empty(400);
