@@ -3337,7 +3337,7 @@ __metadata:
     "@dub/analytics": "npm:0.0.27"
     "@dub/embed-core": "npm:0.0.18"
     "@dub/embed-react": "npm:0.0.18"
-    "@family/ui": "file:vendor/family-ui-0.1.0.tgz"
+    "@family/ui": "file:vendor/family-ui-0.1.1.tgz"
     "@formkit/auto-animate": "npm:1.0.0-beta.5"
     "@glidejs/glide": "npm:3.5.2"
     "@googleapis/admin": "npm:23.5.0"
@@ -4832,9 +4832,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@family/ui@file:vendor/family-ui-0.1.0.tgz::locator=%40calcom%2Fweb%40workspace%3Aapps%2Fweb":
-  version: 0.1.0
-  resolution: "@family/ui@file:vendor/family-ui-0.1.0.tgz#vendor/family-ui-0.1.0.tgz::hash=37d032&locator=%40calcom%2Fweb%40workspace%3Aapps%2Fweb"
+"@family/ui@file:vendor/family-ui-0.1.1.tgz::locator=%40calcom%2Fweb%40workspace%3Aapps%2Fweb":
+  version: 0.1.1
+  resolution: "@family/ui@file:vendor/family-ui-0.1.1.tgz#vendor/family-ui-0.1.1.tgz::hash=fbacad&locator=%40calcom%2Fweb%40workspace%3Aapps%2Fweb"
   dependencies:
     "@base-ui/react": "npm:1.0.0"
     "@internationalized/date": "npm:3.12.4"
@@ -4842,7 +4842,7 @@ __metadata:
   peerDependencies:
     react: ">=18.3"
     react-dom: ">=18.3"
-  checksum: 10/b2cd292736c249f5ee2f9d81744ec0e7b195d3ba507373e7b0e7e4ba5bbd6b8403c276581914941ac6f1b0b8ca0f4b2edb54b700eb298d7ca0e122aa8dad0b86
+  checksum: 10/5ba52acd00a00ab2b9c474f2f7d8500f7700f2503432651c36179bba4fd9f9f9e7562b971904c4b507ff08986a9cd64e362d8e3f1d3d1ea48c5182346604a8d5
   languageName: node
   linkType: hard
 
