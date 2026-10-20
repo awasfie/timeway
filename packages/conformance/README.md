@@ -29,7 +29,36 @@ harness's own OAuth refresh tokens.
 - `src/timeway.ts`: booker client (`getSlots`, `reserveSlot`, `book`, `cancel`) and the accepted /
   rejected-conflict / rejected-other classification. `book` is never retried.
 - `src/invariants.ts`: pure functions for S5 and S9, run over plain JSONL records.
-- `src/load.ts`, `src/run.ts`, `src/report.ts`: added by the follow-up WC-TW-4 cards.
+- `src/load.ts`: per-host scheduler (56 attempts/host/UTC day, one per stratum with jitter; 30 % injected, 40 % of
+  those between `reserveSlot` and the POST with a 0-90 s form gap) and the attempt executor with the 5 s / 900 s lag
+  probe. The booker `uid` cookie rides on every probe so the harness's own hold never reads as a flip.
+- `src/sweep.ts`: the 00:10 UTC sweep of the day before into `sweep-YYYY-MM-DD.json` (S5 counts).
+- `src/drills.ts`: `drill410 --verify` (watches soak-g1 recover after the WC-TW-4d syncToken write) and the
+  runner-driven Graph `subscriptionRemoved` drill (soak day 5).
+- `src/run.ts`: the long-lived loop (load + 5 min Healthchecks ping + sweep + drill) and the CLI.
+- `src/report.ts`: per-day rows, streak, drills and the CC-64 verdict from `/data/soak` alone.
+- `src/store.ts`: append-only JSONL under `/data/soak` (`bookings`, `busy`, `lag`, `drills`, `pings`).
+
+## Bookings source for the sweep
+
+Timeway prod serves neither API v1 nor API v2 (`/api/v1/*`, `/api/v2/*` answer 404). The sweep therefore reads each
+host's bookings the way the soak user does in the UI: NextAuth credentials sign-in as that user, then the tRPC
+`bookings.get` list behind `/bookings`. Without `SOAK_HOST_LOGINS` it falls back to the runner's own
+`bookings.jsonl` and marks the sweep `bookingSource: "runner-log"`.
+
+## Runtime (S8)
+
+Image: `packages/conformance/Dockerfile` (build context `packages/conformance`), `VOLUME /data/soak`.
+
+    docker run -v soak:/data/soak --env-file <names from Infisical timeway:/soak> timeway-soak run
+    docker run -v soak:/data/soak timeway-soak report
+    docker run -v soak:/data/soak --env-file ... timeway-soak drill410 --verify
+
+Env by name: `SOAK_HOSTS` (JSON array: username, eventTypeId, calendarId[, eventTypeSlug, provider]),
+`SOAK_GOOGLE_CLIENT_ID`/`_SECRET`/`_REFRESH_TOKEN`, `SOAK_MS_CLIENT_ID`/`_SECRET`/`_REFRESH_TOKEN`, `SOAK_HC_URL`,
+`SOAK_HOST_LOGINS` (JSON: username -> email/password), `SOAK_START_DAY` (soak day 0, YYYY-MM-DD),
+`MICROSOFT_WEBHOOK_TOKEN` (Graph drill clientState), `TIMEWAY_METRICS_TOKEN` (410 counter for the verify),
+optional `SOAK_RUN_ID`, `SOAK_TIMEWAY_URL`, `SOAK_DIR`.
 
 ## Commands
 
