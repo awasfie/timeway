@@ -52,7 +52,7 @@
     "@dub/analytics": "0.0.27",
     "@dub/embed-core": "0.0.18",
     "@dub/embed-react": "0.0.18",
-    "@family/ui": "file:vendor/family-ui-0.1.1.tgz",
+    "@family/ui": "file:vendor/family-ui-0.1.2.tgz",
     "@formkit/auto-animate": "1.0.0-beta.5",
     "@glidejs/glide": "3.5.2",
     "@googleapis/admin": "23.5.0",

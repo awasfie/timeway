@@ -56,11 +56,8 @@ const useMoveToNextMonthOnNoAvailability = ({
 };
 
 // The e2e, embed and atom suites select on these attributes; keep them stable.
-const BOOKER_DOM_HOOKS: CalendarHookProps = {
-  cellProps: (_date, state) => ({
-    "data-testid": "day",
-    "data-disabled": String(state.isDisabled || state.isUnavailable),
-  }),
+// Outside-month cells are hidden by the grid, so they carry no "day" hook (the old grid rendered blanks).
+const BOOKER_NAV_HOOKS: CalendarHookProps = {
   previousButtonProps: { "data-testid": "decrementMonth" },
   nextButtonProps: { "data-testid": "incrementMonth" },
   headingProps: { "data-testid": "selected-month-label" },
@@ -205,7 +202,18 @@ export const DatePicker = ({
         <Calendar
           aria-label={t("select_date")}
           {...resolveBookerCalendarProps(showHijri)}
-          {...BOOKER_DOM_HOOKS}
+          {...BOOKER_NAV_HOOKS}
+          cellProps={(_date, state) =>
+            state.isOutsideMonth
+              ? {}
+              : { "data-testid": "day", "data-disabled": String(state.isDisabled || state.isUnavailable) }
+          }
+          cellContent={(date) => {
+            const daySlots = slots[date.toString()] ?? [];
+            const allAway = daySlots.length > 0 && daySlots.every((slot) => slot.away);
+            if (!allAway) return undefined;
+            return <span data-testid="away-emoji">{daySlots.find((slot) => slot.away)?.emoji}</span>;
+          }}
           firstDayOfWeek={weekIndexToWeekdayId(weekStart)}
           value={selected ? toCalendarDate(selected) : null}
           focusedValue={focusedDate}
