@@ -22,6 +22,10 @@ const tasks: Record<TaskTypes, () => Promise<TaskHandler>> = {
     import("./sendAwaitingPaymentEmail").then((module) => module.sendAwaitingPaymentEmail),
   bookingAudit: () => import("./bookingAudit").then((module) => module.bookingAudit),
   webhookDelivery: () => import("./webhookDelivery").then((module) => module.webhookDelivery),
+  platformFeeUsage: () =>
+    import("@calcom/features/payments/gateway/platformFee").then(
+      (module) => (payload: string) => module.sendPlatformFeeUsage(payload)
+    ),
 };
 
 export const tasksConfig = {
@@ -32,6 +36,12 @@ export const tasksConfig = {
   webhookDelivery: {
     minRetryIntervalMins: IS_PRODUCTION ? 5 : 1,
     maxAttempts: 3,
+  },
+  // Exponential: 2, 4, 8 ... min, capped at 6 h, so 12 tries stay inside Passport's 35-day window.
+  platformFeeUsage: {
+    minRetryIntervalMins: IS_PRODUCTION ? 2 : 1,
+    retryIntervalMins: (attempts: number) => Math.min(2 ** Math.max(1, attempts), 360),
+    maxAttempts: 12,
   },
 };
 export default tasks;
