@@ -176,4 +176,12 @@ describe("Booker DatePicker on @family/ui Calendar", () => {
     expect(screen.getByTestId("decrementMonth")).toBeInTheDocument();
     expect(screen.getByTestId("selected-month-label")).toBeInTheDocument();
   });
+
+  test("an all-day out-of-office date shows the away emoji in place of the day number", () => {
+    const day = dayjs("2027-02-16");
+    const slots = { [day.format("YYYY-MM-DD")]: [{ time: day.format("YYYY-MM-DDTHH:mm:ss"), away: true, emoji: "🏝", toUser: { id: 2 } }] };
+    render(<DatePicker event={{}} slots={slots as never} isLoading={false} />, { mockStore: { month: "2027-02" } });
+    expect(screen.getAllByTestId("away-emoji")).toHaveLength(1);
+    expect(screen.getByTestId("away-emoji")).toHaveTextContent("🏝");
+  });
 });
