@@ -4,10 +4,10 @@ import dayjs from "@calcom/dayjs";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { trpc } from "@calcom/trpc/react";
 import useMeQuery from "@calcom/trpc/react/hooks/useMeQuery";
-import { Alert } from "@calcom/ui/components/alert";
 import { Badge } from "@calcom/ui/components/badge";
 import { Button } from "@calcom/ui/components/button";
 import { ToggleGroup } from "@calcom/ui/components/form";
+import { isServerErrorStatus, PageError } from "@calcom/ui/components/states";
 import { WipeMyCalActionButton } from "@calcom/web/components/apps/wipemycalother/wipeMyCalActionButton";
 import { getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
@@ -71,7 +71,10 @@ interface BookingListInnerProps extends BookingListContainerProps {
   data?: BookingsGetOutput;
   isPending: boolean;
   hasError: boolean;
-  errorMessage?: string;
+  /** tRPC error: httpStatus + requestId (errorFormatter adds it on 5xx, WC-DX-14c2b). */
+  errorData?: { httpStatus?: number; requestId?: unknown } | null;
+  onRetry: () => void;
+  isRetrying: boolean;
   totalRowCount?: number;
   bookings: BookingsGetOutput["bookings"];
 }
@@ -85,7 +88,9 @@ function BookingListInner({
   data,
   isPending,
   hasError,
-  errorMessage,
+  errorData,
+  onRetry,
+  isRetrying,
   totalRowCount,
 }: BookingListInnerProps) {
   const { t } = useLocale();
@@ -97,9 +102,29 @@ function BookingListInner({
   // Handle auto-selection for list view
   useListAutoSelector(bookings);
 
-  const ErrorView = errorMessage ? (
-    <Alert severity="error" title={t("something_went_wrong")} message={errorMessage} />
-  ) : undefined;
+  const { clearAll } = useDataTable();
+  const errorLabels = { retry: t("retry"), requestId: t("request_id"), copy: t("copy"), copied: t("copied") };
+  const status5xx = errorData?.httpStatus;
+  const requestId = typeof errorData?.requestId === "string" ? errorData.requestId : undefined;
+  const ErrorView = !hasError ? undefined : isServerErrorStatus(status5xx) && requestId ? (
+    <PageError
+      status={status5xx}
+      requestId={requestId}
+      what={t("bookings_load_error")}
+      do={t("bookings_load_error_next")}
+      labels={errorLabels}
+      onRetry={onRetry}
+      retryPending={isRetrying}
+    />
+  ) : (
+    <PageError
+      what={t("bookings_load_error")}
+      do={t("bookings_load_error_next")}
+      labels={errorLabels}
+      onRetry={onRetry}
+      retryPending={isRetrying}
+    />
+  );
 
   const handleBookingClick = useCallback(
     (bookingUid: string) => {
@@ -214,6 +239,8 @@ function BookingListInner({
           totalRowCount={totalRowCount}
           ErrorView={ErrorView}
           hasError={hasError}
+          isFiltered={displayedFilterCount > 0}
+          onClearFilters={() => clearAll()}
         />
       </div>
 
@@ -293,7 +320,9 @@ export function BookingListContainer(props: BookingListContainerProps) {
         data={query.data}
         isPending={query.isPending}
         hasError={!!query.error}
-        errorMessage={query.error?.message}
+        errorData={query.error?.data}
+        onRetry={() => void query.refetch()}
+        isRetrying={query.isRefetching}
         totalRowCount={query.data?.totalCount}
         bookings={bookings}
       />

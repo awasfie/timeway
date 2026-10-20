@@ -38,6 +38,7 @@
     "./components/image-uploader": "./components/image-uploader/index.ts",
     "./components/file-uploader": "./components/file-uploader/index.ts",
     "./components/layout": "./components/layout/index.ts",
+    "./components/states": "./components/states/index.ts",
     "./components/list": "./components/list/index.ts",
     "./components/logo": "./components/logo/index.ts",
     "./components/meta": "./components/meta/index.ts",

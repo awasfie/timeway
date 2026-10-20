@@ -1,8 +1,6 @@
+import { TRPCError } from "@trpc/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-
-import { TRPCError } from "@trpc/server";
-
 import { errorFormatter } from "./errorFormatter";
 
 describe("errorFormatter", () => {
@@ -230,5 +228,28 @@ describe("errorFormatter", () => {
         },
       },
     });
+  });
+
+  it("adds a request id to 5xx when a request is in context (x-request-id wins)", () => {
+    const error = new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Internal Server Error" });
+    const withHeader = errorFormatter({
+      shape: baseShape,
+      error,
+      type: "query",
+      path: "test",
+      input: undefined,
+      ctx: { req: { headers: { "x-request-id": "req_abc123" } } },
+    });
+    expect(withHeader.data.requestId).toBe("req_abc123");
+
+    const minted = errorFormatter({
+      shape: baseShape,
+      error,
+      type: "query",
+      path: "test",
+      input: undefined,
+      ctx: { req: { headers: {} } },
+    });
+    expect(minted.data.requestId).toMatch(/^[0-9a-f-]{36}$/);
   });
 });
