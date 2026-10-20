@@ -24,7 +24,7 @@ const travelScheduleSelect = {
 
 async function postHandler(request: NextRequest) {
   if (!isCronAuthorized(request, { allowBearerSecret: false })) {
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   let timeZonesChanged = 0;

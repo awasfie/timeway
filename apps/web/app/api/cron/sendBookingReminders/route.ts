@@ -30,7 +30,7 @@ async function toPerson(p: { name: string | null; email: string; timeZone: strin
 
 async function postHandler(request: NextRequest) {
   if (!isCronAuthorized(request, { allowBearerSecret: false })) {
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   const now = dayjs();

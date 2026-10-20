@@ -16,7 +16,7 @@ import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 
 async function postHandler(request: NextRequest) {
   if (!isCronAuthorized(request, { allowBearerSecret: false })) {
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   const reminderIntervalMinutes = [48 * 60, 24 * 60, 3 * 60];

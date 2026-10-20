@@ -27,7 +27,7 @@ const limitOnQueryingGoogleCalendar = 50;
 const log = logger.getSubLogger({ prefix: ["[api]", "[delegation]", "[selected-calendars/cron]"] });
 const validateRequest = (req: NextRequest) => {
   if (!isCronAuthorized(req)) {
-    throw new HttpError({ statusCode: 401, message: "Unauthorized" });
+    throw new HttpError({ statusCode: 403, message: "Forbidden" });
   }
 };
 

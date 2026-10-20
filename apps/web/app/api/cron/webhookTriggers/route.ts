@@ -8,7 +8,7 @@ import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 
 async function postHandler(req: NextRequest) {
   if (!isCronAuthorized(req, { allowBearerSecret: false })) {
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   await handleWebhookScheduledTriggers(prisma);

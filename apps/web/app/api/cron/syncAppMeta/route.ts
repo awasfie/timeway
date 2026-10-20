@@ -20,7 +20,7 @@ const log = logger.getSubLogger({
  */
 async function postHandler(request: NextRequest) {
   if (!isCronAuthorized(request, { allowBearerSecret: false })) {
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   log.info(`🧐 Checking DB apps are in-sync with app metadata`);

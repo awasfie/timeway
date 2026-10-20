@@ -76,10 +76,12 @@ type RouteCase = {
   path: string;
   method: "GET" | "POST";
   rejectStatus: number;
+  /** tasks/* only accept `Bearer ${CRON_SECRET}`; every cron route accepts CRON_API_KEY. */
+  acceptsApiKey?: false;
   load: () => Promise<RouteHandler>;
 };
 
-// Each route keeps the rejection status it had before the shared helper; the gate is what changed.
+// Every apps/web cron route rejects with 403; the tasker routes keep their 401.
 const routes: RouteCase[] = [
   {
     name: "calendar-subscriptions",
@@ -108,42 +110,42 @@ const routes: RouteCase[] = [
     name: "selected-calendars",
     path: "/api/cron/selected-calendars",
     method: "GET",
-    rejectStatus: 401,
+    rejectStatus: 403,
     load: async () => (await import("../selected-calendars/route")).GET as unknown as RouteHandler,
   },
   {
     name: "sendBookingReminders",
     path: "/api/cron/sendBookingReminders",
     method: "POST",
-    rejectStatus: 401,
+    rejectStatus: 403,
     load: async () => (await import("../sendBookingReminders/route")).POST as unknown as RouteHandler,
   },
   {
     name: "bookingReminder",
     path: "/api/cron/bookingReminder",
     method: "POST",
-    rejectStatus: 401,
+    rejectStatus: 403,
     load: async () => (await import("../bookingReminder/route")).POST as unknown as RouteHandler,
   },
   {
     name: "changeTimeZone",
     path: "/api/cron/changeTimeZone",
     method: "POST",
-    rejectStatus: 401,
+    rejectStatus: 403,
     load: async () => (await import("../changeTimeZone/route")).POST as unknown as RouteHandler,
   },
   {
     name: "syncAppMeta",
     path: "/api/cron/syncAppMeta",
     method: "POST",
-    rejectStatus: 401,
+    rejectStatus: 403,
     load: async () => (await import("../syncAppMeta/route")).POST as unknown as RouteHandler,
   },
   {
     name: "webhookTriggers",
     path: "/api/cron/webhookTriggers",
     method: "POST",
-    rejectStatus: 401,
+    rejectStatus: 403,
     load: async () => (await import("../webhookTriggers/route")).POST as unknown as RouteHandler,
   },
   {
@@ -151,6 +153,7 @@ const routes: RouteCase[] = [
     path: "/api/tasks/cron",
     method: "GET",
     rejectStatus: 401,
+    acceptsApiKey: false,
     load: async () => (await import("@calcom/features/tasker/api/cron")).GET as unknown as RouteHandler,
   },
   {
@@ -158,9 +161,20 @@ const routes: RouteCase[] = [
     path: "/api/tasks/cleanup",
     method: "GET",
     rejectStatus: 401,
+    acceptsApiKey: false,
     load: async () => (await import("@calcom/features/tasker/api/cleanup")).GET as unknown as RouteHandler,
   },
 ];
+
+// Past the gate a route hits a throwing stub or its own error handling; either way it is not a rejection.
+const passesGate = async (route: RouteCase, init: { authorization?: string; query?: string }) => {
+  try {
+    const res = await call(route, init);
+    return res.status !== 401 && res.status !== 403;
+  } catch {
+    return true;
+  }
+};
 
 const call = async (route: RouteCase, init: { authorization?: string; query?: string } = {}) => {
   const url = `http://localhost${route.path}${init.query ? `?${init.query}` : ""}`;
@@ -209,4 +223,30 @@ describe.each(routes)("cron auth gate: $name", (route) => {
     expect(res.status).toBe(route.rejectStatus);
     expect(reached).not.toHaveBeenCalled();
   });
+
+  test("a wrong credential is rejected", async () => {
+    const res = await call(route, { authorization: "wrong-key" });
+    expect(res.status).toBe(route.rejectStatus);
+    expect(reached).not.toHaveBeenCalled();
+  });
+
+  if (route.acceptsApiKey === false) {
+    test("a valid CRON_API_KEY is not accepted", async () => {
+      const res = await call(route, { authorization: "test-cron-api-key" });
+      expect(res.status).toBe(route.rejectStatus);
+    });
+
+    test("a valid Bearer CRON_SECRET still passes the gate", async () => {
+      vi.stubEnv("CRON_SECRET", "test-cron-secret");
+      expect(await passesGate(route, { authorization: "Bearer test-cron-secret" })).toBe(true);
+    });
+  } else {
+    test("a valid CRON_API_KEY in the authorization header still passes the gate", async () => {
+      expect(await passesGate(route, { authorization: "test-cron-api-key" })).toBe(true);
+    });
+
+    test("a valid CRON_API_KEY in the apiKey query param still passes the gate", async () => {
+      expect(await passesGate(route, { query: "apiKey=test-cron-api-key" })).toBe(true);
+    });
+  }
 });
