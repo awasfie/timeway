@@ -13,6 +13,7 @@ import { getTranslation } from "@calcom/i18n/server";
 import prisma from "@calcom/prisma";
 import { BookingStatus, ReminderType } from "@calcom/prisma/enums";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
+import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 
 // TW-WF-1: 24 h and 1 h reminders to the attendee and every host. Run every 5 minutes.
 const WINDOWS: ReminderWindow[] = [1440, 60];
@@ -28,9 +29,8 @@ async function toPerson(p: { name: string | null; email: string; timeZone: strin
 }
 
 async function postHandler(request: NextRequest) {
-  const apiKey = request.headers.get("authorization") || request.nextUrl.searchParams.get("apiKey");
-  if (!process.env.CRON_API_KEY || process.env.CRON_API_KEY !== apiKey) {
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+  if (!isCronAuthorized(request, { allowBearerSecret: false })) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   const now = dayjs();
