@@ -1,0 +1,16 @@
+{
+  "name": "@calcom/conformance",
+  "description": "CC-64 calendar-sync soak harness (WC-TW-4)",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "test": "TZ=UTC vitest run --config vitest.config.ts",
+    "soak": "node --experimental-strip-types src/run.ts",
+    "report": "node --experimental-strip-types src/report.ts",
+    "type-check": "tsc --pretty --noEmit"
+  }
+}
