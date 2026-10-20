@@ -11,6 +11,7 @@ import { useLocale } from "@calcom/lib/hooks/useLocale";
 import type { User } from "@calcom/prisma/client";
 import type { PeriodData } from "@calcom/types/Event";
 import { useNonEmptyScheduleDays } from "@calcom/web/modules/schedules/hooks/useNonEmptyScheduleDays";
+import type { CalendarHookProps } from "@family/ui";
 import { Calendar, FamilyUIProvider } from "@family/ui";
 import type { CalendarDate, DateValue } from "@internationalized/date";
 import { parseDate } from "@internationalized/date";
@@ -52,6 +53,17 @@ const useMoveToNextMonthOnNoAvailability = ({
   return {
     moveToNextMonthOnNoAvailability,
   };
+};
+
+// The e2e, embed and atom suites select on these attributes; keep them stable.
+const BOOKER_DOM_HOOKS: CalendarHookProps = {
+  cellProps: (_date, state) => ({
+    "data-testid": "day",
+    "data-disabled": String(state.isDisabled || state.isUnavailable),
+  }),
+  previousButtonProps: { "data-testid": "decrementMonth" },
+  nextButtonProps: { "data-testid": "incrementMonth" },
+  headingProps: { "data-testid": "selected-month-label" },
 };
 
 const toCalendarDate = (date: Dayjs): CalendarDate => parseDate(date.format("YYYY-MM-DD"));
@@ -193,6 +205,7 @@ export const DatePicker = ({
         <Calendar
           aria-label={t("select_date")}
           {...resolveBookerCalendarProps(showHijri)}
+          {...BOOKER_DOM_HOOKS}
           firstDayOfWeek={weekIndexToWeekdayId(weekStart)}
           value={selected ? toCalendarDate(selected) : null}
           focusedValue={focusedDate}

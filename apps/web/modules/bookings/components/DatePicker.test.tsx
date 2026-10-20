@@ -164,4 +164,16 @@ describe("Booker DatePicker on @family/ui Calendar", () => {
     expect(screen.getByTestId("booker-hijri-toggle")).not.toBeChecked();
     expect(document.querySelector('[data-calendar="islamic-umalqura"]')).toBeNull();
   });
+
+  test("keeps the e2e DOM contract: day/data-disabled, incrementMonth, decrementMonth, selected-month-label", () => {
+    const day = dayjs("2027-02-16");
+    render(<DatePicker event={{}} slots={slotsFor(day)} isLoading={false} />, {
+      mockStore: { month: "2027-02" },
+    });
+    expect(document.querySelectorAll('[data-testid="day"][data-disabled="false"]')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-testid="day"][data-disabled="true"]').length).toBeGreaterThan(20);
+    expect(screen.getByTestId("incrementMonth")).toBeInTheDocument();
+    expect(screen.getByTestId("decrementMonth")).toBeInTheDocument();
+    expect(screen.getByTestId("selected-month-label")).toBeInTheDocument();
+  });
 });
