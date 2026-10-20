@@ -10,6 +10,8 @@ const config: StorybookConfig = {
   core: { disableTelemetry: true },
   async viteFinal(cfg) {
     cfg.plugins = [...(cfg.plugins ?? []), tailwindcss()];
+    // @calcom/ui Button imports next/link, whose client code reads process.env at module load (WC-DX-14c2).
+    cfg.define = { ...cfg.define, "process.env": "{}" };
     // A mid-run optimizer reload makes Vitest drop the browser runner, so pre-bundle React up front.
     cfg.optimizeDeps = {
       ...cfg.optimizeDeps,
