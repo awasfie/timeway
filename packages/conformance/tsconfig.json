@@ -1,0 +1,17 @@
+{
+  "extends": "@calcom/tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true
+  },
+  "include": ["src", "test", "vitest.config.ts"]
+}
