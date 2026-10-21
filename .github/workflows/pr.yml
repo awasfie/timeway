@@ -423,6 +423,11 @@ jobs:
     needs: [prepare]
     uses: ./.github/workflows/cc13-org-isolation.yml
 
+  i18n-parity:
+    name: i18n
+    needs: [prepare]
+    uses: ./.github/workflows/i18n-parity.yml
+
   analyze:
     name: Analyze Build
     needs: [build]
@@ -451,6 +456,7 @@ jobs:
         e2e-embed-react,
         e2e-app-store,
         cc13,
+        i18n-parity,
       ]
     if: always()
     runs-on: ubuntu-latest
@@ -471,6 +477,11 @@ jobs:
           echo "::error::CC-13 result: ${{ needs.cc13.result }}"
           exit 1
         if: needs.trust-check.outputs.is-trusted == 'true' && needs.cc13.result != 'success'
+      - name: Fail if AR/EN i18n parity did not succeed (skipped does not count)
+        run: |
+          echo "::error::i18n-parity result: ${{ needs.i18n-parity.result }}"
+          exit 1
+        if: needs.trust-check.outputs.is-trusted == 'true' && needs.i18n-parity.result != 'success'
       - name: Fail if conditional jobs failed
         run: exit 1
         if: |
