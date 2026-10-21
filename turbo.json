@@ -314,7 +314,8 @@
     "B2_BUCKET_ID",
     "B2_BUCKET_NAME",
     "CAMV_INTERNAL_SECRET",
-    "G3_TEST_SECRET"
+    "G3_TEST_SECRET",
+    "SENDGRID_EVENT_WEBHOOK_PUBLIC_KEY"
   ],
   "tasks": {
     "@calcom/web#copy-app-store-static": {
