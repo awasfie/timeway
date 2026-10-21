@@ -1,4 +1,3 @@
-import process from "node:process";
 import * as Sentry from "@sentry/nextjs";
 import type { Instrumentation } from "next";
 
