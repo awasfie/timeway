@@ -2966,3 +2966,31 @@ model OrgApiKey {
   @@index([orgId])
   @@map("tw_org_api_key")
 }
+
+/// WC-TW-8c: SendGrid Event Webhook types kept in the deliverability ledger; others are ignored.
+enum TwEmailEventType {
+  processed
+  delivered
+  bounce
+  dropped
+  deferred
+  spamreport
+  unsubscribe
+}
+
+/// WC-TW-8c: one row per SendGrid event (signed Event Webhook). Recipient domain only, never the address.
+model EmailEvent {
+  id              String           @id @default(uuid()) @db.Uuid
+  sgEventId       String           @unique
+  sgMessageId     String?
+  event           TwEmailEventType
+  bookingUid      String?
+  recipientDomain String?
+  reason          String?          @db.VarChar(500)
+  occurredAt      DateTime
+  createdAt       DateTime         @default(now())
+
+  @@index([occurredAt, event])
+  @@index([bookingUid])
+  @@map("tw_email_event")
+}
