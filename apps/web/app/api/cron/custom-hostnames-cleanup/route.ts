@@ -1,6 +1,6 @@
-import process from "node:process";
 import { CustomHostnameRepository } from "@calcom/features/customHostnames/repositories/CustomHostnameRepository";
 import { cleanupStaleHostnames } from "@calcom/lib/domainManager/customHostnames/service";
+import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 import { prisma } from "@calcom/prisma";
 import { defaultResponderForAppDir } from "@calcom/web/app/api/defaultResponderForAppDir";
 import type { NextRequest } from "next/server";
@@ -11,15 +11,7 @@ import { NextResponse } from "next/server";
  * Dry-run unless ?dryRun=false is passed explicitly.
  */
 async function getHandler(request: NextRequest) {
-  const apiKey = request.headers.get("authorization") || request.nextUrl.searchParams.get("apiKey");
-
-  // Same contract as the other cron routes, minus the hole where an unset CRON_SECRET accepts "Bearer undefined".
-  const accepted = [
-    process.env.CRON_API_KEY,
-    process.env.CRON_SECRET ? `Bearer ${process.env.CRON_SECRET}` : undefined,
-  ].filter((v): v is string => !!v);
-
-  if (!apiKey || !accepted.includes(apiKey)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
