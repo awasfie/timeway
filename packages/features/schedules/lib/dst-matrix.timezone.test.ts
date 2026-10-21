@@ -141,7 +141,7 @@ describe("DST matrix: Egypt working hours (host Africa/Cairo, 09:00-17:00)", () 
         start: hm(0),
         end: hm(23, 59),
         dateFrom: dayjs.utc("2026-10-28T21:00:00Z"), // 2026-10-29 00:00 EEST
-        dateTo: dayjs.utc("2026-10-29T21:59:59Z"), // 2026-10-29 23:59:59 EET (second pass)
+        dateTo: dayjs.utc("2026-10-29T22:00:00Z"), // 2026-10-30 00:00 EET, end of the 25-hour local day
       })
     ).toEqual([["2026-10-28T21:00:00.000Z", "2026-10-29T22:00:00.000Z"]]);
   });
