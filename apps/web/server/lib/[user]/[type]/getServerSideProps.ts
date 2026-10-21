@@ -9,6 +9,7 @@ import { UserRepository } from "@calcom/features/users/repositories/UserReposito
 import slugify from "@calcom/lib/slugify";
 import { prisma } from "@calcom/prisma";
 import { BookingStatus, RedirectType } from "@calcom/prisma/enums";
+import { measure } from "@lib/booking/requestTiming";
 import { handleOrgRedirect } from "@lib/handleOrgRedirect";
 import { getUsersInOrgContext } from "@server/lib/[user]/getServerSideProps";
 import type { GetServerSidePropsContext } from "next";
@@ -122,7 +123,7 @@ async function getDynamicGroupPageProps(context: GetServerSidePropsContext) {
   // Session, org redirect and user lookup are independent reads; run them together (WC-TW-6a decision 2).
   const userRepo = new UserRepository(prisma);
   const [session, redirect, usersInOrgContext] = await Promise.all([
-    getServerSession({ req: context.req }),
+    measure(context, "session", getServerSession({ req: context.req })),
     handleOrgRedirect({
       slugs: usernames,
       redirectType: RedirectType.User,
@@ -130,10 +131,14 @@ async function getDynamicGroupPageProps(context: GetServerSidePropsContext) {
       context,
       currentOrgDomain: org,
     }),
-    userRepo.findUsersByUsername({
-      usernameList: usernames,
-      orgSlug: isValidOrgDomain ? currentOrgDomain : null,
-    }),
+    measure(
+      context,
+      "user",
+      userRepo.findUsersByUsername({
+        usernameList: usernames,
+        orgSlug: isValidOrgDomain ? currentOrgDomain : null,
+      })
+    ),
   ]);
 
   if (redirect) {
@@ -151,14 +156,18 @@ async function getDynamicGroupPageProps(context: GetServerSidePropsContext) {
   // We use this to both prefetch the query on the server,
   // as well as to check if the event exist, so we c an show a 404 otherwise.
 
-  const eventData = await EventRepository.getPublicEvent(
-    {
-      username: usernames.join("+"),
-      eventSlug: slug,
-      org,
-      fromRedirectOfNonOrgLink: context.query.orgRedirection === "true",
-    },
-    session?.user?.id
+  const eventData = await measure(
+    context,
+    "event",
+    EventRepository.getPublicEvent(
+      {
+        username: usernames.join("+"),
+        eventSlug: slug,
+        org,
+        fromRedirectOfNonOrgLink: context.query.orgRedirection === "true",
+      },
+      session?.user?.id
+    )
   );
 
   if (!eventData) {
@@ -221,7 +230,7 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
 
   // Session, org redirect and user lookup are independent reads; run them together (WC-TW-6a decision 2).
   const [session, redirect, [user]] = await Promise.all([
-    getServerSession({ req: context.req }),
+    measure(context, "session", getServerSession({ req: context.req })),
     handleOrgRedirect({
       slugs: usernames,
       redirectType: RedirectType.User,
@@ -229,7 +238,7 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
       context,
       currentOrgDomain: isValidOrgDomain ? currentOrgDomain : null,
     }),
-    getUsersInOrgContext([username], isValidOrgDomain ? currentOrgDomain : null),
+    measure(context, "user", getUsersInOrgContext([username], isValidOrgDomain ? currentOrgDomain : null)),
   ]);
 
   if (redirect) {
@@ -246,14 +255,18 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
 
   // We use this to both prefetch the query on the server,
   // as well as to check if the event exist, so we can show a 404 otherwise.
-  const eventData = await EventRepository.getPublicEvent(
-    {
-      username,
-      eventSlug: slug,
-      org,
-      fromRedirectOfNonOrgLink: context.query.orgRedirection === "true",
-    },
-    session?.user?.id
+  const eventData = await measure(
+    context,
+    "event",
+    EventRepository.getPublicEvent(
+      {
+        username,
+        eventSlug: slug,
+        org,
+        fromRedirectOfNonOrgLink: context.query.orgRedirection === "true",
+      },
+      session?.user?.id
+    )
   );
 
   if (!eventData) {
