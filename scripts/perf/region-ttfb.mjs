@@ -53,7 +53,10 @@ async function measure(loc) {
     const m = await (await fetch(`${API}/${created.id}`)).json();
     if (m.status === "in-progress") continue;
     const r = m.results?.[0];
-    if (!r || r.result.status !== "finished") throw new Error(`${loc.region}: probe result ${r?.result?.status ?? "missing"}`);
+    if (!r || r.result.status !== "finished") {
+      const why = (r?.result?.rawOutput ?? "").slice(0, 200);
+      throw new Error(`${loc.region}: probe ${r?.probe?.city ?? "?"}/${r?.probe?.network ?? "?"} ${r?.result?.status ?? "missing"} ${why}`);
+    }
     const h = r.result.headers ?? {};
     return {
       measurement_id: created.id,
@@ -70,11 +73,36 @@ async function measure(loc) {
   throw new Error(`${loc.region}: measurement ${created.id} did not finish in 30 s`);
 }
 
+// One flaky public probe must not fail the gate, a city with no working probe must.
+async function measureWithRetry(loc, failures, attempts = 3) {
+  let last;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await measure(loc);
+    } catch (err) {
+      last = err;
+      failures.push({ region: loc.region, error: err.message });
+      await sleep(2000);
+    }
+  }
+  throw last;
+}
+
+const record = { gate: "booking-region-ttfb", provider: "globalping", commit: process.env.GITHUB_SHA ?? null };
+
+function writeRecord() {
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, `${JSON.stringify(record, null, 2)}\n`);
+}
+
 async function main() {
   const results = [];
+  const failures = [];
+  record.results = results;
+  record.probe_failures = failures;
   for (const loc of REGIONS) {
     const rows = [];
-    for (let i = 0; i < samples; i++) rows.push(await measure(loc));
+    for (let i = 0; i < samples; i++) rows.push(await measureWithRetry(loc, failures));
     const bad = rows.find((r) => r.status_code !== 200);
     if (bad) throw new Error(`${loc.region}: ${target} returned ${bad.status_code}`);
     const ttfbs = rows.map((r) => r.timings.firstByte);
@@ -91,15 +119,8 @@ async function main() {
     });
   }
 
-  const record = {
-    gate: "booking-region-ttfb",
-    provider: "globalping",
-    commit: process.env.GITHUB_SHA ?? null,
-    measured_at: new Date().toISOString(),
-    results,
-  };
-  mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, `${JSON.stringify(record, null, 2)}\n`);
+  record.measured_at = new Date().toISOString();
+  writeRecord();
 
   const lines = [
     `### Booking page TTFB by region (Globalping, median of ${samples})`,
@@ -126,6 +147,9 @@ async function main() {
 }
 
 main().catch((err) => {
+  record.measured_at = new Date().toISOString();
+  record.error = err.message;
+  writeRecord();
   console.error(`::error::${err.message}`);
   process.exit(1);
 });
