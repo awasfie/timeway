@@ -86,17 +86,9 @@ const foldOctets = (line: string) => {
 
 const unfold = (ics: string) => ics.replace(/\r\n[ \t]/g, "").split("\r\n");
 
-const postProcess = ({
-  ics,
-  event,
-  cancelled,
-  sequence,
-}: {
-  ics: string;
-  event: ICSCalendarEvent;
-  cancelled: boolean;
-  sequence: number;
-}) => {
+type PostProcessInput = { ics: string; event: ICSCalendarEvent; cancelled: boolean; sequence: number };
+
+const postProcess = ({ ics, event, cancelled, sequence }: PostProcessInput) => {
   const timeZone = isValidTimeZone(event.organizer.timeZone) ? event.organizer.timeZone : undefined;
   const out: string[] = [];
   for (const line of unfold(ics)) {
@@ -151,7 +143,7 @@ const generateIcsString = ({
   const hideHostEmail = event.hideOrganizerEmail && !isOrganizerExempt;
   const organizerEmail = getIcsOrganizerEmail();
 
-  // The host stays on the invite as CHAIR so their own calendar still owns the event (omitted when their email is hidden).
+  // Host stays as CHAIR so their own calendar still owns the event (omitted when their email is hidden).
   const hostAttendee: Attendee[] =
     hideHostEmail || event.organizer.email.toLowerCase() === organizerEmail.toLowerCase()
       ? []

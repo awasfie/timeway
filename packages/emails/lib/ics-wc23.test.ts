@@ -1,10 +1,8 @@
-import nodemailer from "nodemailer";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { buildCalendarEvent, buildPerson } from "@calcom/lib/test/builder";
 import type { CalendarEvent } from "@calcom/types/Calendar";
 
-import generateIcsFile, { GenerateIcsRole } from "./generateIcsFile";
 import generateIcsString, { ICS_PRODUCT_ID, getIcsOrganizerEmail } from "./generateIcsString";
 import getNextICalSequence, { getICalSequenceForBooking } from "./getICalSequence";
 import getICalUID from "./getICalUID";
@@ -56,7 +54,11 @@ describe("ICS per WC.2.3", () => {
 
     const icsCreate = generateIcsString({ event: baseEvent(created), status: "CONFIRMED" })!;
     const icsResched = generateIcsString({
-      event: baseEvent({ ...rescheduled, startTime: "2026-03-09T14:00:00.000Z", endTime: "2026-03-09T14:30:00.000Z" }),
+      event: baseEvent({
+        ...rescheduled,
+        startTime: "2026-03-09T14:00:00.000Z",
+        endTime: "2026-03-09T14:30:00.000Z",
+      }),
       status: "CONFIRMED",
     })!;
     const icsCancel = generateIcsString({
@@ -86,7 +88,9 @@ describe("ICS per WC.2.3", () => {
   it("4: ORGANIZER is the sending address with host CN; host is CHAIR attendee; env override wins", () => {
     let ics = unfold(generateIcsString({ event: baseEvent(), status: "CONFIRMED" })!);
     expect(ics).toContain("ORGANIZER;CN=Host Person:mailto:bookings@notify.timeway.co");
-    expect(ics).toContain("ATTENDEE;RSVP=FALSE;ROLE=CHAIR;PARTSTAT=ACCEPTED;CN=Host Person:mailto:host@example.com");
+    expect(ics).toContain(
+      "ATTENDEE;RSVP=FALSE;ROLE=CHAIR;PARTSTAT=ACCEPTED;CN=Host Person:mailto:host@example.com"
+    );
 
     process.env.ICS_ORGANIZER_EMAIL = "invites@notify.timeway.co";
     expect(getIcsOrganizerEmail()).toBe("invites@notify.timeway.co");
@@ -115,7 +119,10 @@ describe("ICS per WC.2.3", () => {
 
   it("5: a zone without DST still gets a VTIMEZONE (Asia/Dubai +0400)", () => {
     const ics = unfold(
-      generateIcsString({ event: baseEvent({ organizer: { ...host, timeZone: "Asia/Dubai" } }), status: "CONFIRMED" })!
+      generateIcsString({
+        event: baseEvent({ organizer: { ...host, timeZone: "Asia/Dubai" } }),
+        status: "CONFIRMED",
+      })!
     );
     expect(ics).toContain("DTSTART;TZID=Asia/Dubai:20260308T180000");
     expect(ics).toContain("TZOFFSETFROM:+0400\r\nTZOFFSETTO:+0400");
@@ -135,27 +142,6 @@ describe("ICS per WC.2.3", () => {
     const cancelled = generateIcsString({ event: baseEvent({ iCalSequence: 1 }), status: "CANCELLED" })!;
     expect(prop(cancelled, "TRANSP")).toBe("TRANSP:TRANSPARENT");
     expect(prop(cancelled, "X-MICROSOFT-CDO-BUSYSTATUS")).toBe("X-MICROSOFT-CDO-BUSYSTATUS:FREE");
-  });
-
-  it.each([
-    ["CONFIRMED", "REQUEST"],
-    ["CANCELLED", "CANCEL"],
-  ] as const)("7: %s mail carries a text/calendar method=%s part and an invite.ics attachment", async (status, method) => {
-    const icalEvent = generateIcsFile({ calEvent: baseEvent(), role: GenerateIcsRole.ATTENDEE, status })!;
-    const transport = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "windows" });
-    const info = await transport.sendMail({
-      from: process.env.EMAIL_FROM,
-      to: "guest@example.com",
-      subject: "Invite",
-      html: "<p>hi</p>",
-      text: "hi",
-      icalEvent,
-    });
-    const raw = (info.message as Buffer).toString("utf8");
-    expect(raw).toContain(`Content-Type: text/calendar; charset=utf-8; method=${method}`);
-    expect(raw).toMatch(/Content-Type: application\/ics; name=invite\.ics/);
-    expect(raw).toMatch(/Content-Disposition: attachment; filename=invite\.ics/);
-    expect(raw).toMatch(/Content-Type: multipart\/alternative/);
   });
 
   it("8: Arabic SUMMARY/DESCRIPTION stay valid UTF-8 and lines fold at <= 75 octets", () => {

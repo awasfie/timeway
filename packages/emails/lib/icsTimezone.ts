@@ -42,14 +42,8 @@ const getLocalParts = (timeZone: string, epochMs: number): LocalParts => {
   for (const part of getFormatter(timeZone).formatToParts(new Date(epochMs))) {
     if (part.type !== "literal") parts[part.type] = Number(part.value);
   }
-  return {
-    year: parts.year,
-    month: parts.month,
-    day: parts.day,
-    hour: parts.hour,
-    minute: parts.minute,
-    second: parts.second,
-  };
+  const { year, month, day, hour, minute, second } = parts;
+  return { year, month, day, hour, minute, second };
 };
 
 /** Offset from UTC in minutes at the given instant. */
@@ -76,7 +70,10 @@ const formatOffset = (minutes: number) => {
 
 /** Standard offset of a year = the smaller of the January and July offsets (works for both hemispheres). */
 const getStandardOffset = (timeZone: string, year: number) =>
-  Math.min(getOffsetMinutes(timeZone, Date.UTC(year, 0, 1)), getOffsetMinutes(timeZone, Date.UTC(year, 6, 1)));
+  Math.min(
+    getOffsetMinutes(timeZone, Date.UTC(year, 0, 1)),
+    getOffsetMinutes(timeZone, Date.UTC(year, 6, 1))
+  );
 
 type Transition = { at: number; from: number; to: number };
 
@@ -114,7 +111,7 @@ const observance = (timeZone: string, dtstart: string, from: number, to: number,
 };
 
 /**
- * VTIMEZONE lines for `timeZone` covering Jan 1 of the year before `startIso` until Jan 1 two years after `endIso`.
+ * VTIMEZONE lines for `timeZone` from Jan 1 of the year before `startIso` to Jan 1 two years after `endIso`.
  * Transition DTSTARTs are expressed in the pre-transition local time, as RFC 5545 3.6.5 requires.
  */
 export const buildVTimezone = (timeZone: string, startIso: string, endIso: string): string[] => {
