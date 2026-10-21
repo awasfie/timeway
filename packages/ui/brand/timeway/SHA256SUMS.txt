@@ -1,5 +1,4 @@
 164e3a70efcaaa55a1ac19a6cec5dc7b94ab88c362c4d4cbbbbe46300d80a3a9  README.md
-0c620ee0bf51cd2b5f88c35958e798e4e5807d4b0ff45720d7cfe2f7615e2c5b  SHA256SUMS.txt
 376427b5322148d8de1e03f263bcca4935a2d60ba71d9f94f4947ab664c711ae  fonts/DM_Sans/DM-Sans-Medium.ttf
 b0ae3e89a7d3ef2b1838bb4b1ceb0b17cc3435af061eee809d76aa623ff116e9  fonts/DM_Sans/DM-Sans-Regular.ttf
 b79a2ea7a38f33fd96a282fadb9ce97626bb0724a44d21075859f0e50239993a  fonts/DM_Sans/DM-Sans-SemiBold.ttf
