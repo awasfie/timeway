@@ -12,7 +12,7 @@ describe("getPlausibleRewrites", () => {
     expect(getPlausibleRewrites("stats.timeway.co")).toEqual([
       {
         source: "/js/pa.js",
-        destination: "https://stats.timeway.co/js/script.tagged-events.pageview-props.js",
+        destination: "https://stats.timeway.co/js/script.manual.tagged-events.pageview-props.js",
       },
       { source: "/api/pa/event", destination: "https://stats.timeway.co/api/event" },
     ]);
@@ -20,7 +20,7 @@ describe("getPlausibleRewrites", () => {
 
   it("keeps an explicit scheme and strips trailing slashes", () => {
     const [script, event] = getPlausibleRewrites("http://plausible.local:8000//");
-    expect(script.destination).toBe("http://plausible.local:8000/js/script.tagged-events.pageview-props.js");
+    expect(script.destination).toBe("http://plausible.local:8000/js/script.manual.tagged-events.pageview-props.js");
     expect(event.destination).toBe("http://plausible.local:8000/api/event");
   });
 });
