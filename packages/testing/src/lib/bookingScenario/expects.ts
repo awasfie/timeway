@@ -514,7 +514,7 @@ export function expectSuccessfulBookingCreationEmails({
       ...(calendarType !== "office365_calendar"
         ? {
             ics: {
-              filename: "event.ics",
+              filename: "invite.ics",
               iCalUID: `${iCalUID}`,
               recurrence,
               method: "REQUEST",
@@ -541,7 +541,7 @@ export function expectSuccessfulBookingCreationEmails({
         : null),
       to: `${booker.name} <${booker.email}>`,
       ics: {
-        filename: "event.ics",
+        filename: "invite.ics",
         iCalUID: `${iCalUID}`,
         recurrence,
         method: "REQUEST",
@@ -585,7 +585,7 @@ export function expectSuccessfulBookingCreationEmails({
           // Don't know why but organizer and team members of the eventType don'thave their name here like Booker
           to: `${otherTeamMember.email}`,
           ics: {
-            filename: "event.ics",
+            filename: "invite.ics",
             iCalUID: `${iCalUID}`,
             method: "REQUEST",
           },
@@ -628,7 +628,7 @@ export function expectSuccessfulBookingCreationEmails({
             : null),
           to: `${guest.email}`,
           ics: {
-            filename: "event.ics",
+            filename: "invite.ics",
             iCalUID: `${iCalUID}`,
             method: "REQUEST",
           },
@@ -653,7 +653,7 @@ export function expectBrokenIntegrationEmails({
       to: `${organizer.email}`,
       // No ics goes in case of broken integration email it seems
       // ics: {
-      //   filename: "event.ics",
+      //   filename: "invite.ics",
       //   iCalUID: iCalUID,
       // },
     },
@@ -685,7 +685,7 @@ export function expectCalendarEventCreationFailureEmails({
       titleTag: "broken_integration",
       to: `${organizer.email}`,
       ics: {
-        filename: "event.ics",
+        filename: "invite.ics",
         iCalUID,
         method: "REQUEST",
       },
@@ -698,7 +698,7 @@ export function expectCalendarEventCreationFailureEmails({
       titleTag: "calendar_event_creation_failure_subject",
       to: `${booker.name} <${booker.email}>`,
       ics: {
-        filename: "event.ics",
+        filename: "invite.ics",
         iCalUID,
         method: "REQUEST",
       },
@@ -785,7 +785,7 @@ export function expectSuccessfulBookingRescheduledEmails({
       titleTag: "event_type_has_been_rescheduled_on_time_date",
       to: `${organizer.email}`,
       ics: {
-        filename: "event.ics",
+        filename: "invite.ics",
         iCalUID,
         method: "REQUEST",
       },
@@ -799,7 +799,7 @@ export function expectSuccessfulBookingRescheduledEmails({
       titleTag: "event_type_has_been_rescheduled_on_time_date",
       to: `${booker.name} <${booker.email}>`,
       ics: {
-        filename: "event.ics",
+        filename: "invite.ics",
         iCalUID,
         method: "REQUEST",
       },
@@ -917,7 +917,7 @@ export function expectBookingRequestRescheduledEmails({
       ],
       to: `${booker.email}`,
       ics: {
-        filename: "event.ics",
+        filename: "invite.ics",
         method: "REQUEST",
       },
     },
@@ -931,7 +931,7 @@ export function expectBookingRequestRescheduledEmails({
       subHeading: "request_reschedule_subtitle_organizer",
       to: `${loggedInUser.email}`,
       ics: {
-        filename: "event.ics",
+        filename: "invite.ics",
         method: "REQUEST",
       },
     },

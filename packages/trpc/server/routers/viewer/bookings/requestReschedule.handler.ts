@@ -5,6 +5,7 @@ import {
 } from "@calcom/app-store/delegationCredential";
 import dayjs from "@calcom/dayjs";
 import { sendRequestRescheduleEmailAndSMS } from "@calcom/emails/email-manager";
+import getNextICalSequence from "@calcom/emails/lib/getICalSequence";
 import { getCalEventResponses } from "@calcom/features/bookings/lib/getCalEventResponses";
 import { BookingRepository } from "@calcom/features/bookings/repositories/BookingRepository";
 import { deleteMeeting } from "@calcom/features/conferencing/lib/videoClient";
@@ -83,6 +84,7 @@ export const requestRescheduleHandler = async ({ ctx, input, source }: RequestRe
     rescheduled: true,
     cancellationReason,
     cancelledBy: user.email,
+    iCalSequence: getNextICalSequence(bookingToReschedule.iCalSequence),
   });
 
   // delete scheduled jobs of previous booking
@@ -135,7 +137,7 @@ export const requestRescheduleHandler = async ({ ctx, input, source }: RequestRe
     ),
     organizer,
     iCalUID: bookingToReschedule.iCalUID,
-    iCalSequence: (bookingToReschedule.iCalSequence ?? 0) + 1,
+    iCalSequence: getNextICalSequence(bookingToReschedule.iCalSequence),
     customReplyToEmail: bookingToReschedule.eventType?.customReplyToEmail,
     team: bookingToReschedule.eventType?.team
       ? {
