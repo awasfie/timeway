@@ -1,6 +1,7 @@
 "use client";
 
 import dayjs from "@calcom/dayjs";
+import { trackSlotSelected } from "./utils/bookerAnalytics";
 import { BOOKER_NUMBER_OF_DAYS_TO_LOAD } from "@calcom/lib/constants";
 import { BookerLayouts } from "@calcom/prisma/zod-utils";
 import { useEffect } from "react";
@@ -681,6 +682,7 @@ export const createBookerStore = () =>
     },
     setSelectedTimeslot: (selectedTimeslot: string | null) => {
       set({ selectedTimeslot });
+      trackSlotSelected(selectedTimeslot);
       if (!get().isPlatform || get().allowUpdatingUrlParams) {
         updateQueryParam("slot", selectedTimeslot ?? "", false);
       }
