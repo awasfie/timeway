@@ -16,9 +16,9 @@ import { cookies, headers } from "next/headers";
 import type React from "react";
 import { cache, Suspense } from "react";
 import superjson from "superjson";
+import SeedScheduleQuery from "~/users/views/SeedScheduleQuery";
 import type { PageProps as LegacyPageProps } from "~/users/views/users-type-public-view";
 import LegacyPage from "~/users/views/users-type-public-view";
-import SeedScheduleQuery from "~/users/views/SeedScheduleQuery";
 
 type LegacyCtx = ReturnType<typeof buildLegacyCtx>;
 
@@ -51,7 +51,11 @@ const toURLSearchParams = (searchParams: Record<string, string | string[] | unde
   return sp;
 };
 
-type BookerViewProps = { props: LegacyPageProps; locale?: string | null; translations?: Record<string, string> };
+type BookerViewProps = {
+  props: LegacyPageProps;
+  locale?: string | null;
+  translations?: Record<string, string>;
+};
 
 const BookerView = ({ props, locale, translations }: BookerViewProps) => {
   if (!locale || !translations) return <LegacyPage {...props} />;
@@ -61,6 +65,27 @@ const BookerView = ({ props, locale, translations }: BookerViewProps) => {
     </CustomI18nProvider>
   );
 };
+
+/**
+ * Suspense fallback (WC-TW-6a3 decision 2): a static server skeleton, never a Booker. A client-rendered
+ * fallback (soft navigation, or React rendering the boundary client-side) would mount an unseeded
+ * Booker that fires getSchedule and then unmounts when SeededBooker resolves: two mounts, two
+ * fetches. No hooks, no client JS; title and host name are the same public data as the metadata.
+ */
+const BookerSkeleton = ({ props }: { props: LegacyPageProps }) => (
+  <div
+    className="flex min-h-screen items-center justify-center"
+    aria-busy="true"
+    data-testid="booker-skeleton">
+    <div className="bg-default border-subtle flex w-full max-w-[980px] flex-col gap-6 rounded-md border p-6 md:flex-row">
+      <div className="flex flex-col gap-2 md:w-1/3">
+        <p className="text-subtle text-sm">{props.eventData?.profile?.name ?? ""}</p>
+        <h1 className="text-emphasis text-xl font-semibold">{props.eventData?.title ?? ""}</h1>
+      </div>
+      <div className="bg-subtle h-[320px] animate-pulse rounded-md md:w-2/3" />
+    </div>
+  </div>
+);
 
 /** Starts the first-month slots fetch; null when the Booker would not request the same query. */
 const startSlotsFetch = ({
@@ -121,7 +146,11 @@ const SeededBooker = async ({
     const header = formatServerTiming({ ...timings, slots: Math.round(ms * 10) / 10 });
     return (
       <>
-        <script type="application/json" id="booking-server-timing" dangerouslySetInnerHTML={{ __html: JSON.stringify({ serverTiming: header }) }} />
+        <script
+          type="application/json"
+          id="booking-server-timing"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({ serverTiming: header }) }}
+        />
         <SeedScheduleQuery input={slots.input} serializedData={superjson.serialize(data)}>
           <BookerView props={props} locale={locale} translations={translations} />
         </SeedScheduleQuery>
@@ -149,7 +178,7 @@ const ServerPage = async ({ params, searchParams }: PageProps): Promise<JSX.Elem
   if (!slots) return <BookerView props={props} locale={locale} translations={translations} />;
 
   return (
-    <Suspense fallback={<BookerView props={props} locale={locale} translations={translations} />}>
+    <Suspense fallback={<BookerSkeleton props={props} />}>
       <SeededBookerView props={props} slots={slots} timings={getTimings(ctx)} translations={translations} />
     </Suspense>
   );

@@ -2,10 +2,21 @@
 // state crosses requests; values are durations only (no PII).
 const timings = new WeakMap<object, Record<string, number>>();
 
+/** Per-request store opened by serverTimingHeader.ts (node runtime); shared via globalThis so the
+ * instrumentation bundle and the page bundle see the same AsyncLocalStorage instance. */
+export const SERVER_TIMING_STORE = Symbol.for("timeway.serverTiming.store");
+type ServerTimingStore = { getStore(): Record<string, number> | undefined };
+
+const requestStore = () =>
+  (globalThis as { [SERVER_TIMING_STORE]?: ServerTimingStore })[SERVER_TIMING_STORE]?.getStore();
+
 export function recordTiming(key: object, name: string, ms: number) {
+  const value = Math.round(ms * 10) / 10;
   const entry = timings.get(key) ?? {};
-  entry[name] = Math.round(ms * 10) / 10;
+  entry[name] = value;
   timings.set(key, entry);
+  const store = requestStore();
+  if (store) store[name] = value;
 }
 
 export function measure<T>(key: object, name: string, promise: Promise<T>): Promise<T> {

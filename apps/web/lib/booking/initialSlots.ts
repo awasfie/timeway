@@ -1,7 +1,7 @@
 import dayjs from "@calcom/dayjs";
+import { isBookingDryRun } from "@calcom/features/bookings/Booker/utils/isBookingDryRun";
 import { getUsernameList } from "@calcom/features/eventtypes/lib/defaultEvents";
 import { getRoutedTeamMemberIdsFromSearchParams } from "@calcom/lib/bookings/getRoutedTeamMemberIdsFromSearchParams";
-import { isBookingDryRun } from "@calcom/features/bookings/Booker/utils/isBookingDryRun";
 import { BOOKER_NUMBER_OF_DAYS_TO_LOAD } from "@calcom/lib/constants";
 import type { TGetScheduleInputSchema } from "@calcom/trpc/server/routers/viewer/slots/types";
 
@@ -20,7 +20,11 @@ export const getMultipleDurationValue = (
 };
 
 /** Mirrors the Booker store init: `month` param > `date` param month > current month. */
-export function getInitialMonth(searchParams: URLSearchParams, timeZone: string, now = dayjs()): string | null {
+export function getInitialMonth(
+  searchParams: URLSearchParams,
+  timeZone: string,
+  now = dayjs()
+): string | null {
   const month = searchParams.get("month");
   if (month) return month;
   const date = searchParams.get("date");
@@ -33,7 +37,11 @@ export function getInitialMonth(searchParams: URLSearchParams, timeZone: string,
  * endTime to the next month once we are past the first two weeks of the current month (the "15th" rule).
  * Boundaries are computed in the invitee timezone, which is the browser-local zone the client uses.
  */
-export function getInitialScheduleTimes(month: string, timeZone: string, now = dayjs()): [string, string] | null {
+export function getInitialScheduleTimes(
+  month: string,
+  timeZone: string,
+  now = dayjs()
+): [string, string] | null {
   const monthStart = dayjs.tz(`${month}-01`, timeZone);
   if (!monthStart.isValid() || !/^\d{4}-\d{2}$/.test(month)) return null;
   const nowTz = now.tz(timeZone);
