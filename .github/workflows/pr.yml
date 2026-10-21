@@ -418,6 +418,11 @@ jobs:
     uses: ./.github/workflows/e2e-embed-react.yml
     secrets: inherit
 
+  cc13:
+    name: CC-13
+    needs: [prepare]
+    uses: ./.github/workflows/cc13-org-isolation.yml
+
   analyze:
     name: Analyze Build
     needs: [build]
@@ -445,6 +450,7 @@ jobs:
         e2e-embed,
         e2e-embed-react,
         e2e-app-store,
+        cc13,
       ]
     if: always()
     runs-on: ubuntu-latest
@@ -460,6 +466,11 @@ jobs:
           echo "A maintainer must review the code and add the 'run-ci' label to trigger CI checks."
           exit 1
         if: needs.trust-check.outputs.is-trusted != 'true' && needs.trust-check.result == 'success'
+      - name: Fail if CC-13 did not succeed (skipped does not count)
+        run: |
+          echo "::error::CC-13 result: ${{ needs.cc13.result }}"
+          exit 1
+        if: needs.trust-check.outputs.is-trusted == 'true' && needs.cc13.result != 'success'
       - name: Fail if conditional jobs failed
         run: exit 1
         if: |
