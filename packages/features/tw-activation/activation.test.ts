@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@calcom/prisma", () => ({ default: {}, prisma: {} }));
+vi.mock("@calcom/prisma", () => ({ prisma: {} }));
 vi.mock("@calcom/lib/trackServerEvent", () => ({ trackServerEvent: vi.fn() }));
 
 import { trackServerEvent } from "@calcom/lib/trackServerEvent";
