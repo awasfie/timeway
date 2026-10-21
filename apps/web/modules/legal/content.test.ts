@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { LEGAL_ENTITY, privacyContent, termsContent } from "./content";
+import { LEGAL_ENTITY, legalLastUpdated, privacyContent, termsContent } from "./content";
 
 // CM-T6 (Bible v12.1): Timeway legal pages. These are the facts the Bible pins; a change here
 // is a Bible-level change (PART CM / CM.0-7 / D-R60), so the test fails loudly.
@@ -44,6 +44,26 @@ describe("CM-T6 Timeway legal content", () => {
     expect(terms).toMatch(/21 days/);
     expect(terms).toContain("we pause your workspace for 90 days before anything is deleted");
     expect(privacy).toContain("we pause your workspace for 90 days before anything is deleted");
+  });
+
+  it("serves an Arabic variant for ar locales with the same sections and Latin entity facts", () => {
+    const termsAr = termsContent("Timeway", "help@timeway.co", "https://timeway.co", "ar");
+    const privacyAr = privacyContent("Timeway", "help@timeway.co", "ar");
+    const termsEn = termsContent("Timeway", "help@timeway.co", "https://timeway.co");
+    const privacyEn = privacyContent("Timeway", "help@timeway.co");
+    expect(termsAr.title).toBe("شروط الخدمة");
+    expect(privacyAr.title).toBe("سياسة الخصوصية");
+    expect(termsAr.sections.map((s) => s.id)).toEqual(termsEn.sections.map((s) => s.id));
+    expect(privacyAr.sections.map((s) => s.id)).toEqual(privacyEn.sections.map((s) => s.id));
+    const ar = all(termsAr);
+    expect(ar).toContain("AWSTREAMS DMCC");
+    expect(ar).toContain("100460677600003");
+    expect(ar).toContain("Tiffany Tower");
+    expect(ar).toMatch(/14 يومًا/);
+    expect(ar).toMatch(/90 يومًا/);
+    expect(all(privacyAr)).toContain("AWSTREAMS DMCC");
+    expect(termsContent("Timeway", "a", "b", "en").title).toBe("Terms of Service");
+    expect(legalLastUpdated("ar")).not.toBe(legalLastUpdated("en"));
   });
 
   it("has no cal.com / Cal.diy / upstream-brand leaks", () => {
