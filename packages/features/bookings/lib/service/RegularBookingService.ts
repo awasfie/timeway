@@ -1098,7 +1098,7 @@ async function handler(
             } catch {
               notAvailableLuckyUsers.push(newLuckyUser);
               tracingLogger.info(
-                `Round robin host ${newLuckyUser.name} not available for first two slots. Trying to find another host.`
+                `Round robin host ${newLuckyUser.name} not available for every recurring slot. Trying to find another host.`
               );
             }
           } else {
