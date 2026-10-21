@@ -15,7 +15,7 @@ import { randomUUID } from "node:crypto";
 
 import logger from "@calcom/lib/logger";
 import { trackServerEvent } from "@calcom/lib/trackServerEvent";
-import prisma from "@calcom/prisma";
+import { prisma } from "@calcom/prisma";
 import type { RawCapableTx, TxCapableClient } from "@calcom/prisma/tw-org-context";
 import { withTwOrg } from "@calcom/prisma/tw-org-context";
 
