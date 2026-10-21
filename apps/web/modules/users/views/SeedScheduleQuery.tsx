@@ -5,11 +5,10 @@ import { trpc } from "app/_trpc/trpc";
 import { getQueryKey } from "@trpc/react-query";
 import { useState } from "react";
 import superjson from "superjson";
-import type { SuperJSONResult } from "superjson";
 
 type Props = {
   input: Parameters<typeof trpc.viewer.slots.getSchedule.useQuery>[0];
-  serializedData: SuperJSONResult;
+  serializedData: ReturnType<typeof superjson.serialize>;
   children: React.ReactNode;
 };
 

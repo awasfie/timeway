@@ -51,17 +51,12 @@ const toURLSearchParams = (searchParams: Record<string, string | string[] | unde
   return sp;
 };
 
-const BookerView = ({ props, locale }: { props: LegacyPageProps; locale?: string | null }) => {
-  const page = <LegacyPage {...props} />;
-  if (!locale) return page;
-  return <BookerWithTranslations props={props} locale={locale} />;
-};
+type BookerViewProps = { props: LegacyPageProps; locale?: string | null; translations?: Record<string, string> };
 
-const BookerWithTranslations = async ({ props, locale }: { props: LegacyPageProps; locale: string }) => {
-  const ns = "common";
-  const translations = await loadTranslations(locale, ns);
+const BookerView = ({ props, locale, translations }: BookerViewProps) => {
+  if (!locale || !translations) return <LegacyPage {...props} />;
   return (
-    <CustomI18nProvider translations={translations} locale={locale} ns={ns}>
+    <CustomI18nProvider translations={translations} locale={locale} ns="common">
       <LegacyPage {...props} />
     </CustomI18nProvider>
   );
@@ -97,7 +92,7 @@ const startSlotsFetch = ({
       eventData.length
     ),
     isTeamEvent: false,
-    defaultLayout: eventData.bookerLayouts?.defaultLayout,
+    defaultLayout: eventData.metadata?.bookerLayouts?.defaultLayout,
   });
   if (!input) return null;
   const parsed = getScheduleSchema.safeParse(input);
@@ -113,8 +108,10 @@ const SeededBooker = async ({
   props,
   slots,
   timings,
+  translations,
 }: {
   props: LegacyPageProps;
+  translations?: Record<string, string>;
   slots: NonNullable<ReturnType<typeof startSlotsFetch>>;
   timings: Record<string, number>;
 }) => {
@@ -126,30 +123,34 @@ const SeededBooker = async ({
       <>
         <script type="application/json" id="booking-server-timing" dangerouslySetInnerHTML={{ __html: JSON.stringify({ serverTiming: header }) }} />
         <SeedScheduleQuery input={slots.input} serializedData={superjson.serialize(data)}>
-          <BookerView props={props} locale={locale} />
+          <BookerView props={props} locale={locale} translations={translations} />
         </SeedScheduleQuery>
       </>
     );
   } catch {
     // Slots failure must never break the page: the Booker fetches on its own.
-    return <BookerView props={props} locale={locale} />;
+    return <BookerView props={props} locale={locale} translations={translations} />;
   }
 };
+
+// React 18 JSX types reject async components; Next renders them fine.
+const SeededBookerView = SeededBooker as unknown as (p: Parameters<typeof SeededBooker>[0]) => JSX.Element;
 
 const ServerPage = async ({ params, searchParams }: PageProps): Promise<JSX.Element> => {
   const { props, ctx } = await getData(params, searchParams);
   const locale = props.eventData?.interfaceLanguage;
+  const translations = locale ? await loadTranslations(locale, "common") : undefined;
   const slots = startSlotsFetch({
     props,
     ctx,
     headerList: await headers(),
     searchParams: toURLSearchParams(await searchParams),
   });
-  if (!slots) return <BookerView props={props} locale={locale} />;
+  if (!slots) return <BookerView props={props} locale={locale} translations={translations} />;
 
   return (
-    <Suspense fallback={<BookerView props={props} locale={locale} />}>
-      <SeededBooker props={props} slots={slots} timings={getTimings(ctx)} />
+    <Suspense fallback={<BookerView props={props} locale={locale} translations={translations} />}>
+      <SeededBookerView props={props} slots={slots} timings={getTimings(ctx)} translations={translations} />
     </Suspense>
   );
 };
@@ -157,7 +158,7 @@ const ServerPage = async ({ params, searchParams }: PageProps): Promise<JSX.Elem
 export const generateMetadata = async ({ params, searchParams }: PageProps): Promise<Metadata> => {
   const props = await getData(params, searchParams);
 
-  const { booking, isSEOIndexable = true, eventData, isBrandingHidden } = props;
+  const { booking, isSEOIndexable = true, eventData, isBrandingHidden } = pageProps;
   const rescheduleUid = booking?.uid;
   const profileName = eventData?.profile?.name ?? "";
   const title = eventData?.title ?? "";
