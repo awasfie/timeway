@@ -1,10 +1,9 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-
+import type { ICSCalendarEvent } from "@calcom/emails/lib/generateIcsString";
 import generateIcsString from "@calcom/emails/lib/generateIcsString";
 import { getTranslation } from "@calcom/i18n/server";
 import prisma from "@calcom/prisma";
-import type { ICSCalendarEvent } from "@calcom/emails/lib/generateIcsString";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 /** Public .ics download keyed by the unguessable booking uid (TW-MAIL-2, Apple/.ics link). */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid: string }> }) {

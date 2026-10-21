@@ -115,7 +115,9 @@ export const BaseEmailHtml = (props: {
                       width: "100%",
                     }}>
                     <Row border="0" style={{ verticalAlign: "top" }} width="100%">
-                      <td align={start} style={{ fontSize: 0, padding: "10px 25px", wordBreak: "break-word" }}>
+                      <td
+                        align={start}
+                        style={{ fontSize: 0, padding: "10px 25px", wordBreak: "break-word" }}>
                         <div
                           style={{
                             fontFamily: "Roboto, Helvetica, sans-serif",
@@ -205,7 +207,7 @@ export const BaseEmailHtml = (props: {
               </Row>
             </div>
           </div>
-          {!Boolean(props.hideLogo) && <EmailBodyLogo />}
+          {!props.hideLogo && <EmailBodyLogo />}
           <RawHtml html="<!--[if mso | IE]></td></tr></table><![endif]-->" />
         </div>
       </body>

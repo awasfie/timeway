@@ -4,7 +4,14 @@ import type { TFunction } from "i18next";
 
 type LinkEvent = Pick<
   CalendarEvent,
-  "title" | "startTime" | "endTime" | "uid" | "location" | "bookerUrl" | "videoCallData" | "additionalInformation"
+  | "title"
+  | "startTime"
+  | "endTime"
+  | "uid"
+  | "location"
+  | "bookerUrl"
+  | "videoCallData"
+  | "additionalInformation"
 >;
 
 const compact = (iso: string) =>

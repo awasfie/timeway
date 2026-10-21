@@ -1,6 +1,5 @@
 import type { CalendarEvent } from "@calcom/types/Calendar";
 import type { TFunction } from "i18next";
-
 import { getCalendarLinks } from "../../lib/calendarLinks";
 
 const linkStyle = { color: "#101010", fontWeight: 600, textDecoration: "underline" } as const;
