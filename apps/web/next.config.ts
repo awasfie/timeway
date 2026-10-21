@@ -5,6 +5,7 @@ import type { RouteHas } from "next/dist/lib/load-custom-routes";
 import { withAxiom } from "next-axiom";
 import i18nConfig from "@calcom/i18n/next-i18next.config";
 import packageJson from "./package.json";
+import { getPlausibleRewrites } from "./plausibleRewrites";
 import {
   nextJsOrgRewriteConfig,
   orgUserRoutePath,
@@ -295,6 +296,7 @@ const nextConfig = (phase: string): NextConfig => {
           source: "/login",
           destination: "/auth/login",
         },
+        ...getPlausibleRewrites(process.env.PLAUSIBLE_HOST),
         ...(isOrganizationsEnabled
           ? [
               orgDomainMatcherConfig.root
