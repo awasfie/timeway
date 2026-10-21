@@ -23,10 +23,10 @@ export function installServerTimingHeader() {
   const als = new AsyncLocalStorage<Record<string, number>>();
   g[SERVER_TIMING_STORE] = als;
 
-  const originalEmit = http.Server.prototype.emit;
-  http.Server.prototype.emit = function (this: http.Server, event: string | symbol, ...args: unknown[]) {
-    if (event === "request") return als.run({}, () => originalEmit.call(this, event, ...args));
-    return originalEmit.call(this, event, ...args);
+  const originalEmit = http.Server.prototype.emit as (...a: unknown[]) => boolean;
+  http.Server.prototype.emit = function (this: http.Server, ...args: unknown[]) {
+    if (args[0] === "request") return als.run({}, () => originalEmit.apply(this, args));
+    return originalEmit.apply(this, args);
   } as typeof http.Server.prototype.emit;
 
   const originalWriteHead = http.ServerResponse.prototype.writeHead;
