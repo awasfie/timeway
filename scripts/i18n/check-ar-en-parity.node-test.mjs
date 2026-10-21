@@ -1,4 +1,5 @@
-// node --test scripts/i18n/check-ar-en-parity.test.mjs
+// node --test scripts/i18n/check-ar-en-parity.node-test.mjs
+// Named *.node-test.mjs so the root Vitest glob (**/*.test.mjs) does not collect it; runs under node --test only.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";

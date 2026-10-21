@@ -29,6 +29,6 @@ jobs:
         with:
           node-version: 20
       - name: Checker self-test
-        run: node --test scripts/i18n/check-ar-en-parity.test.mjs
+        run: node --test scripts/i18n/check-ar-en-parity.node-test.mjs
       - name: AR/EN parity
         run: node scripts/i18n/check-ar-en-parity.mjs
