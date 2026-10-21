@@ -27,3 +27,4 @@ apps/web/test/docker-compose.yml|postgres:18@sha256:74935e72241653ca55e0414067e6
 packages/emails/docker-compose.yml|mailhog/mailhog:v1.0.1@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
 packages/prisma/docker-compose.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
 packages/conformance/Dockerfile|node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0   # WC-TW-4b t_49f8c4ff: same digest as the timeway runner; ghcr mirror swap -> t_969dbe7f
+.github/workflows/tzdata-pin.yml|pgvector/pgvector:pg16@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b   # WC-TW-5a t_7cd4f5fa: same digest as the live shared Postgres; ghcr mirror swap -> t_969dbe7f

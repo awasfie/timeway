@@ -86,15 +86,29 @@ RUN scripts/replace-placeholder.sh http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER ${N
 # nothing at runtime calls them (start.sh and migrate.sh use the local node_modules/.bin), and npm's bundled tar
 # was a CRITICAL finding. openssl provides libssl3 for the Prisma engines; netcat for wait-for-it; wget for the
 # HEALTHCHECK.
-FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 AS runner
-
-WORKDIR /calcom
+FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 AS tzbase
 
 RUN apt-get update \
   && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends netcat-openbsd wget openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
+# WC-TW-5a (CC-65): one tzdata version for Node/ICU, the OS and Postgres, pinned in ops/tzdata/pin.env. Applied after
+# apt so no package upgrade can overwrite it; Debian's zoneinfo is replaced whole so no stale zone survives. The
+# build fails here if Node or the OS do not report the pin. CI builds this stage (.github/workflows/tzdata-pin.yml).
+COPY ops/tzdata /opt/tzdata/src
+RUN sh /opt/tzdata/src/install.sh /opt/tzdata \
+  && rm -rf /usr/share/zoneinfo \
+  && mv /opt/tzdata/zoneinfo /usr/share/zoneinfo \
+  && ln -s . /usr/share/zoneinfo/posix \
+  && ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
+ENV ICU_TIMEZONE_FILES_DIR=/opt/tzdata/icu
+RUN node /opt/tzdata/src/assert.mjs
+
+FROM tzbase AS runner
+
+WORKDIR /calcom
 
 COPY --from=builder-two /calcom ./
 # Build-time Go binaries (esbuild via vite/tsx/trigger.dev, depot CLI) are never executed by the app; they carried
