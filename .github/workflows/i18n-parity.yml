@@ -4,6 +4,10 @@ name: i18n AR/EN parity
 # PR (which skips lint) still runs it. No secrets, no install.
 on:
   workflow_call:
+  # pr.yml is pull_request_target (base-branch definitions), so this trigger is what runs the
+  # gate from the PR head on the PR that changes it; read-only, no secrets.
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
