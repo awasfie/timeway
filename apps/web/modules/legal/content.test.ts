@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-
 import { LEGAL_ENTITY, legalLastUpdated, privacyContent, termsContent } from "./content";
 
 // CM-T6 (Bible v12.1): Timeway legal pages. These are the facts the Bible pins; a change here

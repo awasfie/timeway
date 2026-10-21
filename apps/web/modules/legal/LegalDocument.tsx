@@ -1,7 +1,5 @@
-import Link from "next/link";
-
 import type { TFunction } from "i18next";
-
+import Link from "next/link";
 import { LEGAL_ENTITY, type LegalDocumentContent, legalLastUpdated } from "./content";
 
 /** CM-T6: server-rendered legal document (no client JS, readable without sign-in). */
@@ -15,7 +13,7 @@ export function LegalDocument({
   appName: string;
   t: TFunction;
   locale: string;
-}){
+}) {
   return (
     <main className="min-h-screen bg-default text-default">
       <article className="mx-auto max-w-3xl px-6 py-12 md:py-16">
@@ -25,7 +23,9 @@ export function LegalDocument({
           </Link>
         </p>
         <h1 className="font-cal font-semibold text-3xl text-emphasis">{content.title}</h1>
-        <p className="mt-2 text-sm text-subtle">{t("last_updated")}: {legalLastUpdated(locale)}</p>
+        <p className="mt-2 text-sm text-subtle">
+          {t("last_updated")}: {legalLastUpdated(locale)}
+        </p>
         <p className="mt-6 leading-relaxed">{content.intro}</p>
         {content.sections.map((s) => (
           <section key={s.id} id={s.id} className="mt-8">

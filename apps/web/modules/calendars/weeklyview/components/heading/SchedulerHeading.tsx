@@ -1,9 +1,8 @@
 import dayjs from "@calcom/dayjs";
+import { useCalendarStore } from "@calcom/features/calendars/weeklyview/state/store";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { Button } from "@calcom/ui/components/button";
 import { ButtonGroup } from "@calcom/ui/components/buttonGroup";
-
-import { useCalendarStore } from "@calcom/features/calendars/weeklyview/state/store";
 
 export function SchedulerHeading() {
   const { t } = useLocale();

@@ -75,17 +75,11 @@ export const ErrorPage: React.FC<Props> = (props) => {
       <div className="bg-subtle flex h-screen">
         <div className="bg-default m-auto rounded-md p-10 text-start">
           <h1 className="font-cal text-emphasis text-6xl">{statusCode}</h1>
-          <h2 className="text-emphasis mt-6 max-w-2xl text-2xl font-medium">
-            {t("its_not_you_its_us")}
-          </h2>
-          <p className="text-default mb-6 mt-4 max-w-2xl text-sm">
-            {t("something_went_wrong_on_our_end")}
-          </p>
+          <h2 className="text-emphasis mt-6 max-w-2xl text-2xl font-medium">{t("its_not_you_its_us")}</h2>
+          <p className="text-default mb-6 mt-4 max-w-2xl text-sm">{t("something_went_wrong_on_our_end")}</p>
 
           <div className="mb-8 flex flex-col">
-            <p className="text-default mb-4 max-w-2xl text-sm">
-              {t("provide_text_when_contacting_support")}
-            </p>
+            <p className="text-default mb-4 max-w-2xl text-sm">{t("provide_text_when_contacting_support")}</p>
             <pre className="bg-emphasis text-emphasis w-full max-w-2xl whitespace-normal wrap-break-word rounded-md p-4">
               {message}
             </pre>
