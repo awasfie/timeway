@@ -112,9 +112,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           sparse-checkout: scripts/perf
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      # No setup-node: its packageManager auto-cache calls yarn, absent in this sparse checkout.
+      - run: node --version
       - name: Globalping HTTPS probes, median of 3 per city
         env:
           GLOBALPING_TOKEN: ${{ secrets.GLOBALPING_TOKEN }}
