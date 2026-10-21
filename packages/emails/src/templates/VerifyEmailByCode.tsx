@@ -4,6 +4,7 @@ import {
   SUPPORT_MAIL_ADDRESS,
 } from "@calcom/lib/constants";
 import type { EmailVerifyCode } from "../../lib/types/email-types";
+import { getLocaleFromT } from "../../lib/emailDirection";
 import { BaseEmailHtml } from "../components";
 
 export const VerifyEmailByCode = (
@@ -11,6 +12,7 @@ export const VerifyEmailByCode = (
 ) => {
   return (
     <BaseEmailHtml
+      locale={getLocaleFromT(props.language)}
       hideLogo={props.hideLogo}
       subject={
         props.hideLogo
