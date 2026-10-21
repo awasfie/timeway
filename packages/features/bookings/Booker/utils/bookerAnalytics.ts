@@ -1,4 +1,10 @@
 // First-party Plausible events for the public Booker (WC-TW-9c). booking_confirmed is server-side only (9b).
+// Plausible's standard queue stub. The layout inlines it (nonce'd) only when Plausible is configured, so
+// events fired before pa.js executes are queued and replayed; when unset, window.plausible stays undefined
+// and every track* call is a no-op.
+export const PLAUSIBLE_QUEUE_STUB =
+  "window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)}";
+
 export type BookerEventSource = "direct" | "embed";
 
 export type BookerAnalyticsContext = {
@@ -7,10 +13,7 @@ export type BookerAnalyticsContext = {
   source: BookerEventSource;
 };
 
-type PlausibleFn = (
-  name: string,
-  options?: { props?: Record<string, string | number>; u?: string }
-) => void;
+type PlausibleFn = (name: string, options?: { props?: Record<string, string | number>; u?: string }) => void;
 
 const NO_CONTEXT: BookerAnalyticsContext = { org: null, eventType: null, source: "direct" };
 

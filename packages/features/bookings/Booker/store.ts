@@ -1,13 +1,13 @@
 "use client";
 
 import dayjs from "@calcom/dayjs";
-import { trackSlotSelected } from "./utils/bookerAnalytics";
 import { BOOKER_NUMBER_OF_DAYS_TO_LOAD } from "@calcom/lib/constants";
 import { BookerLayouts } from "@calcom/prisma/zod-utils";
 import { useEffect } from "react";
 import { createWithEqualityFn } from "zustand/traditional";
 import type { GetBookingType } from "../lib/get-booking";
 import type { BookerLayout, BookerState } from "./types";
+import { trackSlotSelected } from "./utils/bookerAnalytics";
 import { getQueryParam, removeQueryParam, updateQueryParam } from "./utils/query-param";
 
 const _iso_3166_1_alpha_2_codes = [

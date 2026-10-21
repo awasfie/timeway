@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
+  PLAUSIBLE_QUEUE_STUB,
   resetBookerAnalytics,
   trackBookerPageView,
   trackSlotSelected,
@@ -55,5 +55,21 @@ describe("bookerAnalytics", () => {
     (window as unknown as { plausible: typeof plausible }).plausible = plausible;
     trackBookerPageView({ org: null, eventType: null, source: "direct" });
     expect(plausible.mock.calls[1][1].props).toEqual({ org: "none", event_type: 0, source: "direct" });
+  });
+
+  it("queues events fired before pa.js loads, via the inline stub", () => {
+    const w = (globalThis as unknown as { window: Record<string, unknown> }).window;
+    new Function("window", PLAUSIBLE_QUEUE_STUB)(w);
+    trackBookerPageView(ctx);
+    trackSlotSelected("2026-11-01T10:00:00Z");
+    const q = (w.plausible as unknown as { q: ArrayLike<unknown>[] }).q;
+    expect(q.map((a) => a[0])).toEqual(["pageview", "booking_page_view", "slot_selected"]);
+    expect(JSON.stringify(q.map((a) => Array.from(a)))).not.toMatch(/a@b\.c|Jo|email|name=/);
+  });
+
+  it("stays a no-op when the stub is not installed (env unset)", () => {
+    trackBookerPageView(ctx);
+    const w = (globalThis as unknown as { window: Record<string, unknown> }).window;
+    expect(w.plausible).toBeUndefined();
   });
 });

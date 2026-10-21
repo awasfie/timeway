@@ -1,9 +1,9 @@
+import process from "node:process";
+import { PLAUSIBLE_QUEUE_STUB } from "@calcom/features/bookings/Booker/utils/bookerAnalytics";
+import PageWrapper from "@components/PageWrapperAppDir";
 import { headers } from "next/headers";
 import Script from "next/script";
-
 import { PLAUSIBLE_EVENT_PATH, PLAUSIBLE_SCRIPT_PATH } from "../../plausibleRewrites";
-
-import PageWrapper from "@components/PageWrapperAppDir";
 
 export default async function BookingPageWrapperLayout({ children }: { children: React.ReactNode }) {
   const h = await headers();
@@ -15,6 +15,9 @@ export default async function BookingPageWrapperLayout({ children }: { children:
 
   return (
     <>
+      {plausibleEnabled && (
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: PLAUSIBLE_QUEUE_STUB }} />
+      )}
       {plausibleEnabled && (
         <Script
           src={PLAUSIBLE_SCRIPT_PATH}
