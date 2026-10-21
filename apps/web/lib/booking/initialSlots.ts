@@ -64,7 +64,7 @@ export function buildInitialScheduleInput(p: InitialSlotsParams): RawScheduleInp
   if (p.isTeamEvent) return null;
   if (sp.get("cal.skipSlotsFetch") === "true") return null;
   if (BOOKER_NUMBER_OF_DAYS_TO_LOAD > 0) return null;
-  if ((p.defaultLayout ?? MONTH_VIEW) !== MONTH_VIEW) return null;
+  if ((sp.get("layout") ?? p.defaultLayout ?? MONTH_VIEW) !== MONTH_VIEW) return null;
 
   const month = getInitialMonth(sp, p.browserTimeZone, p.now);
   if (!month) return null;
