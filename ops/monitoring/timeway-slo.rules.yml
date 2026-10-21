@@ -4,7 +4,7 @@
 # to n8n "G3 - Generic Alert -> Telegram" (Spenai Alerts group on Ahmed's phone). Rules are `by (product)`, so the
 # drill product `timeway-drill` exercises the same expressions without touching Timeway.
 groups:
-  - name: timeway-slo-recording
+  - name: timeway-slo
     interval: 30s
     rules:
       - record: product:probe_error:ratio_rate5m
@@ -15,9 +15,8 @@ groups:
         expr: label_replace(1 - avg by (product) (avg_over_time(probe_success{job="timeway-blackbox"}[1h])), "instance", "$1", "product", "(.*)")
       - record: product:probe_error:ratio_rate6h
         expr: label_replace(1 - avg by (product) (avg_over_time(probe_success{job="timeway-blackbox"}[6h])), "instance", "$1", "product", "(.*)")
-
-  - name: timeway-slo-alerts
-    rules:
+      # Alerts sit in the same group as the recording rules: in-group evaluation is sequential, so each alert reads
+      # this tick's recorded ratios (separate groups made $value, and the promtool test, depend on group ordering).
       - alert: TimewayBurnRatePage
         expr: product:probe_error:ratio_rate1h > (5 * 0.005) and product:probe_error:ratio_rate5m > (5 * 0.005)
         for: 2m
