@@ -185,6 +185,7 @@ describe("CalendarReconciliationService", () => {
       await service.reconcileAll();
       await service.reconcileStale(new Date("2026-10-21T10:00:00Z"));
 
+      expect(deps.selectedCalendarRepository.findForReconciliation).toHaveBeenCalledTimes(2);
       for (const [args] of deps.selectedCalendarRepository.findForReconciliation.mock.calls) {
         expect(args.integrations).toContain("office365_calendar");
       }
