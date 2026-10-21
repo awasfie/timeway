@@ -138,7 +138,7 @@ function PasswordResetForm({
               value: 7, // We don't have user here so we can't check if they are admin or not
             },
             pattern: {
-              message: "Should contain a number, uppercase and lowercase letters",
+              message: t("password_hint_mixed"),
               value: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).*$/gm,
             },
           })}

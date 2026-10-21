@@ -1,13 +1,19 @@
-import { _generateMetadataForStaticPage } from "app/_utils";
+import { _generateMetadataForStaticPage, getTranslate } from "app/_utils";
 import type { Metadata } from "next";
+import { cookies, headers } from "next/headers";
+
+import { getLocale } from "@calcom/features/auth/lib/getLocale";
 
 import { APP_NAME, SUPPORT_MAIL_ADDRESS, WEBSITE_URL } from "@calcom/lib/constants";
+
+import { buildLegacyRequest } from "@lib/buildLegacyCtx";
 
 import { LegalDocument } from "~/legal/LegalDocument";
 import { termsContent } from "~/legal/content";
 
 // CM-T6: Timeway Terms of Service (replaces the upstream cal.com/terms link).
-export const dynamic = "force-static";
+// Rendered per request so the visitor's locale (cookie / Accept-Language) picks the en or ar text.
+export const dynamic = "force-dynamic";
 
 export const generateMetadata = async (): Promise<Metadata> =>
   await _generateMetadataForStaticPage(
@@ -18,8 +24,10 @@ export const generateMetadata = async (): Promise<Metadata> =>
     "/terms"
   );
 
-export default function TermsPage(){
+export default async function TermsPage(){
+  const locale = (await getLocale(buildLegacyRequest(await headers(), await cookies()))) ?? "en";
+  const t = await getTranslate();
   return (
-    <LegalDocument content={termsContent(APP_NAME, SUPPORT_MAIL_ADDRESS, WEBSITE_URL)} appName={APP_NAME} />
+    <LegalDocument content={termsContent(APP_NAME, SUPPORT_MAIL_ADDRESS, WEBSITE_URL, locale)} appName={APP_NAME} t={t} locale={locale} />
   );
 }

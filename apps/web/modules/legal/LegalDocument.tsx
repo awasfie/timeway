@@ -1,14 +1,20 @@
 import Link from "next/link";
 
-import { LEGAL_ENTITY, LEGAL_LAST_UPDATED, type LegalDocumentContent } from "./content";
+import type { TFunction } from "i18next";
+
+import { LEGAL_ENTITY, type LegalDocumentContent, legalLastUpdated } from "./content";
 
 /** CM-T6: server-rendered legal document (no client JS, readable without sign-in). */
 export function LegalDocument({
   content,
   appName,
+  t,
+  locale,
 }: {
   content: LegalDocumentContent;
   appName: string;
+  t: TFunction;
+  locale: string;
 }){
   return (
     <main className="min-h-screen bg-default text-default">
@@ -19,7 +25,7 @@ export function LegalDocument({
           </Link>
         </p>
         <h1 className="font-cal font-semibold text-3xl text-emphasis">{content.title}</h1>
-        <p className="mt-2 text-sm text-subtle">Last updated: {LEGAL_LAST_UPDATED}</p>
+        <p className="mt-2 text-sm text-subtle">{t("last_updated")}: {legalLastUpdated(locale)}</p>
         <p className="mt-6 leading-relaxed">{content.intro}</p>
         {content.sections.map((s) => (
           <section key={s.id} id={s.id} className="mt-8">
@@ -30,7 +36,7 @@ export function LegalDocument({
               </p>
             ))}
             {s.bullets && (
-              <ul className="mt-3 list-disc space-y-2 pl-6 leading-relaxed">
+              <ul className="mt-3 list-disc space-y-2 ps-6 leading-relaxed">
                 {s.bullets.map((b) => (
                   <li key={b}>{b}</li>
                 ))}
@@ -40,15 +46,15 @@ export function LegalDocument({
         ))}
         <footer className="mt-12 border-subtle border-t pt-6 text-sm text-subtle">
           <p>
-            {LEGAL_ENTITY.name} · {LEGAL_ENTITY.address} · UAE VAT TRN {LEGAL_ENTITY.trn}
+            {LEGAL_ENTITY.name} · {LEGAL_ENTITY.address} · {t("legal_uae_vat_trn")} {LEGAL_ENTITY.trn}
           </p>
           <p className="mt-2">
             <Link href="/terms" className="hover:underline">
-              Terms of Service
+              {t("terms_of_service")}
             </Link>{" "}
             ·{" "}
             <Link href="/privacy" className="hover:underline">
-              Privacy Policy
+              {t("privacy_policy")}
             </Link>
           </p>
         </footer>
