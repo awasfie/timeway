@@ -462,6 +462,8 @@ jobs:
         if: needs.trust-check.outputs.is-trusted != 'true' && needs.trust-check.result == 'success'
       - name: Fail if conditional jobs failed
         run: exit 1
+        # e2e/build/integration jobs only run when the PR carries 'ready-for-e2e' (prepare.run-e2e).
+        # When they are skipped by design, their result is 'skipped' and must not fail the gate.
         if: |
           (
             needs.prepare.outputs.has-files-requiring-all-checks == 'true' &&
@@ -472,6 +474,7 @@ jobs:
             needs.api-v2-unit-test.result != 'success' ||
             needs.security-audit.result != 'success' ||
             (needs.prepare.outputs.has-prisma-changes == 'true' && needs.check-prisma-migrations.result != 'success') ||
+            (needs.prepare.outputs.run-e2e == 'true' && (
               needs.build.result != 'success' ||
               needs.build-api-v2.result != 'success' ||
               needs.build-atoms.result != 'success' ||
@@ -482,5 +485,6 @@ jobs:
               needs.e2e-embed.result != 'success' ||
               needs.e2e-embed-react.result != 'success' ||
               needs.e2e-app-store.result != 'success'
+            ))
             )
           )
