@@ -156,7 +156,7 @@ const ServerPage = async ({ params, searchParams }: PageProps): Promise<JSX.Elem
 };
 
 export const generateMetadata = async ({ params, searchParams }: PageProps): Promise<Metadata> => {
-  const props = await getData(params, searchParams);
+  const { props: pageProps } = await getData(params, searchParams);
 
   const { booking, isSEOIndexable = true, eventData, isBrandingHidden } = pageProps;
   const rescheduleUid = booking?.uid;
