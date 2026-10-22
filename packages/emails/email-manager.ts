@@ -1,18 +1,17 @@
-import { default as cloneDeep } from "lodash/cloneDeep";
-import type { z } from "zod";
-
 import dayjs from "@calcom/dayjs";
 import type BaseEmail from "@calcom/emails/templates/_base-email";
 import type { EventNameObjectType } from "@calcom/features/eventtypes/lib/eventNaming";
 import { getEventName } from "@calcom/features/eventtypes/lib/eventNaming";
 import { formatCalEvent } from "@calcom/lib/formatCalendarEvent";
+import { attachLigyLinks } from "@calcom/lib/ligy/attachLigyLinks";
 import logger from "@calcom/lib/logger";
 import { safeStringify } from "@calcom/lib/safeStringify";
 import { withReporting } from "@calcom/lib/sentryWrapper";
 import { prisma } from "@calcom/prisma";
 import type { EventTypeMetaDataSchema } from "@calcom/prisma/zod-utils";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
-
+import { default as cloneDeep } from "lodash/cloneDeep";
+import type { z } from "zod";
 import AwaitingPaymentSMS from "../sms/attendee/awaiting-payment-sms";
 import CancelledSeatSMS from "../sms/attendee/cancelled-seat-sms";
 import EventCancelledSMS from "../sms/attendee/event-cancelled-sms";
@@ -83,6 +82,7 @@ const _sendScheduledEmailsAndSMS = async (
   attendeeEmailDisabled?: boolean,
   eventTypeMetadata?: EventTypeMetadata
 ) => {
+  calEvent = await attachLigyLinks(calEvent);
   const formattedCalEvent = formatCalEvent(calEvent);
   const emailsToSend: Promise<unknown>[] = [];
   const organizationSettings = await fetchOrganizationEmailSettings(calEvent.organizationId);
@@ -284,6 +284,7 @@ const _sendRescheduledEmailsAndSMS = async (
   calEvent: CalendarEvent,
   eventTypeMetadata?: EventTypeMetadata
 ) => {
+  calEvent = await attachLigyLinks(calEvent);
   const calendarEvent = formatCalEvent(calEvent);
   const emailsToSend: Promise<unknown>[] = [];
   const organizationSettings = await fetchOrganizationEmailSettings(calEvent.organizationId);
@@ -331,6 +332,7 @@ export const sendRescheduledSeatEmailAndSMS = async (
   attendee: Person,
   eventTypeMetadata?: EventTypeMetadata
 ) => {
+  calEvent = await attachLigyLinks(calEvent);
   const calendarEvent = formatCalEvent(calEvent);
 
   const clonedCalEvent = cloneDeep(calendarEvent);
@@ -368,6 +370,7 @@ export const sendScheduledSeatsEmailsAndSMS = async (
   attendeeEmailDisabled?: boolean,
   eventTypeMetadata?: EventTypeMetadata
 ) => {
+  calEvent = await attachLigyLinks(calEvent);
   const calendarEvent = formatCalEvent(calEvent);
 
   const emailsToSend: Promise<unknown>[] = [];
