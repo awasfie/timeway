@@ -1,43 +1,16 @@
-import { cubicBezier, useAnimate } from "framer-motion";
-import { useReducedMotion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { BookerLayouts } from "@calcom/prisma/zod-utils";
 
 import type { BookerLayout, BookerState } from "./types";
 
-// Framer motion fade in animation configs.
-export const fadeInLeft = {
-  variants: {
-    visible: { opacity: 1, x: 0 },
-    hidden: { opacity: 0, x: 20 },
-  },
-  initial: "hidden",
-  exit: "hidden",
-  animate: "visible",
-  transition: { ease: "easeInOut", delay: 0.1 },
-};
-export const fadeInUp = {
-  variants: {
-    visible: { opacity: 1, y: 0 },
-    hidden: { opacity: 0, y: 20 },
-  },
-  initial: "hidden",
-  exit: "hidden",
-  animate: "visible",
-  transition: { ease: "easeInOut", delay: 0.1 },
-};
-
-export const fadeInRight = {
-  variants: {
-    visible: { opacity: 1, x: 0 },
-    hidden: { opacity: 0, x: -20 },
-  },
-  initial: "hidden",
-  exit: "hidden",
-  animate: "visible",
-  transition: { ease: "easeInOut", delay: 0.1 },
-};
+// CSS enter animations (tw-animate-css) replacing the former framer-motion variants, so the booker
+// ships no animation runtime. fill-mode-backwards keeps the hidden state during the delay;
+// motion-reduce disables them for prefers-reduced-motion.
+export const fadeInLeftClassName =
+  "animate-in fade-in slide-in-from-end-5 duration-300 ease-in-out delay-100 fill-mode-backwards motion-reduce:animate-none";
+export const fadeInUpClassName =
+  "animate-in fade-in slide-in-from-bottom-5 duration-300 ease-in-out delay-300 fill-mode-backwards motion-reduce:animate-none";
 
 type ResizeAnimationConfig = {
   [key in BookerLayout]: {
@@ -53,8 +26,7 @@ type ResizeAnimationConfig = {
  * (mobile, month_view, week_view, column_view)
  *
  * The values of these properties are objects that define the animation for each state of the booker.
- * The animation have the same properties as you could pass to the animate prop of framer-motion:
- * @see: https://www.framer.com/motion/animation/
+ * The values are applied as inline styles on the booker grid; width transitions via CSS classes.
  */
 export const resizeAnimationConfig: ResizeAnimationConfig = {
   mobile: {
@@ -159,59 +131,27 @@ export const getBookerSizeClassNames = (
 };
 
 /**
- * This hook returns a ref that should be set on the booker element.
- * Based on that ref this hook animates the size of the booker element with framer motion.
- * It also takes into account the prefers-reduced-motion setting, to not animate when that's set.
+ * Returns a ref for the booker element and applies the grid layout of the current layout/state to it.
+ * Width changes animate through the element's CSS transition classes (disabled for reduced motion);
+ * height is set directly because CSS cannot transition to "auto".
  */
 export const useBookerResizeAnimation = (layout: BookerLayout, state: BookerState) => {
-  const prefersReducedMotion = useReducedMotion();
-  const [animationScope, animate] = useAnimate();
+  const animationScope = useRef<HTMLDivElement>(null);
   const isEmbed = typeof window !== "undefined" && window?.isEmbed?.();
-  ``;
   useEffect(() => {
     const animationConfig = resizeAnimationConfig[layout][state] || resizeAnimationConfig[layout].default;
+    const element = animationScope.current;
+    if (!element) return;
 
-    if (!animationScope.current) return;
-
-    const animatedProperties = {
-      height: animationConfig?.height || "auto",
-    };
-
-    const nonAnimatedProperties = {
-      // Width is animated by the css class instead of via framer motion,
-      // because css is better at animating the calcs, framer motion might
-      // make some mistakes in that.
-      gridTemplateAreas: animationConfig?.gridTemplateAreas,
-      width: animationConfig?.width || "auto",
-      gridTemplateColumns: animationConfig?.gridTemplateColumns,
-      gridTemplateRows: animationConfig?.gridTemplateRows,
-      minHeight: animationConfig?.minHeight,
-    };
-
-    // In this cases we don't animate the booker at all.
-    if (prefersReducedMotion || layout === "mobile" || isEmbed) {
-      const styles = { ...nonAnimatedProperties, ...animatedProperties };
-      Object.keys(styles).forEach((property) => {
-        if (property === "height") {
-          // Change 100vh to 100% in embed, since 100vh in iframe will behave weird, because
-          // the iframe will constantly grow. 100% will simply make sure it grows with the iframe.
-          animationScope.current.style.height =
-            animatedProperties.height === "100vh" && isEmbed ? "100%" : animatedProperties.height;
-        } else {
-          animationScope.current.style[property] = styles[property as keyof typeof styles];
-        }
-      });
-    } else {
-      Object.keys(nonAnimatedProperties).forEach((property) => {
-        animationScope.current.style[property] =
-          nonAnimatedProperties[property as keyof typeof nonAnimatedProperties];
-      });
-      animate(animationScope.current, animatedProperties, {
-        duration: 0.5,
-        ease: cubicBezier(0.4, 0, 0.2, 1),
-      });
-    }
-  }, [animate, isEmbed, animationScope, layout, prefersReducedMotion, state]);
+    const height = animationConfig?.height || "auto";
+    // 100vh inside an iframe makes the embed grow forever; 100% follows the iframe instead.
+    element.style.height = height === "100vh" && isEmbed ? "100%" : String(height);
+    element.style.gridTemplateAreas = animationConfig?.gridTemplateAreas ?? "";
+    element.style.width = String(animationConfig?.width || "auto");
+    element.style.gridTemplateColumns = animationConfig?.gridTemplateColumns ?? "";
+    element.style.gridTemplateRows = animationConfig?.gridTemplateRows ?? "";
+    element.style.minHeight = String(animationConfig?.minHeight ?? "");
+  }, [isEmbed, layout, state]);
 
   return animationScope;
 };
