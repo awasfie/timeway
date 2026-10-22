@@ -506,4 +506,18 @@ describe("Middleware Matcher Configuration", () => {
       "/api/auth/signup",
     ]);
   });
+
+  it("adds exactly one non-string entry: the custom-host catch-all that excludes timeway hosts", () => {
+    const objects = config.matcher.filter((entry) => typeof entry !== "string");
+    expect(objects).toHaveLength(1);
+    const [entry] = objects as { source: string; missing: { type: string; value: string }[] }[];
+    const hostRe = new RegExp(`^${entry.missing[0].value}$`);
+    expect(entry.missing[0].type).toBe("host");
+    for (const host of ["timeway.co", "acme.timeway.co", "a.b.timeway.co", "localhost", "127.0.0.1"]) {
+      expect(hostRe.test(host)).toBe(true);
+    }
+    for (const host of ["book.acme.com", "timeway.co.evil.com", "eviltimeway.co"]) {
+      expect(hostRe.test(host)).toBe(false);
+    }
+  });
 });
