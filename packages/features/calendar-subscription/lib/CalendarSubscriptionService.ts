@@ -20,9 +20,18 @@ import type { ISelectedCalendarRepository } from "@calcom/features/selectedCalen
 import logger from "@calcom/lib/logger";
 import type { SelectedCalendar } from "@calcom/prisma/client";
 import { metrics } from "@sentry/nextjs";
+import { safeTokenEquals } from "./safeTokenEquals";
 
 // biome-ignore lint/nursery/useExplicitType: logger type is inferred
 const log = logger.getSubLogger({ prefix: ["CalendarSubscriptionService"] });
+
+/** One entry of a Microsoft Graph change-notification body: `{ value: GraphChangeNotification[] }`. */
+export type GraphChangeNotification = {
+  subscriptionId?: string;
+  clientState?: string;
+  changeType?: string;
+  resource?: string;
+};
 
 export class CalendarSubscriptionService {
   static CALENDAR_SUBSCRIPTION_CACHE_FEATURE = "calendar-subscription-cache" as const;
@@ -134,7 +143,7 @@ export class CalendarSubscriptionService {
     let handled = 0;
     let skipped = 0;
     for (const n of notifications ?? []) {
-      if (!webhookToken || n?.clientState !== webhookToken || !n.subscriptionId || !n.lifecycleEvent) {
+      if (!safeTokenEquals(n?.clientState, webhookToken) || !n.subscriptionId || !n.lifecycleEvent) {
         skipped++;
         continue;
       }
@@ -167,6 +176,67 @@ export class CalendarSubscriptionService {
       }
     }
     return { handled, skipped };
+  }
+
+  /**
+   * WC-TW-4f: Microsoft Graph change notifications. The route parses the JSON body once
+   * (`{ value: [...] }`) and hands the entries here; a Request body is a stream, so the
+   * adapter cannot read clientState from it. Each entry must carry clientState equal to the
+   * webhook token (constant-time). Valid entries are grouped by subscriptionId and each
+   * matched SelectedCalendar is processed once.
+   */
+  async processGraphNotifications(
+    notifications: GraphChangeNotification[],
+    webhookToken: string | null | undefined
+  ): Promise<{ processed: number; invalid: number; notFound: number; failed: number }> {
+    const provider = "office365_calendar";
+    let invalid = 0;
+    let notFound = 0;
+    let failed = 0;
+    let processed = 0;
+    const subscriptionIds = new Set<string>();
+    for (const n of notifications ?? []) {
+      if (!safeTokenEquals(n?.clientState, webhookToken) || typeof n?.subscriptionId !== "string") {
+        invalid++;
+        continue;
+      }
+      subscriptionIds.add(n.subscriptionId);
+    }
+    if (invalid > 0) {
+      log.warn("Graph notification rejected: invalid clientState or missing subscriptionId", { invalid });
+      metrics.count("calendar.subscription.webhook.invalid", invalid, { attributes: { provider } });
+    }
+    for (const subscriptionId of Array.from(subscriptionIds)) {
+      const startTime = performance.now();
+      const selectedCalendar = await this.deps.selectedCalendarRepository.findByChannelId(subscriptionId);
+      if (!selectedCalendar) {
+        notFound++;
+        metrics.count("calendar.subscription.webhook.skipped", 1, {
+          attributes: { provider, reason: "calendar_not_found" },
+        });
+        log.info("Graph notification - calendar not found", { channelId: subscriptionId });
+        continue;
+      }
+      try {
+        const result = await this.processEvents(selectedCalendar);
+        processed++;
+        metrics.count("calendar.subscription.webhook.success", 1, { attributes: { provider } });
+        metrics.distribution("calendar.subscription.webhook.duration_ms", performance.now() - startTime, {
+          attributes: { provider },
+        });
+        metrics.distribution("calendar.subscription.webhook.events_fetched", result?.eventsFetched ?? 0, {
+          attributes: { provider },
+        });
+      } catch (error) {
+        failed++;
+        metrics.count("calendar.subscription.webhook.error", 1, { attributes: { provider } });
+        log.error("Graph notification processing failed", {
+          selectedCalendarId: selectedCalendar.id,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }
+    return { processed, invalid, notFound, failed };
   }
 
   /**
