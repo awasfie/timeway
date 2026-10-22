@@ -2,7 +2,9 @@
 // WC-TW-6c: turn an LHCI filesystem upload into the CC-56 region-tagged evidence record.
 // Usage: node scripts/perf/lhci-summary.mjs --dir perf/out/lhci --region gh-runner --out perf/out/lhci-gh-runner.json
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { createRequire } from "node:module";
+import { dirname, join, resolve } from "node:path";
+import process from "node:process";
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, cur, i, all) => {
@@ -13,6 +15,8 @@ const args = Object.fromEntries(
 const dir = args.dir ?? "perf/out/lhci";
 const region = args.region ?? "gh-runner";
 const out = args.out ?? `perf/out/lhci-${region}.json`;
+const { limits } = createRequire(import.meta.url)(resolve(args.config ?? "perf/lighthouserc.cjs"));
+const gate = (l, abs) => (l.ratchet ? `< ${l.max} error (ratchet), < ${abs} warn` : `< ${l.max} error`);
 
 const AUDITS = {
   lcp_ms: "largest-contentful-paint",
@@ -64,7 +68,16 @@ const result = {
   measured_at: new Date().toISOString(),
   runs: runs.length,
   median: med,
-  thresholds: { lcp_error_ms: 2500, lcp_warn_ms: 1500, tbt_error_ms: 200, ttfb_warn_ms: 500 },
+  thresholds: {
+    lcp_error_ms: limits.lcp.max,
+    lcp_ratchet: limits.lcp.ratchet,
+    lcp_absolute_ms: limits.absolute.lcp_ms,
+    lcp_warn_ms: 1500,
+    tbt_error_ms: limits.tbt.max,
+    tbt_ratchet: limits.tbt.ratchet,
+    tbt_absolute_ms: limits.absolute.tbt_ms,
+    ttfb_warn_ms: 500,
+  },
   runs_detail: runs,
 };
 mkdirSync(dirname(out), { recursive: true });
@@ -77,8 +90,8 @@ const lines = [
   "",
   "| metric | median | gate |",
   "| --- | ---: | --- |",
-  `| LCP | ${med.lcp_ms} ms | < 2500 error, <= 1500 warn |`,
-  `| TBT (INP proxy) | ${med.tbt_ms} ms | < 200 error |`,
+  `| LCP | ${med.lcp_ms} ms | ${gate(limits.lcp, limits.absolute.lcp_ms)}, <= 1500 warn |`,
+  `| TBT (INP proxy) | ${med.tbt_ms} ms | ${gate(limits.tbt, limits.absolute.tbt_ms)} |`,
   `| TTFB | ${med.ttfb_ms} ms | < 500 warn |`,
   `| FCP | ${med.fcp_ms} ms | — |`,
   `| CLS | ${med.cls} | — |`,

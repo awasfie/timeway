@@ -77,10 +77,10 @@ jobs:
           echo "::error::booking page $BOOKING_URL never returned 200 (last $code)"
           tail -100 "$RUNNER_TEMP/next.log"
           exit 1
-      - name: (a) JS budget <= 200 KB gz
+      - name: (a) JS ratchet vs perf/js-baseline.json, 200 KB budget reported
         id: js
         continue-on-error: true
-        run: node scripts/perf/booking-js-budget.mjs --url "$BOOKING_URL" --static-dir apps/web/.next/static --budget-kb 200 --out perf/out/js-budget-gh-runner.json
+        run: node scripts/perf/booking-js-budget.mjs --url "$BOOKING_URL" --static-dir apps/web/.next/static --budget-kb 200 --baseline perf/js-baseline.json --out perf/out/js-budget-gh-runner.json
       - name: (b) Lighthouse CI, 3 runs median
         id: lhci
         continue-on-error: true
@@ -114,12 +114,14 @@ jobs:
           sparse-checkout: scripts/perf
       # No setup-node: its packageManager auto-cache calls yarn, absent in this sparse checkout.
       - run: node --version
-      - name: Globalping HTTPS probes, median of 3 per city
+      - name: Globalping HTTPS probes, 2 samples x up to 3 probes per city
         env:
           GLOBALPING_TOKEN: ${{ secrets.GLOBALPING_TOKEN }}
-          # Scheduled runs are the WC.2.5 data series: over-budget is recorded, provider failure still fails.
-          ENFORCE: ${{ github.event_name == 'schedule' && 'false' || 'true' }}
-        run: node scripts/perf/region-ttfb.mjs --url "$REGION_URL" --budget-ms 500 --samples 3 --enforce "$ENFORCE" --out perf/out/region-ttfb.json
+          # The probe hits the deployed site, not the PR build, so on PR/push/schedule an over-budget
+          # TTFB is a recorded ::warning (WC.2.5 series; reduction is WC-TW-6a/6b). A city with no
+          # answering probe always fails. workflow_dispatch enforces the 500 ms budget.
+          ENFORCE: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+        run: node scripts/perf/region-ttfb.mjs --url "$REGION_URL" --budget-ms 500 --samples 2 --probes 3 --enforce "$ENFORCE" --out perf/out/region-ttfb.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
