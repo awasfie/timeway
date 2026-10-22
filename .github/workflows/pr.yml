@@ -261,7 +261,10 @@ jobs:
                   return;
                 }
 
-                prNumber = prs[0].number;
+                // A commit can belong to several PRs (e.g. a closed WIP draft and the live PR on the
+                // same branch). Prefer an open PR; prs[0] alone picked a stale closed PR (timeway#108).
+                const open = prs.filter(p => p.state === 'open');
+                prNumber = (open[0] || prs[0]).number;
               }
               catch (e) {
                 core.setOutput('run-e2e', false);
