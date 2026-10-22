@@ -1,0 +1,13 @@
+/* WC-DX-14c1: Tailwind v4 for stories with the app's own token files (no hex here, UX.0.10).
+ * tokens.css carries the light/.dark roles (bg-default, text-emphasis, ...); brand-timeway.css the UX-T0 brand roles. */
+@import "tailwindcss";
+@import "../../config/theme/tokens.css";
+@import "../../config/theme/brand-timeway.css";
+@source "../components";
+
+@custom-variant dark (&:is(.dark *));
+
+[lang="ar"] {
+  font-family: var(--font-brand-ar);
+  line-height: 1.75;
+}

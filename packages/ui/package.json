@@ -65,14 +65,17 @@
   "license": "MIT",
   "scripts": {
     "lint": "biome lint .",
-    "type-check": "tsc --pretty --noEmit",
-    "type-check:ci": "tsc-absolute --pretty --noEmit",
+    "type-check": "tsc --pretty --noEmit && tsc --pretty --noEmit -p tsconfig.storybook.json",
+    "type-check:ci": "tsc-absolute --pretty --noEmit && tsc-absolute --pretty --noEmit -p tsconfig.storybook.json",
     "lint:fix": "biome lint --write .",
     "lint:report": "biome lint --reporter json . > ../../lint-results/ui.json",
     "dx": "node ./scripts/build-icons.mjs",
     "dev": "node ./scripts/build-icons.mjs",
     "build": "node ./scripts/build-icons.mjs",
-    "build:icons": "node ./scripts/build-icons.mjs"
+    "build:icons": "node ./scripts/build-icons.mjs",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build --quiet -o storybook-static",
+    "test:storybook": "vitest run --project=storybook"
   },
   "dependencies": {
     "@calcom/lib": "workspace:*",
@@ -123,15 +126,28 @@
     "@biomejs/biome": "^2.3.8",
     "@calcom/config": "workspace:*",
     "@calcom/tsconfig": "workspace:*",
+    "@storybook/addon-a11y": "9.1.21",
+    "@storybook/addon-docs": "9.1.21",
+    "@storybook/addon-vitest": "9.1.21",
+    "@storybook/react-vite": "9.1.21",
+    "@tailwindcss/vite": "4.1.17",
     "@testing-library/user-event": "14.6.1",
     "@types/react": "18.0.26",
     "@types/react-dom": "18.2.6",
     "@types/uuid": "10.0.0",
+    "@vitejs/plugin-react": "5.1.2",
+    "@vitest/browser": "4.1.12",
+    "@vitest/browser-playwright": "4.1.12",
     "execa": "9.3.0",
     "fast-glob": "3.3.2",
     "fs-extra": "11.3.2",
     "lucide-static": "0.424.0",
     "node-html-parser": "6.1.13",
-    "typescript": "5.9.3"
+    "playwright": "1.57.0",
+    "storybook": "9.1.21",
+    "tailwindcss": "4.1.17",
+    "typescript": "5.9.3",
+    "vite": "6.4.2",
+    "vitest": "4.1.12"
   }
 }

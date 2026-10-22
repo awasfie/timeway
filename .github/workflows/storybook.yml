@@ -1,0 +1,44 @@
+name: Storybook
+# WC-DX-14c1 (Q-11): static Storybook build + every story (render, play, axe in fail mode) in headless Chromium.
+# No path filter on purpose: the job must run on every PR so it can be a required check (never skipped).
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storybook-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  storybook:
+    name: Storybook (build + axe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: ./.github/actions/cache-checkout
+      - uses: ./.github/actions/yarn-install
+      - name: Install Chromium headless shell
+        run: yarn playwright install --with-deps chromium-headless-shell
+      - name: Type-check stories
+        working-directory: packages/ui
+        run: yarn tsc --pretty --noEmit -p tsconfig.storybook.json
+      - name: Build static Storybook
+        working-directory: packages/ui
+        run: yarn build-storybook
+      - name: Story count (fails on an empty index)
+        working-directory: packages/ui
+        run: |
+          n=$(node -e 'console.log(Object.values(require("./storybook-static/index.json").entries).filter(e=>e.type==="story").length)')
+          echo "stories=$n"
+          test "$n" -gt 0
+      - name: Run stories + axe (fail mode)
+        working-directory: packages/ui
+        run: yarn test:storybook

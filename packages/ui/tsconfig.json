@@ -12,5 +12,13 @@
     "**/*.ts",
     "**/*.tsx"
   ],
-  "exclude": ["dist", "build", "**/node_modules/**"]
+  "exclude": [
+    "dist",
+    "build",
+    "**/node_modules/**",
+    ".storybook",
+    "**/*.stories.tsx",
+    "vitest.config.ts",
+    "storybook-static"
+  ]
 }
