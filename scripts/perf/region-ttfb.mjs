@@ -3,7 +3,9 @@
 // Dubai via Globalping (public probe network, free tier; GLOBALPING_TOKEN raises the rate limit).
 // A missing city or a provider error fails the run: a gate is never satisfied by a skip.
 // Usage: node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min \
-//          [--budget-ms 500] [--samples 3] [--out perf/out/region-ttfb.json]
+//          [--budget-ms 500] [--samples 2] [--probes 3] [--out perf/out/region-ttfb.json]
+// Each sample asks Globalping for up to --probes probes in the city and keeps the ones that answer;
+// a city fails only when no probe answers in any attempt.
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
@@ -15,7 +17,8 @@ const args = Object.fromEntries(
 );
 const target = new URL(args.url ?? "https://timeway.co/ahmedwasfie/30min");
 const budgetMs = Number(args["budget-ms"] ?? 500);
-const samples = Number(args.samples ?? 3);
+const samples = Number(args.samples ?? 2);
+const probes = Number(args.probes ?? 3);
 const out = args.out ?? "perf/out/region-ttfb.json";
 const enforce = (args.enforce ?? "true") === "true";
 
@@ -35,11 +38,14 @@ const median = (xs) => {
   return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
 };
 
-async function measure(loc) {
+const probeOf = (r) => ({ city: r?.probe?.city ?? null, network: r?.probe?.network ?? null, asn: r?.probe?.asn ?? null });
+
+// Returns every probe result that finished; failed probes are pushed to `failures` with their ASN.
+async function measure(loc, failures) {
   const body = {
     type: "http",
     target: target.hostname,
-    locations: [{ magic: loc.magic, limit: 1 }],
+    locations: [{ magic: loc.magic, limit: probes }],
     measurementOptions: {
       protocol: "HTTPS",
       request: { method: "GET", path: target.pathname, query: target.search.replace(/^\?/, "") || undefined },
@@ -52,23 +58,31 @@ async function measure(loc) {
     await sleep(1000);
     const m = await (await fetch(`${API}/${created.id}`)).json();
     if (m.status === "in-progress") continue;
-    const r = m.results?.[0];
-    if (!r || r.result.status !== "finished") {
-      const why = (r?.result?.rawOutput ?? "").slice(0, 200);
-      throw new Error(`${loc.region}: probe ${r?.probe?.city ?? "?"}/${r?.probe?.network ?? "?"} ${r?.result?.status ?? "missing"} ${why}`);
+    const ok = [];
+    for (const r of m.results ?? []) {
+      if (r.result?.status !== "finished") {
+        failures.push({
+          region: loc.region,
+          measurement_id: created.id,
+          ...probeOf(r),
+          status: r.result?.status ?? "missing",
+          error: (r.result?.rawOutput ?? "").slice(0, 200),
+        });
+        continue;
+      }
+      const h = r.result.headers ?? {};
+      ok.push({
+        measurement_id: created.id,
+        ...probeOf(r),
+        country: r.probe.country,
+        status_code: r.result.statusCode,
+        timings: r.result.timings,
+        cf_ray: [h["cf-ray"]].flat()[0] ?? null,
+        server_timing: [h["server-timing"] ?? []].flat(),
+      });
     }
-    const h = r.result.headers ?? {};
-    return {
-      measurement_id: created.id,
-      city: r.probe.city,
-      country: r.probe.country,
-      network: r.probe.network,
-      asn: r.probe.asn,
-      status_code: r.result.statusCode,
-      timings: r.result.timings,
-      cf_ray: [h["cf-ray"]].flat()[0] ?? null,
-      server_timing: [h["server-timing"] ?? []].flat(),
-    };
+    if (!ok.length) throw new Error(`${loc.region}: no probe answered in measurement ${created.id} (${(m.results ?? []).length} probes)`);
+    return ok;
   }
   throw new Error(`${loc.region}: measurement ${created.id} did not finish in 30 s`);
 }
@@ -78,7 +92,7 @@ async function measureWithRetry(loc, failures, attempts = 3) {
   let last;
   for (let i = 0; i < attempts; i++) {
     try {
-      return await measure(loc);
+      return await measure(loc, failures);
     } catch (err) {
       last = err;
       failures.push({ region: loc.region, error: err.message });
@@ -102,7 +116,7 @@ async function main() {
   record.probe_failures = failures;
   for (const loc of REGIONS) {
     const rows = [];
-    for (let i = 0; i < samples; i++) rows.push(await measureWithRetry(loc, failures));
+    for (let i = 0; i < samples; i++) rows.push(...(await measureWithRetry(loc, failures)));
     const bad = rows.find((r) => r.status_code !== 200);
     if (bad) throw new Error(`${loc.region}: ${target} returned ${bad.status_code}`);
     const ttfbs = rows.map((r) => r.timings.firstByte);
@@ -115,6 +129,7 @@ async function main() {
       total_ms: median(rows.map((r) => r.timings.total)),
       budget_ms: budgetMs,
       pass: ttfbMs < budgetMs,
+      probes: [...new Map(rows.map((r) => [`${r.city}/${r.asn}`, { city: r.city, asn: r.asn, network: r.network }])).values()],
       samples: rows,
     });
   }
@@ -123,7 +138,7 @@ async function main() {
   writeRecord();
 
   const lines = [
-    `### Booking page TTFB by region (Globalping, median of ${samples})`,
+    `### Booking page TTFB by region (Globalping, median over ${samples} x up to ${probes} probes)`,
     "",
     `\`${target.href}\``,
     "",
@@ -131,7 +146,7 @@ async function main() {
     "| --- | --- | ---: | ---: | --- | --- |",
     ...results.map(
       (r) =>
-        `| ${r.region} | ${r.samples[0].city} (${r.samples[0].network}) | ${r.ttfb_ms} | ${r.total_ms} | ${
+        `| ${r.region} | ${r.probes.map((p) => `${p.city} (${p.network} AS${p.asn})`).join(", ")} (n=${r.samples.length}) | ${r.ttfb_ms} | ${r.total_ms} | ${
           r.samples[0].cf_ray?.split("-")[1] ?? "?"
         } | ${r.pass ? "PASS" : "FAIL"} < ${budgetMs} |`
     ),
