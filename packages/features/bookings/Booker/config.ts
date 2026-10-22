@@ -146,10 +146,10 @@ export const useBookerResizeAnimation = (layout: BookerLayout, state: BookerStat
     const height = animationConfig?.height || "auto";
     // 100vh inside an iframe makes the embed grow forever; 100% follows the iframe instead.
     element.style.height = height === "100vh" && isEmbed ? "100%" : String(height);
-    element.style.gridTemplateAreas = animationConfig?.gridTemplateAreas ?? "";
+    element.style.gridTemplateAreas = String(animationConfig?.gridTemplateAreas ?? "");
     element.style.width = String(animationConfig?.width || "auto");
-    element.style.gridTemplateColumns = animationConfig?.gridTemplateColumns ?? "";
-    element.style.gridTemplateRows = animationConfig?.gridTemplateRows ?? "";
+    element.style.gridTemplateColumns = String(animationConfig?.gridTemplateColumns ?? "");
+    element.style.gridTemplateRows = String(animationConfig?.gridTemplateRows ?? "");
     element.style.minHeight = String(animationConfig?.minHeight ?? "");
   }, [isEmbed, layout, state]);
 
