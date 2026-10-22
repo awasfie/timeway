@@ -8,6 +8,7 @@
 // a city fails only when no probe answers in any attempt.
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import process from "node:process";
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, cur, i, all) => {
@@ -38,7 +39,11 @@ const median = (xs) => {
   return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
 };
 
-const probeOf = (r) => ({ city: r?.probe?.city ?? null, network: r?.probe?.network ?? null, asn: r?.probe?.asn ?? null });
+const probeOf = (r) => ({
+  city: r?.probe?.city ?? null,
+  network: r?.probe?.network ?? null,
+  asn: r?.probe?.asn ?? null,
+});
 
 // Returns every probe result that finished; failed probes are pushed to `failures` with their ASN.
 async function measure(loc, failures) {
@@ -53,7 +58,8 @@ async function measure(loc, failures) {
   };
   const res = await fetch(API, { method: "POST", headers, body: JSON.stringify(body) });
   const created = await res.json();
-  if (!res.ok || !created.id) throw new Error(`Globalping create for ${loc.region}: ${res.status} ${JSON.stringify(created)}`);
+  if (!res.ok || !created.id)
+    throw new Error(`Globalping create for ${loc.region}: ${res.status} ${JSON.stringify(created)}`);
   for (let i = 0; i < 30; i++) {
     await sleep(1000);
     const m = await (await fetch(`${API}/${created.id}`)).json();
@@ -81,7 +87,10 @@ async function measure(loc, failures) {
         server_timing: [h["server-timing"] ?? []].flat(),
       });
     }
-    if (!ok.length) throw new Error(`${loc.region}: no probe answered in measurement ${created.id} (${(m.results ?? []).length} probes)`);
+    if (!ok.length)
+      throw new Error(
+        `${loc.region}: no probe answered in measurement ${created.id} (${(m.results ?? []).length} probes)`
+      );
     return ok;
   }
   throw new Error(`${loc.region}: measurement ${created.id} did not finish in 30 s`);
@@ -102,7 +111,12 @@ async function measureWithRetry(loc, failures, attempts = 3) {
   throw last;
 }
 
-const record = { gate: "booking-region-ttfb", provider: "globalping", commit: process.env.GITHUB_SHA ?? null };
+const record = {
+  gate: "booking-region-ttfb",
+  provider: "globalping",
+  commit: process.env.GITHUB_SHA ?? null,
+  budget_enforced: enforce,
+};
 
 function writeRecord() {
   mkdirSync(dirname(out), { recursive: true });
@@ -129,7 +143,11 @@ async function main() {
       total_ms: median(rows.map((r) => r.timings.total)),
       budget_ms: budgetMs,
       pass: ttfbMs < budgetMs,
-      probes: [...new Map(rows.map((r) => [`${r.city}/${r.asn}`, { city: r.city, asn: r.asn, network: r.network }])).values()],
+      probes: [
+        ...new Map(
+          rows.map((r) => [`${r.city}/${r.asn}`, { city: r.city, asn: r.asn, network: r.network }])
+        ).values(),
+      ],
       samples: rows,
     });
   }
@@ -153,11 +171,13 @@ async function main() {
     "",
   ];
   console.log(lines.join("\n"));
-  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`);
+  if (process.env.GITHUB_STEP_SUMMARY)
+    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`);
   const failed = results.filter((r) => !r.pass);
-  if (failed.length && enforce) {
-    console.error(`::error::TTFB over ${budgetMs} ms from ${failed.map((r) => r.region).join(", ")}`);
-    process.exit(1);
+  if (failed.length) {
+    const msg = `TTFB over ${budgetMs} ms from ${failed.map((r) => `${r.region} ${r.ttfb_ms} ms`).join(", ")}`;
+    console.error(`::${enforce ? "error" : "warning"}::${msg}`);
+    if (enforce) process.exit(1);
   }
 }
 
