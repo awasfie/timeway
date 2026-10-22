@@ -86,7 +86,7 @@ const IMPORT_RE =
 
 function staticImports(source: string): string[] {
   const specs: string[] = [];
-  for (const m of source.matchAll(IMPORT_RE)) {
+  for (const m of Array.from(source.matchAll(IMPORT_RE))) {
     if (m[4]) {
       if (m[2]) continue;
       const clause = m[3].trim();
