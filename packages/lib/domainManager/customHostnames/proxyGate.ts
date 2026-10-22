@@ -89,7 +89,8 @@ function cacheKey(q: { host: string; users?: string[]; team?: string }) {
  * Fetches /api/internal/custom-domain/resolve on this same instance (proxy.ts must not load Prisma).
  * Positive and negative answers are cached 60 s; transport errors are not cached and fail closed.
  */
-export function createHttpResolver(fetchImpl: typeof fetch = fetch): Resolver {
+// Late-bound default: proxy.ts creates its resolver at import time, before tests or runtimes patch fetch.
+export function createHttpResolver(fetchImpl: typeof fetch = (input, init) => fetch(input, init)): Resolver {
   return async (q) => {
     const key = cacheKey(q);
     const hit = cache.get(key);

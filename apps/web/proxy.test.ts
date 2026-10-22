@@ -1,13 +1,13 @@
 // Import mocked functions
 
 import { WEBAPP_URL } from "@calcom/lib/constants";
+import { clearCustomHostCache } from "@calcom/lib/domainManager/customHostnames/proxyGate";
 import { get as edgeConfigGet } from "@vercel/edge-config";
 import { NextRequest, NextResponse } from "next/server";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // We'll test the wrapped proxy as it would be used in production
-import proxy from "./proxy";
-import { config } from "./proxy";
+import proxy, { config } from "./proxy";
 
 // Mock dependencies at module level
 vi.mock("@vercel/edge-config", () => ({
@@ -468,6 +468,150 @@ describe("Middleware Integration Tests", () => {
       const res = await callProxy(req);
       expect(res).toBeDefined();
     });
+  });
+});
+
+describe("Custom host routing (WC-TW-12c2)", () => {
+  const SECRET = "test-approve-secret";
+  // host -> resolve answer: orgSlug for an ACTIVE row; null means the route answered 404
+  // (pending_dns, failed, unknown host or a foreign slug, which the route itself decides).
+  const rows = new Map<string, { org: string; members: string[]; teams: string[] } | null>();
+  const fetchMock = vi.fn(async (input: URL | string) => {
+    const url = new URL(input.toString());
+    const row = rows.get(url.searchParams.get("host") ?? "");
+    const users = url.searchParams.get("users")?.split(",") ?? [];
+    const team = url.searchParams.get("team");
+    const allowed =
+      !!row && users.every((u) => row.members.includes(u)) && (!team || row.teams.includes(team));
+    return allowed
+      ? new Response(JSON.stringify({ orgSlug: row.org }), { status: 200 })
+      : new Response(null, { status: 404 });
+  });
+
+  const hostRequest = (host: string, path: string) =>
+    createTestRequest({ url: `https://${host}${path}`, headers: { host } });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearCustomHostCache();
+    vi.stubEnv("NEXT_PUBLIC_WEBAPP_URL", WEBAPP_URL);
+    vi.stubEnv("TW_CUSTOM_DOMAINS_ENABLED", "true");
+    vi.stubEnv("TW_DOMAIN_APPROVE_SECRET", SECRET);
+    vi.stubGlobal("fetch", fetchMock);
+    rows.clear();
+    rows.set("book.acme.com", { org: "acme", members: ["alice", "bob"], teams: ["sales"] });
+    rows.set("book.globex.com", { org: "globex", members: ["mallory"], teams: ["ops"] });
+    rows.set("pending.acme.com", null);
+    rows.set("failed.acme.com", null);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  const expectNotFound = (res: Response) => {
+    expectStatus(res, 404);
+    expect(getHeader(res, "cache-control")).toBe("no-store");
+    expect(getHeader(res, "x-middleware-rewrite")).toBeNull();
+    expect(getHeader(res, "x-middleware-next")).toBeNull();
+  };
+
+  it("rewrites / on an active customer host to its org's booking page", async () => {
+    const res = await callProxy(hostRequest("book.acme.com", "/?utm=x"));
+    expectStatus(res, 200);
+    const rewrite = new URL(getHeader(res, "x-middleware-rewrite") ?? "");
+    expect(rewrite.pathname).toBe("/team/acme");
+    expect(rewrite.searchParams.get("isOrgProfile")).toBe("1");
+    expect(rewrite.searchParams.get("utm")).toBe("x");
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.pathname).toBe("/api/internal/custom-domain/resolve");
+    expect(url.searchParams.get("host")).toBe("book.acme.com");
+    expect((init.headers as Record<string, string>)["x-tw-domain-approve-secret"]).toBe(SECRET);
+  });
+
+  it("rewrites /embed on an active host to the org embed page", async () => {
+    const res = await callProxy(hostRequest("book.acme.com:443", "/embed"));
+    const rewrite = new URL(getHeader(res, "x-middleware-rewrite") ?? "");
+    expect(rewrite.pathname).toBe("/team/acme/embed");
+    expect(getHeader(res, "x-isEmbed")).toBe("true");
+  });
+
+  it("serves the host org's own user and team pages without rewriting", async () => {
+    for (const path of ["/alice", "/alice/30min", "/alice+bob", "/team/sales"]) {
+      const res = await callProxy(hostRequest("book.acme.com", path));
+      expectStatus(res, 200);
+      expect(getHeader(res, "x-middleware-next")).toBe("1");
+      expect(getHeader(res, "x-middleware-rewrite")).toBeNull();
+    }
+  });
+
+  it.each([
+    "pending.acme.com",
+    "failed.acme.com",
+    "unknown.example.org",
+  ])("returns 404 no-store for %s", async (host) => {
+    expectNotFound(await callProxy(hostRequest(host, "/")));
+    expectNotFound(await callProxy(hostRequest(host, "/alice")));
+  });
+
+  it("returns 404 for another org's user or team slug under a customer host", async () => {
+    for (const path of ["/mallory", "/alice+mallory", "/mallory/30min", "/team/ops"]) {
+      expectNotFound(await callProxy(hostRequest("book.acme.com", path)));
+    }
+  });
+
+  it("returns 404 for app routes under a customer host without asking the resolver", async () => {
+    for (const path of ["/settings/my-account", "/auth/login", "/api/internal/custom-domain/resolve"]) {
+      expectNotFound(await callProxy(hostRequest("book.acme.com", path)));
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("fails closed with 404 when the resolve call errors", async () => {
+    fetchMock.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    expectNotFound(await callProxy(hostRequest("book.acme.com", "/")));
+  });
+
+  it.each([
+    "timeway.co",
+    "acme.timeway.co",
+    "localhost:3000",
+    new URL(WEBAPP_URL).host,
+  ])("passes %s through untouched on non-legacy paths", async (host) => {
+    for (const path of ["/alice", "/", "/settings/my-account", "/api/bookings"]) {
+      const res = await callProxy(hostRequest(host, path));
+      expectStatus(res, 200);
+      expect(getHeader(res, "x-middleware-next")).toBe("1");
+      expect(getHeader(res, "x-middleware-rewrite")).toBeNull();
+      expect(getHeader(res, "x-csp-status")).toBeNull();
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("flag off: timeway hosts behave exactly as with the flag on (and as before 12c2)", async () => {
+    const snapshot = async () => {
+      clearCustomHostCache();
+      const out: Record<string, unknown>[] = [];
+      for (const host of ["timeway.co", "acme.timeway.co", "localhost:3000"]) {
+        for (const path of ["/team/sales", "/alice/embed", "/auth/logout", "/alice"]) {
+          const res = await callProxy(hostRequest(host, path));
+          out.push({ host, path, status: res.status, headers: Object.fromEntries(res.headers.entries()) });
+        }
+      }
+      return out;
+    };
+    const flagOn = await snapshot();
+    vi.stubEnv("TW_CUSTOM_DOMAINS_ENABLED", "false");
+    const flagOff = await snapshot();
+    expect(flagOff).toEqual(flagOn);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("flag off: a non-timeway host gets 404 without a lookup", async () => {
+    vi.stubEnv("TW_CUSTOM_DOMAINS_ENABLED", "false");
+    expectNotFound(await callProxy(hostRequest("book.acme.com", "/")));
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 
