@@ -4,7 +4,7 @@
     "tenantFields": ["organizationId", "teamId", "orgId", "twOrgId"],
     "roots": ["Organization", "Team"]
   },
-  "count": 44,
+  "count": 45,
   "models": [
     {
       "model": "AccessCode",
@@ -485,6 +485,19 @@
         {
           "name": "teamId",
           "type": "Int",
+          "nullable": false
+        }
+      ],
+      "nullable": false
+    },
+    {
+      "model": "TwCustomHostname",
+      "table": "tw_custom_hostname",
+      "root": false,
+      "tenantFields": [
+        {
+          "name": "orgId",
+          "type": "String",
           "nullable": false
         }
       ],
