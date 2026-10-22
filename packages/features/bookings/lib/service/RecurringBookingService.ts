@@ -4,6 +4,9 @@ import { type CreationSource, SchedulingType } from "@calcom/prisma/enums";
 import type { AppsStatus } from "@calcom/types/Calendar";
 import type { IBookingService } from "../interfaces/IBookingService";
 import type { RegularBookingService } from "./RegularBookingService";
+
+const MAX_RECURRING_OCCURRENCES_TO_CHECK = 52;
+
 export type BookingHandlerInput = {
   bookingData: CreateRecurringBookingData;
 } & CreateBookingMeta;
@@ -28,7 +31,9 @@ export const handleNewRecurringBooking = async function (
   });
   const appsStatus: AppsStatus[] | undefined = undefined;
 
-  const numSlotsToCheckForAvailability = 1;
+  // Occurrences repeat the booker's wall clock (WC-TW-5b D2), so a host whose zone shifts for DST can
+  // drift out of hours mid-series; every occurrence must pass the server-side availability check.
+  const numSlotsToCheckForAvailability = Math.min(data.length, MAX_RECURRING_OCCURRENCES_TO_CHECK);
 
   let thirdPartyRecurringEventId = null;
 
@@ -75,7 +80,7 @@ export const handleNewRecurringBooking = async function (
     const booking = data[key];
     // Disable AppStatus in Recurring Booking Email as it requires us to iterate backwards to be able to compute the AppsStatus for all the bookings except the very first slot and then send that slot's email with statuses
     // It is also doubtful that how useful is to have the AppsStatus of all the bookings in the email.
-    // It is more important to iterate forward and check for conflicts for only first few bookings defined by 'numSlotsToCheckForAvailability'
+    // It is more important to iterate forward and check for conflicts for the bookings covered by 'numSlotsToCheckForAvailability'
     // if (key === 0) {
     //   const calcAppsStatus: { [key: string]: AppsStatus } = createdBookings
     //     .flatMap((book) => (book.appsStatus !== undefined ? book.appsStatus : []))

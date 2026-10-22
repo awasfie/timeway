@@ -106,7 +106,7 @@ const PaymentPage: FC<PaymentPageProps> = (props) => {
               </span>
               <div
                 className={classNames(
-                  "main inline-block transform overflow-hidden rounded-lg border border-subtle bg-default px-8 pt-5 pb-4 text-left align-bottom transition-all sm:w-full sm:max-w-lg sm:py-6 sm:align-middle",
+                  "main inline-block transform overflow-hidden rounded-lg border border-subtle bg-default px-8 pt-5 pb-4 text-start align-bottom transition-all sm:w-full sm:max-w-lg sm:py-6 sm:align-middle",
                   isEmbed ? "" : "sm:my-8"
                 )}
                 role="dialog"
@@ -121,14 +121,15 @@ const PaymentPage: FC<PaymentPageProps> = (props) => {
                     <h3 className="font-semibold text-2xl text-emphasis leading-6" id="modal-headline">
                       {paymentAppData.paymentOption === "HOLD" ? t("complete_your_booking") : t("payment")}
                     </h3>
-                    <div className="mt-4 grid grid-cols-3 border-t border-b py-4 text-left text-default dark:border-gray-900 dark:text-gray-300">
+                    <div className="mt-4 grid grid-cols-3 border-t border-b py-4 text-start text-default dark:border-gray-900 dark:text-gray-300">
                       <div className="font-medium">{t("what")}</div>
                       <div className="col-span-2 mb-6">{eventName}</div>
                       <div className="font-medium">{t("when")}</div>
                       <div className="col-span-2 mb-6">
                         {date.locale(i18n.language ?? "en").format("dddd, DD MMMM YYYY")}
                         <br />
-                        {date.format(is24h ? "H:mm" : "h:mma")} - {props.eventType.length} mins{" "}
+                        {date.format(is24h ? "H:mm" : "h:mma")} -{" "}
+                        {t("event_length_mins", { length: props.eventType.length })}{" "}
                         <span className="text-subtle">({timezone})</span>
                       </div>
                       {props.booking.location && (
