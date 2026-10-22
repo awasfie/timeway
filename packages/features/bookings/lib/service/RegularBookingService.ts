@@ -1172,8 +1172,8 @@ async function handler(
   if (eventType.schedulingType === SchedulingType.COLLECTIVE && !eventType.isDynamic) {
     users = [...users].sort(
       (a, b) =>
-        ((b as { priority?: number | null }).priority ?? 0) - ((a as { priority?: number | null }).priority ?? 0) ||
-        a.id - b.id
+        ((b as { priority?: number | null }).priority ?? 0) -
+          ((a as { priority?: number | null }).priority ?? 0) || a.id - b.id
     );
   }
 
