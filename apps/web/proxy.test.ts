@@ -472,7 +472,7 @@ describe("Middleware Integration Tests", () => {
 });
 
 describe("Middleware Matcher Configuration", () => {
-  const matcher: string[] = config.matcher;
+  const matcher = config.matcher.filter((entry): entry is string => typeof entry === "string");
 
   it("should include all core middleware routes", () => {
     expect(matcher).toContain("/auth/login");
