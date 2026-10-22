@@ -145,6 +145,10 @@ const getTabs = (
           name: "guest_notifications",
           href: "/settings/organizations/guest-notifications",
         },
+        {
+          name: "custom_domain",
+          href: "/settings/organizations/custom-domain",
+        },
         ...(orgBranding
           ? [
               {
@@ -265,6 +269,7 @@ interface SettingsPermissions {
   canViewRoles?: boolean;
   canViewOrganizationBilling?: boolean;
   canUpdateOrganization?: boolean;
+  canManageCustomDomain?: boolean;
 }
 
 const useTabs = ({
@@ -292,7 +297,9 @@ const useTabs = ({
         };
       } else if (tab.href === "/settings/organizations") {
         const newArray = (tab?.children ?? []).filter(
-          (child) => permissions?.canUpdateOrganization || !organizationAdminKeys.includes(child.name)
+          (child) =>
+            (permissions?.canUpdateOrganization || !organizationAdminKeys.includes(child.name)) &&
+            (child.name !== "custom_domain" || permissions?.canManageCustomDomain)
         );
 
         // Add delegation-credential menu item only if feature flag is enabled
