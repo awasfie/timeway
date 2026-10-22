@@ -1,11 +1,11 @@
 import type { CalendarEvent } from "@calcom/types/Calendar";
-
+import type { TFunction } from "i18next";
 import { getCalendarLinks } from "../../lib/calendarLinks";
 
 const linkStyle = { color: "#101010", fontWeight: 600, textDecoration: "underline" } as const;
 
-export function AddToCalendarLinks(props: { calEvent: CalendarEvent }) {
-  const { google, outlook, ics } = getCalendarLinks(props.calEvent);
+export function AddToCalendarLinks(props: { calEvent: CalendarEvent; t?: TFunction }) {
+  const { google, outlook, ics } = getCalendarLinks(props.calEvent, props.t);
   return (
     <div
       data-testid="add-to-calendar"
@@ -17,7 +17,7 @@ export function AddToCalendarLinks(props: { calEvent: CalendarEvent }) {
         color: "#3E3E3E",
         paddingTop: "16px",
       }}>
-      <p style={{ margin: "0 0 4px 0" }}>Add to calendar</p>
+      <p style={{ margin: "0 0 4px 0" }}>{props.t ? props.t("add_to_calendar") : "Add to calendar"}</p>
       <a href={google} style={linkStyle}>
         Google
       </a>

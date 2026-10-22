@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-head-element */
+import { getEmailDirection } from "../../lib/emailDirection";
 import BaseTable from "./BaseTable";
 import EmailBodyLogo from "./EmailBodyLogo";
 import EmailHead from "./EmailHead";
@@ -9,10 +10,12 @@ import EmailSchedulingBodyHeader from "./EmailSchedulingBodyHeader";
 import RawHtml from "./RawHtml";
 import Row from "./Row";
 
-const Html = (props: { children: React.ReactNode }) => (
+const Html = (props: { children: React.ReactNode; lang: string; dir: "rtl" | "ltr" }) => (
   <>
     <RawHtml html="<!doctype html>" />
-    <html>{props.children}</html>
+    <html lang={props.lang} dir={props.dir}>
+      {props.children}
+    </html>
   </>
 );
 
@@ -24,11 +27,16 @@ export const BaseEmailHtml = (props: {
   subtitle?: React.ReactNode | string;
   headerType?: BodyHeadType;
   hideLogo?: boolean;
+  /** Recipient locale; drives <html lang dir> so Arabic/Hebrew/Farsi/Urdu mail renders right-to-left. */
+  locale?: string;
 }) => {
+  const lang = props.locale || "en";
+  const dir = getEmailDirection(lang);
+  const start = dir === "rtl" ? "right" : "left";
   return (
-    <Html>
+    <Html lang={lang} dir={dir}>
       <EmailHead title={props.subject} />
-      <body style={{ wordSpacing: "normal", backgroundColor: "#F3F4F6" }}>
+      <body dir={dir} style={{ wordSpacing: "normal", backgroundColor: "#F3F4F6" }}>
         <div style={{ backgroundColor: "#F3F4F6" }}>
           <RawHtml
             html={`<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->`}
@@ -37,7 +45,7 @@ export const BaseEmailHtml = (props: {
             <Row align="center" border="0" style={{ width: "100%" }}>
               <td
                 style={{
-                  direction: "ltr",
+                  direction: dir,
                   fontSize: "0px",
                   padding: "0px",
                   paddingTop: "40px",
@@ -88,7 +96,7 @@ export const BaseEmailHtml = (props: {
                 style={{ background: "#FFFFFF", backgroundColor: "#FFFFFF", width: "100%" }}>
                 <td
                   style={{
-                    direction: "ltr",
+                    direction: dir,
                     fontSize: 0,
                     padding: 0,
                     textAlign: "center",
@@ -100,21 +108,23 @@ export const BaseEmailHtml = (props: {
                     className="mj-column-per-100 mj-outlook-group-fix"
                     style={{
                       fontSize: 0,
-                      textAlign: "left",
-                      direction: "ltr",
+                      textAlign: start,
+                      direction: dir,
                       display: "inline-block",
                       verticalAlign: "top",
                       width: "100%",
                     }}>
                     <Row border="0" style={{ verticalAlign: "top" }} width="100%">
-                      <td align="left" style={{ fontSize: 0, padding: "10px 25px", wordBreak: "break-word" }}>
+                      <td
+                        align={start}
+                        style={{ fontSize: 0, padding: "10px 25px", wordBreak: "break-word" }}>
                         <div
                           style={{
                             fontFamily: "Roboto, Helvetica, sans-serif",
                             fontSize: 16,
                             fontWeight: 500,
                             lineHeight: 1,
-                            textAlign: "left",
+                            textAlign: start,
                             color: "#101010",
                           }}>
                           {props.children}
@@ -144,7 +154,7 @@ export const BaseEmailHtml = (props: {
                 style={{ background: "#FFFFFF", backgroundColor: "#FFFFFF", width: "100%" }}>
                 <td
                   style={{
-                    direction: "ltr",
+                    direction: dir,
                     fontSize: 0,
                     padding: 0,
                     textAlign: "center",
@@ -157,8 +167,8 @@ export const BaseEmailHtml = (props: {
                       className="mj-column-per-100 mj-outlook-group-fix"
                       style={{
                         fontSize: 0,
-                        textAlign: "left",
-                        direction: "ltr",
+                        textAlign: start,
+                        direction: dir,
                         display: "inline-block",
                         verticalAlign: "top",
                         width: "100%",
@@ -175,14 +185,14 @@ export const BaseEmailHtml = (props: {
                           </tr>
                           <tr>
                             <td
-                              align="left"
+                              align={start}
                               style={{ fontSize: 0, padding: "10px 25px", wordBreak: "break-word" }}>
                               <div
                                 style={{
                                   fontFamily: "Roboto, Helvetica, sans-serif",
                                   fontSize: 13,
                                   lineHeight: 1,
-                                  textAlign: "left",
+                                  textAlign: start,
                                   color: "#000000",
                                 }}
                               />
@@ -197,7 +207,7 @@ export const BaseEmailHtml = (props: {
               </Row>
             </div>
           </div>
-          {!Boolean(props.hideLogo) && <EmailBodyLogo />}
+          {!props.hideLogo && <EmailBodyLogo />}
           <RawHtml html="<!--[if mso | IE]></td></tr></table><![endif]-->" />
         </div>
       </body>

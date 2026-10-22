@@ -64,6 +64,7 @@ export const BaseScheduledEmail = (
 
   return (
     <BaseEmailHtml
+      locale={locale}
       hideLogo={Boolean(props.calEvent.platformClientId) || Boolean(props.calEvent.hideBranding)}
       headerType={props.headerType || "checkCircle"}
       subject={props.subject || subject}
@@ -128,7 +129,7 @@ export const BaseScheduledEmail = (
       <Info label={t("description")} description={props.calEvent.description} withSpacer formatted />
       <Info label={t("additional_notes")} description={props.calEvent.additionalNotes} withSpacer />
       {!props.calEvent.cancellationReason && !props.calEvent.rejectionReason && (
-        <AddToCalendarLinks calEvent={props.calEvent} />
+        <AddToCalendarLinks calEvent={props.calEvent} t={t} />
       )}
       {props.includeAppsStatus && <AppsStatus calEvent={props.calEvent} t={t} />}
       {props.isOrganizer && props.calEvent.assignmentReason && (

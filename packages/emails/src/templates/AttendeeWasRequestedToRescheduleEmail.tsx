@@ -21,7 +21,7 @@ export const AttendeeWasRequestedToRescheduleEmail = (
       subject="rescheduled_event_type_subject"
       callToAction={
         <CallToActionTable>
-          <CallToAction label="Book a new time" href={props.metadata.rescheduleLink} endIconName="linkIcon" />
+          <CallToAction label={t("book_a_new_time")} href={props.metadata.rescheduleLink} endIconName="linkIcon" />
         </CallToActionTable>
       }
       {...props}
