@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { prisma } from "@calcom/prisma";
 import { BookingStatus } from "@calcom/prisma/enums";
 
+import { twOrgIdForBooking } from "./fixtures/twOrg";
 import { test } from "./lib/fixtures";
 
 /**
@@ -70,6 +71,7 @@ test.describe("Booking Confirmation and Rejection via API", () => {
         endTime,
         status: BookingStatus.PENDING,
         oneTimePassword,
+        twOrgId: await twOrgIdForBooking(organizer.id, eventType.id),
         user: {
           connect: {
             id: organizer.id,
@@ -144,6 +146,7 @@ test.describe("Booking Confirmation and Rejection via API", () => {
         endTime,
         status: BookingStatus.PENDING,
         oneTimePassword,
+        twOrgId: await twOrgIdForBooking(organizer.id, eventType.id),
         user: {
           connect: {
             id: organizer.id,
