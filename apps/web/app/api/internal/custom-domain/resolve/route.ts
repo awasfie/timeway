@@ -2,7 +2,10 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import process from "node:process";
 import { CustomHostResolverRepository } from "@calcom/features/customHostnames/repositories/CustomHostResolverRepository";
 import { resolveCustomHost } from "@calcom/lib/domainManager/customHostnames/resolve";
-import { APPROVE_SECRET_HEADER, isCustomDomainsEnabled } from "@calcom/lib/domainManager/customHostnames/service";
+import {
+  APPROVE_SECRET_HEADER,
+  isCustomDomainsEnabled,
+} from "@calcom/lib/domainManager/customHostnames/service";
 import { prisma } from "@calcom/prisma";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";

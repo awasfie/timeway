@@ -7,7 +7,9 @@ export interface CustomHostResolverPort {
   /** Every user row carrying one of these usernames, with its Timeway org. */
   listUsersByUsername(usernames: string[]): Promise<{ username: string; twOrgId: string | null }[]>;
   /** Every team with this slug, with what ties it to an org. */
-  listTeamsBySlug(slug: string): Promise<{ slug: string; parentSlug: string | null; eventTypeOrgIds: (string | null)[] }[]>;
+  listTeamsBySlug(
+    slug: string
+  ): Promise<{ slug: string; parentSlug: string | null; eventTypeOrgIds: (string | null)[] }[]>;
 }
 
 export type ResolveRequest = { host: string; users?: string[]; team?: string };
@@ -56,7 +58,7 @@ export const RESOLVE_CACHE_TTL_MS = 60_000;
 const RESOLVE_CACHE_MAX = 5_000;
 
 /** Per-instance TTL cache; negative results are cached too so unknown hosts cannot hammer the DB. */
-export function createResolveCache<V>(ttlMs = RESOLVE_CACHE_TTL_MS, now: () => number = Date.now) {
+export function createResolveCache<V>(ttlMs = RESOLVE_CACHE_TTL_MS, now: () => number = () => Date.now()) {
   const entries = new Map<string, { value: V; expiresAt: number }>();
   return {
     get(key: string): V | undefined {

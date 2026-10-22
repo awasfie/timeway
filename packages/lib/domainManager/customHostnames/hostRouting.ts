@@ -111,7 +111,9 @@ export function classifyCustomHostPath(pathname: string): CustomHostRoute {
   if (pathname === "/embed") return { kind: "root", embed: true };
   if (PASSTHROUGH_PREFIXES.some((p) => pathname.startsWith(p))) return { kind: "passthrough" };
   if (pathname.startsWith("/api/")) {
-    return DENIED_API_PREFIXES.some((p) => pathname.startsWith(p)) ? { kind: "deny" } : { kind: "passthrough" };
+    return DENIED_API_PREFIXES.some((p) => pathname.startsWith(p))
+      ? { kind: "deny" }
+      : { kind: "passthrough" };
   }
   if (pathname === "/favicon.ico" || pathname === "/robots.txt" || pathname === "/embed.js") {
     return { kind: "passthrough" };

@@ -1,5 +1,4 @@
 import process from "node:process";
-import { APPROVE_SECRET_HEADER } from "./service";
 import {
   classifyCustomHostPath,
   hostFromHeader,
@@ -8,6 +7,7 @@ import {
   orgRootRewritePath,
 } from "./hostRouting";
 import { createResolveCache } from "./resolve";
+import { APPROVE_SECRET_HEADER } from "./service";
 
 export type CustomHostDecision =
   /** Not a customer host (or flag off on a platform host): today's behaviour. */
@@ -33,9 +33,7 @@ export function readGateEnv(): GateEnv {
     hostOfUrl(process.env.NEXT_PUBLIC_WEBAPP_URL),
     hostOfUrl(process.env.NEXT_PUBLIC_WEBSITE_URL),
     hostOfUrl(process.env.NEXTAUTH_URL),
-    ...(process.env.ALLOWED_HOSTNAMES ?? "")
-      .split(",")
-      .map((h) => hostFromHeader(h.replace(/["']/g, ""))),
+    ...(process.env.ALLOWED_HOSTNAMES ?? "").split(",").map((h) => hostFromHeader(h.replace(/["']/g, ""))),
   ].filter(Boolean);
   return { enabled: process.env.TW_CUSTOM_DOMAINS_ENABLED === "true", ownHosts };
 }
