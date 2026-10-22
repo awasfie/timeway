@@ -1,7 +1,6 @@
 import type { TFunction } from "i18next";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
 import { z } from "zod";
-
 import { getLocationByType } from "./locations";
 
 // Kept apart from locations.ts so the booking page, which imports locations.ts, does not ship the
