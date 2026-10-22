@@ -15,6 +15,6 @@ describe("CM-T6 link constants (no env)", () => {
     );
     expect(c.WEBSITE_TERMS_URL).toBe("https://timeway.co/terms");
     expect(c.WEBSITE_PRIVACY_POLICY_URL).toBe("https://timeway.co/privacy");
-    expect(c.COMPANY_NAME).toBe("AWSTREAMS DMCC");
+    expect(c.COMPANY_NAME).toBe("AWstreams DMCC");
   });
 });

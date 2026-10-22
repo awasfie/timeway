@@ -2,6 +2,7 @@ import process from "node:process";
 import { getOffice365AccessToken } from "@calcom/app-store/office365calendar/lib/getOffice365AccessToken";
 import dayjs from "@calcom/dayjs";
 import { CalendarCacheEventService } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService";
+import { safeTokenEquals } from "@calcom/features/calendar-subscription/lib/safeTokenEquals";
 import logger from "@calcom/lib/logger";
 import type { SelectedCalendar } from "@calcom/prisma/client";
 import type {
@@ -127,17 +128,15 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
     }
     if (validationToken) return true;
 
-    // validate notifications
-    const clientState =
-      request?.headers?.get("clientState") ??
-      (typeof request?.body === "object" && request.body !== null && "clientState" in request.body
-        ? (request.body as { clientState?: string }).clientState
-        : undefined);
+    // Header fallback only. Graph change notifications carry clientState inside the JSON body
+    // (`{ value: [...] }`), which the route parses once and validates per entry through
+    // CalendarSubscriptionService.processGraphNotifications (WC-TW-4f): a Request body is a stream.
+    const clientState = request?.headers?.get("clientState");
     if (!this.webhookToken) {
       log.warn("MICROSOFT_WEBHOOK_TOKEN missing");
       return false;
     }
-    if (clientState !== this.webhookToken) {
+    if (!safeTokenEquals(clientState, this.webhookToken)) {
       log.warn("Invalid clientState");
       return false;
     }
@@ -145,12 +144,8 @@ export class Office365CalendarSubscriptionAdapter implements ICalendarSubscripti
   }
 
   async extractChannelId(request: Request): Promise<string | null> {
-    let id: string | null = null;
-    if (request?.body && typeof request.body === "object" && "subscriptionId" in request.body) {
-      id = (request.body as { subscriptionId?: string }).subscriptionId ?? null;
-    } else if (request?.headers?.get("subscriptionId")) {
-      id = request.headers.get("subscriptionId");
-    }
+    // Header fallback only; body-borne subscriptionIds are handled by processGraphNotifications.
+    const id: string | null = request?.headers?.get("subscriptionId") ?? null;
     if (!id) {
       log.warn("subscriptionId missing in webhook");
     }
