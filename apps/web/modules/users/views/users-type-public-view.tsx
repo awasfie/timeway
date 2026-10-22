@@ -2,6 +2,9 @@
 
 import type { EmbedProps } from "app/WithEmbedSSR";
 import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+
+import { PERF_BLOAT_PROOF } from "./perf-bloat-proof";
 
 import { BookerWebWrapper as Booker } from "@calcom/web/modules/bookings/components/BookerWebWrapper";
 import { getBookerWrapperClasses } from "@calcom/features/bookings/Booker/utils/getBookerWrapperClasses";
@@ -26,6 +29,9 @@ export const getMultipleDurationValue = (
 
 function Type({ slug, user, isEmbed, booking, isBrandingHidden, eventData, orgBannerUrl }: PageProps) {
   const searchParams = useSearchParams();
+  useEffect(() => {
+    (window as unknown as Record<string, unknown>).__perfBloatProof = PERF_BLOAT_PROOF;
+  }, []);
 
   return (
     <BookingPageErrorBoundary>
