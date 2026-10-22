@@ -1,4 +1,7 @@
 import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
+import { CustomHostnameRepository } from "@calcom/features/customHostnames/repositories/CustomHostnameRepository";
+import { isCustomDomainsEnabled } from "@calcom/lib/domainManager/customHostnames/service";
+import { prisma } from "@calcom/prisma";
 import { buildLegacyRequest } from "@lib/buildLegacyCtx";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -12,6 +15,9 @@ export default async function SettingsLayoutAppDir(props: SettingsLayoutProps) {
     return redirect("/auth/login");
   }
 
+  const canManageCustomDomain =
+    isCustomDomainsEnabled() && (await new CustomHostnameRepository(prisma).listAdminOrgIds(userId)).length > 0;
+
   return (
     <SettingsLayoutAppDirClient
       {...props}
@@ -20,6 +26,7 @@ export default async function SettingsLayoutAppDir(props: SettingsLayoutProps) {
         canViewRoles: false,
         canViewOrganizationBilling: false,
         canUpdateOrganization: false,
+        canManageCustomDomain,
       }}
     />
   );
