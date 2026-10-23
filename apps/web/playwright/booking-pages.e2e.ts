@@ -462,7 +462,10 @@ test.describe("booking route without SessionProvider", () => {
     const user = await users.create();
     await user.apiLogin();
     await page.goto("/settings/my-account/profile");
-    await expect(page.locator('[data-testid="profile-submit-button"]')).toBeVisible();
+    await expect(page).toHaveURL(/\/settings\/my-account\/profile/);
+    // Two submit buttons can be in the DOM at once (strict mode failed in CI run 39949667591); match the visible one.
+    await expect(page.getByTestId("profile-submit-button").filter({ visible: true })).toHaveCount(1);
+    await expect(page.getByTestId("profile-form-email-0").first()).toHaveValue(user.email);
   });
 });
 
