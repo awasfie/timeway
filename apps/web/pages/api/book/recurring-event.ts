@@ -7,6 +7,8 @@ import getIP from "@calcom/lib/getIP";
 import { checkCfTurnstileToken } from "@calcom/lib/server/checkCfTurnstileToken";
 import { defaultResponder } from "@calcom/lib/server/defaultResponder";
 import { piiHasher } from "@calcom/lib/server/PiiHasher";
+import { publicLookupsForBookingBody, runWithPublicTwOrg } from "@calcom/lib/server/tw-org-scope/public";
+import { prisma } from "@calcom/prisma";
 import type { NextApiRequest } from "next";
 
 // @TODO: Didn't look at the contents of this function in order to not break old booking page.
@@ -63,4 +65,10 @@ async function handler(req: NextApiRequest & RequestMeta) {
 
 export const handleRecurringEventBooking = handler;
 
-export default defaultResponder(handler);
+// TW-T9.2b2: every slot in the series books the same user/team; the first body resolves the org.
+async function handlerInPublicOrg(req: NextApiRequest & RequestMeta) {
+  const first = Array.isArray(req.body) ? req.body[0] : req.body;
+  return runWithPublicTwOrg(prisma, publicLookupsForBookingBody(first), () => handler(req));
+}
+
+export default defaultResponder(handlerInPublicOrg);

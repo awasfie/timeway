@@ -147,6 +147,11 @@ export const createHandler = async ({ ctx, input }: CreateOptions) => {
     }
   }
 
+  // TW-T9.2b2: the creator's org (read from the row, the session user does not carry it);
+  // a NULL-org event type is not found on its public page.
+  const creator = await ctx.prisma.user.findUnique({ where: { id: userId }, select: { twOrgId: true } });
+  data.twOrgId = creator?.twOrgId ?? null;
+
   const profile = ctx.user.profile;
   try {
     const eventTypeRepo = new EventTypeRepository(ctx.prisma);

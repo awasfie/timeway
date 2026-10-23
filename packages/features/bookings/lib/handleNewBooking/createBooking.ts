@@ -83,6 +83,17 @@ const _createBooking = async ({
     tracking,
   });
 
+  // TW-T9.2b2: a dynamic group booking has no event type; it takes the organizer's org
+  // (the backfill's Booking <- user rule), else its success/cancel pages are not found.
+  // The public booking path already refused a group whose users span two orgs.
+  if (!eventType.id && !bookingAndAssociatedData.newBookingData.twOrgId) {
+    const organizer = await prisma.user.findUnique({
+      where: { id: eventType.organizerUser.id },
+      select: { twOrgId: true },
+    });
+    bookingAndAssociatedData.newBookingData.twOrgId = organizer?.twOrgId ?? null;
+  }
+
   return await saveBooking(
     bookingAndAssociatedData,
     originalRescheduledBooking,
@@ -223,7 +234,7 @@ function buildNewBookingData(params: CreateBookingParams) {
     creationSource,
     tracking: tracking ? { create: tracking } : undefined,
     // TW-ORGID-INS: always the booked event type's org, never the request's org context;
-    // the public booking path has none. Dynamic (no event type) bookings stay NULL.
+    // the public booking path has none. Dynamic (no event type) bookings: see _createBooking.
     twOrgId: getEventTypeTwOrgId(eventType.eventTypeData),
   };
 
