@@ -1,3 +1,4 @@
+import process from "node:process";
 import { WEBAPP_URL } from "@calcom/lib/constants";
 import { generateHashedLink } from "@calcom/lib/generateHashedLink";
 import { randomString } from "@calcom/lib/random";
@@ -412,6 +413,59 @@ test.describe("lazy booking form", () => {
   });
 });
 
+// WC-TW-6c-9b: the booking route has no SessionProvider and mounts sonner's Toaster on the first toast.
+test.describe("booking route without SessionProvider", () => {
+  test("logged-in owner books their own event and the success page shows the owner UI", async ({
+    page,
+    users,
+  }) => {
+    const owner = await users.create({ name: "Owner User" });
+    await owner.apiLogin();
+    const [eventType] = owner.eventTypes;
+    await page.goto(`/${owner.username}/${eventType.slug}`);
+    await selectFirstAvailableTimeSlotNextMonth(page);
+    await expect(page.locator('[name="email"]')).toHaveValue(owner.email);
+    await page.locator('[data-testid="confirm-book-button"]').click();
+    await expect(page.locator("[data-testid=success-page]")).toBeVisible();
+    await expect(page.locator('[data-testid="back-to-bookings"]')).toBeVisible();
+  });
+
+  test("logged-out booking succeeds without the logged-in UI", async ({ page, users }) => {
+    const user = await users.create();
+    const [eventType] = user.eventTypes;
+    await page.goto(`/${user.username}/${eventType.slug}`);
+    await selectFirstAvailableTimeSlotNextMonth(page);
+    await bookTimeSlot(page);
+    await expect(page.locator("[data-testid=success-page]")).toBeVisible();
+    await expect(page.locator('[data-testid="back-to-bookings"]')).toHaveCount(0);
+  });
+
+  test("the email_sent toast shows through the lazy Toaster", async ({ page, users, prisma }) => {
+    const user = await users.create();
+    const [eventType] = user.eventTypes;
+    await prisma.eventType.update({
+      where: { id: eventType.id },
+      data: { requiresBookerEmailVerification: true },
+    });
+    await page.goto(`/${user.username}/${eventType.slug}`);
+    await expect(page.locator("[data-sonner-toaster]")).toHaveCount(0);
+    await selectFirstAvailableTimeSlotNextMonth(page);
+    await page.fill('[name="name"]', testName);
+    await page.fill('[name="email"]', `toast-${randomString(4)}@example.com`);
+    await page.locator('[data-testid="confirm-book-button"]').click();
+    await expect(
+      page.getByTestId("toast-success").filter({ hasText: "Email sent successfully" })
+    ).toBeVisible();
+  });
+
+  test("a settings page still has a session", async ({ page, users }) => {
+    const user = await users.create();
+    await user.apiLogin();
+    await page.goto("/settings/my-account/profile");
+    await expect(page.locator('[data-testid="profile-submit-button"]')).toBeVisible();
+  });
+});
+
 test.describe("prefill", () => {
   test("logged in", async ({ page, users }) => {
     const prefill = await users.create({ name: "Prefill User" });
@@ -523,7 +577,8 @@ test.describe("Booking on different layouts", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.locator('[data-testid="event-type-link"]').first().click();
     const booker = page.locator('[data-testid="booker-container"]');
-    const gridAreas = (): Promise<string> => booker.evaluate((el) => (el as HTMLElement).style.gridTemplateAreas);
+    const gridAreas = (): Promise<string> =>
+      booker.evaluate((el) => (el as HTMLElement).style.gridTemplateAreas);
 
     await expect.poll(gridAreas).toContain("meta main");
     await testInfo.attach("month_view", { body: await page.screenshot(), contentType: "image/png" });
