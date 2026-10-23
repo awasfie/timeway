@@ -6,7 +6,6 @@ import { useBookingSession } from "@lib/booking-session";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
-import { Toaster } from "sonner";
 import { z } from "zod";
 
 import BookingPageTagManager from "@calcom/app-store/BookingPageTagManager";
@@ -61,7 +60,7 @@ import {
   ExternalLinkIcon,
   XIcon,
 } from "@coss/ui/icons";
-import { showToast } from "@calcom/ui/components/toast";
+import { LazyToaster, showToastLazy as showToast } from "@calcom/ui/components/toast/lazy";
 import { useCalcomTheme } from "@calcom/ui/styles";
 import CancelBooking from "@calcom/web/components/booking/CancelBooking";
 import EventReservationSchema from "@calcom/web/components/schemas/EventReservationSchema";
@@ -1158,7 +1157,7 @@ export default function Success(props: PageProps) {
           </div>
         </div>
       </main>
-      <Toaster position="bottom-right" />
+      <LazyToaster position="bottom-right" />
     </div>
   );
 }

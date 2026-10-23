@@ -10,6 +10,7 @@ import { useRouterQuery } from "@calcom/lib/hooks/useRouterQuery";
 import useTheme from "@calcom/lib/hooks/useTheme";
 import { UserAvatar } from "@calcom/ui/components/avatar";
 import { Icon } from "@calcom/ui/components/icon";
+import { LazyToaster } from "@calcom/ui/components/toast/lazy";
 import { OrgBanner } from "@calcom/ui/components/organization-banner";
 import { UnpublishedEntity } from "@calcom/ui/components/unpublished-entity";
 import { EventTypeDescriptionLazy as EventTypeDescription } from "@calcom/web/modules/event-types/components";
@@ -18,7 +19,6 @@ import type { getServerSideProps } from "@server/lib/[user]/getServerSideProps";
 import classNames from "classnames";
 import type { InferGetServerSidePropsType } from "next";
 import Link from "next/link";
-import { Toaster } from "sonner";
 
 export type PageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
 export function UserPage(props: PageProps) {
@@ -149,7 +149,7 @@ export function UserPage(props: PageProps) {
 
           {isEventListEmpty && <EmptyPage name={profile.name || "User"} />}
         </main>
-        <Toaster position="bottom-right" />
+        <LazyToaster position="bottom-right" />
       </div>
     </>
   );

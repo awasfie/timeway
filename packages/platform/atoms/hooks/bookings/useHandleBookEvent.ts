@@ -6,7 +6,7 @@ import { mapBookingToMutationInput, mapRecurringBookingToMutationInput } from "@
 import type { BookingCreateBody } from "@calcom/features/bookings/lib/bookingCreateBodySchema";
 import type { BookerEvent } from "@calcom/features/bookings/types";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { showToast } from "@calcom/ui/components/toast";
+import { showToastLazy as showToast } from "@calcom/ui/components/toast/lazy";
 import { useSearchParams } from "next/navigation";
 import { getUtmTrackingParameters } from "../../lib/getUtmTrackingParameters";
 import type { UseCreateBookingInput } from "./useCreateBooking";
