@@ -24,6 +24,10 @@ export class CredentialsRepositoryFixture {
     });
   }
 
+  get(id: number) {
+    return this.prismaReadClient.credential.findUnique({ where: { id } });
+  }
+
   delete(id: number) {
     return this.prismaWriteClient.credential.delete({
       where: {
