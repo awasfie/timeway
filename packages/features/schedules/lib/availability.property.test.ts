@@ -402,10 +402,13 @@ describe("WC-TW-5c availability properties (CC-65)", () => {
         );
       }
       // Working-hours misses on a host's DST transition window are defects D1/D3 owned by WC-TW-5b
-      // (t_7723617d); counted here, asserted to zero once that card lands (TW_PROP_STRICT_DST=1).
+      // (t_7723617d), daily-limit misses there are the limit-period endOf("day") DST defect (own card);
+      // counted here, asserted to zero once those land (TW_PROP_STRICT_DST=1).
       const dstOnly =
         bad.length > 0 &&
-        bad.every((x) => x.includes("outside working hours") && !x.includes("overlaps")) &&
+        bad.every(
+          (x) => (x.includes("outside working hours") || x.includes("booking limit")) && !x.includes("overlaps")
+        ) &&
         config.hosts.some((h) => spansTransition(h.timeZone, config.now));
       if (dstOnly && !process.env.TW_PROP_STRICT_DST) {
         knownDst++;
