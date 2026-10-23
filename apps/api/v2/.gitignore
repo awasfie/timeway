@@ -47,3 +47,6 @@ lerna-debug.log*
 
 # Generated secrets file
 .generated-secrets
+
+# Test artifacts
+/test-results
