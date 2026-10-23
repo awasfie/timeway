@@ -1,6 +1,6 @@
 {
   "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200.",
-  "total_kb_gz": 773.6,
+  "total_kb_gz": 757.5,
   "tolerance_kb": 5,
-  "source": "booking-perf run 39912330160 (PR #128 bb0219a377 rebased onto main 359ea3511c: +7.1 KB vs 766.5 from the next 16.4.1 / @sentry 10.75.2 security bump #132 and other main changes, no booking source change), region=gh-runner"
+  "source": "booking-perf run 39948474367 (PR #146 dd2a72ac11, WC-TW-6c-9b: -16.1 KB vs 773.6 in run 39912330160 for PR #128 5002bb7ac9 on the same main base 359ea3511c; SessionProvider/next-auth, web push and sonner off the first load), region=gh-runner"
 }
