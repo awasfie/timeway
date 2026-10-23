@@ -92,10 +92,9 @@ export const negative = {
       "apps/web/test/cc13/negative/invitations.integration-test.ts > an invite token for tenant B grants nothing in tenant A",
       "apps/web/test/cc13/negative/invitations.integration-test.ts > an invite token minted for A's invitee creates only a MEMBER membership in A, never an elevated role",
       "apps/web/test/cc13/negative/invitations.integration-test.ts > an existing member's invite cannot raise their role (pending ADMIN stays what the inviter set)",
+      "apps/web/test/cc13/negative/invitations.integration-test.ts > CC13-D2 fixed: an invite token minted for one email cannot be accepted by a different email",
     ],
-    defects: {
-      "CC13-D2": "signup with a team token does not check the token identifier against the signing-up email (it.fails)",
-    },
+    defects: {},
     none: { bAdminInvitesIntoA: "no invite-creation endpoint (team invite router) on main" },
   },
   keyScopes: {

@@ -102,7 +102,7 @@ describe("CC-13 negative: invitations (WC-TW-7d)", () => {
     expect(rows.find((r) => r.teamId === seed.A.team.id)?.role).toBe(MembershipRole.MEMBER);
   });
 
-  it.fails("DEFECT CC13-D2: an invite token minted for one email cannot be accepted by a different email", async () => {
+  it("CC13-D2 fixed: an invite token minted for one email cannot be accepted by a different email", async () => {
     const invitee = freshEmail();
     const intruder = freshEmail();
     const token = await mintToken(seed.A.team.id, invitee);

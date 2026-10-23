@@ -9,6 +9,7 @@ import { prefillAvatar } from "@calcom/features/auth/signup/utils/prefillAvatar"
 import {
   findTokenByToken,
   throwIfTokenExpired,
+  tokenIdentifierMatchesEmail,
   validateAndGetCorrectedUsernameForTeam,
 } from "@calcom/features/auth/signup/utils/token";
 import { validateAndGetCorrectedUsernameAndEmail } from "@calcom/features/auth/signup/utils/validateUsername";
@@ -93,10 +94,13 @@ const handler: CustomNextApiHandler = async (body, usernameStatus, query) => {
 
   const email = _email.toLowerCase();
 
-  let foundToken: { id: number; teamId: number | null; expires: Date } | null = null;
+  let foundToken: { id: number; identifier: string; teamId: number | null; expires: Date } | null = null;
   if (token) {
     foundToken = await findTokenByToken({ token });
     throwIfTokenExpired(foundToken?.expires);
+    if (!tokenIdentifierMatchesEmail(foundToken.identifier, email)) {
+      return NextResponse.json({ message: "Token was issued for a different email" }, { status: 403 });
+    }
     username = await validateAndGetCorrectedUsernameForTeam({
       username,
       email,

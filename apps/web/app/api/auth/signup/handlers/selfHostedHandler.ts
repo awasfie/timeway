@@ -7,6 +7,7 @@ import { prefillAvatar } from "@calcom/features/auth/signup/utils/prefillAvatar"
 import {
   findTokenByToken,
   throwIfTokenExpired,
+  tokenIdentifierMatchesEmail,
   validateAndGetCorrectedUsernameForTeam,
 } from "@calcom/features/auth/signup/utils/token";
 import { validateAndGetCorrectedUsernameAndEmail } from "@calcom/features/auth/signup/utils/validateUsername";
@@ -37,11 +38,14 @@ export default async function handler(body: Record<string, string>) {
     return NextResponse.json({ message: "Invalid username" }, { status: 422 });
   }
 
-  let foundToken: { id: number; teamId: number | null; expires: Date } | null = null;
+  let foundToken: { id: number; identifier: string; teamId: number | null; expires: Date } | null = null;
   let correctedUsername = username;
   if (token) {
     foundToken = await findTokenByToken({ token });
     throwIfTokenExpired(foundToken?.expires);
+    if (!tokenIdentifierMatchesEmail(foundToken.identifier, userEmail)) {
+      return NextResponse.json({ message: "Token was issued for a different email" }, { status: 403 });
+    }
     correctedUsername = await validateAndGetCorrectedUsernameForTeam({
       username,
       email: userEmail,
