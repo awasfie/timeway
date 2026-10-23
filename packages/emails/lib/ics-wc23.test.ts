@@ -1,7 +1,7 @@
 import process from "node:process";
 import { buildCalendarEvent, buildPerson } from "@calcom/lib/test/builder";
 import type { CalendarEvent } from "@calcom/types/Calendar";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import generateIcsString, { getIcsOrganizerEmail, ICS_PRODUCT_ID } from "./generateIcsString";
 import getNextICalSequence, { getICalSequenceForBooking } from "./getICalSequence";
 import getICalUID from "./getICalUID";
@@ -29,10 +29,11 @@ const baseEvent = (overrides: Partial<CalendarEvent> = {}): CalendarEvent =>
 describe("ICS per WC.2.3", () => {
   const env = { ...process.env };
   beforeEach(() => {
-    process.env.EMAIL_FROM = "Timeway <bookings@notify.timeway.co>";
+    vi.stubEnv("EMAIL_FROM", "Timeway <bookings@notify.timeway.co>");
     delete process.env.ICS_ORGANIZER_EMAIL;
   });
   afterEach(() => {
+    vi.unstubAllEnvs();
     process.env = { ...env };
   });
 
