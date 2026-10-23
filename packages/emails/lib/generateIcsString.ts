@@ -66,7 +66,6 @@ export const getIcsOrganizerEmail = () =>
   `no-reply@${new URL(WEBSITE_URL).hostname.replace(/^www\./, "")}`;
 
 const utf8Length = (s: string) => Buffer.byteLength(s, "utf8");
-
 /** RFC 5545 3.1: fold at 75 octets without splitting a UTF-8 sequence (the ics lib folds by UTF-16 units). */
 const foldOctets = (line: string) => {
   const parts: string[] = [];
@@ -85,7 +84,6 @@ const foldOctets = (line: string) => {
 };
 
 const unfold = (ics: string) => ics.replace(/\r\n[ \t]/g, "").split("\r\n");
-
 type PostProcessInput = { ics: string; event: ICSCalendarEvent; cancelled: boolean; sequence: number };
 
 const postProcess = ({ ics, event, cancelled, sequence }: PostProcessInput) => {
