@@ -1,5 +1,3 @@
-import type { MotionProps } from "framer-motion";
-import { m } from "framer-motion";
 import { forwardRef } from "react";
 
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
@@ -25,7 +23,7 @@ type BookerSectionProps = {
   area: GridArea;
   visible?: boolean;
   className?: string;
-} & MotionProps;
+};
 
 // This map with strings is needed so Tailwind generates all classnames,
 // If we would concatenate them with JS, Tailwind would not generate them.
@@ -41,7 +39,7 @@ const gridAreaClassNameMap: { [key in BookerAreas]: string } = {
  * Small helper component that renders a booker section in a specific grid area.
  */
 export const BookerSection = forwardRef<HTMLDivElement, BookerSectionProps>(function BookerSection(
-  { children, area, visible, className, ...props },
+  { children, area, visible, className },
   ref
 ) {
   const layout = useBookerStoreContext((state) => state.layout);
@@ -56,8 +54,8 @@ export const BookerSection = forwardRef<HTMLDivElement, BookerSectionProps>(func
   if (!visible && typeof visible !== "undefined") return null;
 
   return (
-    <m.div ref={ref} className={classNames(gridClassName, className)} layout {...props}>
+    <div ref={ref} className={classNames(gridClassName, className)}>
       {children}
-    </m.div>
+    </div>
   );
 });

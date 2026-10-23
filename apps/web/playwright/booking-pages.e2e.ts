@@ -479,6 +479,32 @@ test.describe("Booking on different layouts", () => {
     await expect(page.locator("[data-testid=success-page]")).toBeVisible();
   });
 
+  // WC-TW-6c-8: the grid layout moved from framer-motion to inline styles + CSS animations.
+  test("Layout switch applies the grid and honours prefers-reduced-motion", async ({ page }, testInfo) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.locator('[data-testid="event-type-link"]').first().click();
+    const booker = page.locator('[data-testid="booker-container"]');
+    const gridAreas = (): Promise<string> => booker.evaluate((el) => (el as HTMLElement).style.gridTemplateAreas);
+
+    await expect.poll(gridAreas).toContain("meta main");
+    await testInfo.attach("month_view", { body: await page.screenshot(), contentType: "image/png" });
+
+    for (const layout of ["week_view", "column_view"]) {
+      await page.click(`[data-testid="toggle-group-item-${layout}"]`);
+      await expect.poll(gridAreas).toContain("meta header header");
+      await expect(booker).toHaveCSS("min-height", /px$/);
+      await testInfo.attach(layout, { body: await page.screenshot(), contentType: "image/png" });
+    }
+
+    await page.click('[data-testid="toggle-group-item-month_view"]');
+    await expect.poll(gridAreas).not.toContain("header");
+
+    const animated = booker.locator(".animate-in").first();
+    await expect(animated).toHaveCSS("animation-name", "none");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(animated).not.toHaveCSS("animation-name", "none");
+  });
+
   test("Book on column layout", async ({ page }) => {
     // Click first event type
     await page.locator('[data-testid="event-type-link"]').first().click();
