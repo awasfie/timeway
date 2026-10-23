@@ -7,7 +7,7 @@ import { getRecurringFreq } from "@calcom/lib/recurringStrings";
 import { getTimeShiftFlags, getFirstShiftFlags } from "@calcom/lib/timeShift";
 import { Alert } from "@calcom/ui/components/alert";
 import { Badge } from "@calcom/ui/components/badge";
-import { Input } from "@calcom/ui/components/form";
+import { Input } from "@calcom/ui/components/form/inputs/TextField";
 import { Tooltip } from "@calcom/ui/components/tooltip";
 
 import { useBookerTime } from "@calcom/features/bookings/Booker/hooks/useBookerTime";
