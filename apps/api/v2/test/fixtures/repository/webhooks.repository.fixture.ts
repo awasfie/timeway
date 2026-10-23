@@ -20,4 +20,16 @@ export class WebhookRepositoryFixture {
   async delete(webhookId: string) {
     return this.prismaWriteClient.webhook.delete({ where: { id: webhookId } });
   }
+
+  async get(webhookId: string) {
+    return this.prismaWriteClient.webhook.findUnique({ where: { id: webhookId } });
+  }
+
+  async countByEventTypeId(eventTypeId: number) {
+    return this.prismaWriteClient.webhook.count({ where: { eventTypeId } });
+  }
+
+  async countByClientId(platformOAuthClientId: string) {
+    return this.prismaWriteClient.webhook.count({ where: { platformOAuthClientId } });
+  }
 }

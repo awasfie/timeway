@@ -36,6 +36,11 @@ const API_KEY_NONE = {
   none: "API-key auth only resolves a cal_ key to its owning User and twk_ org keys are no v2 credential; no key-authenticated route reads or writes this model",
 };
 
+/** webhook surface (WC-TW-7c-4): webhooks hang off User, Team, EventType and PlatformOAuthClient and fire for Booking events; no other model is read or written by a webhook handler or the trigger path. */
+const WEBHOOK_NONE = {
+  none: "no webhook config handler, v2 webhooks route or trigger path reads or writes this model",
+};
+
 const pending = (overrides: Partial<ModelCoverage> = {}): ModelCoverage => {
   const entry = {} as ModelCoverage;
   for (const s of SURFACES) entry[s] = overrides[s] ?? { pending: OWNER[s] };
@@ -43,63 +48,87 @@ const pending = (overrides: Partial<ModelCoverage> = {}): ModelCoverage => {
 };
 
 export const manifest: Record<string, ModelCoverage> = {
-  AccessCode: pending({ apiKey: API_KEY_NONE }),
-  Agent: pending({ apiKey: API_KEY_NONE }),
-  ApiKey: pending({ apiKey: "apps/web/test/cc13/api-key.integration-test.ts > B cannot list A's api keys" }),
-  Attribute: pending({ apiKey: API_KEY_NONE }),
-  Avatar: pending({ apiKey: API_KEY_NONE }),
+  AccessCode: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  Agent: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  ApiKey: pending({
+    webhook: WEBHOOK_NONE,
+    apiKey: "apps/web/test/cc13/api-key.integration-test.ts > B cannot list A's api keys",
+  }),
+  Attribute: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  Avatar: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
   Booking: pending({
+    webhook:
+      "apps/web/test/cc13/webhook.integration-test.ts > A's booking event is delivered to A's subscribers and never to B's subscriber URLs",
     apiV2: "apps/api/v2/src/platform/cc13-cross-tenant.e2e-spec.ts > B cannot read A's booking references",
     apiKey:
       "apps/api/v2/src/platform/cc13-cross-tenant-api-key.e2e-spec.ts > B's API key lists none of A's bookings, event types or schedules",
   }),
-  BookingDenormalized: pending({ apiKey: API_KEY_NONE }),
-  BookingReport: pending({ apiKey: API_KEY_NONE }),
-  BookingTimeStatus: pending({ apiKey: API_KEY_NONE }),
-  BookingTimeStatusDenormalized: pending({ apiKey: API_KEY_NONE }),
-  CalAiPhoneNumber: pending({ apiKey: API_KEY_NONE }),
-  Credential: pending({ apiKey: API_KEY_NONE }),
-  CreditBalance: pending({ apiKey: API_KEY_NONE }),
-  DSyncData: pending({ apiKey: API_KEY_NONE }),
-  DSyncTeamGroupMapping: pending({ apiKey: API_KEY_NONE }),
-  DelegationCredential: pending({ apiKey: API_KEY_NONE }),
+  BookingDenormalized: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  BookingReport: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  BookingTimeStatus: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  BookingTimeStatusDenormalized: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  CalAiPhoneNumber: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  Credential: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  CreditBalance: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  DSyncData: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  DSyncTeamGroupMapping: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  DelegationCredential: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
   EventType: pending({
+    webhook: "apps/web/test/cc13/webhook.integration-test.ts > B cannot create a webhook on A's event type",
     apiV2: "apps/api/v2/src/platform/cc13-cross-tenant.e2e-spec.ts > B cannot update A's event type",
     apiKey:
       "apps/api/v2/src/platform/cc13-cross-tenant-api-key.e2e-spec.ts > B's API key cannot update or delete A's event type and schedule",
   }),
-  FilterSegment: pending({ apiKey: API_KEY_NONE }),
-  InstantMeetingToken: pending({ apiKey: API_KEY_NONE }),
-  IntegrationAttributeSync: pending({ apiKey: API_KEY_NONE }),
-  InternalNotePreset: pending({ apiKey: API_KEY_NONE }),
-  Membership: pending({ apiKey: API_KEY_NONE }),
-  MonthlyProration: pending({ apiKey: API_KEY_NONE }),
+  FilterSegment: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  InstantMeetingToken: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  IntegrationAttributeSync: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  InternalNotePreset: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  Membership: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  MonthlyProration: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
   OrgApiKey: pending({
+    webhook: WEBHOOK_NONE,
     apiKey: "apps/web/test/cc13/api-key.integration-test.ts > B's org context cannot read A's org api key",
   }),
-  Organization: pending({ apiKey: API_KEY_NONE }),
-  OrganizationBilling: pending({ apiKey: API_KEY_NONE }),
-  OrganizationMember: pending({ apiKey: API_KEY_NONE }),
-  OrganizationOnboarding: pending({ apiKey: API_KEY_NONE }),
-  OrganizationSettings: pending({ apiKey: API_KEY_NONE }),
-  PlatformOAuthClient: pending({ apiKey: API_KEY_NONE }),
-  Profile: pending({ apiKey: API_KEY_NONE }),
-  Role: pending({ apiKey: API_KEY_NONE }),
+  Organization: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  OrganizationBilling: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  OrganizationMember: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  OrganizationOnboarding: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  OrganizationSettings: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  PlatformOAuthClient: pending({
+    webhook:
+      "apps/api/v2/src/platform/cc13-webhooks.e2e-spec.ts > B cannot list, read, update or delete webhooks of A's oauth client",
+    apiKey: API_KEY_NONE,
+  }),
+  Profile: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  Role: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
   Schedule: pending({
+    webhook: WEBHOOK_NONE,
     apiV2: "apps/api/v2/src/platform/cc13-cross-tenant.e2e-spec.ts > B cannot update A's schedule",
     apiKey:
       "apps/api/v2/src/platform/cc13-cross-tenant-api-key.e2e-spec.ts > B's API key cannot update or delete A's event type and schedule",
   }),
-  SeatChangeLog: pending({ apiKey: API_KEY_NONE }),
-  Team: pending({ apiKey: API_KEY_NONE }),
-  TeamBilling: pending({ apiKey: API_KEY_NONE }),
-  TeamFeatures: pending({ apiKey: API_KEY_NONE }),
-  TwCustomHostname: pending({ apiKey: API_KEY_NONE }),
-  User: pending({ apiKey: API_KEY_NONE }),
-  VerificationToken: pending({ apiKey: API_KEY_NONE }),
-  VerifiedEmail: pending({ apiKey: API_KEY_NONE }),
-  VerifiedNumber: pending({ apiKey: API_KEY_NONE }),
-  Watchlist: pending({ apiKey: API_KEY_NONE }),
-  Webhook: pending({ apiKey: API_KEY_NONE }),
-  WrongAssignmentReport: pending({ apiKey: API_KEY_NONE }),
+  SeatChangeLog: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  Team: pending({
+    webhook:
+      "apps/web/test/cc13/webhook.integration-test.ts > getWebhooks for A's event type returns none of B's webhooks",
+    apiKey: API_KEY_NONE,
+  }),
+  TeamBilling: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  TeamFeatures: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  TwCustomHostname: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  User: pending({
+    webhook: "apps/web/test/cc13/webhook.integration-test.ts > B list returns none of A's webhooks",
+    apiKey: API_KEY_NONE,
+  }),
+  VerificationToken: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  VerifiedEmail: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  VerifiedNumber: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  Watchlist: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
+  Webhook: pending({
+    webhook:
+      "apps/web/test/cc13/webhook.integration-test.ts > B cannot delete A's team, user and event-type webhook",
+    apiV2: "apps/api/v2/src/platform/cc13-webhooks.e2e-spec.ts > B cannot update A's webhook",
+    apiKey: API_KEY_NONE,
+  }),
+  WrongAssignmentReport: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
 };
