@@ -41,6 +41,18 @@ const WEBHOOK_NONE = {
   none: "no webhook config handler, v2 webhooks route or trigger path reads or writes this model",
 };
 
+/** job surface (WC-TW-7c-5): the cron handlers (sendBookingReminders, bookingReminder, webhookTriggers) read Booking, its User/attendees, EventType hosts and Webhook subscribers; downgradeUsers and scheduleEmailReminders have no handler in this repo. */
+const JOBS = "apps/web/test/cc13/jobs.integration-test.ts";
+const JOB_NONE = {
+  none: "no cron handler (sendBookingReminders, bookingReminder, webhookTriggers) nor downgradeUsers/scheduleEmailReminders reads or writes this model",
+};
+const JOB_PROBES: Record<string, ProbeId> = {
+  Booking: `${JOBS} > sendBookingReminders sends A's reminders only to A's host, hosts and attendees and B's only to B's`,
+  EventType: `${JOBS} > bookingReminder (pending confirmation) mails A's organizer and attendee for A's booking and B's for B's`,
+  User: `${JOBS} > sendBookingReminders sends A's reminders only to A's host, hosts and attendees and B's only to B's`,
+  Webhook: `${JOBS} > webhookTriggers delivers A's scheduled trigger only to A's subscriber, signed with A's secret, and B's only to B's`,
+};
+
 const pending = (overrides: Partial<ModelCoverage> = {}): ModelCoverage => {
   const entry = {} as ModelCoverage;
   for (const s of SURFACES) entry[s] = overrides[s] ?? { pending: OWNER[s] };
@@ -132,3 +144,8 @@ export const manifest: Record<string, ModelCoverage> = {
   }),
   WrongAssignmentReport: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
 };
+
+// job surface (WC-TW-7c-5): applied to every model in one pass so the per-model rows stay untouched.
+for (const [model, coverage] of Object.entries(manifest)) {
+  coverage.job = JOB_PROBES[model] ?? JOB_NONE;
+}
