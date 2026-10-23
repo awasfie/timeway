@@ -16,6 +16,7 @@ import { uuid } from "short-uuid";
 import { v4 } from "uuid";
 import { selectFirstAvailableTimeSlotNextMonth, teamEventSlug, teamEventTitle } from "../lib/testUtils";
 import type { createEmailsFixture } from "./emails";
+import { assignUsersToTwOrg, getE2eTwOrgId } from "./twOrg";
 import { TimeZoneEnum } from "./types";
 
 // Don't import hashPassword from app as that ends up importing next-auth and initializing it before NEXTAUTH_URL can be updated during tests.
@@ -519,6 +520,25 @@ export const createUsersFixture = (
             }
           }
         }
+      }
+
+      // TW-T9.2b2-e2e: the user, its teammates and their rows join the worker's Timeway org.
+      const twOrgId = await getE2eTwOrgId(workerInfo.workerIndex);
+      const teamIds = store.teams.map((t) => t.id);
+      const teamMemberIds = teamIds.length
+        ? (
+            await prisma.membership.findMany({
+              where: { teamId: { in: teamIds } },
+              select: { userId: true },
+            })
+          ).map((m) => m.userId)
+        : [];
+      await assignUsersToTwOrg(twOrgId, [user.id, ...teamMemberIds]);
+      if (teamIds.length) {
+        await prisma.eventType.updateMany({
+          where: { twOrgId: null, teamId: { in: teamIds } },
+          data: { twOrgId },
+        });
       }
 
       const finalUser = await prisma.user.findUniqueOrThrow({

@@ -18,6 +18,7 @@ import type { teamMetadataSchema } from "../packages/prisma/zod-utils";
 import mainAppStore from "./seed-app-store";
 import mainHugeEventTypesSeed from "./seed-huge-event-types";
 import { createOAuthClientForUser, createUserAndEventType } from "./seed-utils";
+import seedTwOrg from "./seed-tw-org";
 
 function hashAPIKey(apiKey: string): string {
   return createHash("sha256").update(apiKey).digest("hex");
@@ -1380,6 +1381,7 @@ async function runSeed() {
   await mainAppStore();
   await main();
   await mainHugeEventTypesSeed();
+  await seedTwOrg();
 }
 
 runSeed()
