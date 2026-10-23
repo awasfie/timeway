@@ -9,6 +9,7 @@ import {
   setReloadInitiated,
   incrementView,
 } from "./embed-iframe/lib/embedStore";
+import { takeEventsFiredBeforeRuntime } from "./embed-iframe/lib/pre-runtime-events";
 import {
   runAsap,
   isBookerReady,
@@ -24,7 +25,7 @@ import type { UiConfig, EmbedNonStylesConfig, BookerLayouts, EmbedStyles, Prefil
 export * from "./embed-iframe/hooks";
 export { useBookerEmbedEvents, useSlotsViewOnSmallScreen } from "./embed-iframe/react-hooks";
 
-// Importing this module runs main(). The app loads it only inside an embed (useEmbedIframeRuntime), so
+// Importing this module runs main(). The app loads it only inside an embed (embed-iframe/load-runtime.ts), so
 // non-embed pages keep the iframe<->parent runtime off their first load.
 
 // Prerendering is a hidden process and we shouldn't really track any events from it unless absolutely necessary
@@ -305,25 +306,12 @@ const messageParent = (data: CustomEvent["detail"]) => {
   );
 };
 
-let isForwardingToParent = false;
-
 function forwardToParent(detail: CustomEvent["detail"]) {
   if (isPrerendering() && !eventsAllowedInPrerendering.includes(detail.type)) {
     return;
   }
   log(detail);
   messageParent(detail);
-}
-
-/**
- * The app loads this module lazily (embed-iframe/load-runtime.ts), so the booker can fire SDK events
- * before main() subscribed; load-runtime buffers them and hands them over here, in order.
- */
-export function forwardEventsFiredBeforeLoad(details: CustomEvent["detail"][]) {
-  if (!isForwardingToParent) {
-    return;
-  }
-  details.forEach(forwardToParent);
 }
 
 function main() {
@@ -333,6 +321,10 @@ function main() {
   log("Embed SDK loaded", { isEmbed: window?.isEmbed?.() || false });
   const url = new URL(document.URL);
   embedStore.theme = window?.getEmbedTheme?.();
+  // useEmbedTheme may have mounted before this lazily loaded module ran.
+  if (embedStore.theme && embedStore.setTheme) {
+    embedStore.setTheme(embedStore.theme);
+  }
 
   const autoScrollFromParam = url.searchParams.get("ui.autoscroll");
   const shouldDisableAutoScroll = autoScrollFromParam === "false";
@@ -357,6 +349,7 @@ function main() {
   // If embed link is opened in top, and not in iframe. Let the page be visible.
   if (top === window) {
     showPageAsNonEmbed();
+    takeEventsFiredBeforeRuntime();
     // We would want to avoid a situation where Cal.diy embeds cal.com and then embed-iframe is in the top as well. In such case, we would want to avoid infinite loop of events being passed.
     log("Embed SDK Skipped as we are in top");
     return;
@@ -400,8 +393,9 @@ function main() {
     incrementView();
   });
 
+  // load-runtime.ts buffered what the app fired before this module loaded; hand-off is synchronous.
+  takeEventsFiredBeforeRuntime().forEach(forwardToParent);
   sdkActionManager?.on("*", (e) => forwardToParent(e.detail));
-  isForwardingToParent = true;
 
   if (url.searchParams.get("preload") !== "true" && window?.isEmbed?.()) {
     initializeAndSetupEmbed();
