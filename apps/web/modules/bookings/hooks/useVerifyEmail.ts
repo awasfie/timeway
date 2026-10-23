@@ -5,7 +5,7 @@ import { useBookerStore } from "@calcom/features/bookings/Booker/store";
 import { useDebounce } from "@calcom/lib/hooks/useDebounce";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { trpc } from "@calcom/trpc/react";
-import { showToast } from "@calcom/ui/components/toast";
+import { showToastLazy as showToast } from "@calcom/ui/components/toast/lazy";
 
 export interface IUseVerifyEmailProps {
   email: string;

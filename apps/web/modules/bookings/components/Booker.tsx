@@ -27,12 +27,12 @@ import { useCompatSearchParams } from "@calcom/lib/hooks/useCompatSearchParams";
 import { BookerLayouts } from "@calcom/prisma/zod-utils";
 import classNames from "@calcom/ui/classNames";
 import { DialogContent } from "@calcom/ui/components/dialog";
+import { LazyToaster } from "@calcom/ui/components/toast/lazy";
 import { UnpublishedEntity } from "@calcom/ui/components/unpublished-entity";
 import { useSkipConfirmStep } from "@calcom/web/modules/bookings/hooks/useSkipConfirmStep";
 import { useNonEmptyScheduleDays } from "@calcom/web/modules/schedules/hooks/useNonEmptyScheduleDays";
 import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
 import StickyBox from "react-sticky-box";
-import { Toaster } from "sonner";
 import { shallow } from "zustand/shallow";
 import { useIsQuickAvailabilityCheckFeatureEnabled } from "../hooks/useIsQuickAvailabilityCheckFeatureEnabled";
 import type { WrappedBookerProps } from "../types";
@@ -641,7 +641,7 @@ const BookerComponent = ({
           />
         </DialogContent>
       </Dialog>
-      <Toaster position="bottom-right" />
+      <LazyToaster position="bottom-right" />
     </>
   );
 };

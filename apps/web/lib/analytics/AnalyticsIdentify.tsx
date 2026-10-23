@@ -1,20 +1,18 @@
 "use client";
 
-import process from "node:process";
 import { toAnalyticsLocale } from "@calcom/lib/analytics/locale";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { identify, init } from "../../../../vendor/analytics/src/index";
+import { identify } from "../../../../vendor/analytics/src/index";
 import { useGeo } from "../../app/GeoContext";
 
-/** WC-DX-3c-2: init the vendored client (same-origin /ingest) and identify after the session loads. */
+/**
+ * WC-DX-3c-2: identify after the session loads. Mounted under AuthedAppProviders (WC-TW-6c-9b), so the public
+ * booking route does not pull next-auth/react; AnalyticsInit in the root Providers does the init.
+ */
 export function AnalyticsIdentify() {
   const { data: session, status } = useSession();
   const { country } = useGeo();
-
-  useEffect(() => {
-    init({ key: process.env.NEXT_PUBLIC_POSTHOG_KEY, apiHost: "/ingest", product: "timeway" });
-  }, []);
 
   const user = session?.user;
   const userId = user?.uuid;

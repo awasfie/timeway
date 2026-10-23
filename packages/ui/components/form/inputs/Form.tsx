@@ -5,7 +5,7 @@ import { FormProvider } from "react-hook-form";
 
 import { getErrorFromUnknown } from "@calcom/lib/errors";
 
-import { showToast } from "../../toast";
+import { showToastLazy } from "../../toast/lazy";
 
 type FormProps<T extends object> = { form: UseFormReturn<T>; handleSubmit: SubmitHandler<T> } & Omit<
   JSX.IntrinsicElements["form"],
@@ -27,7 +27,7 @@ const PlainForm = <T extends FieldValues>(props: FormProps<T>, ref: Ref<HTMLForm
             .handleSubmit(handleSubmit)(event)
             .catch((err) => {
               // FIXME: Booking Pages don't have toast, so this error is never shown
-              showToast(`${getErrorFromUnknown(err).message}`, "error");
+              showToastLazy(`${getErrorFromUnknown(err).message}`, "error");
             });
         }}
         {...passThrough}>
