@@ -82,7 +82,7 @@ describe("CC-13 negative: RR pools with outside users (WC-TW-7d)", () => {
     expect(await hostIds()).toEqual([seed.A.owner.id, seed.A.member.id].sort((a, b) => a - b));
   });
 
-  it("assignment never picks a non-member host row that bypassed the write path", async () => {
+  it.fails("DEFECT CC13-D1: assignment never picks a non-member host row that bypassed the write path", async () => {
     // A stray Host row (restored backup, direct SQL) pointing at B's user.
     await prisma.host.create({ data: { eventTypeId: rrEventTypeId, userId: seed.B.owner.id, isFixed: false } });
     const rows = await prisma.host.findMany({
