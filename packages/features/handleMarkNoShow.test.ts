@@ -474,7 +474,22 @@ describe("handleMarkNoShow", () => {
           bookingUid: "non-existent",
           noShowHost: true,
         })
-      ).rejects.toThrow(/Failed to update no-show status/);
+      ).rejects.toThrow(/Booking not found/);
+    });
+
+    // CC13 (t_fa3a2475): authenticated host-only no-show must check booking access.
+    it("should throw 403 on host-only no-show when an authenticated user lacks access", async () => {
+      const bookingUid = "test-booking-host-access";
+      createMockBooking({ uid: bookingUid });
+      mockDoesUserIdHaveAccessToBooking.mockResolvedValue(false);
+
+      await expect(
+        handleMarkNoShow({
+          bookingUid,
+          noShowHost: true,
+          userId: 999,
+        })
+      ).rejects.toThrow(/not allowed to access this booking/);
     });
 
     it("should throw 403 when user lacks access", async () => {

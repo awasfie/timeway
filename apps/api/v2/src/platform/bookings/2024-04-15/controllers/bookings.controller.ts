@@ -46,6 +46,7 @@ import { ApiQuery, ApiExcludeController as DocsExcludeController } from "@nestjs
 import { Request } from "express";
 import { NextApiRequest } from "next/types";
 import { v4 as uuidv4 } from "uuid";
+import { BookingOptionalAuthAccessGuard } from "@/platform/bookings/2024-08-13/guards/booking-optional-auth-access.guard";
 import { CreateBookingInput_2024_04_15 } from "@/platform/bookings/2024-04-15/inputs/create-booking.input";
 import { CreateRecurringBookingInput_2024_04_15 } from "@/platform/bookings/2024-04-15/inputs/create-recurring-booking.input";
 import { MarkNoShowInput_2024_04_15 } from "@/platform/bookings/2024-04-15/inputs/mark-no-show.input";
@@ -161,7 +162,9 @@ export class BookingsController_2024_04_15 {
     };
   }
 
+  // CC13-API-002 (t_fa3a2475): anonymous booker keeps uid access; authenticated non-owner gets 403.
   @Get("/:bookingUid")
+  @UseGuards(OptionalApiAuthGuard, BookingOptionalAuthAccessGuard)
   async getBooking(@Param("bookingUid") bookingUid: string): Promise<GetBookingOutput_2024_04_15> {
     const { bookingInfo } = await getBookingInfo(bookingUid);
 
@@ -176,7 +179,7 @@ export class BookingsController_2024_04_15 {
   }
 
   @Get("/:bookingUid/reschedule")
-  @UseGuards(OptionalApiAuthGuard)
+  @UseGuards(OptionalApiAuthGuard, BookingOptionalAuthAccessGuard)
   async getBookingForReschedule(
     @Param("bookingUid") bookingUid: string,
     @GetOptionalUser() user: AuthOptionalUser
@@ -234,7 +237,9 @@ export class BookingsController_2024_04_15 {
     throw new InternalServerErrorException("Could not create booking.");
   }
 
+  // CC13-API-003 (t_fa3a2475): anonymous booker keeps uid access; authenticated non-owner gets 403.
   @Post("/:bookingUid/cancel")
+  @UseGuards(OptionalApiAuthGuard, BookingOptionalAuthAccessGuard)
   async cancelBooking(
     @Req() req: BookingRequest,
     @Param("bookingUid") bookingUid: string,

@@ -83,12 +83,15 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       { title: `${t}-event-type`, slug: `${t}-event-type`, length: 30 },
       user.id
     );
-    const mkBooking = (suffix: string, status: "ACCEPTED" | "PENDING", hour: number) =>
+    // Cancel probes use a FUTURE booking: a past one is refused with 400 "already ended" on the
+    // legacy path, which would hide a leak (gosi review round 1).
+    const futureYear = new Date().getUTCFullYear() + 2;
+    const mkBooking = (suffix: string, status: "ACCEPTED" | "PENDING", hour: number, year = 2020) =>
       bookingsFixture.create({
         uid: `${t}-${suffix}`,
         title: `${t}-${suffix}`,
-        startTime: new Date(Date.UTC(2020, 0, 8, hour, 0, 0)),
-        endTime: new Date(Date.UTC(2020, 0, 8, hour, 30, 0)),
+        startTime: new Date(Date.UTC(year, 0, 8, hour, 0, 0)),
+        endTime: new Date(Date.UTC(year, 0, 8, hour, 30, 0)),
         status,
         user: { connect: { id: user.id } },
         eventType: { connect: { id: eventType.id } },
@@ -100,7 +103,7 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       });
     const booking = await mkBooking("booking", "ACCEPTED", 10);
     const pendingBooking = await mkBooking("pending", "PENDING", 12);
-    const cancelBooking = await mkBooking("cancel", "ACCEPTED", 14);
+    const cancelBooking = await mkBooking("cancel", "ACCEPTED", 14, futureYear);
     return { label, org, client, user, accessToken, eventType, schedule, booking, pendingBooking, cancelBooking };
   }
 
@@ -177,8 +180,8 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       await bookingUnchanged(A.booking);
     });
 
-    // CC13-API-001: GET /v2/bookings/:uid/calendar-links returns A's booking title/times to B (any authenticated caller).
-    it.failing("B cannot read A's booking calendar links", async () => {
+    // CC13-API-001 (fixed t_fa3a2475): calendar-links now behind BookingPbacGuard.
+    it("B cannot read A's booking calendar links", async () => {
       const res = await request(app.getHttpServer())
         .get(`/v2/bookings/${A.booking.uid}/calendar-links`)
         .set("Authorization", bearer(B))
@@ -186,8 +189,8 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       expect(DENIED).toContain(res.status);
     });
 
-    // CC13-API-004: POST /v2/bookings/:uid/mark-absent by B returns 200 on A's past booking (no tenant check beyond BookingUidGuard).
-    it.failing("B cannot mark A's booking absent", async () => {
+    // CC13-API-004 (fixed t_fa3a2475): mark-absent now behind BookingPbacGuard.
+    it("B cannot mark A's booking absent", async () => {
       const res = await request(app.getHttpServer())
         .post(`/v2/bookings/${A.booking.uid}/mark-absent`)
         .set("Authorization", bearer(B))
@@ -231,8 +234,8 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       await bookingUnchanged(A.booking);
     });
 
-    // CC13-API-003: POST /v2/bookings/:uid/cancel by B cancels A's booking (OptionalApiAuthGuard, no tenant check).
-    it.failing("B cannot cancel A's booking", async () => {
+    // CC13-API-003 (fixed t_fa3a2475): authenticated non-owner refused by BookingOptionalAuthAccessGuard.
+    it("B cannot cancel A's booking", async () => {
       const res = await request(app.getHttpServer())
         .post(`/v2/bookings/${A.cancelBooking.uid}/cancel`)
         .set("Authorization", bearer(B))
@@ -242,13 +245,138 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       await bookingUnchanged(A.cancelBooking);
     });
 
-    // CC13-API-002: GET /v2/bookings/:uid returns A's host email, attendees and details to B (uid acts as a bearer capability).
-    it.failing("B cannot read A's booking by uid with attendee details", async () => {
+    // CC13-API-002 (fixed t_fa3a2475): authenticated non-owner refused; anonymous uid access kept for the booker flow.
+    it("B cannot read A's booking by uid with attendee details", async () => {
       const res = await request(app.getHttpServer())
         .get(`/v2/bookings/${A.booking.uid}`)
         .set("Authorization", bearer(B))
         .set(bookingsReq());
       expect(DENIED).toContain(res.status);
+    });
+  });
+
+  // Legacy controller (2024-04-15, also 2024-06-11/06-14) serves the same paths when the
+  // cal-api-version header is omitted (gosi review round 1 on timeway#163).
+  describe("bookings legacy controller, no cal-api-version header (t_fa3a2475)", () => {
+    const unchanged = async (b: Booking) => {
+      const row = await bookingsFixture.getByUid(b.uid);
+      expect(row?.status).toEqual(b.status);
+      expect(row?.cancellationReason ?? null).toBeNull();
+    };
+
+    it("B cannot read A's booking by uid (legacy)", async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v2/bookings/${A.booking.uid}`)
+        .set("Authorization", bearer(B));
+      expect(DENIED).toContain(res.status);
+      expect(JSON.stringify(res.body)).not.toContain(A.user.email);
+    });
+
+    it("B cannot read A's booking for reschedule (legacy)", async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v2/bookings/${A.cancelBooking.uid}/reschedule`)
+        .set("Authorization", bearer(B));
+      expect(DENIED).toContain(res.status);
+    });
+
+    it("B cannot cancel A's future booking (legacy)", async () => {
+      const res = await request(app.getHttpServer())
+        .post(`/v2/bookings/${A.cancelBooking.uid}/cancel`)
+        .set("Authorization", bearer(B))
+        .send({ cancellationReason: "cc13 probe" });
+      expect(DENIED).toContain(res.status);
+      await unchanged(A.cancelBooking);
+    });
+
+    it("B cannot mark A's booking no-show (legacy)", async () => {
+      const res = await request(app.getHttpServer())
+        .post(`/v2/bookings/${A.booking.uid}/mark-no-show`)
+        .set("Authorization", bearer(B))
+        .send({ noShowHost: true });
+      expect(DENIED_OR_BAD_REQUEST).toContain(res.status);
+      const row = await bookingsFixture.getByUid(A.booking.uid);
+      expect(row?.noShowHost ?? null).not.toEqual(true);
+    });
+
+    it("B-tenant user with unverified email equal to A's attendee cannot read or cancel A's booking", async () => {
+      const spoofEmail = `${tag}-a-attendee@example.com`;
+      const spoof = await userFixture.create({
+        email: spoofEmail,
+        username: `${tag}-spoof`,
+        name: `${tag}-spoof`,
+        emailVerified: null,
+        platformOAuthClients: { connect: { id: B.client.id } },
+      });
+      try {
+        const { accessToken } = await tokensFixture.createTokens(spoof.id, B.client.id);
+        for (const headers of [{}, bookingsReq()]) {
+          const get = await request(app.getHttpServer())
+            .get(`/v2/bookings/${A.booking.uid}`)
+            .set("Authorization", `Bearer ${accessToken}`)
+            .set(headers);
+          expect(DENIED).toContain(get.status);
+          const cancel = await request(app.getHttpServer())
+            .post(`/v2/bookings/${A.cancelBooking.uid}/cancel`)
+            .set("Authorization", `Bearer ${accessToken}`)
+            .set(headers)
+            .send({ cancellationReason: "cc13 spoof probe" });
+          expect(DENIED).toContain(cancel.status);
+        }
+        await unchanged(A.cancelBooking);
+      } finally {
+        await userFixture.deleteByEmail(spoofEmail).catch(() => undefined);
+      }
+    });
+
+    it("A can read own booking by uid (legacy)", async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v2/bookings/${A.booking.uid}`)
+        .set("Authorization", bearer(A))
+        .expect(200);
+      expect(res.body.data.uid).toEqual(A.booking.uid);
+    });
+
+    it("anonymous booker can still read a booking by uid (legacy)", async () => {
+      const res = await request(app.getHttpServer()).get(`/v2/bookings/${B.booking.uid}`).expect(200);
+      expect(res.body.data.uid).toEqual(B.booking.uid);
+    });
+  });
+
+  describe("bookings: owner and anonymous booker keep access (t_fa3a2475)", () => {
+    const bookingsReq = () => ({ [CAL_API_VERSION_HEADER]: VERSION_2024_08_13 });
+
+    it("A can read own booking calendar links", async () => {
+      await request(app.getHttpServer())
+        .get(`/v2/bookings/${A.booking.uid}/calendar-links`)
+        .set("Authorization", bearer(A))
+        .set(bookingsReq())
+        .expect(200);
+    });
+
+    it("A can read own booking by uid", async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v2/bookings/${A.booking.uid}`)
+        .set("Authorization", bearer(A))
+        .set(bookingsReq())
+        .expect(200);
+      expect(res.body.data.uid).toEqual(A.booking.uid);
+    });
+
+    it("anonymous booker can still read a booking by uid", async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v2/bookings/${B.booking.uid}`)
+        .set(bookingsReq())
+        .expect(200);
+      expect(res.body.data.uid).toEqual(B.booking.uid);
+    });
+
+    it("A can mark own past booking absent", async () => {
+      await request(app.getHttpServer())
+        .post(`/v2/bookings/${A.booking.uid}/mark-absent`)
+        .set("Authorization", bearer(A))
+        .set(bookingsReq())
+        .send({ host: false })
+        .expect(200);
     });
   });
 
