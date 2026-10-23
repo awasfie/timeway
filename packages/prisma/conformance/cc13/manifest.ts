@@ -76,6 +76,7 @@ export const manifest: Record<string, ModelCoverage> = {
   Team: pending(),
   TeamBilling: pending(),
   TeamFeatures: pending(),
+  TwCustomHostname: pending(),
   User: pending(),
   VerificationToken: pending(),
   VerifiedEmail: pending(),

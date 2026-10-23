@@ -504,6 +504,19 @@
       "nullable": false
     },
     {
+      "model": "TwCustomHostname",
+      "table": "tw_custom_hostname",
+      "root": false,
+      "tenantFields": [
+        {
+          "name": "orgId",
+          "type": "String",
+          "nullable": false
+        }
+      ],
+      "nullable": false
+    },
+    {
       "model": "User",
       "table": "users",
       "root": false,
