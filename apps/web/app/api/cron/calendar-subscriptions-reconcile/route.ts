@@ -1,4 +1,3 @@
-import process from "node:process";
 import { getCredentialForSelectedCalendar } from "@calcom/app-store/delegationCredential";
 import { DefaultAdapterFactory } from "@calcom/features/calendar-subscription/adapters/AdaptersFactory";
 import { CalendarSubscriptionService } from "@calcom/features/calendar-subscription/lib/CalendarSubscriptionService";
@@ -7,6 +6,7 @@ import { CalendarCacheEventService } from "@calcom/features/calendar-subscriptio
 import { CalendarReconciliationService } from "@calcom/features/calendar-subscription/lib/reconcile/CalendarReconciliationService";
 import { getFeatureRepository } from "@calcom/features/di/containers/FeatureRepository";
 import { SelectedCalendarRepository } from "@calcom/features/selectedCalendar/repositories/SelectedCalendarRepository";
+import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 import { prisma } from "@calcom/prisma";
 import { defaultResponderForAppDir } from "@calcom/web/app/api/defaultResponderForAppDir";
 import type { NextRequest } from "next/server";
@@ -19,9 +19,7 @@ import { NextResponse } from "next/server";
  * - ?mode=stale: only calendars whose cache is older than 15 min (run every few minutes)
  */
 async function getHandler(request: NextRequest) {
-  const apiKey = request.headers.get("authorization") || request.nextUrl.searchParams.get("apiKey");
-
-  if (![process.env.CRON_API_KEY, `Bearer ${process.env.CRON_SECRET}`].includes(`${apiKey}`)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 

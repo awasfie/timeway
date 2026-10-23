@@ -31,7 +31,7 @@ if (!["localhost", "127.0.0.1", "postgres"].includes(host)) {
 
 const ROLE = "cc13_probe";
 const PW = "cc13_probe_pw";
-const TABLES = ["tw_organization", "tw_organization_member", "tw_org_api_key"];
+const TABLES = ["tw_organization", "tw_organization_member", "tw_org_api_key", "tw_custom_hostname"];
 const results = [];
 const check = (name, ok, detail = "") => {
   results.push({ name, ok });
@@ -89,6 +89,7 @@ const orgA = orgs.find((o) => o.slug === "cc13-a").id;
 const orgB = orgs.find((o) => o.slug === "cc13-b").id;
 await app.query(`insert into tw_organization_member (id,"orgId","userId",role) values (gen_random_uuid(),$1,$2,'owner'),(gen_random_uuid(),$3,$4,'owner')`, [orgA, userA, orgB, userB]);
 await app.query(`insert into tw_org_api_key (id,"orgId",prefix,"hashedKey",scopes) values (gen_random_uuid(),$1,'cc13a_','h',ARRAY['*']),(gen_random_uuid(),$2,'cc13b_','h',ARRAY['*'])`, [orgA, orgB]);
+await app.query(`insert into tw_custom_hostname (id,"orgId",hostname,"updatedAt") values (gen_random_uuid(),$1,'book.cc13-a.invalid',now()),(gen_random_uuid(),$2,'book.cc13-b.invalid',now())`, [orgA, orgB]);
 await app.query("commit");
 
 // 1. No context at all -> zero rows everywhere (fail-closed).
@@ -118,10 +119,13 @@ await tx({ "app.tw_org_id": orgA }, async () => {
   check("S3 A delete B api keys -> 0 rows", del.rowCount === 0);
   const upm = await app.query(`update tw_organization_member set role='member' where "orgId"=$1`, [orgB]);
   check("S3 A demote B owner -> 0 rows", upm.rowCount === 0);
+  const delh = await app.query(`delete from tw_custom_hostname where "orgId"=$1`, [orgB]);
+  check("S3 A delete B custom hostname -> 0 rows", delh.rowCount === 0);
 });
 for (const [name, sql, params] of [
   ["S3 A insert member into B -> denied", `insert into tw_organization_member (id,"orgId","userId",role) values (gen_random_uuid(),$1,$2,'admin')`, [orgB, userA]],
   ["S3 A mint key for B -> denied", `insert into tw_org_api_key (id,"orgId",prefix,"hashedKey",scopes) values (gen_random_uuid(),$1,'cc13x_','h',ARRAY['*'])`, [orgB]],
+  ["S3 A claim hostname for B -> denied", `insert into tw_custom_hostname (id,"orgId",hostname,"updatedAt") values (gen_random_uuid(),$1,'x.cc13-b.invalid',now())`, [orgB]],
   ["S3 A move own member to B -> denied", `update tw_organization_member set "orgId"=$1 where "orgId"=$2`, [orgB, orgA]],
 ]) {
   let denied = false;
@@ -135,6 +139,45 @@ for (const [name, sql, params] of [
   check(name, denied);
 }
 
+// 5. WC-TW-14a: parentOrgId does not widen RLS. Org B's sub-org is invisible to A,
+// even when A filters by parentOrgId; A cannot re-parent B's sub-org under itself.
+await app.query("begin");
+await app.query("select set_config('app.tw_platform','on',true)");
+const { rows: subs } = await app.query(
+  `insert into tw_organization (id, slug, name, "updatedAt", "parentOrgId", "billingAttribution") values (gen_random_uuid(),'cc13-b-sub','CC13 B sub',now(),$1,'parent') returning id`,
+  [orgB]
+);
+const subB = subs[0].id;
+await app.query("commit");
+await tx({ "app.tw_org_id": orgA }, async () => {
+  const { rows } = await app.query(
+    `select count(*)::int n from tw_organization where "parentOrgId" = $1 or id = $2`,
+    [orgB, subB]
+  );
+  check("S5 A reading B's sub-org -> 0", rows[0].n === 0, `n=${rows[0].n}`);
+  const up = await app.query(`update tw_organization set "parentOrgId"=$1 where id=$2`, [orgA, subB]);
+  check("S5 A re-parent B's sub-org -> 0 rows", up.rowCount === 0);
+});
+await tx({ "app.tw_org_id": subB }, async () => {
+  const { rows } = await app.query(`select id::text o from tw_organization`);
+  check(
+    "S5 sub-org context sees only itself (not its parent)",
+    rows.length === 1 && rows[0].o === subB,
+    `rows=${rows.length}`
+  );
+});
+{
+  let restricted = false;
+  await tx({ "app.tw_platform": "on" }, async () => {
+    try {
+      await app.query(`delete from tw_organization where id=$1`, [orgB]);
+    } catch (e) {
+      restricted = /foreign key/i.test(String(e.message));
+    }
+  });
+  check("S5 deleting a parent with sub-orgs -> FK RESTRICT", restricted);
+}
+
 // 4. Setting the platform flag requires the literal 'on'.
 await tx({ "app.tw_platform": "true" }, async () => {
   const { rows } = await app.query(`select count(*)::int n from tw_organization`);
@@ -143,6 +186,7 @@ await tx({ "app.tw_platform": "true" }, async () => {
 
 // Cleanup (throwaway DB, but leave it tidy).
 await app.end();
+await admin.query(`delete from tw_organization where slug = 'cc13-b-sub'`);
 await admin.query(`delete from tw_organization where slug in ('cc13-a','cc13-b')`);
 await admin.query(`delete from users where email like 'cc13-%@probe.invalid'`);
 await admin.query(`drop owned by ${ROLE}`);
