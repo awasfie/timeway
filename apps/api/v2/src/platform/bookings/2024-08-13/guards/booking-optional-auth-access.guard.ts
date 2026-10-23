@@ -15,6 +15,13 @@ import { BookingAccessService } from "@calcom/platform-libraries";
  * - Authenticated caller -> must be the organizer, a host, a team/org admin of the booking
  *   (BookingAccessService) or one of its attendees by email. Any other authenticated caller,
  *   e.g. another tenant's OAuth token, is refused with 403.
+ * - The attendee-email match only counts when the email is bound to the caller: a verified email,
+ *   or a platform managed user (managed emails are namespaced as local+<oauthClientId>@domain, so a
+ *   tenant cannot mint a managed user carrying another tenant's attendee address). An unverified
+ *   self-signup carrying someone else's address falls through to BookingAccessService.
+ *
+ * Applied to both the 2024-08-13 controller and the legacy 2024-04-15 controller (same paths when
+ * the cal-api-version header is omitted or is 2024-04-15/06-11/06-14).
  *
  * Must run after OptionalApiAuthGuard so request.user is set when credentials were sent.
  */
@@ -54,7 +61,8 @@ export class BookingOptionalAuthAccessGuard implements CanActivate {
     if (!booking) return true;
 
     const userEmail = user.email?.toLowerCase();
-    if (userEmail && booking.attendees.some((a) => a.email.toLowerCase() === userEmail)) {
+    const emailIsBound = Boolean(user.emailVerified) || user.isPlatformManaged === true;
+    if (userEmail && emailIsBound && booking.attendees.some((a) => a.email.toLowerCase() === userEmail)) {
       return true;
     }
 

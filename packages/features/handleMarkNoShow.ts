@@ -217,6 +217,12 @@ const handleMarkNoShow = async ({
     }
 
     if (noShowHost !== undefined) {
+      // CC13 (t_fa3a2475): an authenticated caller (API v2 legacy mark-no-show, loggedInViewer) must have
+      // access to the booking. The public host-no-show flow (handleMarkHostNoShow) passes no userId and
+      // keeps uid-as-capability for the attendee.
+      if (userId !== undefined && !(attendees && attendeeEmails.length > 0)) {
+        await assertCanAccessBooking(bookingUid, userId);
+      }
       await bookingRepository.updateNoShowHost({ bookingUid, noShowHost });
       responsePayload.setNoShowHost(noShowHost);
       responsePayload.setMessage(t("booking_no_show_updated"));
@@ -228,6 +234,8 @@ const handleMarkNoShow = async ({
     if (error instanceof Error) {
       logger.error(error.message);
     }
+    // Keep authorization/validation refusals (401/403/404) instead of masking them as 500.
+    if (error instanceof HttpError && error.statusCode < 500) throw error;
     throw new HttpError({ statusCode: 500, message: "Failed to update no-show status" });
   }
 };
