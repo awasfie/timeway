@@ -3,9 +3,12 @@ import Script from "next/script";
 
 import PageWrapper from "@components/PageWrapperAppDir";
 
+import { AuthedAppProviders } from "../AuthedAppProviders";
+
 export default async function PageWrapperLayout({ children }: { children: React.ReactNode }) {
   const h = await headers();
   const nonce = h.get("x-csp-nonce") ?? undefined;
+  const isEmbed = h.get("x-isEmbed") === "true";
   const headScript = process.env.NEXT_PUBLIC_HEAD_SCRIPTS;
   const bodyScript = process.env.NEXT_PUBLIC_BODY_SCRIPTS;
 
@@ -21,7 +24,7 @@ export default async function PageWrapperLayout({ children }: { children: React.
   ].filter((script): script is { id: string; script: string } => !!script.script);
 
   return (
-    <>
+    <AuthedAppProviders isEmbed={isEmbed}>
       <PageWrapper requiresLicense={false} nonce={nonce}>
         {children}
         {scripts.map((script) => (
@@ -36,6 +39,6 @@ export default async function PageWrapperLayout({ children }: { children: React.
           />
         ))}
       </PageWrapper>
-    </>
+    </AuthedAppProviders>
   );
 }

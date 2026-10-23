@@ -1,11 +1,11 @@
-import { useSession } from "next-auth/react";
+import { useBookingSession } from "@lib/booking-session";
 import { useState } from "react";
 
 import { useBookerStore } from "@calcom/features/bookings/Booker/store";
 import { useDebounce } from "@calcom/lib/hooks/useDebounce";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { trpc } from "@calcom/trpc/react";
-import { showToast } from "@calcom/ui/components/toast";
+import { showToastLazy as showToast } from "@calcom/ui/components/toast/lazy";
 
 export interface IUseVerifyEmailProps {
   email: string;
@@ -27,7 +27,7 @@ export const useVerifyEmail = ({
   const setVerifiedEmail = useBookerStore((state) => state.setVerifiedEmail);
   const isRescheduling = useBookerStore((state) => Boolean(state.rescheduleUid && state.bookingData));
   const debouncedEmail = useDebounce(email, 600);
-  const { data: session } = useSession();
+  const { data: session } = useBookingSession();
 
   const { t, i18n } = useLocale();
   const sendEmailVerificationByCodeMutation = trpc.viewer.auth.sendVerifyEmailCode.useMutation({
