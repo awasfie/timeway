@@ -13,6 +13,7 @@ import {
   eventTypeMetaDataSchemaWithTypedApps,
 } from "@calcom/app-store/zod-utils";
 import dayjs from "@calcom/dayjs";
+import { getICalSequenceForBooking } from "@calcom/emails/lib/getICalSequence";
 import getICalUID from "@calcom/emails/lib/getICalUID";
 import { verifyCodeUnAuthenticated } from "@calcom/features/auth/lib/verifyCodeUnAuthenticated";
 import type {
@@ -131,21 +132,6 @@ function assertNonEmptyArray<T>(arr: T[]): asserts arr is [T, ...T[]] {
   if (arr.length === 0) {
     throw new Error("Array should have at least one item, but it's empty");
   }
-}
-
-function getICalSequence(originalRescheduledBooking: BookingType | null) {
-  // If new booking set the sequence to 0
-  if (!originalRescheduledBooking) {
-    return 0;
-  }
-
-  // If rescheduling and there is no sequence set, assume sequence should be 1
-  if (!originalRescheduledBooking.iCalSequence) {
-    return 1;
-  }
-
-  // If rescheduling then increment sequence by 1
-  return originalRescheduledBooking.iCalSequence + 1;
 }
 
 type CreatedBooking = Booking & {
@@ -1336,7 +1322,7 @@ async function handler(
     uid,
   });
   // For bookings made before introducing iCalSequence, assume that the sequence should start at 1. For new bookings start at 0.
-  const iCalSequence = getICalSequence(originalRescheduledBooking);
+  const iCalSequence = getICalSequenceForBooking(originalRescheduledBooking);
   const organizerOrganizationProfile = await deps.prismaClient.profile.findFirst({
     where: {
       userId: organizerUser.id,
@@ -2050,7 +2036,7 @@ async function handler(
 
       evt.iCalUID = Array.isArray(calendarResult?.updatedEvent)
         ? calendarResult?.updatedEvent[0]?.iCalUID
-        : calendarResult?.updatedEvent?.iCalUID || undefined;
+        : calendarResult?.updatedEvent?.iCalUID || iCalUID;
     }
 
     evt.appsStatus = handleAppsStatus(results, booking, reqAppsStatus);
