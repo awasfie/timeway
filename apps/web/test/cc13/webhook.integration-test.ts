@@ -8,8 +8,8 @@ import { getWebhookFeature } from "@calcom/features/di/webhooks/containers/webho
 import getWebhooks from "@calcom/features/webhooks/lib/getWebhooks";
 import { prisma } from "@calcom/prisma";
 import { WebhookTriggerEvents } from "@calcom/prisma/enums";
-import { createCallerFactory } from "@calcom/trpc/server/trpc";
 import { webhookRouter } from "@calcom/trpc/server/routers/viewer/webhook/_router";
+import { createCallerFactory } from "@calcom/trpc/server/trpc";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Cc13Seed, SeededTenant } from "./seed";
 import { seedCc13Tenants } from "./seed";
@@ -146,9 +146,8 @@ describe("CC-13 webhook probes: config isolation (web/tRPC)", () => {
     expect(A.webhook.id).toBeTruthy();
   });
 
-  // CC13-WH-001: webhook.get on a team-scoped webhook (teamId set, no userId/eventTypeId) skips every ownership check
-  // in createWebhookProcedure and returns A's subscriberUrl and signing secret to B.
-  it.fails("B cannot read A's team webhook", async () => {
+  // CC13-WH-001 (fixed): webhook.get on a team-scoped webhook now requires an accepted membership of webhook.teamId.
+  it("B cannot read A's team webhook", async () => {
     const { A, B } = seed;
     const before = await webhookRow(A.webhook.id);
     const res = await callerFor(B)
@@ -174,8 +173,8 @@ describe("CC-13 webhook probes: config isolation (web/tRPC)", () => {
     }
   });
 
-  // CC13-WH-002: webhook.edit on a team-scoped webhook has no tenant check; B repoints A's subscriberUrl and deactivates it.
-  it.fails("B cannot edit A's team webhook", async () => {
+  // CC13-WH-002 (fixed): webhook.edit on a team-scoped webhook now requires ADMIN/OWNER of webhook.teamId.
+  it("B cannot edit A's team webhook", async () => {
     const { A, B } = seed;
     const before = await webhookRow(A.webhook.id);
     const res = await callerFor(B)
@@ -188,6 +187,42 @@ describe("CC-13 webhook probes: config isolation (web/tRPC)", () => {
       .catch((e) => ({ error: e.code as string }));
     expect(res).toMatchObject({ error: expect.stringMatching(/FORBIDDEN|NOT_FOUND|UNAUTHORIZED/) });
     expect(await webhookRow(A.webhook.id)).toEqual(before);
+  });
+
+  it("A's members keep their team webhook access: member reads, only owner/admin edits", async () => {
+    const { A } = seed;
+    const asA = (u: { id: number }) => callerFor({ ...A, owner: { ...A.owner, id: u.id } });
+    const read = await asA(A.owner).get({ id: A.webhook.id });
+    expect(read).toMatchObject({ id: A.webhook.id, teamId: A.team.id });
+    await expect(asA(A.member).get({ id: A.webhook.id })).resolves.toMatchObject({ id: A.webhook.id });
+
+    const before = await webhookRow(A.webhook.id);
+    await expect(
+      asA(A.member).edit({ id: A.webhook.id, payloadTemplate: null, active: false })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(await webhookRow(A.webhook.id)).toEqual(before);
+
+    const edited = await asA(A.owner).edit({ id: A.webhook.id, payloadTemplate: null, active: false });
+    expect(edited).toMatchObject({ id: A.webhook.id, active: false });
+  });
+
+  it("B cannot reach A's team webhooks through a teamId scope hint", async () => {
+    const { A, B } = seed;
+    await expect(callerFor(B).get({ id: A.webhook.id, teamId: B.team.id })).rejects.toMatchObject({
+      code: expect.stringMatching(/FORBIDDEN|NOT_FOUND|UNAUTHORIZED/),
+    });
+    await expect(callerFor(B).list({ teamId: A.team.id })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const countBefore = await prisma.webhook.count({ where: { teamId: A.team.id } });
+    await expect(
+      callerFor(B).create({
+        subscriberUrl: "https://attacker.cc13.invalid/team",
+        eventTriggers: [WebhookTriggerEvents.BOOKING_CREATED],
+        active: true,
+        payloadTemplate: null,
+        teamId: A.team.id,
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(await prisma.webhook.count({ where: { teamId: A.team.id } })).toBe(countBefore);
   });
 
   it("B cannot delete A's team, user and event-type webhook", async () => {
