@@ -20,6 +20,9 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
  * WC-TW-5c (CC-65): property suite over the real availability pipeline in the order
  * packages/trpc/server/routers/viewer/slots/util.ts runs it. A failing config prints its
  * seed and index; replay with TW_PROP_SEED=<seed> TW_PROP_RUNS=<index+1>.
+ * The index range is split over availability.property.<k>.test.ts so vitest runs the shards in
+ * parallel workers: one 10,000-config file took > 600 s on a contended CI runner. Every shard
+ * replays the same generator stream, so a config's index and seed do not depend on the split.
  */
 
 vi.mock("@calcom/prisma", () => ({
@@ -399,106 +402,134 @@ function violations(c: Config, res: Awaited<ReturnType<typeof runPipeline>>): st
   return out;
 }
 
-describe("WC-TW-5c availability properties (CC-65)", () => {
-  beforeAll(() => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-  });
-  afterAll(() => {
-    vi.useRealTimers();
-  });
+export const PROPERTY_SHARDS = 4;
 
-  it(`holds over ${RUNS} random configurations (seed ${SEED})`, async () => {
-    const rng = mulberry32(SEED);
-    let slotsChecked = 0;
-    let configsWithSlots = 0;
-    let knownDst = 0;
-    for (let i = 0; i < RUNS; i++) {
-      const config = genConfig(rng);
-      const first = await runPipeline(config);
-      const bad = violations(config, first);
-      const again = await runPipeline(shuffledConfig(rng, config));
-      const a = [...new Set(first.times)].sort((x, y) => x - y);
-      const b = [...new Set(again.times)].sort((x, y) => x - y);
-      if (a.join() !== b.join()) {
-        const iso = (xs: number[]) => xs.slice(0, 5).map((t) => new Date(t).toISOString());
-        bad.push(
-          `output changed when input order was shuffled: only original ${iso(a.filter((t) => !b.includes(t)))}, only shuffled ${iso(b.filter((t) => !a.includes(t)))}`
-        );
-      }
-      // Working-hours misses on a host's DST transition window are defects D1/D3 owned by WC-TW-5b
-      // (t_7723617d), daily-limit misses there are the limit-period endOf("day") DST defect (own card);
-      // counted here, asserted to zero once those land (TW_PROP_STRICT_DST=1).
-      const dstOnly =
-        bad.length > 0 &&
-        bad.every(
-          (x) =>
-            (x.includes("outside working hours") || x.includes("booking limit")) && !x.includes("overlaps")
-        ) &&
-        config.hosts.some((h) => spansTransition(h.timeZone, config.now));
-      if (dstOnly && !process.env.TW_PROP_STRICT_DST) {
-        knownDst++;
-        continue;
-      }
-      if (bad.length) {
-        throw new Error(
-          `config #${i} seed ${SEED} (replay: TW_PROP_SEED=${SEED} TW_PROP_RUNS=${i + 1})\n${bad.join("\n")}\n${JSON.stringify(config)}`
-        );
-      }
-      slotsChecked += first.times.length;
-      if (first.times.length) configsWithSlots++;
-    }
-    // Guard against a vacuous pass: most configs must actually produce slots.
-    expect(configsWithSlots).toBeGreaterThan(RUNS * 0.3);
-    expect(slotsChecked).toBeGreaterThan(RUNS);
-    console.info(
-      `WC-TW-5c: ${RUNS} configs, ${slotsChecked} slots checked, ${knownDst} known DST-window (t_7723617d)`
-    );
-    expect(knownDst).toBeLessThan(RUNS * 0.02);
-  }, 600_000);
+export function describePropertyShard(shard: number) {
+  const chunk = Math.ceil(RUNS / PROPERTY_SHARDS);
+  const from = shard * chunk;
+  const to = Math.min(RUNS, from + chunk);
+  const n = Math.max(0, to - from);
 
-  it("seated booking under capacity does not block its slot; at capacity it does", async () => {
-    const base = (seats: number): Config => {
-      const start = new Date("2026-03-03T10:00:00.000Z");
-      return {
-        now: new Date("2026-03-02T08:00:00.000Z"),
-        bookerTimeZone: "UTC",
-        schedulingType: null,
-        length: 30,
-        frequency: 30,
-        offsetStart: 0,
-        beforeEventBuffer: 0,
-        afterEventBuffer: 0,
-        minimumBookingNotice: 0,
-        seatsPerTimeSlot: 3,
-        bookingLimitPerDay: null,
-        periodDays: null,
-        periodCountCalendarDays: true,
-        hosts: [
-          {
-            id: 1,
-            timeZone: "UTC",
-            availability: [
-              { days: [0, 1, 2, 3, 4, 5, 6], startTime: clock(9 * 60), endTime: clock(12 * 60), date: null },
-            ],
-            bookings: Array.from({ length: seats }, (_, k) => ({
-              id: k + 1,
-              uid: `s${k}`,
-              userId: 1,
-              title: "seat",
-              startTime: start,
-              endTime: new Date(start.getTime() + 30 * MINUTE),
-              eventType: { id: EVENT_ID, beforeEventBuffer: 0, afterEventBuffer: 0, seatsPerTimeSlot: 3 },
-              _count: { seatsReferences: 1 },
-            })),
-          },
-        ],
+  describe(`WC-TW-5c availability properties (CC-65) shard ${shard + 1}/${PROPERTY_SHARDS}`, () => {
+    beforeAll(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+    });
+    afterAll(() => {
+      vi.useRealTimers();
+    });
+
+    it(`holds over configs ${from}..${to - 1} of ${RUNS} (seed ${SEED})`, async () => {
+      // Empty only when TW_PROP_RUNS is lowered to replay one config.
+      if (n === 0) return;
+      const rng = mulberry32(SEED);
+      for (let i = 0; i < from; i++) shuffledConfig(rng, genConfig(rng));
+      let slotsChecked = 0;
+      let configsWithSlots = 0;
+      let knownDst = 0;
+      for (let i = from; i < to; i++) {
+        const config = genConfig(rng);
+        const first = await runPipeline(config);
+        const bad = violations(config, first);
+        const again = await runPipeline(shuffledConfig(rng, config));
+        const a = Array.from(new Set(first.times)).sort((x, y) => x - y);
+        const b = Array.from(new Set(again.times)).sort((x, y) => x - y);
+        if (a.join() !== b.join()) {
+          const iso = (xs: number[]) => xs.slice(0, 5).map((t) => new Date(t).toISOString());
+          bad.push(
+            `output changed when input order was shuffled: only original ${iso(a.filter((t) => !b.includes(t)))}, only shuffled ${iso(b.filter((t) => !a.includes(t)))}`
+          );
+        }
+        // Working-hours misses on a host's DST transition window are defects D1/D3 owned by WC-TW-5b
+        // (t_7723617d), daily-limit misses there are the limit-period endOf("day") DST defect (own card);
+        // counted here, asserted to zero once those land (TW_PROP_STRICT_DST=1).
+        const dstOnly =
+          bad.length > 0 &&
+          bad.every(
+            (x) =>
+              (x.includes("outside working hours") || x.includes("booking limit")) && !x.includes("overlaps")
+          ) &&
+          config.hosts.some((h) => spansTransition(h.timeZone, config.now));
+        if (dstOnly && !process.env.TW_PROP_STRICT_DST) {
+          knownDst++;
+          continue;
+        }
+        if (bad.length) {
+          throw new Error(
+            `config #${i} seed ${SEED} (replay: TW_PROP_SEED=${SEED} TW_PROP_RUNS=${i + 1})\n${bad.join("\n")}\n${JSON.stringify(config)}`
+          );
+        }
+        slotsChecked += first.times.length;
+        if (first.times.length) configsWithSlots++;
+      }
+      // Guard against a vacuous pass: most configs must actually produce slots.
+      expect(configsWithSlots).toBeGreaterThan(n * 0.3);
+      expect(slotsChecked).toBeGreaterThan(n);
+      console.info(
+        `WC-TW-5c shard ${shard + 1}/${PROPERTY_SHARDS}: ${n} configs, ${slotsChecked} slots checked, ${knownDst} known DST-window (t_7723617d)`
+      );
+      expect(knownDst).toBeLessThan(n * 0.02);
+    }, 600_000);
+  });
+}
+
+export function describeSeatCase() {
+  describe("WC-TW-5c seats", () => {
+    beforeAll(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+    });
+    afterAll(() => {
+      vi.useRealTimers();
+    });
+
+    it("seated booking under capacity does not block its slot; at capacity it does", async () => {
+      const base = (seats: number): Config => {
+        const start = new Date("2026-03-03T10:00:00.000Z");
+        return {
+          now: new Date("2026-03-02T08:00:00.000Z"),
+          bookerTimeZone: "UTC",
+          schedulingType: null,
+          length: 30,
+          frequency: 30,
+          offsetStart: 0,
+          beforeEventBuffer: 0,
+          afterEventBuffer: 0,
+          minimumBookingNotice: 0,
+          seatsPerTimeSlot: 3,
+          bookingLimitPerDay: null,
+          periodDays: null,
+          periodCountCalendarDays: true,
+          hosts: [
+            {
+              id: 1,
+              timeZone: "UTC",
+              availability: [
+                {
+                  days: [0, 1, 2, 3, 4, 5, 6],
+                  startTime: clock(9 * 60),
+                  endTime: clock(12 * 60),
+                  date: null,
+                },
+              ],
+              bookings: Array.from({ length: seats }, (_, k) => ({
+                id: k + 1,
+                uid: `s${k}`,
+                userId: 1,
+                title: "seat",
+                startTime: start,
+                endTime: new Date(start.getTime() + 30 * MINUTE),
+                eventType: { id: EVENT_ID, beforeEventBuffer: 0, afterEventBuffer: 0, seatsPerTimeSlot: 3 },
+                _count: { seatsReferences: 1 },
+              })),
+            },
+          ],
+        };
       };
-    };
-    const slot = new Date("2026-03-03T10:00:00.000Z").getTime();
-    const under = await runPipeline(base(2));
-    expect(under.times).toContain(slot);
-    const full = await runPipeline(base(3));
-    expect(full.times).not.toContain(slot);
-    expect(violations(base(3), full)).toEqual([]);
+      const slot = new Date("2026-03-03T10:00:00.000Z").getTime();
+      const under = await runPipeline(base(2));
+      expect(under.times).toContain(slot);
+      const full = await runPipeline(base(3));
+      expect(full.times).not.toContain(slot);
+      expect(violations(base(3), full)).toEqual([]);
+    });
   });
-});
+}
