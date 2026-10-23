@@ -51,6 +51,8 @@ export type CustomHostRoute =
 const PASSTHROUGH_PREFIXES = ["/_next/", "/booking/", "/reschedule/", "/cancel/", "/success/"];
 const DENIED_API_PREFIXES = ["/api/internal/", "/api/auth/", "/api/cron/"];
 const SLUG_RE = /^[a-z0-9][a-z0-9._-]{0,127}$/i;
+const ROOT_ASSET_RE =
+  /\.(?:png|jpe?g|gif|svg|ico|webp|avif|css|js|map|json|txt|xml|woff2?|ttf|webmanifest)$/i;
 
 /**
  * Top-level segments that are app routes, never user slugs. Under a customer host they are denied,
@@ -128,8 +130,8 @@ export function classifyCustomHostPath(pathname: string): CustomHostRoute {
     return { kind: "team", slug };
   }
 
-  // Root-level static assets (fonts, images) carry an extension and no user segment depth.
-  if (segments.length === 1 && /\.[a-z0-9]{2,5}$/i.test(first)) return { kind: "passthrough" };
+  // Allow-list, not "any extension": usernames may contain dots (/john.doe) and must reach the org check.
+  if (segments.length === 1 && ROOT_ASSET_RE.test(first)) return { kind: "passthrough" };
 
   if (RESERVED_TOP_LEVEL.has(first.toLowerCase())) return { kind: "deny" };
 

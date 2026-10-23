@@ -105,6 +105,14 @@ describe("classifyCustomHostPath", () => {
     expect(classifyCustomHostPath("/alice+bob/30min")).toEqual({ kind: "user", slugs: ["alice", "bob"] });
   });
 
+  it("treats dotted usernames as users, not static assets", () => {
+    expect(classifyCustomHostPath("/john.doe")).toEqual({ kind: "user", slugs: ["john.doe"] });
+    expect(classifyCustomHostPath("/jo.smith")).toEqual({ kind: "user", slugs: ["jo.smith"] });
+    expect(classifyCustomHostPath("/mary_ann.lee")).toEqual({ kind: "user", slugs: ["mary_ann.lee"] });
+    expect(classifyCustomHostPath("/logo.png")).toEqual({ kind: "passthrough" });
+    expect(classifyCustomHostPath("/site.webmanifest")).toEqual({ kind: "passthrough" });
+  });
+
   it("caps multi-user paths at 10 slugs", () => {
     const eleven = Array.from({ length: 11 }, (_, i) => `u${i}`).join("+");
     expect(classifyCustomHostPath(`/${eleven}`)).toEqual({ kind: "deny" });
