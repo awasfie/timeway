@@ -100,4 +100,11 @@ export class CalendarCacheEventRepository implements ICalendarCacheEventReposito
       },
     });
   }
+
+  async findManyBySelectedCalendarIdBetween(selectedCalendarId: string, start: Date, end: Date) {
+    return this.prismaClient.calendarCacheEvent.findMany({
+      where: { selectedCalendarId, AND: [{ start: { lt: end } }, { end: { gt: start } }] },
+      select: { externalId: true, externalEtag: true },
+    });
+  }
 }

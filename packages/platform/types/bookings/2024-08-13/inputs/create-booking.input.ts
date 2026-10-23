@@ -20,6 +20,7 @@ import {
   IsTimeZone,
   IsUrl,
   isEmail,
+  MaxLength,
   Min,
   registerDecorator,
   Validate,
@@ -395,6 +396,16 @@ export class CreateBookingInput_2024_08_13 {
   @IsOptional()
   @IsString()
   emailVerificationCode?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      "reservationUid returned by POST /v2/slots/reservations for this slot, so the caller's own hold does not block the booking.",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  reservedSlotUid?: string;
 
   /* @ApiPropertyOptional({
     type: [Number],

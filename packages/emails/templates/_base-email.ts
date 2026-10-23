@@ -1,15 +1,17 @@
-import { decodeHTML } from "entities";
-import { z } from "zod";
-
+import process from "node:process";
 import dayjs from "@calcom/dayjs";
 import { FeaturesRepository } from "@calcom/features/flags/features.repository";
 import isSmsCalEmail from "@calcom/lib/isSmsCalEmail";
-import { serverConfig } from "@calcom/lib/serverConfig";
 import { getServerErrorFromUnknown } from "@calcom/lib/server/getServerErrorFromUnknown";
+import { serverConfig } from "@calcom/lib/serverConfig";
 import { setTestEmail } from "@calcom/lib/testEmails";
 import { prisma } from "@calcom/prisma";
-
+import { decodeHTML } from "entities";
+import { z } from "zod";
+import { recipientDomains } from "../lib/maskRecipient";
 import { sanitizeDisplayName } from "../lib/sanitizeDisplayName";
+
+type SentInfo = { messageId?: string; response?: string };
 
 export default class BaseEmail {
   name = "";
@@ -72,7 +74,7 @@ export default class BaseEmail {
       ...(parseSubject.success && { subject: decodeHTML(parseSubject.data) }),
     };
     const { createTransport } = await import("nodemailer");
-    await new Promise((resolve, reject) =>
+    await new Promise<SentInfo | undefined>((resolve, reject) =>
       createTransport(this.getMailerOptions().transport).sendMail(
         payloadWithUnEscapedSubject,
         (_err, info) => {
@@ -85,14 +87,16 @@ export default class BaseEmail {
           }
         }
       )
-    ).catch((e) =>
-      console.error(
-        "sendEmail",
-        `from: ${"from" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.from : ""}`,
-        `subject: ${"subject" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.subject : ""}`,
-        e
-      )
-    );
+    )
+      .then((info) => this.logSent(info, sanitizedTo))
+      .catch((e) =>
+        console.error(
+          "sendEmail",
+          `from: ${"from" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.from : ""}`,
+          `subject: ${"subject" in payloadWithUnEscapedSubject ? payloadWithUnEscapedSubject.subject : ""}`,
+          e
+        )
+      );
     return new Promise((resolve) => resolve("send mail async"));
   }
   protected getMailerOptions() {
@@ -101,6 +105,25 @@ export default class BaseEmail {
       from: serverConfig.from,
       headers: serverConfig.headers,
     };
+  }
+  /** Booking uid when the template carries a calEvent; read-only, no template changes needed. */
+  protected getBookingUid(): string | undefined {
+    const uid = (this as { calEvent?: { uid?: unknown } }).calEvent?.uid;
+    return typeof uid === "string" && uid.length > 0 ? uid : undefined;
+  }
+  /**
+   * One structured line per sent email so a send can be proven by id (TW-MAIL-ID).
+   * Logs template, booking uid, nodemailer messageId, SendGrid X-Message-Id (from the SMTP
+   * "250 Ok: queued as <id>" reply) and recipient domain(s) only. No address, subject or body.
+   */
+  protected logSent(info: SentInfo | undefined, to: string): void {
+    const clean = (v: string) => v.replace(/\s+/g, "");
+    const messageId = typeof info?.messageId === "string" && info.messageId ? clean(info.messageId) : "-";
+    const queued = typeof info?.response === "string" ? /queued as\s+(\S+)/i.exec(info.response) : null;
+    const sgMessageId = queued?.[1] ? clean(queued[1]) : "-";
+    console.log(
+      `sendEmail ok template=${this.name || "-"} bookingUid=${this.getBookingUid() ?? "-"} messageId=${messageId} sgMessageId=${sgMessageId} toDomain=${recipientDomains(to)}`
+    );
   }
   protected printNodeMailerError(error: Error): void {
     /** Don't clog the logs with unsent emails in E2E */

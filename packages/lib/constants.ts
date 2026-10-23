@@ -37,8 +37,8 @@ export const BASE_URL = WEBAPP_URL;
 export const WEBSITE_URL = ensureProtocol(process.env.NEXT_PUBLIC_WEBSITE_URL) || "https://timeway.co";
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Timeway";
 export const SUPPORT_MAIL_ADDRESS = process.env.NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS || "help@timeway.co";
-// CM-T6: the legal entity behind Timeway is AWSTREAMS DMCC (Bible v12.1; there is no "Timeway, Inc.").
-export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "AWSTREAMS DMCC";
+// CM-T6: the legal entity behind Timeway is AWstreams DMCC (customer-facing style; legal documents keep the registry spelling; Bible v12.1; there is no "Timeway, Inc.").
+export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "AWstreams DMCC";
 export const SENDER_ID = process.env.NEXT_PUBLIC_SENDER_ID || "Timeway";
 export const SENDER_NAME = process.env.NEXT_PUBLIC_SENDGRID_SENDER_NAME || "Timeway";
 export const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || APP_NAME;

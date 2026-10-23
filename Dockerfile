@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM node:20 AS builder
+FROM --platform=$BUILDPLATFORM node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5 AS builder
 
 WORKDIR /calcom
 
@@ -7,6 +7,8 @@ ARG NEXT_PUBLIC_LICENSE_CONSENT
 ARG NEXT_PUBLIC_WEBSITE_TERMS_URL
 ARG NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL
 ARG CALCOM_TELEMETRY_DISABLED
+# TW-T9.2e: no DATABASE_DIRECT_URL here. The owner URL is never in the image or the runtime env; migrations run in
+# the pre-deploy job (scripts/migrate.sh deploy). Without it @calcom/prisma's build step skips auto-migrations.
 ARG DATABASE_URL
 ARG NEXTAUTH_SECRET=secret
 ARG CALENDSO_ENCRYPTION_KEY=secret
@@ -28,7 +30,6 @@ ENV NEXT_PUBLIC_WEBAPP_URL=http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER \
   NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL=$NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL \
   CALCOM_TELEMETRY_DISABLED=$CALCOM_TELEMETRY_DISABLED \
   DATABASE_URL=$DATABASE_URL \
-  DATABASE_DIRECT_URL=$DATABASE_URL \
   NEXTAUTH_SECRET=${NEXTAUTH_SECRET} \
   CALENDSO_ENCRYPTION_KEY=${CALENDSO_ENCRYPTION_KEY} \
   NEXT_PUBLIC_SINGLE_ORG_SLUG=$NEXT_PUBLIC_SINGLE_ORG_SLUG \
@@ -45,7 +46,8 @@ COPY apps/api/v2 ./apps/api/v2
 COPY packages ./packages
 
 RUN yarn config set httpTimeout 1200000
-RUN npx turbo@2.7.1 prune --scope=@calcom/web --scope=@calcom/trpc --docker
+# No `turbo prune` here: its out/ tree was never copied, so it changed nothing in the image, and turbo's berry
+# lockfile parser cannot resolve the relative file: tarball @family/webhooks (INT-2), which failed the build.
 RUN yarn install
 # Build and make embed servable from web/public/embed folder
 RUN yarn workspace @calcom/trpc run build
@@ -54,7 +56,7 @@ RUN yarn --cwd apps/web workspace @calcom/web run copy-app-store-static
 RUN yarn --cwd apps/web workspace @calcom/web run build
 RUN rm -rf node_modules/.cache .yarn/cache apps/web/.next/cache
 
-FROM node:20 AS builder-two
+FROM node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5 AS builder-two
 
 WORKDIR /calcom
 ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
@@ -78,13 +80,27 @@ ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
 
 RUN scripts/replace-placeholder.sh http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER ${NEXT_PUBLIC_WEBAPP_URL}
 
-FROM node:20 AS runner
+# IMGSCAN-A1 (WC-PE-7 step 4, CC-93): the runtime stage is the slim Debian 12 Node base, pinned by digest, so the
+# full node:20 image's -dev/headers packages (imagemagick, mariadb, linux-libc-dev) and toolchain never ship.
+# `apt-get upgrade` lands perl/gnutls on the security revisions published at build time. npm/npx are removed:
+# nothing at runtime calls them (start.sh and migrate.sh use the local node_modules/.bin), and npm's bundled tar
+# was a CRITICAL finding. openssl provides libssl3 for the Prisma engines; netcat for wait-for-it; wget for the
+# HEALTHCHECK.
+FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 AS runner
 
 WORKDIR /calcom
 
-RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd wget && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+  && apt-get upgrade -y \
+  && apt-get install -y --no-install-recommends netcat-openbsd wget openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 COPY --from=builder-two /calcom ./
+# Build-time Go binaries (esbuild via vite/tsx/trigger.dev, depot CLI) are never executed by the app; they carried
+# the Go-stdlib/moby CRITICALs that ignore.trivyignore.yaml listed with "prune is the fix".
+RUN rm -rf node_modules/@depot node_modules/@esbuild/linux-x64/bin/esbuild \
+  node_modules/trigger.dev/node_modules/@esbuild/linux-x64/bin/esbuild
 ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
   BUILT_NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL

@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
-import { DEFAULT_WEBHOOK_VERSION } from "./interface/IWebhookRepository";
-import { handleWebhookScheduledTriggers } from "./handleWebhookScheduledTriggers";
 import type { PrismaClient } from "@calcom/prisma";
+import { generateSecret } from "@family/webhooks";
+import { Webhook } from "standardwebhooks";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { handleWebhookScheduledTriggers } from "./handleWebhookScheduledTriggers";
+import { DEFAULT_WEBHOOK_VERSION } from "./interface/IWebhookRepository";
 
 describe("handleWebhookScheduledTriggers - X-Cal-Webhook-Version header", () => {
   const mockFetch = vi.fn();
@@ -153,5 +154,44 @@ describe("handleWebhookScheduledTriggers - X-Cal-Webhook-Version header", () => 
     const [, options] = mockFetch.mock.calls[0];
 
     expect(options.headers).toHaveProperty("X-Cal-Webhook-Version", webhookVersion);
+  });
+
+  function prismaWithJob(secret: string): PrismaClient {
+    return {
+      webhookScheduledTriggers: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 1,
+            jobName: null,
+            subscriberUrl: "https://example.com/webhook",
+            payload: JSON.stringify({ triggerEvent: "MEETING_ENDED" }),
+            startAfter: new Date(now.getTime() - 60000),
+            webhook: { secret, version: DEFAULT_WEBHOOK_VERSION },
+          },
+        ]),
+        delete: vi.fn().mockResolvedValue({}),
+      },
+      webhook: { findUniqueOrThrow: vi.fn() },
+    } as unknown as PrismaClient;
+  }
+
+  it("signs a whsec_ subscriber's scheduled delivery so the reference verifier accepts it", async () => {
+    const secret = generateSecret();
+    await handleWebhookScheduledTriggers(prismaWithJob(secret));
+
+    const [, options] = mockFetch.mock.calls[0];
+    expect(new Webhook(secret).verify(options.body, options.headers)).toEqual({
+      triggerEvent: "MEETING_ENDED",
+    });
+    expect(options.headers).toHaveProperty("X-Cal-Signature-256");
+  });
+
+  it("sends no webhook-* headers to a non-whsec_ subscriber", async () => {
+    await handleWebhookScheduledTriggers(prismaWithJob("test-secret"));
+
+    const [, options] = mockFetch.mock.calls[0];
+    expect(Object.keys(options.headers).filter((h) => h.startsWith("webhook-"))).toEqual([]);
+    expect(options.headers).toHaveProperty("X-Cal-Signature-256");
   });
 });

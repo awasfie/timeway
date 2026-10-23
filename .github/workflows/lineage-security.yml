@@ -10,6 +10,15 @@ permissions:
   contents: read
 
 jobs:
+  image-refs:
+    # WC-PE-7e (CC-93): every image reference is pinned by digest; a new unpinned one or a stale allowlist line fails.
+    name: Image references
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image references (by digest, CC-93 ratchet)
+        run: python3 scripts/supply-chain/check_image_refs.py
   lineage-floor:
     name: Lineage floor
     runs-on: ubuntu-latest
