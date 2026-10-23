@@ -17,6 +17,14 @@
       "schedule": "*/5 * * * *"
     },
     {
+      "path": "/api/cron/api-usage-snapshot",
+      "schedule": "30 0 * * *"
+    },
+    {
+      "path": "/api/cron/custom-hostnames-cleanup",
+      "schedule": "15 3 * * *"
+    },
+    {
       "path": "/api/cron/queuedFormResponseCleanup",
       "schedule": "0 */12 * * *"
     },

@@ -70,6 +70,7 @@ import { getTimeFormatStringFromUserTimeFormat } from "@calcom/lib/timeFormat";
 import { distributedTracing } from "@calcom/lib/tracing/factory";
 import type { PrismaClient } from "@calcom/prisma";
 import type { AssignmentReasonEnum, DestinationCalendar, Prisma, User } from "@calcom/prisma/client";
+import { enqueueApiBookingUsage } from "@calcom/features/payments/gateway/apiUsage";
 import { BookingStatus, CreationSource, SchedulingType, WebhookTriggerEvents } from "@calcom/prisma/enums";
 import { userMetadata as userMetadataSchema } from "@calcom/prisma/zod-utils";
 import type {
@@ -1098,7 +1099,7 @@ async function handler(
             } catch {
               notAvailableLuckyUsers.push(newLuckyUser);
               tracingLogger.info(
-                `Round robin host ${newLuckyUser.name} not available for first two slots. Trying to find another host.`
+                `Round robin host ${newLuckyUser.name} not available for every recurring slot. Trying to find another host.`
               );
             }
           } else {
@@ -1172,8 +1173,8 @@ async function handler(
   if (eventType.schedulingType === SchedulingType.COLLECTIVE && !eventType.isDynamic) {
     users = [...users].sort(
       (a, b) =>
-        ((b as { priority?: number | null }).priority ?? 0) - ((a as { priority?: number | null }).priority ?? 0) ||
-        a.id - b.id
+        ((b as { priority?: number | null }).priority ?? 0) -
+          ((a as { priority?: number | null }).priority ?? 0) || a.id - b.id
     );
   }
 
@@ -2524,6 +2525,11 @@ async function handler(
     }
   } catch (error) {
     tracingLogger.error("Error while creating booking references", JSON.stringify({ error }));
+  }
+
+  // WC-TW-14c: one usage line per newly created API booking; never throws, so Passport can't fail a booking.
+  if (!isDryRun && !originalRescheduledBooking) {
+    await enqueueApiBookingUsage({ bookingUid: booking.uid, viaPlatformOAuth: isPlatformBooking });
   }
 
   // Queue BOOKING_REQUESTED webhook after booking update so consumer fetches booking with location, metadata, references

@@ -67,9 +67,10 @@ export const BtcpayPaymentComponent = (props: IPaymentComponentProps) => {
   const { data } = payment;
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const { copyToClipboard, isCopied } = useCopy();
+  const { t } = useLocale();
   const wrongUrl = (
     <>
-      <p className="mt-3 text-center">Couldn&apos;t obtain payment URL</p>
+      <p className="mt-3 text-center">{t("payment_url_unavailable")}</p>
     </>
   );
 
@@ -86,15 +87,15 @@ export const BtcpayPaymentComponent = (props: IPaymentComponentProps) => {
 
       {!iframeLoaded && (
         <div className="flex items-center justify-center">
-          <Spinner className="mr-2 h-5 w-5" />
-          <p>Loading payment page...</p>
+          <Spinner className="me-2 h-5 w-5" />
+          <p>{t("loading_payment_page")}</p>
         </div>
       )}
 
       <div className={`w-full ${iframeLoaded ? "block" : "hidden"}`}>
         <iframe
           src={checkoutUrl}
-          title="BTCPay Payment"
+          title={t("btcpay_payment_frame_title")}
           className="h-[1000px] w-full rounded-md border-0"
           onLoad={() => setIframeLoaded(true)}
         />
@@ -107,10 +108,10 @@ export const BtcpayPaymentComponent = (props: IPaymentComponentProps) => {
           onClick={() => copyToClipboard(checkoutUrl)}
           className="rounded-md text-subtle"
           StartIcon={isCopied ? "clipboard-check" : "clipboard"}>
-          Copy Payment Link
+          {t("copy_payment_link")}
         </Button>
 
-        <Button onClick={handleOpenInNewTab}>Open in New Tab</Button>
+        <Button onClick={handleOpenInNewTab}>{t("open_in_new_tab")}</Button>
       </div>
     </div>
   );

@@ -6,12 +6,11 @@ dotEnv.config({ path: "../../.env" });
 async function fetchCron(endpoint: string) {
   const apiKey = process.env.CRON_API_KEY;
 
-  const res = await fetch(`http://localhost:3000/api${endpoint}?apiKey=${apiKey}`, {
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Bearer ${process.env.CRON_SECRET}`,
-    },
-  });
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  // An unset CRON_SECRET would otherwise send the literal "Bearer undefined".
+  if (process.env.CRON_SECRET) headers.authorization = `Bearer ${process.env.CRON_SECRET}`;
+
+  const res = await fetch(`http://localhost:3000/api${endpoint}?apiKey=${apiKey}`, { headers });
   const json = await res.json();
   console.log(endpoint, json);
 }

@@ -70,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      # Timeway (Q1-R7): Docker Hub login dropped; the fork holds no DOCKERHUB_* secret and public images pull anonymously.
+      # Timeway (Q1-R7, D-R74 D2): no registry login; public images pull anonymously.
       - uses: actions/checkout@v4
         with:
           sparse-checkout: .github

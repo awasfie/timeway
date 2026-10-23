@@ -5,6 +5,7 @@ import { CalendarCacheEventRepository } from "@calcom/features/calendar-subscrip
 import { CalendarCacheEventService } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService";
 import { prisma } from "@calcom/prisma";
 import { defaultResponderForAppDir } from "@calcom/web/app/api/defaultResponderForAppDir";
+import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 
 /**
  * Cron webhook
@@ -14,9 +15,7 @@ import { defaultResponderForAppDir } from "@calcom/web/app/api/defaultResponderF
  * @returns
  */
 async function getHandler(request: NextRequest) {
-  const apiKey = request.headers.get("authorization") || request.nextUrl.searchParams.get("apiKey");
-
-  if (![process.env.CRON_API_KEY, `Bearer ${process.env.CRON_SECRET}`].includes(`${apiKey}`)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 

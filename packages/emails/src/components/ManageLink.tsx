@@ -1,11 +1,14 @@
 import { getBookingUrl, getCancelLink, getRescheduleLink } from "@calcom/lib/CalEventParser";
+import { ligyLinksFor } from "@calcom/lib/ligy/attachLigyLinks";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
 
 export function ManageLink(props: { calEvent: CalendarEvent; attendee: Person }) {
   // Only the original attendee can make changes to the event
   // Guests cannot
   const t = props.attendee.language.translate;
-  const cancelLink = getCancelLink(
+  // LK-T6a: li.gy overrides composed before render (attachLigyLinks); long URLs otherwise.
+  const ligy = ligyLinksFor(props.calEvent, props.attendee);
+  const longCancelLink = getCancelLink(
     {
       platformClientId: props.calEvent.platformClientId,
       platformCancelUrl: props.calEvent.platformCancelUrl,
@@ -19,8 +22,10 @@ export function ManageLink(props: { calEvent: CalendarEvent; attendee: Person })
     },
     props.attendee
   );
-  const rescheduleLink = getRescheduleLink({ calEvent: props.calEvent, attendee: props.attendee });
-  const bookingLink = getBookingUrl({
+  const cancelLink = (longCancelLink && ligy?.cancel) || longCancelLink;
+  const longRescheduleLink = getRescheduleLink({ calEvent: props.calEvent, attendee: props.attendee });
+  const rescheduleLink = (longRescheduleLink && ligy?.reschedule) || longRescheduleLink;
+  const longBookingLink = getBookingUrl({
     platformClientId: props.calEvent.platformClientId,
     platformBookingUrl: props.calEvent.platformBookingUrl,
     bookerUrl: props.calEvent.bookerUrl,
@@ -29,6 +34,7 @@ export function ManageLink(props: { calEvent: CalendarEvent; attendee: Person })
     organizer: props.calEvent.organizer,
     attendeeSeatId: props.calEvent.attendeeSeatId,
   });
+  const bookingLink = (longBookingLink && ligy?.booking) || longBookingLink;
 
   const isOriginalAttendee = props.attendee.email === props.calEvent.attendees[0]?.email;
   const isOrganizer = props.calEvent.organizer.email === props.attendee.email;
