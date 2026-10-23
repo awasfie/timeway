@@ -1,3 +1,4 @@
+import process from "node:process";
 import type {
   DefaultEventLocationType,
   EventLocationTypeFromApp,
@@ -103,7 +104,7 @@ export function AvailableEventLocations({ locations }: { locations: LocationObje
         <img
           src="/map-pin-dark.svg"
           className={classNames("me-[10px] h-4 w-4 opacity-70 dark:invert")}
-          alt="map-pin"
+          alt=""
         />
       )}
       <Tooltip content={<RenderLocationTooltip locations={locations} />}>

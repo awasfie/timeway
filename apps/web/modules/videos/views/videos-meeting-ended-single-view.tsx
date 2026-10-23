@@ -6,7 +6,6 @@ import { detectBrowserTimeFormat } from "@calcom/lib/timeFormat";
 import type { inferSSRProps } from "@calcom/types/inferSSRProps";
 import { Button } from "@calcom/ui/components/button";
 import { CalendarIcon, XIcon } from "@coss/ui/icons";
-
 import type { getServerSideProps } from "@lib/video/meeting-ended/[uid]/getServerSideProps";
 
 export type PageProps = inferSSRProps<typeof getServerSideProps>;
@@ -23,7 +22,7 @@ export default function MeetingUnavailable(props: PageProps) {
                 &#8203;
               </span>
               <div
-                className="bg-default inline-block transform overflow-hidden rounded-lg px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6 sm:align-middle"
+                className="bg-default inline-block transform overflow-hidden rounded-lg px-4 pb-4 pt-5 text-start align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6 sm:align-middle"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="modal-headline">
@@ -33,7 +32,7 @@ export default function MeetingUnavailable(props: PageProps) {
                   </div>
                   <div className="mt-3 text-center sm:mt-5">
                     <h3 className="text-emphasis text-lg font-medium leading-6" id="modal-headline">
-                      This meeting is in the past.
+                      {t("meeting_in_the_past")}
                     </h3>
                   </div>
                   <div className="mt-4 border-b border-t py-4">
@@ -41,7 +40,7 @@ export default function MeetingUnavailable(props: PageProps) {
                       {props.booking.title}
                     </h2>
                     <p className="text-subtle text-center">
-                      <CalendarIcon className="-mt-1 mr-1 inline-block h-4 w-4" />
+                      <CalendarIcon className="-mt-1 me-1 inline-block h-4 w-4" />
                       {dayjs(props.booking.startTime).format(`${detectBrowserTimeFormat}, dddd DD MMMM YYYY`)}
                     </p>
                   </div>

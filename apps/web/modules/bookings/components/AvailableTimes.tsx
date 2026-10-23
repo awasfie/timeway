@@ -239,7 +239,7 @@ const SlotItem = ({
                 <HoverCard.Content side="top" align="end" sideOffset={2}>
                   <div className="text-emphasis bg-inverted w-(--booker-timeslots-width) rounded-md p-3">
                     <div className="flex items-center gap-2">
-                      <p>Busy</p>
+                      <p>{t("time_slot_busy")}</p>
                     </div>
                     <p className="text-muted">
                       {overlappingTimeStart} - {overlappingTimeEnd}

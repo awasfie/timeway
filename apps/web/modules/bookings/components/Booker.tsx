@@ -25,6 +25,7 @@ import {
   PUBLIC_INVALIDATE_AVAILABLE_SLOTS_ON_BOOKING_FORM,
 } from "@calcom/lib/constants";
 import { useCompatSearchParams } from "@calcom/lib/hooks/useCompatSearchParams";
+import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { BookerLayouts } from "@calcom/prisma/zod-utils";
 import classNames from "@calcom/ui/classNames";
 import { DialogContent } from "@calcom/ui/components/dialog";
@@ -88,6 +89,7 @@ const BookerComponent = ({
   hideOrgTeamAvatar,
   showNoAvailabilityDialog,
 }: BookerProps & WrappedBookerProps): JSX.Element | null => {
+  const { t } = useLocale();
   const searchParams = useCompatSearchParams();
   const isPlatformBookerEmbed = useIsPlatformBookerEmbed();
   const [bookerState, setBookerState] = useBookerStoreContext(
@@ -403,7 +405,7 @@ const BookerComponent = ({
                   <img
                     loading="eager"
                     className="-mb-9 h-auto w-full object-contain object-top ltr:rounded-tl-md rtl:rounded-tr-md sm:h-16 sm:object-cover"
-                    alt="org banner"
+                    alt={t("organization_banner")}
                     src={orgBannerUrl}
                   />
                 )}
