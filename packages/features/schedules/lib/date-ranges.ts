@@ -240,10 +240,11 @@ export function buildDateRanges({
 }): { dateRanges: DateRange[]; oooExcludedDateRanges: DateRange[] } {
   const dateFromOrganizerTZ = dateFrom.tz(timeZone);
 
-  // processWorkingHours only merges a rule into a range it shares an end with or starts at the end of,
-  // so overlapping or touching rules gave different ranges (and slots) depending on stored order.
-  const groupedWorkingHours = mergeGroupedRanges(
-    groupByDate(
+  // processWorkingHours only merges a rule into a range it shares an end with or starts at the end of
+  // (incl. chaining past midnight), so overlapping rules gave different ranges, and date overrides
+  // replaced different groups, depending on stored order. Merging the union makes it canonical.
+  const groupedWorkingHours = groupByDate(
+    mergeRanges(
       Object.values(
         availability
           .filter((item): item is WorkingHours => "days" in item)
@@ -268,66 +269,50 @@ export function buildDateRanges({
       : []
   );
 
-  const groupedDateOverrides = groupByDate(
-    Object.values(
-      availability.reduce((processed: Record<number, DateRange>, item) => {
-        // early return if item is not a date override
-        if (!("date" in item && !!item.date)) {
-          return processed;
-        }
-        const itemDateAsUtc = dayjs.utc(item.date);
-        // TODO: Remove the .subtract(1, "day") and .add(1, "day") part and
-        // refactor this to actually work with correct dates.
-        // As of 2024-02-20, there are mismatches between local and UTC dates for overrides
-        // and the dateFrom and dateTo fields, resulting in this if not returning true, which
-        // results in "no available users found" errors.
-        if (
-          itemDateAsUtc.isBetween(
-            dateFrom.subtract(1, "day").startOf("day"),
-            dateTo.add(1, "day").endOf("day"),
-            null,
-            "[]"
-          )
-        ) {
-          // unlike working hours, date overrides are always one. No loop per day.
-          const newProcessedDateOverride = processDateOverride({
-            item,
-            itemDateAsUtc,
-            timeZone,
-            travelSchedules,
-          });
-          if (processed[newProcessedDateOverride.start.valueOf()]) {
-            // if a result already exists, we merge the end time
-            processed[newProcessedDateOverride.start.valueOf()].end = dayjs.max(
-              processed[newProcessedDateOverride.start.valueOf()].end,
-              newProcessedDateOverride.end
-            );
-            return processed;
-          }
-          const sameEnd = processed[newProcessedDateOverride.end.valueOf()];
-          // Two overrides ending together: keep the union instead of whichever came last.
-          processed[newProcessedDateOverride.end.valueOf()] = sameEnd
-            ? { start: dayjs.min(sameEnd.start, newProcessedDateOverride.start), end: sameEnd.end }
-            : newProcessedDateOverride;
-        }
-        return processed;
-      }, {})
-    )
-  );
+  // Overrides used to be chained by start/end key in input order, and the merged range was then
+  // grouped under its first day only, so an override on the next day was dropped (working hours
+  // came back) depending on stored order. Each override now replaces its own date; touching
+  // overrides still merge so a booking can run past midnight.
+  const overrideDates = new Set<string>();
+  const overrideRanges: DateRange[] = [];
+  for (const item of availability) {
+    if (!("date" in item && !!item.date)) continue;
+    const itemDateAsUtc = dayjs.utc(item.date);
+    // TODO: Remove the .subtract(1, "day") and .add(1, "day") part and
+    // refactor this to actually work with correct dates.
+    // As of 2024-02-20, there are mismatches between local and UTC dates for overrides
+    // and the dateFrom and dateTo fields, resulting in this if not returning true, which
+    // results in "no available users found" errors.
+    if (
+      !itemDateAsUtc.isBetween(
+        dateFrom.subtract(1, "day").startOf("day"),
+        dateTo.add(1, "day").endOf("day"),
+        null,
+        "[]"
+      )
+    ) {
+      continue;
+    }
+    // unlike working hours, date overrides are always one. No loop per day.
+    const range = processDateOverride({ item, itemDateAsUtc, timeZone, travelSchedules });
+    overrideDates.add(dayjs(range.start).format("YYYY-MM-DD"));
+    overrideRanges.push(range);
+  }
+  const groupedDateOverrides = groupByDate(mergeRanges(overrideRanges));
 
-  const dateRanges = Object.values({
-    ...groupedWorkingHours,
-    ...groupedDateOverrides,
-  }).map(
+  // Spread first to keep the historical key order, then drop working hours of every overridden date
+  // whose override was merged into the previous day's group.
+  const byDate: { [x: string]: DateRange[] } = { ...groupedWorkingHours, ...groupedDateOverrides };
+  for (const date of overrideDates) {
+    if (!groupedDateOverrides[date]) delete byDate[date];
+  }
+
+  const dateRanges = Object.values(byDate).map(
     // remove 0-length overrides that were kept to cancel out working dates until now.
     (ranges) => ranges.filter((range) => range.start.valueOf() !== range.end.valueOf())
   );
 
-  const oooExcludedDateRanges = Object.values({
-    ...groupedWorkingHours,
-    ...groupedDateOverrides,
-    ...groupedOOO,
-  }).map(
+  const oooExcludedDateRanges = Object.values({ ...byDate, ...groupedOOO }).map(
     // remove 0-length overrides && OOO dates that were kept to cancel out working dates until now.
     (ranges) => ranges.filter((range) => range.start.valueOf() !== range.end.valueOf())
   );
@@ -335,22 +320,18 @@ export function buildDateRanges({
   return { dateRanges: dateRanges.flat(), oooExcludedDateRanges: oooExcludedDateRanges.flat() };
 }
 
-function mergeGroupedRanges(grouped: { [x: string]: DateRange[] }): { [x: string]: DateRange[] } {
-  const merged: { [x: string]: DateRange[] } = {};
-  for (const [date, ranges] of Object.entries(grouped)) {
-    const sorted = [...ranges].sort((a, b) => a.start.valueOf() - b.start.valueOf());
-    const out: DateRange[] = [];
-    for (const range of sorted) {
-      const last = out[out.length - 1];
-      if (last && range.start.valueOf() <= last.end.valueOf()) {
-        if (range.end.valueOf() > last.end.valueOf()) last.end = range.end;
-      } else {
-        out.push({ start: range.start, end: range.end });
-      }
+function mergeRanges(ranges: DateRange[]): DateRange[] {
+  const sorted = [...ranges].sort((a, b) => a.start.valueOf() - b.start.valueOf());
+  const out: DateRange[] = [];
+  for (const range of sorted) {
+    const last = out[out.length - 1];
+    if (last && range.start.valueOf() <= last.end.valueOf()) {
+      if (range.end.valueOf() > last.end.valueOf()) last.end = range.end;
+    } else {
+      out.push({ start: range.start, end: range.end });
     }
-    merged[date] = out;
   }
-  return merged;
+  return out;
 }
 
 export function groupByDate(ranges: DateRange[]): { [x: string]: DateRange[] } {
