@@ -305,6 +305,27 @@ const messageParent = (data: CustomEvent["detail"]) => {
   );
 };
 
+let isForwardingToParent = false;
+
+function forwardToParent(detail: CustomEvent["detail"]) {
+  if (isPrerendering() && !eventsAllowedInPrerendering.includes(detail.type)) {
+    return;
+  }
+  log(detail);
+  messageParent(detail);
+}
+
+/**
+ * The app loads this module lazily (embed-iframe/load-runtime.ts), so the booker can fire SDK events
+ * before main() subscribed; load-runtime buffers them and hands them over here, in order.
+ */
+export function forwardEventsFiredBeforeLoad(details: CustomEvent["detail"][]) {
+  if (!isForwardingToParent) {
+    return;
+  }
+  details.forEach(forwardToParent);
+}
+
 function main() {
   if (!isBrowser) {
     return;
@@ -328,6 +349,9 @@ function main() {
     useSlotsViewOnSmallScreen:
       (useSlotsViewOnSmallScreenParam ?? "false") === "true",
   };
+
+  // Components that mounted before this lazily loaded module ran saw an empty uiConfig.
+  runAllUiSetters(embedStore.uiConfig);
 
   actOnColorScheme(embedStore.uiConfig.colorScheme);
   // If embed link is opened in top, and not in iframe. Let the page be visible.
@@ -376,17 +400,8 @@ function main() {
     incrementView();
   });
 
-  sdkActionManager?.on("*", (e) => {
-    if (
-      isPrerendering() &&
-      !eventsAllowedInPrerendering.includes(e.detail.type)
-    ) {
-      return;
-    }
-    const detail = e.detail;
-    log(detail);
-    messageParent(detail);
-  });
+  sdkActionManager?.on("*", (e) => forwardToParent(e.detail));
+  isForwardingToParent = true;
 
   if (url.searchParams.get("preload") !== "true" && window?.isEmbed?.()) {
     initializeAndSetupEmbed();
