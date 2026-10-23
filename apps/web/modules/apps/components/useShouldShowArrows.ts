@@ -1,8 +1,10 @@
+"use client";
+
 import type { UIEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
-// Kept apart from AllApps so the booker (event-meta/Duration) does not pull the app store UI
-// and its analytics into the public booking page bundle.
+// Own module so the booker (event-meta/Duration) can use it without pulling AllApps/AppCard,
+// which import markdownToSafeHTML (markdown-it + sanitize-html) into the booking bundle.
 export function useShouldShowArrows() {
   const ref = useRef<HTMLUListElement>(null);
   const [showArrowScroll, setShowArrowScroll] = useState({

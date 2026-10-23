@@ -13,7 +13,7 @@ import { isRecurringEvent, parseRecurringEvent } from "@calcom/lib/isRecurringEv
 import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 import type { PrismaClient } from "@calcom/prisma";
 import type { Prisma, Team, User as UserType } from "@calcom/prisma/client";
-import { MembershipRole } from "@calcom/prisma/enums";
+import { EventTypeAutoTranslatedField, MembershipRole } from "@calcom/prisma/enums";
 import type { BookerLayoutSettings } from "@calcom/prisma/zod-utils";
 import {
   BookerLayouts,
@@ -348,6 +348,7 @@ export const getPublicEvent = async (
 
     return {
       ...defaultEvent,
+      description: markdownToSafeHTML(defaultEvent.description),
       bookingFields: getBookingFieldsWithSystemFields({ ...defaultEvent, disableBookingTitle }),
       // Only return fields consumed by the booker.
       subsetOfUsers: users.map((user) => ({
@@ -567,6 +568,7 @@ export const getPublicEvent = async (
     ...eventWithUserProfiles,
     bookerLayouts: bookerLayoutsSchema.parse(eventMetaData?.bookerLayouts || null),
     description: markdownToSafeHTML(eventWithUserProfiles.description),
+    fieldTranslations: descriptionTranslationsToSafeHTML(eventWithUserProfiles.fieldTranslations),
     metadata: eventMetaData,
     customInputs: customInputSchema.array().parse(event.customInputs || []),
     locations: privacyFilteredLocations((eventWithUserProfiles.locations || []) as LocationObject[]),
@@ -613,6 +615,20 @@ export const getPublicEvent = async (
 };
 
 const eventData = getPublicEventSelect(true);
+
+/**
+ * The booker renders translated descriptions with dangerouslySetInnerHTML, so they get the same
+ * server-side markdown rendering as `description`; the client bundle never ships markdown-it.
+ */
+export function descriptionTranslationsToSafeHTML<T extends { field: string; translatedText: string }>(
+  translations: T[]
+): T[] {
+  return translations.map((translation) =>
+    translation.field === EventTypeAutoTranslatedField.DESCRIPTION
+      ? { ...translation, translatedText: markdownToSafeHTML(translation.translatedText) }
+      : translation
+  );
+}
 
 type Event = Prisma.EventTypeGetPayload<{ select: typeof eventData }>;
 
@@ -774,6 +790,7 @@ export const processEventDataShared = async ({
     ...eventData,
     bookerLayouts: bookerLayoutsSchema.parse(metadata?.bookerLayouts || null),
     description: markdownToSafeHTML(eventData.description),
+    fieldTranslations: descriptionTranslationsToSafeHTML(eventData.fieldTranslations),
     metadata,
     customInputs: customInputSchema.array().parse(eventData.customInputs || []),
     locations: privacyFilteredLocations((eventData.locations || []) as LocationObject[]),

@@ -219,6 +219,8 @@ export interface CalendarEvent {
   platformRescheduleUrl?: string | null;
   platformCancelUrl?: string | null;
   platformBookingUrl?: string | null;
+  /** LK-T6a: per-recipient li.gy overrides keyed by lowercased email; absent = long URLs (flag off / Ligy down). */
+  ligyLinks?: Record<string, { booking?: string; cancel?: string; reschedule?: string }> | null;
   hideBranding?: boolean;
   oneTimePassword?: string | null;
   delegationCredentialId?: string | null;
