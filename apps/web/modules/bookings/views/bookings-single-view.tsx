@@ -2,7 +2,7 @@
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import classNames from "classnames";
-import { useSession } from "next-auth/react";
+import { useBookingSession } from "@lib/booking-session";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
@@ -171,7 +171,7 @@ export default function Success(props: PageProps) {
   const [is24h, setIs24h] = useState(
     props?.userTimeFormat ? props.userTimeFormat === 24 : isBrowserLocale24h()
   );
-  const { data: session } = useSession();
+  const { data: session } = useBookingSession();
   const isHost = props.isLoggedInUserHost;
 
   const [showUtmParams, setShowUtmParams] = useState(false);

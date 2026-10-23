@@ -1,0 +1,137 @@
+name: Booking perf gates
+# WC-TW-6c (WC-9 WC-TW-6 step 3; WC.2.5 LCP p75 / TTFB p75 rows), CC-56 evidence format.
+# (a) JS budget: gzip JS of a first load of /[user]/[type] on a CI production build, <= 200 KB.
+# (b) Lighthouse CI on that build: Moto G Power / slow 4G default profile, 3 runs, median.
+# (c) Region TTFB from Cairo / Riyadh / Dubai via Globalping against the deployed booking page.
+# Every result is a JSON artifact tagged region=gh-runner|cairo|riyadh|dubai plus a job summary.
+# No job is skippable: a provider outage or a missing city fails the job.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # WC.2.5 synthetic TTFB probe; GitHub may delay scheduled runs under load.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: booking-perf-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGION_URL: ${{ vars.BOOKING_PERF_PROD_URL || 'https://timeway.co/ahmedwasfie/30min' }}
+
+jobs:
+  build-gates:
+    name: JS budget + Lighthouse (gh-runner)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: calendso
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      # CI-only public dummies (same values as e2e.yml fallbacks); the DB is this job's service.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/calendso
+      DATABASE_DIRECT_URL: postgresql://postgres:postgres@localhost:5432/calendso
+      CALENDSO_ENCRYPTION_KEY: 0zfLtY99wjeLnsM7qsa8xsT+Q0oSgnOL
+      NEXTAUTH_SECRET: EI4qqDpcfdvf4A+0aQEEx8JjHxHSy4uWiZw/F32K+pA=
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_WEBAPP_URL: http://localhost:3000
+      NEXT_PUBLIC_WEBSITE_URL: http://localhost:3000
+      ALLOWED_HOSTNAMES: '"cal.local:3000","localhost:3000"'
+      NEXT_TELEMETRY_DISABLED: "1"
+      BOOKING_URL: http://localhost:3000/pro/30min
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: ./.github/actions/cache-checkout
+      - uses: ./.github/actions/yarn-install
+      - run: yarn prisma generate
+      - uses: ./.github/actions/cache-db
+      - uses: ./.github/actions/cache-build
+      - name: Start production server
+        run: |
+          (cd apps/web && nohup npx next start -p 3000 > "$RUNNER_TEMP/next.log" 2>&1 &)
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$BOOKING_URL" || true)
+            [ "$code" = "200" ] && echo "booking page up after ${i}x2s" && exit 0
+            sleep 2
+          done
+          echo "::error::booking page $BOOKING_URL never returned 200 (last $code)"
+          tail -100 "$RUNNER_TEMP/next.log"
+          exit 1
+      - name: (a) JS ratchet vs perf/js-baseline.json, 200 KB budget reported
+        id: js
+        continue-on-error: true
+        run: node scripts/perf/booking-js-budget.mjs --url "$BOOKING_URL" --static-dir apps/web/.next/static --budget-kb 200 --baseline perf/js-baseline.json --out perf/out/js-budget-gh-runner.json --forbid "$FORBID"
+        env:
+          # WC-TW-6c-8: literals only framer-motion / the full app catalog ship. getNormalizedAppMetadata
+          # stays on purpose: bookerAppsMetaData (booker-apps subset, used by locations.ts) needs it.
+          # WC-TW-6c-9: form-builder fields, the phone input, VerifyCodeDialog and Turnstile load after a slot pick.
+          # react-hook-form stays: useBookingForm owns the form state in BookerWebWrapper.
+          # WC-TW-6c-9c: the embed-iframe runtime chunk loads only inside an embed (embed-iframe/load-runtime.ts).
+          FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar;form-builder fields=data-fob-field-name;phone input=react-tel-input;VerifyCodeDialog=webkit-text-fill-color:currentColor;Turnstile=challenges.cloudflare.com/turnstile;embed-iframe runtime=Embed SDK Skipped as we are in top"
+      - name: (b) Lighthouse CI, 3 runs median
+        id: lhci
+        continue-on-error: true
+        env:
+          LHCI_URL: ${{ env.BOOKING_URL }}
+          LHCI_OUT_DIR: perf/out/lhci
+        run: |
+          npx -y @lhci/cli@0.15.1 collect --config=perf/lighthouserc.cjs
+          npx -y @lhci/cli@0.15.1 upload --config=perf/lighthouserc.cjs
+          node scripts/perf/lhci-summary.mjs --dir perf/out/lhci --region gh-runner --out perf/out/lhci-gh-runner.json
+          npx -y @lhci/cli@0.15.1 assert --config=perf/lighthouserc.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: booking-perf-gh-runner
+          path: perf/out/
+          if-no-files-found: error
+      - name: Gate verdict
+        if: always()
+        run: |
+          echo "js=${{ steps.js.outcome }} lhci=${{ steps.lhci.outcome }}"
+          [ "${{ steps.js.outcome }}" = "success" ] && [ "${{ steps.lhci.outcome }}" = "success" ]
+
+  region-ttfb:
+    name: Region TTFB (cairo, riyadh, dubai)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/perf
+      # No setup-node: its packageManager auto-cache calls yarn, absent in this sparse checkout.
+      - run: node --version
+      - name: Globalping HTTPS probes, 2 samples x up to 3 probes per city
+        env:
+          GLOBALPING_TOKEN: ${{ secrets.GLOBALPING_TOKEN }}
+          # The probe hits the deployed site, not the PR build, so on PR/push/schedule an over-budget
+          # TTFB is a recorded ::warning (WC.2.5 series; reduction is WC-TW-6a/6b). A city with no
+          # answering probe always fails. workflow_dispatch enforces the 500 ms budget.
+          ENFORCE: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+        run: node scripts/perf/region-ttfb.mjs --url "$REGION_URL" --budget-ms 500 --samples 2 --probes 3 --enforce "$ENFORCE" --out perf/out/region-ttfb.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: booking-perf-regions
+          path: perf/out/
+          if-no-files-found: error

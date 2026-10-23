@@ -1,0 +1,7 @@
+{
+  "_comment": "WC-TW-6c LHCI ratchet: medians of 3 runs on the CI production build. While a median is over its absolute error threshold the gate asserts median <= baseline x (1 + tolerance) and the absolute threshold is a warning; lower these in every reduction PR.",
+  "lcp_ms": 9366,
+  "tbt_ms": 1511,
+  "tolerance": 0.1,
+  "source": "booking-perf run 39650356967 (main 540cf44054 + perf gates), region=gh-runner"
+}

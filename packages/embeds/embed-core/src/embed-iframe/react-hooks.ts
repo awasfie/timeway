@@ -5,7 +5,7 @@
  */
 import useMediaQuery from "@calcom/lib/hooks/useMediaQuery";
 import { sdkActionManager } from "../sdk-event";
-import { useEmbedUiConfig, useIsEmbed } from "../embed-iframe";
+import { useEmbedUiConfig, useIsEmbed } from "./hooks";
 import { embedStore, getEventHasFired, setEventHasFired, getReloadInitiated, setReloadInitiated } from "./lib/embedStore";
 import { isBrowser, isPrerendering } from "./lib/utils";
 
