@@ -240,23 +240,25 @@ export function buildDateRanges({
 }): { dateRanges: DateRange[]; oooExcludedDateRanges: DateRange[] } {
   const dateFromOrganizerTZ = dateFrom.tz(timeZone);
 
-  const groupedWorkingHours = groupByDate(
-    Object.values(
-      availability.reduce((processed: Record<number, DateRange>, item) => {
-        if (!("days" in item)) {
-          return processed;
-        }
-
-        processed = processWorkingHours(processed, {
-          item,
-          timeZone,
-          dateFrom: dateFromOrganizerTZ,
-          dateTo,
-          travelSchedules,
-        });
-
-        return processed;
-      }, {})
+  // processWorkingHours only merges a rule into a range it shares an end with or starts at the end of,
+  // so overlapping or touching rules gave different ranges (and slots) depending on stored order.
+  const groupedWorkingHours = mergeGroupedRanges(
+    groupByDate(
+      Object.values(
+        availability
+          .filter((item): item is WorkingHours => "days" in item)
+          .reduce(
+            (processed: Record<number, DateRange>, item) =>
+              processWorkingHours(processed, {
+                item,
+                timeZone,
+                dateFrom: dateFromOrganizerTZ,
+                dateTo,
+                travelSchedules,
+              }),
+            {}
+          )
+      )
     )
   );
 
@@ -302,7 +304,11 @@ export function buildDateRanges({
             );
             return processed;
           }
-          processed[newProcessedDateOverride.end.valueOf()] = newProcessedDateOverride;
+          const sameEnd = processed[newProcessedDateOverride.end.valueOf()];
+          // Two overrides ending together: keep the union instead of whichever came last.
+          processed[newProcessedDateOverride.end.valueOf()] = sameEnd
+            ? { start: dayjs.min(sameEnd.start, newProcessedDateOverride.start), end: sameEnd.end }
+            : newProcessedDateOverride;
         }
         return processed;
       }, {})
@@ -327,6 +333,24 @@ export function buildDateRanges({
   );
 
   return { dateRanges: dateRanges.flat(), oooExcludedDateRanges: oooExcludedDateRanges.flat() };
+}
+
+function mergeGroupedRanges(grouped: { [x: string]: DateRange[] }): { [x: string]: DateRange[] } {
+  const merged: { [x: string]: DateRange[] } = {};
+  for (const [date, ranges] of Object.entries(grouped)) {
+    const sorted = [...ranges].sort((a, b) => a.start.valueOf() - b.start.valueOf());
+    const out: DateRange[] = [];
+    for (const range of sorted) {
+      const last = out[out.length - 1];
+      if (last && range.start.valueOf() <= last.end.valueOf()) {
+        if (range.end.valueOf() > last.end.valueOf()) last.end = range.end;
+      } else {
+        out.push({ start: range.start, end: range.end });
+      }
+    }
+    merged[date] = out;
+  }
+  return merged;
 }
 
 export function groupByDate(ranges: DateRange[]): { [x: string]: DateRange[] } {

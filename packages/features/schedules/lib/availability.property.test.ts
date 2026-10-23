@@ -304,14 +304,17 @@ async function runPipeline(c: Config) {
     eventUtcOffset: dayjs(c.now).tz(c.hosts[0].timeZone).utcOffset(),
     bookerUtcOffset: dayjs(c.now).tz(c.bookerTimeZone).utcOffset(),
   });
+  // util.ts turns a past slot into a 400 for the whole request; surface it as a violation instead.
+  const pastSlots = slots.filter((s) => s.time.valueOf() < Date.now()).map((s) => s.time.toISOString());
   const times = slots
     .filter(
       (s) =>
+        s.time.valueOf() >= Date.now() &&
         !isTimeViolatingFutureLimit({ time: s.time.toISOString(), periodLimits }) &&
         !isTimeOutOfBounds({ time: s.time.toISOString(), minimumBookingNotice: c.minimumBookingNotice })
     )
     .map((s) => s.time.valueOf());
-  return { times, perHost, periodLimits };
+  return { times, perHost, periodLimits, pastSlots };
 }
 
 /** Independent model of what blocks a host at [t, t+len): raw bookings widened by both buffers. */
@@ -358,6 +361,7 @@ function violations(c: Config, res: Awaited<ReturnType<typeof runPipeline>>): st
   const out: string[] = [];
   const nowMs = c.now.getTime();
   const horizon = res.periodLimits.endOfRollingPeriodEndDayInBookerTz?.valueOf();
+  for (const iso of res.pastSlots.slice(0, 3)) out.push(`${iso}: getSlots returned a slot in the past`);
   for (const t of res.times) {
     const iso = new Date(t).toISOString();
     if (t < nowMs + c.minimumBookingNotice * MINUTE) out.push(`${iso}: before now+minimumBookingNotice`);
@@ -391,7 +395,12 @@ describe("WC-TW-5c availability properties (CC-65)", () => {
       const again = await runPipeline(shuffledConfig(rng, config));
       const a = [...new Set(first.times)].sort((x, y) => x - y);
       const b = [...new Set(again.times)].sort((x, y) => x - y);
-      if (a.join() !== b.join()) bad.push("output changed when input order was shuffled");
+      if (a.join() !== b.join()) {
+        const iso = (xs: number[]) => xs.slice(0, 5).map((t) => new Date(t).toISOString());
+        bad.push(
+          `output changed when input order was shuffled: only original ${iso(a.filter((t) => !b.includes(t)))}, only shuffled ${iso(b.filter((t) => !a.includes(t)))}`
+        );
+      }
       // Working-hours misses on a host's DST transition window are defects D1/D3 owned by WC-TW-5b
       // (t_7723617d); counted here, asserted to zero once that card lands (TW_PROP_STRICT_DST=1).
       const dstOnly =

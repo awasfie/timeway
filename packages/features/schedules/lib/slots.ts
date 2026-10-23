@@ -125,12 +125,14 @@ function buildSlotsWithDateRanges({
   const slotBoundaries = new Map<number, true>();
 
   orderedDateRanges.forEach((range) => {
-    let slotStartTime = range.start.utc().isAfter(startTimeWithMinNotice)
-      ? range.start
-      : startTimeWithMinNotice;
+    const startsAtNotice = !range.start.utc().isAfter(startTimeWithMinNotice);
+    let slotStartTime = startsAtNotice ? startTimeWithMinNotice : range.start;
 
-    // For current day bookings, normalizing the seconds to zero to avoid issues with time calculations
+    // For current day bookings, normalizing the seconds to zero to avoid issues with time calculations.
+    // Rounding "now + notice" down would yield a slot in the past (util.ts rejects the whole request).
+    const hasSubMinute = slotStartTime.second() !== 0 || slotStartTime.millisecond() !== 0;
     slotStartTime = slotStartTime.set("second", 0).set("millisecond", 0);
+    if (startsAtNotice && hasSubMinute) slotStartTime = slotStartTime.add(1, "minute");
 
     // Convert to target timezone BEFORE checking if rounding is needed
     // This ensures we check minute alignment in the local timezone, not UTC
