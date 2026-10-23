@@ -24,6 +24,14 @@ export class CredentialsRepositoryFixture {
     });
   }
 
+  async ensureApp(slug: string, categories: Prisma.AppCreateInput["categories"]) {
+    return this.prismaWriteClient.app.upsert({
+      where: { slug },
+      update: {},
+      create: { slug, dirName: slug, categories, enabled: true },
+    });
+  }
+
   get(id: number) {
     return this.prismaReadClient.credential.findUnique({ where: { id } });
   }

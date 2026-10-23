@@ -11,7 +11,7 @@ import { OAuthClientRepositoryFixture } from "test/fixtures/repository/oauth-cli
 import { TeamRepositoryFixture } from "test/fixtures/repository/team.repository.fixture";
 import { TokensRepositoryFixture } from "test/fixtures/repository/tokens.repository.fixture";
 import { UserRepositoryFixture } from "test/fixtures/repository/users.repository.fixture";
-import { VerifiedResourcesRepositoryFixture } from "test/fixtures/repository/verified-resources.repository.fixture";
+import { VerifiedResourcesRepositoryFixtures } from "test/fixtures/repository/verified-resources.repository.fixture";
 import { randomString } from "test/utils/randomString";
 import { mockThrottlerGuard } from "test/utils/withNoThrottler";
 import { AppModule } from "@/app.module";
@@ -43,6 +43,15 @@ const DENIED = [401, 403, 404];
 // 400 "not connected / invalid" is a refusal that returns no data and changes nothing.
 const DENIED_OR_BAD_REQUEST = [400, ...DENIED];
 
+// A 200 with data:null is an empty result (the row is scoped by userId) and discloses nothing.
+const expectDeniedOrEmpty = (res: { status: number; body: { data?: unknown } }) => {
+  if (res.status === 200) {
+    expect(res.body.data ?? null).toBeNull();
+  } else {
+    expect(DENIED_OR_BAD_REQUEST).toContain(res.status);
+  }
+};
+
 describe("CC-13 apiV2 cross-tenant probes: organizations, teams, memberships, credentials", () => {
   let app: INestApplication;
   let oauthFixture: OAuthClientRepositoryFixture;
@@ -51,7 +60,7 @@ describe("CC-13 apiV2 cross-tenant probes: organizations, teams, memberships, cr
   let tokensFixture: TokensRepositoryFixture;
   let membershipFixture: MembershipRepositoryFixture;
   let credentialsFixture: CredentialsRepositoryFixture;
-  let verifiedFixture: VerifiedResourcesRepositoryFixture;
+  let verifiedFixture: VerifiedResourcesRepositoryFixtures;
   let A: Tenant;
   let B: Tenant;
   const tag = `cc13-org-${randomString()}`;
@@ -77,6 +86,8 @@ describe("CC-13 apiV2 cross-tenant probes: organizations, teams, memberships, cr
     });
     const membership = await membershipFixture.addUserToOrg(user, org, MembershipRole.OWNER, true);
     const { accessToken, refreshToken } = await tokensFixture.createTokens(user.id, client.id);
+    await credentialsFixture.ensureApp("zoom", ["conferencing"]);
+    await credentialsFixture.ensureApp("google-calendar", ["calendar"]);
     const zoomCredential = await credentialsFixture.create("zoom_video", { access_token: `${t}-z` }, user.id, "zoom");
     const calendarCredential = await credentialsFixture.create(
       "google_calendar",
@@ -123,7 +134,7 @@ describe("CC-13 apiV2 cross-tenant probes: organizations, teams, memberships, cr
     tokensFixture = new TokensRepositoryFixture(moduleRef);
     membershipFixture = new MembershipRepositoryFixture(moduleRef);
     credentialsFixture = new CredentialsRepositoryFixture(moduleRef);
-    verifiedFixture = new VerifiedResourcesRepositoryFixture(moduleRef);
+    verifiedFixture = new VerifiedResourcesRepositoryFixtures(moduleRef);
 
     A = await seedTenant("a");
     B = await seedTenant("b");
@@ -332,8 +343,10 @@ describe("CC-13 apiV2 cross-tenant probes: organizations, teams, memberships, cr
       const res = await request(app.getHttpServer())
         .delete("/v2/conferencing/zoom/disconnect")
         .set("Authorization", bearer(B));
-      expect(DENIED_OR_BAD_REQUEST).toContain(res.status);
+      // The route is keyed by app slug, never by credential id: it may only act on B's own credential.
+      expect([200, ...DENIED_OR_BAD_REQUEST]).toContain(res.status);
       await credentialExists(A.zoomCredential.id);
+      if (res.status === 200) expect(await credentialsFixture.get(B.zoomCredential.id)).toBeNull();
     });
 
     it("B conferencing list does not include A's credential", async () => {
@@ -347,7 +360,7 @@ describe("CC-13 apiV2 cross-tenant probes: organizations, teams, memberships, cr
       const res = await request(app.getHttpServer())
         .get(`/v2/verified-resources/emails/${A.verifiedEmailId}`)
         .set("Authorization", bearer(B));
-      expect(DENIED_OR_BAD_REQUEST).toContain(res.status);
+      expectDeniedOrEmpty(res);
       expect(JSON.stringify(res.body)).not.toContain(`${tag}-a-verified@example.com`);
     });
 
@@ -355,7 +368,8 @@ describe("CC-13 apiV2 cross-tenant probes: organizations, teams, memberships, cr
       const res = await request(app.getHttpServer())
         .get(`/v2/verified-resources/phones/${A.verifiedPhoneId}`)
         .set("Authorization", bearer(B));
-      expect(DENIED_OR_BAD_REQUEST).toContain(res.status);
+      expectDeniedOrEmpty(res);
+      expect(JSON.stringify(res.body)).not.toContain("phoneNumber");
     });
 
     it("B verified-resources lists contain none of A's", async () => {
