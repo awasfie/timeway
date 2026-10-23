@@ -1,6 +1,6 @@
 {
   "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200.",
-  "total_kb_gz": 671.3,
+  "total_kb_gz": 670.2,
   "tolerance_kb": 5,
-  "source": "booking-perf run 40000894863 job 120576366179 (PR #130 b2731afcd8 = dc23227448 work + merge of main 359ea3511c, WC-TW-6c-8b: -173.9 KB vs 845.2 in run 39721687565 at 9067e5147b; pre-merge head measured 665.5 in run 39941695289, the +5.8 KB arrived with main's next 16.4.1 / dompurify 3.4.17 / Ligy + custom-domain changes; sanitize-html/markdown-it/postcss and atoms axios + Buffer polyfill off first load), region=gh-runner"
+  "source": "booking-perf run 40009058087 job 120604394818 (PR #154 9ac0190c7b, WC-TW-6c-8c: radix react-slot/react-context deduped within major 1, -1.1 KB vs 671.3 in run 40000894863 at #130 b2731afcd8; residual duplicates: tailwind-merge 1.x+3.x (major), chunk-split copies of nuqs/styled-jsx/next-themes/next link, react-timezone-select bundled deps), region=gh-runner"
 }
