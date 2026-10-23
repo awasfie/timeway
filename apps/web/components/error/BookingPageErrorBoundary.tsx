@@ -1,4 +1,3 @@
-import { captureReactException } from "@sentry/nextjs";
 import React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -12,7 +11,10 @@ export default function BookingPageErrorBoundary({ children }: { children: React
       )}
       onError={(error, info) => {
         console.error(error);
-        captureReactException(error, info);
+        // Lazy so @sentry/nextjs stays off the booking page's first load (WC-TW-6c-6).
+        void import("@sentry/nextjs")
+          .then(({ captureReactException }) => captureReactException(error, info))
+          .catch(() => undefined);
       }}>
       {children}
     </ErrorBoundary>

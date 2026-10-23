@@ -1,0 +1,6 @@
+{
+  "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200.",
+  "total_kb_gz": 782.0,
+  "tolerance_kb": 5,
+  "source": "booking-perf run 39933978340 attempt 2 (PR #125 merge ref 67f6bf30ca, head 16ea5b97f0, WC-TW-6c-6), region=gh-runner"
+}
