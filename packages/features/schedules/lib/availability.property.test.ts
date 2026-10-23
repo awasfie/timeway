@@ -7,7 +7,11 @@ import { getBusyTimesService } from "@calcom/features/di/containers/BusyTimes";
 import type { DateRange } from "@calcom/features/schedules/lib/date-ranges";
 import { buildDateRanges, subtract } from "@calcom/features/schedules/lib/date-ranges";
 import getSlots from "@calcom/features/schedules/lib/slots";
-import { calculatePeriodLimits, isTimeOutOfBounds, isTimeViolatingFutureLimit } from "@calcom/lib/isOutOfBounds";
+import {
+  calculatePeriodLimits,
+  isTimeOutOfBounds,
+  isTimeViolatingFutureLimit,
+} from "@calcom/lib/isOutOfBounds";
 import { PeriodType, SchedulingType } from "@calcom/prisma/enums";
 import type { EventBusyDetails } from "@calcom/types/Calendar";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -146,7 +150,10 @@ function genConfig(r: Rng): Config {
       availability.push({ days, startTime: clock(start), endTime: clock(end), date: null });
     }
     for (let i = int(r, 0, 2); i > 0; i--) {
-      const day = dayjs(now).tz(timeZone).add(int(r, 0, WINDOW_DAYS), "day").format("YYYY-MM-DD");
+      const day = dayjs(now)
+        .tz(timeZone)
+        .add(int(r, 0, WINDOW_DAYS), "day")
+        .format("YYYY-MM-DD");
       const blocked = chance(r, 0.3);
       const start = blocked ? 0 : int(r, 0, 40) * 30;
       const end = blocked ? 0 : Math.min(start + int(r, 1, 16) * 30, 23 * 60 + 59);
@@ -160,7 +167,8 @@ function genConfig(r: Rng): Config {
     const bookings: Booking[] = [];
     for (let i = int(r, 0, 8); i > 0; i--) {
       const start = new Date(
-        Math.floor(now.getTime() / (5 * MINUTE)) * 5 * MINUTE + int(r, -12, WINDOW_DAYS * 24 * 12) * 5 * MINUTE
+        Math.floor(now.getTime() / (5 * MINUTE)) * 5 * MINUTE +
+          int(r, -12, WINDOW_DAYS * 24 * 12) * 5 * MINUTE
       );
       const ownEvent = chance(r, 0.6);
       const duration = ownEvent ? length : pick(r, LENGTHS);
@@ -209,21 +217,34 @@ function shuffledConfig(r: Rng, c: Config): Config {
     ...c,
     hosts: shuffle(
       r,
-      c.hosts.map((h) => ({ ...h, availability: shuffle(r, h.availability), bookings: shuffle(r, h.bookings) }))
+      c.hosts.map((h) => ({
+        ...h,
+        availability: shuffle(r, h.availability),
+        bookings: shuffle(r, h.bookings),
+      }))
     ),
   };
 }
 
 function spansTransition(zone: string, now: Date) {
   const from = dayjs(now).subtract(1, "day");
-  return dayjs(from).tz(zone).utcOffset() !== from.add(WINDOW_DAYS + 2, "day").tz(zone).utcOffset();
+  return (
+    dayjs(from).tz(zone).utcOffset() !==
+    from
+      .add(WINDOW_DAYS + 2, "day")
+      .tz(zone)
+      .utcOffset()
+  );
 }
 
 type HostResult = { host: Host; working: DateRange[]; limitBusy: EventBusyDetails[] };
 
 async function runPipeline(c: Config) {
   vi.setSystemTime(c.now);
-  const startTime = dayjs.utc().add(c.minimumBookingNotice || 1, "minutes").tz(c.bookerTimeZone);
+  const startTime = dayjs
+    .utc()
+    .add(c.minimumBookingNotice || 1, "minutes")
+    .tz(c.bookerTimeZone);
   const endTime = dayjs.utc(c.now).add(WINDOW_DAYS, "day").tz(c.bookerTimeZone);
   const busyTimesService = getBusyTimesService();
 
@@ -346,11 +367,13 @@ function hostAccepts(c: Config, r: HostResult, t: number): string | null {
   const inside = r.working.some((w) => t >= w.start.valueOf() && end <= w.end.valueOf() + 999);
   if (!inside) return "outside working hours";
   const hit = blockingIntervals(c, r.host).find(([s, e]) => t < e && end > s);
-  if (hit) return `overlaps busy+buffer [${new Date(hit[0]).toISOString()}, ${new Date(hit[1]).toISOString()})`;
+  if (hit)
+    return `overlaps busy+buffer [${new Date(hit[0]).toISOString()}, ${new Date(hit[1]).toISOString()})`;
   if (c.bookingLimitPerDay) {
     const day = dayjs(t).tz(r.host.timeZone).format("YYYY-MM-DD");
     const count = r.host.bookings.filter(
-      (b) => b.eventType.id === EVENT_ID && dayjs(b.startTime).tz(r.host.timeZone).format("YYYY-MM-DD") === day
+      (b) =>
+        b.eventType.id === EVENT_ID && dayjs(b.startTime).tz(r.host.timeZone).format("YYYY-MM-DD") === day
     ).length;
     if (count >= c.bookingLimitPerDay) return `booking limit ${c.bookingLimitPerDay}/day reached on ${day}`;
   }
@@ -369,7 +392,8 @@ function violations(c: Config, res: Awaited<ReturnType<typeof runPipeline>>): st
     const reasons = res.perHost.map((h) => hostAccepts(c, h, t));
     const ok =
       c.schedulingType === SchedulingType.ROUND_ROBIN ? reasons.some((x) => !x) : reasons.every((x) => !x);
-    if (!ok) out.push(`${iso}: ${reasons.map((x, i) => `host${res.perHost[i].host.id}=${x ?? "ok"}`).join(", ")}`);
+    if (!ok)
+      out.push(`${iso}: ${reasons.map((x, i) => `host${res.perHost[i].host.id}=${x ?? "ok"}`).join(", ")}`);
     if (out.length > 5) break;
   }
   return out;
@@ -407,7 +431,8 @@ describe("WC-TW-5c availability properties (CC-65)", () => {
       const dstOnly =
         bad.length > 0 &&
         bad.every(
-          (x) => (x.includes("outside working hours") || x.includes("booking limit")) && !x.includes("overlaps")
+          (x) =>
+            (x.includes("outside working hours") || x.includes("booking limit")) && !x.includes("overlaps")
         ) &&
         config.hosts.some((h) => spansTransition(h.timeZone, config.now));
       if (dstOnly && !process.env.TW_PROP_STRICT_DST) {
@@ -425,7 +450,9 @@ describe("WC-TW-5c availability properties (CC-65)", () => {
     // Guard against a vacuous pass: most configs must actually produce slots.
     expect(configsWithSlots).toBeGreaterThan(RUNS * 0.3);
     expect(slotsChecked).toBeGreaterThan(RUNS);
-    console.info(`WC-TW-5c: ${RUNS} configs, ${slotsChecked} slots checked, ${knownDst} known DST-window (t_7723617d)`);
+    console.info(
+      `WC-TW-5c: ${RUNS} configs, ${slotsChecked} slots checked, ${knownDst} known DST-window (t_7723617d)`
+    );
     expect(knownDst).toBeLessThan(RUNS * 0.02);
   }, 600_000);
 

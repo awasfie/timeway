@@ -67,7 +67,10 @@ function getCorrectedSlotStartTime({
 
   // Relative add, not startOf("hour"): dayjs-tz startOf lands an hour early after a DST fall-back,
   // which produced slots before now+notice (and in the past) on the transition day.
-  return slotStartTime.add(Math.ceil(slotStartTime.minute() / interval) * interval - slotStartTime.minute(), "minute");
+  return slotStartTime.add(
+    Math.ceil(slotStartTime.minute() / interval) * interval - slotStartTime.minute(),
+    "minute"
+  );
 }
 
 function buildSlotsWithDateRanges({

@@ -244,21 +244,21 @@ export function buildDateRanges({
   // (incl. chaining past midnight), so overlapping rules gave different ranges, and date overrides
   // replaced different groups, depending on stored order. Merging the union makes it canonical.
   const workingHours = mergeRanges(
-      Object.values(
-        availability
-          .filter((item): item is WorkingHours => "days" in item)
-          .reduce(
-            (processed: Record<number, DateRange>, item) =>
-              processWorkingHours(processed, {
-                item,
-                timeZone,
-                dateFrom: dateFromOrganizerTZ,
-                dateTo,
-                travelSchedules,
-              }),
-            {}
-          )
-      )
+    Object.values(
+      availability
+        .filter((item): item is WorkingHours => "days" in item)
+        .reduce(
+          (processed: Record<number, DateRange>, item) =>
+            processWorkingHours(processed, {
+              item,
+              timeZone,
+              dateFrom: dateFromOrganizerTZ,
+              dateTo,
+              travelSchedules,
+            }),
+          {}
+        )
+    )
   );
 
   const groupedOOO = groupByDate(
@@ -303,7 +303,7 @@ export function buildDateRanges({
     overrideDates.size
       ? subtract(
           workingHours,
-          [...overrideDates].map((date) => {
+          Array.from(overrideDates).map((date) => {
             const start = dayjs.tz(date, timeZone);
             return { start, end: start.add(1, "day") };
           })
