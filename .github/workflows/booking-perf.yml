@@ -86,7 +86,8 @@ jobs:
           # stays on purpose: bookerAppsMetaData (booker-apps subset, used by locations.ts) needs it.
           # WC-TW-6c-9: form-builder fields, the phone input, VerifyCodeDialog and Turnstile load after a slot pick.
           # react-hook-form stays: useBookingForm owns the form state in BookerWebWrapper.
-          FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar;form-builder fields=data-fob-field-name;phone input=react-tel-input;VerifyCodeDialog=webkit-text-fill-color:currentColor;Turnstile=challenges.cloudflare.com/turnstile"
+          # WC-TW-6c-9c: the embed-iframe runtime chunk loads only inside an embed (embed-iframe/load-runtime.ts).
+          FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar;form-builder fields=data-fob-field-name;phone input=react-tel-input;VerifyCodeDialog=webkit-text-fill-color:currentColor;Turnstile=challenges.cloudflare.com/turnstile;embed-iframe runtime=Embed SDK Skipped as we are in top"
       - name: (b) Lighthouse CI, 3 runs median
         id: lhci
         continue-on-error: true
