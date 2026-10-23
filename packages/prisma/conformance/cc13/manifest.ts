@@ -84,3 +84,36 @@ export const manifest: Record<string, ModelCoverage> = {
   Webhook: pending(),
   WrongAssignmentReport: pending(),
 };
+
+/** WC-TW-7d negative-test ids and recorded gaps (kept apart from the model x surface matrix). */
+export const negative = {
+  invitations: {
+    probes: [
+      "apps/web/test/cc13/negative/invitations.integration-test.ts > an invite token for tenant B grants nothing in tenant A",
+      "apps/web/test/cc13/negative/invitations.integration-test.ts > an invite token minted for A's invitee creates only a MEMBER membership in A, never an elevated role",
+      "apps/web/test/cc13/negative/invitations.integration-test.ts > an existing member's invite cannot raise their role (pending ADMIN stays what the inviter set)",
+    ],
+    defects: {
+      "CC13-D2": "signup with a team token does not check the token identifier against the signing-up email (it.fails)",
+    },
+    none: { bAdminInvitesIntoA: "no invite-creation endpoint (team invite router) on main" },
+  },
+  keyScopes: {
+    probes: [
+      "apps/web/test/cc13/negative/key-scopes.integration-test.ts > tenant A's API key resolves to A's owner only, never to a B user",
+      "apps/web/test/cc13/negative/key-scopes.integration-test.ts > an expired API key is rejected",
+    ],
+    none: {
+      orgKeyScopesAndRevocation: "no verifier for tw_org_api_key (scopes, revokedAt) on main; only the table exists",
+    },
+  },
+  planLimits: { none: "plan model not on main" },
+  rrPools: {
+    probes: [
+      "apps/web/test/cc13/negative/rr-pools.integration-test.ts > refuses to assign tenant B's user as a host of A's RR event type",
+    ],
+    defects: {
+      "CC13-D1": "loadUsers does not filter hosts to team members; a stray non-member Host row is selectable",
+    },
+  },
+} as const;
