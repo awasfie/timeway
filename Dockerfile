@@ -50,6 +50,8 @@ COPY .yarn ./.yarn
 COPY apps/web ./apps/web
 COPY apps/api/v2 ./apps/api/v2
 COPY packages ./packages
+# WC-DX-3c-2: vendored analytics module (imported by relative path from apps/web and packages/lib)
+COPY vendor ./vendor
 
 RUN yarn config set httpTimeout 1200000
 # No `turbo prune` here: its out/ tree was never copied, so it changed nothing in the image, and turbo's berry
