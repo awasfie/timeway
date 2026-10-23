@@ -1,6 +1,7 @@
 import type { Dayjs } from "@calcom/dayjs";
 import dayjs from "@calcom/dayjs";
 import type { IOutOfOfficeData } from "@calcom/features/availability/lib/getUserAvailability";
+import { wallClockParts, wallClockToInstant } from "@calcom/lib/timeZoneWallClock";
 import type { Availability } from "@calcom/prisma/client";
 
 export type DateRange = {
@@ -26,6 +27,13 @@ function getAdjustedTimezone(date: Dayjs, timeZone: string, travelSchedules: Tra
     }
   }
   return adjustedTimezone;
+}
+
+// dayjs's tz() parses its own locale string in the process TZ, so near that TZ's transitions it can land an
+// hour off; keep the zone label but restore the exact instant.
+function inTimeZone(ms: number, timeZone: string) {
+  const zoned = dayjs(ms).tz(timeZone);
+  return zoned.valueOf() === ms ? zoned : zoned.add(ms - zoned.valueOf(), "millisecond");
 }
 
 // reducer
@@ -57,30 +65,31 @@ export function processWorkingHours(
 
     // it always has to be start of the day (midnight) even when DST changes
     const dateInTz = date.add(fromOffset - offset, "minutes").tz(adjustedTimezone);
-    if (!item.days.includes(dateInTz.day())) {
+    // dateInTz is local midnight give or take a DST hour (and the process TZ's own quirks), so read the
+    // calendar day from mid-morning and rebuild start/end from wall-clock times in the host's zone.
+    const localDay = wallClockParts(dateInTz.valueOf() + 6 * 3600000, adjustedTimezone);
+    if (
+      !item.days.includes(new Date(Date.UTC(localDay.year, localDay.month - 1, localDay.day)).getUTCDay())
+    ) {
       continue;
     }
 
-    let start = dateInTz
-      .add(item.startTime.getUTCHours(), "hours")
-      .add(item.startTime.getUTCMinutes(), "minutes");
-
-    let end = dateInTz.add(item.endTime.getUTCHours(), "hours").add(item.endTime.getUTCMinutes(), "minutes");
-
-    const offsetBeginningOfDay = dayjs(start.format("YYYY-MM-DD hh:mm")).tz(adjustedTimezone).utcOffset();
-    const offsetDiff = start.utcOffset() - offsetBeginningOfDay; // there will be 60 min offset on the day day of DST change
-
-    start = start.add(offsetDiff, "minute");
-    end = end.add(offsetDiff, "minute");
+    const startMinutes = item.startTime.getUTCHours() * 60 + item.startTime.getUTCMinutes();
+    const endMinutes = item.endTime.getUTCHours() * 60 + item.endTime.getUTCMinutes();
+    const start = inTimeZone(
+      wallClockToInstant(localDay, startMinutes, adjustedTimezone, "earlier"),
+      adjustedTimezone
+    );
+    // INFO: We only allow users to set availability up to 11:59PM which ends up not making them available
+    // up to midnight. Applied before clipping to dateTo so a clipped end never grows past dateTo.
+    const endInstant =
+      endMinutes === 23 * 60 + 59
+        ? wallClockToInstant(localDay, endMinutes, adjustedTimezone, "later") + 60000
+        : wallClockToInstant(localDay, endMinutes, adjustedTimezone, "later");
+    const end = inTimeZone(endInstant, adjustedTimezone);
 
     const startResult = dayjs.max(start, dateFrom);
-    let endResult = dayjs.min(end, dateTo.tz(adjustedTimezone));
-
-    // INFO: We only allow users to set availability up to 11:59PM which ends up not making them available
-    // up to midnight.
-    if (endResult.hour() === 23 && endResult.minute() === 59) {
-      endResult = endResult.add(1, "minute");
-    }
+    const endResult = dayjs.min(end, inTimeZone(dateTo.valueOf(), adjustedTimezone));
 
     if (endResult.isBefore(startResult)) {
       // if an event ends before start, it's not a result.
