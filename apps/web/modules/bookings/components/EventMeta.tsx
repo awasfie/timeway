@@ -1,4 +1,3 @@
-import { Timezone as PlatformTimezoneSelect } from "@calcom/atoms/timezone";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import { useBookerTime } from "@calcom/features/bookings/Booker/hooks/useBookerTime";
 import { fadeInUpClassName } from "@calcom/features/bookings/Booker/config";
@@ -19,6 +18,9 @@ import { shallow } from "zustand/shallow";
 import i18nConfigration from "../../../../../i18n.json";
 import { EventDetails, EventMembers, EventMetaSkeleton, EventTitle } from "./event-meta";
 import { ScrollableWithGradients } from "./ScrollableWithGradients";
+
+// Lazy so the platform atoms HTTP client (axios, which pulls the Buffer polyfill) stays off the web booker's first load.
+const PlatformTimezoneSelect = dynamic(() => import("@calcom/atoms/timezone").then((mod) => mod.Timezone));
 
 const WebTimezoneSelect = dynamic(
   () => import("@calcom/web/modules/timezone/components/TimezoneSelect").then((mod) => mod.TimezoneSelect),
