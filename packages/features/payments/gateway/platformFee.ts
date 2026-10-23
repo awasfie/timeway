@@ -196,7 +196,7 @@ export type SendDeps = {
   env: NodeJS.ProcessEnv;
 };
 
-const defaultSendDeps: SendDeps = {
+export const defaultSendDeps: SendDeps = {
   resolvePassportOrgId: async (twOrgId) => {
     const org = await withTwOrg(prisma, twOrgId, (tx) =>
       tx.organization.findUnique({
