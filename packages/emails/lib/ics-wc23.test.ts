@@ -1,9 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
+import process from "node:process";
 import { buildCalendarEvent, buildPerson } from "@calcom/lib/test/builder";
 import type { CalendarEvent } from "@calcom/types/Calendar";
-
-import generateIcsString, { ICS_PRODUCT_ID, getIcsOrganizerEmail } from "./generateIcsString";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import generateIcsString, { getIcsOrganizerEmail, ICS_PRODUCT_ID } from "./generateIcsString";
 import getNextICalSequence, { getICalSequenceForBooking } from "./getICalSequence";
 import getICalUID from "./getICalUID";
 
@@ -16,20 +15,16 @@ const prop = (ics: string, name: string) =>
 const host = buildPerson({ name: "Host Person", email: "host@example.com", timeZone: "America/New_York" });
 const guest = buildPerson({ name: "Guest", email: "guest@example.com", timeZone: "Asia/Dubai" });
 
+const slot = { startTime: "2026-03-08T14:00:00.000Z", endTime: "2026-03-08T14:30:00.000Z" };
+const fixed = {
+  title: "Intro call",
+  organizer: host,
+  attendees: [guest],
+  location: "Office",
+  iCalSequence: 0,
+};
 const baseEvent = (overrides: Partial<CalendarEvent> = {}): CalendarEvent =>
-  buildCalendarEvent(
-    {
-      title: "Intro call",
-      startTime: "2026-03-08T14:00:00.000Z",
-      endTime: "2026-03-08T14:30:00.000Z",
-      organizer: host,
-      attendees: [guest],
-      location: "Office",
-      iCalSequence: 0,
-      ...overrides,
-    },
-    true
-  );
+  buildCalendarEvent({ ...slot, ...fixed, ...overrides }, true);
 
 describe("ICS per WC.2.3", () => {
   const env = { ...process.env };
@@ -79,9 +74,7 @@ describe("ICS per WC.2.3", () => {
   });
 
   it("2: a pre-sequence booking (null) still increases; location/request-reschedule bump by one", () => {
-    expect(getNextICalSequence(null)).toBe(1);
-    expect(getNextICalSequence(undefined)).toBe(1);
-    expect(getNextICalSequence(4)).toBe(5);
+    expect([null, undefined, 4].map(getNextICalSequence)).toEqual([1, 1, 5]);
     expect(getICalSequenceForBooking({ iCalSequence: 0 })).toBe(1);
   });
 
@@ -118,12 +111,8 @@ describe("ICS per WC.2.3", () => {
   });
 
   it("5: a zone without DST still gets a VTIMEZONE (Asia/Dubai +0400)", () => {
-    const ics = unfold(
-      generateIcsString({
-        event: baseEvent({ organizer: { ...host, timeZone: "Asia/Dubai" } }),
-        status: "CONFIRMED",
-      })!
-    );
+    const event = baseEvent({ organizer: { ...host, timeZone: "Asia/Dubai" } });
+    const ics = unfold(generateIcsString({ event, status: "CONFIRMED" })!);
     expect(ics).toContain("DTSTART;TZID=Asia/Dubai:20260308T180000");
     expect(ics).toContain("TZOFFSETFROM:+0400\r\nTZOFFSETTO:+0400");
   });

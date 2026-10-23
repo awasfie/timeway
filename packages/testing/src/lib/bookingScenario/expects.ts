@@ -653,7 +653,7 @@ export function expectBrokenIntegrationEmails({
       to: `${organizer.email}`,
       // No ics goes in case of broken integration email it seems
       // ics: {
-      //   filename: "invite.ics",
+      //   filename: "event.ics",
       //   iCalUID: iCalUID,
       // },
     },

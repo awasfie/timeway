@@ -1,27 +1,16 @@
-// Builds DTSTART/DTEND with TZID and a matching VTIMEZONE from the runtime's tzdata (Intl),
-// so no tz database dependency is added. Observances are emitted as explicit transitions
-// over a bounded window around the event; RFC 5545 allows observances without RRULE.
+// VTIMEZONE from the runtime's tzdata (Intl) so no tz dependency is added; RFC 5545 allows RRULE-less observances.
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
-
+const DAY_MS = 24 * 60 * MINUTE_MS;
 const formatterCache = new Map<string, Intl.DateTimeFormat>();
+const TWO = "2-digit";
+const PART_OPTIONS = { year: "numeric", month: TWO, day: TWO, hour: TWO, minute: TWO, second: TWO } as const;
 
 const getFormatter = (timeZone: string) => {
-  let formatter = formatterCache.get(timeZone);
-  if (!formatter) {
-    formatter = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      hourCycle: "h23",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-    formatterCache.set(timeZone, formatter);
-  }
+  const formatter =
+    formatterCache.get(timeZone) ??
+    new Intl.DateTimeFormat("en-US", { timeZone, hourCycle: "h23", ...PART_OPTIONS });
+  formatterCache.set(timeZone, formatter);
   return formatter;
 };
 
@@ -42,8 +31,7 @@ const getLocalParts = (timeZone: string, epochMs: number): LocalParts => {
   for (const part of getFormatter(timeZone).formatToParts(new Date(epochMs))) {
     if (part.type !== "literal") parts[part.type] = Number(part.value);
   }
-  const { year, month, day, hour, minute, second } = parts;
-  return { year, month, day, hour, minute, second };
+  return parts as LocalParts;
 };
 
 /** Offset from UTC in minutes at the given instant. */
@@ -54,7 +42,6 @@ const getOffsetMinutes = (timeZone: string, epochMs: number) => {
 };
 
 const pad = (n: number, width = 2) => String(n).padStart(width, "0");
-
 const formatLocal = (p: LocalParts) =>
   `${pad(p.year, 4)}${pad(p.month)}${pad(p.day)}T${pad(p.hour)}${pad(p.minute)}${pad(p.second)}`;
 

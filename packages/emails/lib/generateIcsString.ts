@@ -95,12 +95,10 @@ const postProcess = ({ ics, event, cancelled, sequence }: PostProcessInput) => {
     if (line === "BEGIN:VEVENT" && timeZone) {
       out.push(...buildVTimezone(timeZone, event.startTime, event.endTime));
     }
-    if (timeZone && line.startsWith("DTSTART:")) {
-      out.push(`DTSTART;TZID=${timeZone}:${toLocalIcsDateTime(timeZone, event.startTime)}`);
-      continue;
-    }
-    if (timeZone && line.startsWith("DTEND:")) {
-      out.push(`DTEND;TZID=${timeZone}:${toLocalIcsDateTime(timeZone, event.endTime)}`);
+    const dt = timeZone && /^(DTSTART|DTEND):/.exec(line)?.[1];
+    if (dt) {
+      const iso = dt === "DTSTART" ? event.startTime : event.endTime;
+      out.push(`${dt};TZID=${timeZone}:${toLocalIcsDateTime(timeZone, iso)}`);
       continue;
     }
     out.push(line);
@@ -108,10 +106,7 @@ const postProcess = ({ ics, event, cancelled, sequence }: PostProcessInput) => {
     if (line.startsWith("DTSTAMP:") && sequence === 0) out.push("SEQUENCE:0");
     if (line.startsWith("STATUS:")) out.push(`TRANSP:${cancelled ? "TRANSPARENT" : "OPAQUE"}`);
   }
-  return `${out
-    .filter((line) => line !== "")
-    .map(foldOctets)
-    .join("\r\n")}\r\n`;
+  return `${out.filter(Boolean).map(foldOctets).join("\r\n")}\r\n`;
 };
 
 const generateIcsString = ({
