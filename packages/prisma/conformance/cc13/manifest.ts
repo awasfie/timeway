@@ -39,6 +39,7 @@ const pending = (overrides: Partial<ModelCoverage> = {}): ModelCoverage => {
 
 export const manifest: Record<string, ModelCoverage> = {
   AccessCode: pending(),
+  ActivationEvent: pending(),
   Agent: pending(),
   ApiKey: pending(),
   Attribute: pending(),

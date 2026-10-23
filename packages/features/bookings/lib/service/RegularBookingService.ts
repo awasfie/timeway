@@ -59,6 +59,7 @@ import { groupHostsByGroupId } from "@calcom/lib/bookings/hostGroupUtils";
 import { shouldIgnoreContactOwner } from "@calcom/lib/bookings/routing/utils";
 import { getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
 import { DEFAULT_GROUP_ID, ENABLE_ASYNC_TASKER } from "@calcom/lib/constants";
+import { onBookingCreated } from "@calcom/features/tw-activation/activation";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
 import { extractBaseEmail } from "@calcom/lib/extract-base-email";
@@ -1759,6 +1760,10 @@ async function handler(
         creationSource: input.bookingData.creationSource,
         tracking: reqBody.tracking,
       });
+
+      if (booking) {
+        await onBookingCreated(booking, input.bookingData.creationSource ?? "unknown");
+      }
 
       if (booking?.userId) {
         const usersRepository = new UsersRepository();

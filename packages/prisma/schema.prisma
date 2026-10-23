@@ -2929,9 +2929,10 @@ model Organization {
   /// WC-TW-14a (E7): developer sandbox; emits no usage lines (nor do its sub-orgs).
   isSandbox          Boolean              @default(false)
 
-  members        OrganizationMember[]
-  apiKeys        OrgApiKey[]
-  customHostname TwCustomHostname?
+  members          OrganizationMember[]
+  apiKeys          OrgApiKey[]
+  customHostname   TwCustomHostname?
+  activationEvents ActivationEvent[]
 
   @@index([parentOrgId])
   @@map("tw_organization")
@@ -2995,4 +2996,27 @@ model OrgApiKey {
 
   @@index([orgId])
   @@map("tw_org_api_key")
+}
+
+/// WC-TW-9b: the three activation milestones (WC-9 step 2). First occurrence per org wins.
+enum TwActivationKind {
+  calendar_connected
+  event_type_published
+  first_external_booking
+}
+
+/// WC-TW-9b: activation ledger, DB source of truth for "activation <= 7 days" (Plausible is the funnel view).
+/// One row per (org, kind); inserts use ON CONFLICT DO NOTHING. RLS forced like the other TW-T9 tables.
+model ActivationEvent {
+  id         String           @id @default(uuid()) @db.Uuid
+  twOrgId    String           @db.Uuid
+  org        Organization     @relation(fields: [twOrgId], references: [id], onDelete: Cascade)
+  kind       TwActivationKind
+  occurredAt DateTime
+  /// credential id / event type id / booking uid, as text.
+  refId      String?
+  createdAt  DateTime         @default(now())
+
+  @@unique([twOrgId, kind])
+  @@map("tw_activation_event")
 }
