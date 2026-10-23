@@ -1,3 +1,4 @@
+import { filterHostsToTeamMembers } from "@calcom/features/eventtypes/lib/filterHostsToTeamMembers";
 import {
   findMatchingHostsWithEventSegment,
   getNormalizedHosts,
@@ -77,8 +78,15 @@ export const loadUsers = async ({
 };
 
 const loadUsersByEventType = async (eventType: EventType): Promise<NewBookingEventType["users"]> => {
+  // CC13-D1: never assign a host without an accepted membership in the event type's team.
+  const memberHosts = await filterHostsToTeamMembers({
+    prismaClient: prisma,
+    team: eventType.team,
+    hosts: eventType.hosts.filter(Boolean),
+    eventTypeId: eventType.id,
+  });
   const { hosts, fallbackHosts } = getNormalizedHosts({
-    eventType: { ...eventType, hosts: eventType.hosts.filter(Boolean) },
+    eventType: { ...eventType, hosts: memberHosts },
   });
   const matchingHosts = await findMatchingHostsWithEventSegment({
     eventType,

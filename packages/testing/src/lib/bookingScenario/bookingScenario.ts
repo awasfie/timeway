@@ -327,6 +327,21 @@ async function addHostsToDb(eventTypes: InputEventType[]) {
     }
 
     if (!eventType.hosts?.length) continue;
+    // CC13-D1: slot/booking readers only use hosts with an accepted membership in the event type's team
+    // (the update handler enforces the same on write). Give scenario hosts that membership when absent.
+    const hostTeamId = eventType.teamId ?? eventType.team?.id;
+    if (hostTeamId) {
+      for (const host of eventType.hosts) {
+        const existing = await prismock.membership.findFirst({
+          where: { teamId: hostTeamId, userId: host.userId },
+        });
+        if (!existing) {
+          await prismock.membership.create({
+            data: { teamId: hostTeamId, userId: host.userId, accepted: true, role: "MEMBER" },
+          });
+        }
+      }
+    }
     for (const host of eventType.hosts) {
       const data: Prisma.HostCreateInput = {
         eventType: {
