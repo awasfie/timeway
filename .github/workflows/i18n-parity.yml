@@ -1,0 +1,34 @@
+name: i18n AR/EN parity
+# R1-TW-AREN-a (R-61): every en key must exist in ar with the same {{placeholders}} and tags.
+# Called from pr.yml (in `required`) on every trusted PR with no path filter, so a locale-only
+# PR (which skips lint) still runs it. No secrets, no install.
+on:
+  workflow_call:
+  # pr.yml is pull_request_target (base-branch definitions), so this trigger is what runs the
+  # gate from the PR head on the PR that changes it; read-only, no secrets.
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    name: AR/EN key parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: ./.github/actions/cache-checkout
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Checker self-test
+        run: node --test scripts/i18n/check-ar-en-parity.node-test.mjs
+      - name: AR/EN parity
+        run: node scripts/i18n/check-ar-en-parity.mjs
