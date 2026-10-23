@@ -1,4 +1,5 @@
 import {
+  BookingAccessService,
   confirmBookingHandler,
   distributedTracing,
   getAllUserBookings,
@@ -1190,11 +1191,19 @@ export class BookingsService_2024_08_13 {
     return this.getBooking(bookingUid, requestUser);
   }
 
-  async getCalendarLinks(bookingUid: string): Promise<CalendarLink[]> {
+  async getCalendarLinks(bookingUid: string, userId: number): Promise<CalendarLink[]> {
     const booking = await this.bookingsRepository.getByUidWithAttendeesAndUserAndEvent(bookingUid);
 
     if (!booking) {
       throw new NotFoundException(`Booking with uid ${bookingUid} not found`);
+    }
+
+    // CC13-API-001 (t_fa3a2475): only the organizer, a host or a team/org admin may read the links.
+    const hasAccess = await new BookingAccessService(this.prismaReadService.prisma).doesUserIdHaveAccessToBooking(
+      { userId, bookingUid }
+    );
+    if (!hasAccess) {
+      throw new ForbiddenException(`User with id=${userId} does not have access to booking with uid=${bookingUid}`);
     }
 
     if (!booking.eventTypeId) {

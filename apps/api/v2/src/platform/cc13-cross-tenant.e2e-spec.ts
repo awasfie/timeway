@@ -177,8 +177,8 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       await bookingUnchanged(A.booking);
     });
 
-    // CC13-API-001: GET /v2/bookings/:uid/calendar-links returns A's booking title/times to B (any authenticated caller).
-    it.failing("B cannot read A's booking calendar links", async () => {
+    // CC13-API-001 (fixed t_fa3a2475): calendar-links now behind BookingPbacGuard.
+    it("B cannot read A's booking calendar links", async () => {
       const res = await request(app.getHttpServer())
         .get(`/v2/bookings/${A.booking.uid}/calendar-links`)
         .set("Authorization", bearer(B))
@@ -186,8 +186,8 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       expect(DENIED).toContain(res.status);
     });
 
-    // CC13-API-004: POST /v2/bookings/:uid/mark-absent by B returns 200 on A's past booking (no tenant check beyond BookingUidGuard).
-    it.failing("B cannot mark A's booking absent", async () => {
+    // CC13-API-004 (fixed t_fa3a2475): mark-absent now behind BookingPbacGuard.
+    it("B cannot mark A's booking absent", async () => {
       const res = await request(app.getHttpServer())
         .post(`/v2/bookings/${A.booking.uid}/mark-absent`)
         .set("Authorization", bearer(B))
@@ -231,8 +231,8 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       await bookingUnchanged(A.booking);
     });
 
-    // CC13-API-003: POST /v2/bookings/:uid/cancel by B cancels A's booking (OptionalApiAuthGuard, no tenant check).
-    it.failing("B cannot cancel A's booking", async () => {
+    // CC13-API-003 (fixed t_fa3a2475): authenticated non-owner refused by BookingOptionalAuthAccessGuard.
+    it("B cannot cancel A's booking", async () => {
       const res = await request(app.getHttpServer())
         .post(`/v2/bookings/${A.cancelBooking.uid}/cancel`)
         .set("Authorization", bearer(B))
@@ -242,13 +242,51 @@ describe("CC-13 apiV2 cross-tenant probes: bookings, event-types, schedules", ()
       await bookingUnchanged(A.cancelBooking);
     });
 
-    // CC13-API-002: GET /v2/bookings/:uid returns A's host email, attendees and details to B (uid acts as a bearer capability).
-    it.failing("B cannot read A's booking by uid with attendee details", async () => {
+    // CC13-API-002 (fixed t_fa3a2475): authenticated non-owner refused; anonymous uid access kept for the booker flow.
+    it("B cannot read A's booking by uid with attendee details", async () => {
       const res = await request(app.getHttpServer())
         .get(`/v2/bookings/${A.booking.uid}`)
         .set("Authorization", bearer(B))
         .set(bookingsReq());
       expect(DENIED).toContain(res.status);
+    });
+  });
+
+  describe("bookings: owner and anonymous booker keep access (t_fa3a2475)", () => {
+    const bookingsReq = () => ({ [CAL_API_VERSION_HEADER]: VERSION_2024_08_13 });
+
+    it("A can read own booking calendar links", async () => {
+      await request(app.getHttpServer())
+        .get(`/v2/bookings/${A.booking.uid}/calendar-links`)
+        .set("Authorization", bearer(A))
+        .set(bookingsReq())
+        .expect(200);
+    });
+
+    it("A can read own booking by uid", async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v2/bookings/${A.booking.uid}`)
+        .set("Authorization", bearer(A))
+        .set(bookingsReq())
+        .expect(200);
+      expect(res.body.data.uid).toEqual(A.booking.uid);
+    });
+
+    it("anonymous booker can still read a booking by uid", async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v2/bookings/${B.booking.uid}`)
+        .set(bookingsReq())
+        .expect(200);
+      expect(res.body.data.uid).toEqual(B.booking.uid);
+    });
+
+    it("A can mark own past booking absent", async () => {
+      await request(app.getHttpServer())
+        .post(`/v2/bookings/${A.booking.uid}/mark-absent`)
+        .set("Authorization", bearer(A))
+        .set(bookingsReq())
+        .send({ host: false })
+        .expect(200);
     });
   });
 

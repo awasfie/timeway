@@ -44,6 +44,7 @@ import {
   getSchemaPath,
 } from "@nestjs/swagger";
 import { Request } from "express";
+import { BookingOptionalAuthAccessGuard } from "@/platform/bookings/2024-08-13/guards/booking-optional-auth-access.guard";
 import { BookingPbacGuard } from "@/platform/bookings/2024-08-13/guards/booking-pbac.guard";
 import { BookingUidGuard } from "@/platform/bookings/2024-08-13/guards/booking-uid.guard";
 import { BookingReferencesFilterInput_2024_08_13 } from "@/platform/bookings/2024-08-13/inputs/booking-references-filter.input";
@@ -188,7 +189,7 @@ export class BookingsController_2024_08_13 {
   }
 
   @Get("/:bookingUid")
-  @UseGuards(BookingUidGuard, OptionalApiAuthGuard)
+  @UseGuards(BookingUidGuard, OptionalApiAuthGuard, BookingOptionalAuthAccessGuard)
   @ApiHeader(OPTIONAL_X_CAL_CLIENT_ID_HEADER)
   @ApiHeader(OPTIONAL_X_CAL_SECRET_KEY_HEADER)
   @ApiHeader(OPTIONAL_API_KEY_OR_ACCESS_TOKEN_HEADER)
@@ -294,7 +295,7 @@ export class BookingsController_2024_08_13 {
   }
 
   @Post("/:bookingUid/reschedule")
-  @UseGuards(BookingUidGuard, OptionalApiAuthGuard)
+  @UseGuards(BookingUidGuard, OptionalApiAuthGuard, BookingOptionalAuthAccessGuard)
   @ApiHeader(OPTIONAL_X_CAL_CLIENT_ID_HEADER)
   @ApiHeader(OPTIONAL_X_CAL_SECRET_KEY_HEADER)
   @ApiHeader(OPTIONAL_API_KEY_OR_ACCESS_TOKEN_HEADER)
@@ -334,7 +335,7 @@ export class BookingsController_2024_08_13 {
   }
 
   @Post("/:bookingUid/cancel")
-  @UseGuards(BookingUidGuard, OptionalApiAuthGuard)
+  @UseGuards(BookingUidGuard, OptionalApiAuthGuard, BookingOptionalAuthAccessGuard)
   @ApiHeader(OPTIONAL_X_CAL_CLIENT_ID_HEADER)
   @ApiHeader(OPTIONAL_X_CAL_SECRET_KEY_HEADER)
   @ApiHeader(OPTIONAL_API_KEY_OR_ACCESS_TOKEN_HEADER)
@@ -390,7 +391,7 @@ export class BookingsController_2024_08_13 {
   @Post("/:bookingUid/mark-absent")
   @HttpCode(HttpStatus.OK)
   @Permissions([BOOKING_WRITE])
-  @UseGuards(ApiAuthGuard, BookingUidGuard)
+  @UseGuards(ApiAuthGuard, BookingUidGuard, BookingPbacGuard)
   @ApiHeader(API_KEY_OR_ACCESS_TOKEN_HEADER)
   @ApiOperation({
     summary: "Mark a booking absence",
@@ -528,8 +529,11 @@ export class BookingsController_2024_08_13 {
       `,
   })
   @HttpCode(HttpStatus.OK)
-  async getCalendarLinks(@Param("bookingUid") bookingUid: string): Promise<CalendarLinksOutput_2024_08_13> {
-    const calendarLinks = await this.bookingsService.getCalendarLinks(bookingUid);
+  async getCalendarLinks(
+    @Param("bookingUid") bookingUid: string,
+    @GetUser("id") userId: number
+  ): Promise<CalendarLinksOutput_2024_08_13> {
+    const calendarLinks = await this.bookingsService.getCalendarLinks(bookingUid, userId);
 
     return {
       status: SUCCESS_STATUS,

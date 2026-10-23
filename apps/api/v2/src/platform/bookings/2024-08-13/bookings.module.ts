@@ -3,6 +3,7 @@ import { BookingAttendeesController_2024_08_13 } from "@/platform/bookings/2024-
 import { BookingGuestsController_2024_08_13 } from "@/platform/bookings/2024-08-13/controllers/booking-guests.controller";
 import { BookingLocationController_2024_08_13 } from "@/platform/bookings/2024-08-13/controllers/booking-location.controller";
 import { BookingsController_2024_08_13 } from "@/platform/bookings/2024-08-13/controllers/bookings.controller";
+import { BookingOptionalAuthAccessGuard } from "@/platform/bookings/2024-08-13/guards/booking-optional-auth-access.guard";
 import { BookingPbacGuard } from "@/platform/bookings/2024-08-13/guards/booking-pbac.guard";
 import { BookingReferencesRepository_2024_08_13 } from "@/platform/bookings/2024-08-13/repositories/booking-references.repository";
 import { BookingsRepository_2024_08_13 } from "@/platform/bookings/2024-08-13/repositories/bookings.repository";
@@ -103,6 +104,7 @@ import { UsersModule } from "@/modules/users/users.module";
     CalVideoService,
     CalVideoOutputService,
     BookingPbacGuard,
+    BookingOptionalAuthAccessGuard,
     BookingLocationCalendarSyncService_2024_08_13,
     BookingLocationCredentialService_2024_08_13,
     BookingLocationIntegrationService_2024_08_13,
