@@ -1,4 +1,5 @@
 import type { IEventTypesRepository } from "@calcom/features/eventtypes/eventtypes.repository.interface";
+import { filterHostsToTeamMembers } from "@calcom/features/eventtypes/lib/filterHostsToTeamMembers";
 import { MembershipRepository } from "@calcom/features/membership/repositories/MembershipRepository";
 import { LookupTarget, ProfileRepository } from "@calcom/features/profile/repositories/ProfileRepository";
 import type { UserWithLegacySelectedCalendars } from "@calcom/features/users/repositories/UserRepository";
@@ -1375,9 +1376,17 @@ export class EventTypeRepository implements IEventTypesRepository {
       return eventType;
     }
 
+    // CC13-D1: slots never offer a host without an accepted membership in the event type's team.
+    const memberHosts = await filterHostsToTeamMembers({
+      prismaClient: this.prismaClient,
+      team: eventType.team,
+      hosts: eventType.hosts,
+      eventTypeId: eventType.id,
+    });
+
     return {
       ...eventType,
-      hosts: hostsWithSelectedCalendars(eventType.hosts),
+      hosts: hostsWithSelectedCalendars(memberHosts),
       users: usersWithSelectedCalendars(eventType.users),
       metadata: EventTypeMetaDataSchema.parse(eventType.metadata),
       rrSegmentQueryValue: rrSegmentQueryValueSchema.parse(eventType.rrSegmentQueryValue),

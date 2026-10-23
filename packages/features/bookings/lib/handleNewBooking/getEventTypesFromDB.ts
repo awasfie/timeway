@@ -1,6 +1,7 @@
 import type { LocationObject } from "@calcom/app-store/locations";
 import { getBookingFieldsWithSystemFields } from "@calcom/features/bookings/lib/getBookingFields";
 import type { DefaultEvent } from "@calcom/features/eventtypes/lib/defaultEvents";
+import { filterHostsToTeamMembers } from "@calcom/features/eventtypes/lib/filterHostsToTeamMembers";
 import { withSelectedCalendars } from "@calcom/features/users/repositories/UserRepository";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { parseRecurringEvent } from "@calcom/lib/isRecurringEvent";
@@ -218,7 +219,15 @@ export const getEventTypesFromDB = async (eventTypeId: number) => {
 
   const isOrgTeamEvent = !!eventType?.team && !!profile?.organizationId;
 
-  const hostsWithSelectedCalendars = hosts.map((host) => ({
+  // CC13-D1: drop Host rows whose user is not an accepted member of the event type's team.
+  const memberHosts = await filterHostsToTeamMembers({
+    prismaClient: prisma,
+    team: eventType.team,
+    hosts,
+    eventTypeId,
+  });
+
+  const hostsWithSelectedCalendars = memberHosts.map((host) => ({
     ...host,
     user: withSelectedCalendars(host.user),
   }));
