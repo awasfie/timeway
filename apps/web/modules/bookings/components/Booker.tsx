@@ -3,7 +3,7 @@ import BookingPageTagManager from "@calcom/app-store/BookingPageTagManager";
 import { useIsPlatformBookerEmbed } from "@calcom/atoms/hooks/useIsPlatformBookerEmbed";
 import dayjs from "@calcom/dayjs";
 import { useEmbedUiConfig } from "@calcom/embed-core/embed-iframe";
-import { updateEmbedBookerState } from "@calcom/embed-core/src/embed-iframe";
+import { updateEmbedBookerState } from "@calcom/embed-core/src/embed-iframe/hooks";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import {
   fadeInLeftClassName,

@@ -1,6 +1,6 @@
 "use client";
 
-import "@calcom/embed-core/src/embed-iframe";
+import "@calcom/embed-core/src/embed-iframe/load-runtime";
 
 import AppProviders from "@lib/app-providers-app-dir";
 
