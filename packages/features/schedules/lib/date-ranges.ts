@@ -243,8 +243,7 @@ export function buildDateRanges({
   // processWorkingHours only merges a rule into a range it shares an end with or starts at the end of
   // (incl. chaining past midnight), so overlapping rules gave different ranges, and date overrides
   // replaced different groups, depending on stored order. Merging the union makes it canonical.
-  const groupedWorkingHours = groupByDate(
-    mergeRanges(
+  const workingHours = mergeRanges(
       Object.values(
         availability
           .filter((item): item is WorkingHours => "days" in item)
@@ -260,7 +259,6 @@ export function buildDateRanges({
             {}
           )
       )
-    )
   );
 
   const groupedOOO = groupByDate(
@@ -299,13 +297,21 @@ export function buildDateRanges({
     overrideRanges.push(range);
   }
   const groupedDateOverrides = groupByDate(mergeRanges(overrideRanges));
+  // Cut overridden days out of working hours rather than dropping whole groups: a range chained past
+  // midnight is grouped under its first day, so dropping by group key depended on the query window.
+  const groupedWorkingHours = groupByDate(
+    overrideDates.size
+      ? subtract(
+          workingHours,
+          [...overrideDates].map((date) => {
+            const start = dayjs.tz(date, timeZone);
+            return { start, end: start.add(1, "day") };
+          })
+        )
+      : workingHours
+  );
 
-  // Spread first to keep the historical key order, then drop working hours of every overridden date
-  // whose override was merged into the previous day's group.
   const byDate: { [x: string]: DateRange[] } = { ...groupedWorkingHours, ...groupedDateOverrides };
-  for (const date of overrideDates) {
-    if (!groupedDateOverrides[date]) delete byDate[date];
-  }
 
   const dateRanges = Object.values(byDate).map(
     // remove 0-length overrides that were kept to cancel out working dates until now.
@@ -317,7 +323,11 @@ export function buildDateRanges({
     (ranges) => ranges.filter((range) => range.start.valueOf() !== range.end.valueOf())
   );
 
-  return { dateRanges: dateRanges.flat(), oooExcludedDateRanges: oooExcludedDateRanges.flat() };
+  const byStart = (a: DateRange, b: DateRange) => a.start.valueOf() - b.start.valueOf();
+  return {
+    dateRanges: dateRanges.flat().sort(byStart),
+    oooExcludedDateRanges: oooExcludedDateRanges.flat().sort(byStart),
+  };
 }
 
 function mergeRanges(ranges: DateRange[]): DateRange[] {
