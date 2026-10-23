@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 
 import PageWrapper from "@components/PageWrapperAppDir";
 
-import { AuthedAppProviders } from "./AuthedAppProviders";
 import { NotFound } from "./notFoundClient";
 
 export const generateMetadata = async () => {
@@ -26,11 +25,9 @@ const ServerPage = async () => {
   const host = h.get("x-forwarded-host") ?? "";
 
   return (
-    <AuthedAppProviders isEmbed={h.get("x-isEmbed") === "true"}>
-      <PageWrapper requiresLicense={false} nonce={nonce}>
-        <NotFound host={host} />
-      </PageWrapper>
-    </AuthedAppProviders>
+    <PageWrapper requiresLicense={false} nonce={nonce}>
+      <NotFound host={host} />
+    </PageWrapper>
   );
 };
 export default ServerPage;
