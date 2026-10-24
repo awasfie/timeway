@@ -1,0 +1,17 @@
+/* Maps the @family/ui token names (WC-DX-4) onto Timeway's coss-ui theme variables, so the shared
+ * picker inherits the brand-timeway palette without hard-coded colours. */
+:root {
+  --color-ink: var(--foreground);
+  --color-ink-muted: var(--muted-foreground);
+  --color-surface: var(--accent);
+  --color-surface-alt: var(--background);
+  --radius-full: 9999px;
+  --font-arabic: var(--font-sans);
+  --font-weight-label: 500;
+  --font-weight-headline: 600;
+}
+
+/* The booker month view fills its column like the grid it replaced. */
+.tw-booker-calendar .fui-calendar,
+.tw-booker-calendar .fui-calendar-grid { inline-size: 100%; }
+.tw-booker-calendar .fui-calendar-cell { inline-size: 100%; aspect-ratio: 1; block-size: auto; max-inline-size: 3.5rem; margin-inline: auto; }

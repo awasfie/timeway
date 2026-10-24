@@ -4,6 +4,8 @@
 @import "../../../packages/config/theme/brand-timeway.css";
 @import "../../../packages/coss-ui/src/styles/globals.css";
 @import "./raqb.css";
+@import "./family-ui.css";
+@import "@family/ui/styles.css";
 
 ::-moz-selection {
   color: var(--cal-brand-text);

@@ -95,14 +95,14 @@ const createMockStore = (initialState?: Partial<BookerStore>): StoreApi<BookerSt
 export const renderWithBookerStore = (
   ui: ReactElement,
   options?: CustomRenderOptions
-): ReturnType<typeof render> => {
+): ReturnType<typeof render> & { mockStore: StoreApi<BookerStore> } => {
   const mockStore = createMockStore(options?.mockStore);
 
   const Wrapper = ({ children }: { children: ReactNode }): ReactElement => (
     <BookerStoreContext.Provider value={mockStore}>{children}</BookerStoreContext.Provider>
   );
 
-  return render(ui, { wrapper: Wrapper, ...options });
+  return { ...render(ui, { wrapper: Wrapper, ...options }), mockStore };
 };
 
 export * from "@testing-library/react";
