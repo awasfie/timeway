@@ -8,8 +8,9 @@ import { getWebhookFeature } from "@calcom/features/di/webhooks/containers/webho
 import getWebhooks from "@calcom/features/webhooks/lib/getWebhooks";
 import { prisma } from "@calcom/prisma";
 import { WebhookTriggerEvents } from "@calcom/prisma/enums";
-import { createCallerFactory } from "@calcom/trpc/server/trpc";
 import { webhookRouter } from "@calcom/trpc/server/routers/viewer/webhook/_router";
+import { createCallerFactory } from "@calcom/trpc/server/trpc";
+import type { TFunction } from "i18next";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Cc13Seed, SeededTenant } from "./seed";
 import { seedCc13Tenants } from "./seed";
@@ -83,7 +84,7 @@ async function snapshotA() {
   }
 }
 async function restoreA() {
-  for (const [id, row] of pristine) {
+  for (const [id, row] of Array.from(pristine)) {
     const { id: _id, ...data } = row;
     await prisma.webhook.upsert({ where: { id }, create: row, update: data });
   }
@@ -107,7 +108,12 @@ const bookingEventAsA = () => {
       endTime: "2030-01-15T09:30:00.000Z",
       uid: A.booking.uid,
       bookingId: A.booking.id,
-      organizer: { name: "A", email: A.owner.email, timeZone: "UTC" },
+      organizer: {
+        name: "A",
+        email: A.owner.email,
+        timeZone: "UTC",
+        language: { translate: ((key: string) => key) as TFunction, locale: "en" },
+      },
       attendees: [],
     },
     traceContext: { traceId: "cc13", spanId: "cc13", operation: "cc13" },

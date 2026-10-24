@@ -77,7 +77,7 @@ const soon: Record<"A" | "B", { id: number; uid: string }> = {
 const hookUrl = (t: SeededTenant) => `https://${tag(t)}-sched.cc13.invalid/hook`;
 
 beforeAll(async () => {
-  process.env.CRON_API_KEY = CRON_KEY;
+  vi.stubEnv("CRON_API_KEY", CRON_KEY);
   seed = await seedCc13Tenants();
   const now = Date.now();
   for (const t of [seed.A, seed.B]) {
@@ -138,7 +138,7 @@ describe("CC-13 job probes: booking reminders (B vs A)", () => {
       expect(recipients.has(`${tag(t)}-soon-guest@cc13.test`)).toBe(true);
       expect(recipients.has(t.owner.email)).toBe(true);
       expect(recipients.has(t.member.email)).toBe(true);
-      for (const r of recipients) {
+      for (const r of Array.from(recipients)) {
         expect(ownsAddress(t, r), `${t.label} reminder went to ${r}`).toBe(true);
         expect(ownsAddress(other, r)).toBe(false);
       }
