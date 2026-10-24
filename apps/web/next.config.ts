@@ -264,8 +264,6 @@ const nextConfig = (phase: string): NextConfig => {
       // Client bundles get a console-only tslog (packages/lib/tslog.browser.ts); servers keep the real one.
       resolveAlias: {
         tslog: { browser: "@calcom/lib/tslog.browser" },
-        // next/dist/client/{app-globals,index}.js import this relative specifier; only those files use it.
-        "../build/polyfills/polyfill-module": { browser: "@calcom/lib/next-polyfill-module.browser" },
       },
     },
     async rewrites() {
