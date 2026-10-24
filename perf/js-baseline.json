@@ -1,6 +1,6 @@
 {
   "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200.",
-  "total_kb_gz": 670.2,
+  "total_kb_gz": 669.9,
   "tolerance_kb": 5,
-  "source": "booking-perf run 40009058087 job 120604394818 (PR #154 9ac0190c7b, WC-TW-6c-8c: radix react-slot/react-context deduped within major 1, -1.1 KB vs 671.3 in run 40000894863 at #130 b2731afcd8; residual duplicates: tailwind-merge 1.x+3.x (major), chunk-split copies of nuqs/styled-jsx/next-themes/next link, react-timezone-select bundled deps), region=gh-runner"
+  "source": "booking-perf run 40045310870 job 120725564120 (PR #160 f7294693ac, WC-TW-6c-8d: next 16.4.1 polyfill-module yarn-patched to URL.canParse only, -0.3 KB gz vs 670.2 in run 40009058087; Lighthouse legacy-javascript 15.2 -> 1.3 KiB; residual: react-timezone-select babel runtime, i18next classCallCheck, next-auth@4 cjs (major upgrades)), region=gh-runner"
 }
