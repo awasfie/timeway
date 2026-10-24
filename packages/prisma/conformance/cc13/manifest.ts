@@ -145,6 +145,42 @@ export const manifest: Record<string, ModelCoverage> = {
   WrongAssignmentReport: pending({ webhook: WEBHOOK_NONE, apiKey: API_KEY_NONE }),
 };
 
+// apiV2 surface (WC-TW-7c-1/2): probed models listed here, special none() reasons next, every other model falls to API_V2_NONE; Webhook keeps its own row.
+const API_V2_NONE = { none: "no apps/api/v2 route reads or writes this model" };
+const API_V2_PROBES: Record<string, SurfaceCoverage> = {
+  Booking: "apps/api/v2/src/platform/cc13-cross-tenant.e2e-spec.ts > B cannot read A's booking references",
+  Credential:
+    "apps/api/v2/src/platform/cc13-cross-tenant-orgs.e2e-spec.ts > B cannot disconnect A's calendar credential",
+  EventType: "apps/api/v2/src/platform/cc13-cross-tenant.e2e-spec.ts > B cannot update A's event type",
+  Membership:
+    "apps/api/v2/src/platform/cc13-cross-tenant-orgs.e2e-spec.ts > B cannot update A's managed user or membership",
+  Organization:
+    "apps/api/v2/src/platform/cc13-cross-tenant-orgs.e2e-spec.ts > B cannot update A's OAuth client",
+  PlatformOAuthClient:
+    "apps/api/v2/src/platform/cc13-cross-tenant-orgs.e2e-spec.ts > B cannot read A's OAuth client",
+  Profile:
+    "apps/api/v2/src/platform/cc13-cross-tenant-orgs.e2e-spec.ts > B reads only its own profile via /me",
+  Schedule: "apps/api/v2/src/platform/cc13-cross-tenant.e2e-spec.ts > B cannot update A's schedule",
+  User: "apps/api/v2/src/platform/cc13-cross-tenant-orgs.e2e-spec.ts > B cannot read A's managed user",
+  VerifiedEmail:
+    "apps/api/v2/src/platform/cc13-cross-tenant-orgs.e2e-spec.ts > B cannot read A's verified email by id",
+  VerifiedNumber:
+    "apps/api/v2/src/platform/cc13-cross-tenant-orgs.e2e-spec.ts > B cannot read A's verified phone by id",
+  ApiKey: {
+    none: "/v2/api-keys/refresh acts only on the key presented in the caller's own Authorization header; cross-tenant key use is the apiKey surface (WC-TW-7c-3)",
+  },
+  OrganizationSettings: {
+    none: "read internally by the admin-API guard (fetchOrgAdminApiStatus); no route returns or writes it",
+  },
+  Team: {
+    none: "apps/api/v2 has no team controller; team/org rows are reached only through the org-scoped OAuthClientGuard/RolesGuard, probed under Organization and PlatformOAuthClient",
+  },
+};
+for (const [model, coverage] of Object.entries(manifest)) {
+  if (typeof coverage.apiV2 === "object" && "pending" in coverage.apiV2)
+    coverage.apiV2 = API_V2_PROBES[model] ?? API_V2_NONE;
+}
+
 // job surface (WC-TW-7c-5): applied to every model in one pass so the per-model rows stay untouched.
 for (const [model, coverage] of Object.entries(manifest)) {
   coverage.job = JOB_PROBES[model] ?? JOB_NONE;
