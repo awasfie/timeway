@@ -45,7 +45,8 @@ export function missingSeedEventTypes(
 /**
  * The owner's own public booking link, prefilled so booking yourself is two clicks.
  * A self-booking never counts as activation: tw-activation isExternalBooking rejects
- * attendees who are org members.
+ * attendees who are org members. No locale param: the booking page renders in the
+ * event owner's interfaceLanguage / the visitor's request locale.
  */
 export function bookYourselfUrl(input: {
   bookerUrl: string;
@@ -53,7 +54,6 @@ export function bookYourselfUrl(input: {
   slug?: string;
   name?: string | null;
   email?: string | null;
-  locale?: string | null;
 }): string | null {
   if (!input.username) return null;
   const base = input.bookerUrl.replace(/\/+$/, "");
@@ -62,6 +62,5 @@ export function bookYourselfUrl(input: {
   );
   if (input.name) url.searchParams.set("name", input.name);
   if (input.email) url.searchParams.set("email", input.email);
-  if (input.locale === "ar") url.searchParams.set("lang", "ar");
   return url.toString();
 }

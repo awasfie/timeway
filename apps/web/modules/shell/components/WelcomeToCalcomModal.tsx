@@ -32,7 +32,6 @@ export function WelcomeToCalcomModal() {
         username: me.username,
         name: me.name,
         email: me.email,
-        locale: me.locale,
       })
     : null;
 

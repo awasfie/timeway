@@ -42,7 +42,6 @@ describe("WC-DX-10c timeway onboarding seed", () => {
       username: "sara",
       name: "Sara Ali",
       email: "sara@example.com",
-      locale: "en",
     });
     expect(en).toBe("https://timeway.co/sara/15min?name=Sara+Ali&email=sara%40example.com");
     const ar = new URL(
@@ -50,12 +49,11 @@ describe("WC-DX-10c timeway onboarding seed", () => {
         bookerUrl: "https://timeway.co",
         username: "sara",
         name: "سارة علي",
-        locale: "ar",
       }) ?? ""
     );
     expect(ar.pathname).toBe("/sara/15min");
     expect(ar.searchParams.get("name")).toBe("سارة علي");
-    expect(ar.searchParams.get("lang")).toBe("ar");
+    expect(ar.searchParams.has("lang")).toBe(false);
   });
 
   it("returns null without a username (no public page yet)", () => {
