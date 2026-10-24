@@ -10,6 +10,7 @@
 import process from "node:process";
 import type { ParsedUrlQuery } from "node:querystring";
 import { FeatureProvider } from "@calcom/features/flags/context/provider";
+import { PagesRouterI18nContext } from "@calcom/lib/hooks/PagesRouterI18nContext";
 import { useFlags } from "@calcom/web/modules/feature-flags/hooks/useFlags";
 import { useViewerI18n } from "@components/I18nLanguageHandler";
 import useIsBookingPage from "@lib/hooks/useIsBookingPage";
@@ -25,13 +26,22 @@ import type { SSRConfig } from "next-i18next/dist/types/types";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/pages";
 import type { PropsWithChildren, ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+
+// useLocale reads this context instead of importing react-i18next, which keeps react-i18next off app-router pages.
+const PagesRouterI18nBridge = ({ children }: { children: ReactNode }) => {
+  const { i18n, t } = useTranslation("common");
+  const isLocaleReady = Object.keys(i18n).length > 0;
+  const value = useMemo(() => ({ i18n, t, isLocaleReady }), [i18n, t, isLocaleReady]);
+  return <PagesRouterI18nContext.Provider value={value}>{children}</PagesRouterI18nContext.Provider>;
+};
 
 const I18nextAdapter = appWithTranslation<
   NextJsAppProps<SSRConfig> & {
     children: React.ReactNode;
   }
->(({ children }) => <>{children}</>);
+>(({ children }) => <PagesRouterI18nBridge>{children}</PagesRouterI18nBridge>);
 
 // Workaround for https://github.com/vercel/next.js/issues/8592
 export type AppProps = Omit<

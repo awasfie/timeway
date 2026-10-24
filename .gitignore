@@ -117,3 +117,6 @@ agents/devin-knowledge.json
 
 # pagefind
 _pagefind/
+
+# WC-TW-6c perf gate outputs
+perf/out/
