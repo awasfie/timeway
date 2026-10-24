@@ -117,3 +117,6 @@ agents/devin-knowledge.json
 
 # pagefind
 _pagefind/
+
+# ops tooling bytecode
+ops/cloudflare/__pycache__/
