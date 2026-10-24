@@ -6,12 +6,21 @@ import { fieldsThatSupportLabelAsSafeHtml } from "@calcom/features/form-builder/
 import { fieldTypesConfigMap } from "@calcom/features/form-builder/fieldTypes";
 import { SystemField } from "@calcom/lib/bookings/SystemField";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 import type { RouterOutputs } from "@calcom/trpc/react";
 import { FormBuilderField } from "@calcom/web/modules/form-builder/components/FormBuilderField";
 import { useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import { z } from "zod";
+
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// labelAsSafeHtml is sanitized on the server (getBookingFields); appending escaped text keeps the
+// markdown parser and sanitize-html (which pulls the Buffer polyfill) out of the booking bundle.
+const appendToSafeHtml = (safeHtml: string, escapedText: string) =>
+  /<\/p>\s*$/.test(safeHtml)
+    ? safeHtml.replace(/<\/p>(\s*)$/, `${escapedText}</p>$1`)
+    : `${safeHtml}${escapedText}`;
 
 type TouchedFields = {
   responses?: Record<string, boolean>;
@@ -90,12 +99,13 @@ export const BookingFields = ({
 
     const price = typeof field.price === "string" ? parseFloat(field.price) : field.price;
     const label = getPriceFormattedLabel(field.label, price);
+    const priceSuffix = escapeHtml(label.slice(field.label.length));
 
     return {
       ...field,
       label,
       ...(fieldsThatSupportLabelAsSafeHtml.includes(field.type) && field.labelAsSafeHtml
-        ? { labelAsSafeHtml: markdownToSafeHTML(label) }
+        ? { labelAsSafeHtml: appendToSafeHtml(field.labelAsSafeHtml, priceSuffix) }
         : { labelAsSafeHtml: undefined }),
     };
   };
