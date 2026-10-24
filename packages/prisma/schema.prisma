@@ -661,6 +661,9 @@ model Team {
   seatChangeLogs    SeatChangeLog[]
   monthlyProrations MonthlyProration[]
 
+  // WC-TW-12 custom hostname (Cloudflare for SaaS); one per organization.
+  twCustomHostname TwCustomHostname?
+
   @@unique([slug, parentId])
   @@index([parentId])
 }
@@ -2946,4 +2949,25 @@ model OrgApiKey {
 
   @@index([orgId])
   @@map("tw_org_api_key")
+}
+
+/// WC-TW-12 (D5): one Cloudflare for SaaS custom hostname per organization (Team).
+/// No RLS: the request middleware resolves a Host header to its org before any session exists.
+model TwCustomHostname {
+  id                 String    @id @default(uuid()) @db.Uuid
+  organizationId     Int       @unique
+  organization       Team      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// lowercase, no trailing dot
+  hostname           String    @unique
+  cfHostnameId       String?   @unique
+  /// Cloudflare custom hostname status: pending | active | moved | deleted | blocked | ...
+  status             String    @default("pending")
+  sslStatus          String?
+  verificationErrors Json?
+  createdAt          DateTime  @default(now())
+  lastCheckedAt      DateTime?
+  activatedAt        DateTime?
+
+  @@index([status, createdAt])
+  @@map("tw_custom_hostname")
 }

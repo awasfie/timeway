@@ -2753,6 +2753,7 @@ __metadata:
     lingo.dev: "npm:0.117.14"
     rrule: "npm:2.7.1"
     sharp: "npm:0.35.5"
+    tldts: "npm:6.1.86"
     tsdav: "npm:2.0.3"
     tslog: "npm:4.9.2"
     typescript: "npm:5.9.3"
@@ -39318,7 +39319,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tldts@npm:^6.1.32":
+"tldts@npm:6.1.86, tldts@npm:^6.1.32":
   version: 6.1.86
   resolution: "tldts@npm:6.1.86"
   dependencies:
