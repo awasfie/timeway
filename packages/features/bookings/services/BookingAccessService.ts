@@ -1,44 +1,8 @@
+import { PermissionCheckService } from "@calcom/features/pbac/services/permission-check.service";
 import { UserRepository } from "@calcom/features/users/repositories/UserRepository";
 import type { PrismaClient } from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
 import { BookingRepository } from "../repositories/BookingRepository";
-
-/**
- * Role-based access check (CC13-API-001..004, t_fa3a2475).
- *
- * Cal.diy removed the PBAC engine and left a stub here that returned `true` for every
- * check, so any authenticated user was treated as a team/org admin of every booking whose
- * event type has a team or whose organizer belongs to an org or team. That made
- * doesUserIdHaveAccessToBooking a cross-tenant pass. With PBAC gone, the permission is
- * decided by the fallback roles: the user needs an accepted membership with one of
- * `fallbackRoles` on the team itself or on its parent organization.
- */
-class PermissionCheckService {
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async checkPermission({
-    userId,
-    teamId,
-    fallbackRoles,
-  }: {
-    userId: number;
-    teamId: number;
-    permission: string;
-    fallbackRoles: MembershipRole[];
-  }): Promise<boolean> {
-    if (!fallbackRoles.length) return false;
-    const membership = await this.prisma.membership.findFirst({
-      where: {
-        userId,
-        accepted: true,
-        role: { in: fallbackRoles },
-        team: { OR: [{ id: teamId }, { children: { some: { id: teamId } } }] },
-      },
-      select: { id: true },
-    });
-    return !!membership;
-  }
-}
 
 type BookingForAccessCheck = NonNullable<Awaited<ReturnType<BookingRepository["findByUidIncludeEventType"]>>>;
 

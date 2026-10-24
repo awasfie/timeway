@@ -72,9 +72,10 @@ describe("getUserEventGroups", () => {
     >
   >;
 
+  const mockMembershipFindFirst = vi.fn();
   const mockCtx = {
     user: mockUser,
-    prisma: {} as PrismaClient,
+    prisma: { membership: { findFirst: mockMembershipFindFirst } } as unknown as PrismaClient,
   };
 
   beforeEach(() => {
@@ -171,7 +172,8 @@ describe("getUserEventGroups", () => {
   });
 
   describe("Permissions", () => {
-    it("should grant permissions for team members (stub always returns true)", async () => {
+    it("grants canCreateEventType to a team ADMIN (accepted membership found)", async () => {
+      mockMembershipFindFirst.mockResolvedValue({ id: 1 });
       const { ProfileRepository } = await import("@calcom/features/profile/repositories/ProfileRepository");
 
       const mockTeamMembership = {
@@ -212,6 +214,42 @@ describe("getUserEventGroups", () => {
       expect(result.teamPermissions[100]).toMatchObject({
         canCreateEventType: true,
       });
+    });
+
+    it("refuses canCreateEventType when no ADMIN/OWNER membership exists on the team or its org", async () => {
+      const { ProfileRepository } = await import("@calcom/features/profile/repositories/ProfileRepository");
+      mockMembershipFindFirst.mockResolvedValue(null);
+      const memberOnly = {
+        id: 2,
+        teamId: 100,
+        userId: 1,
+        accepted: true,
+        role: MembershipRole.MEMBER,
+        team: { id: 100, name: "Test Team", slug: "test-team", logoUrl: null, parentId: null, parent: null, metadata: {} },
+      } as unknown as NonNullable<
+        Awaited<
+          ReturnType<
+            typeof import("@calcom/features/membership/repositories/MembershipRepository").MembershipRepository.findAllByUpIdIncludeTeam
+          >
+        >
+      >[0];
+
+      vi.mocked(ProfileRepository.findByUpIdWithAuth).mockResolvedValue(mockProfile);
+      mockFindAllByUpIdIncludeTeam.mockResolvedValue([memberOnly]);
+      mockFilterTeamsByEventTypeReadPermission.mockResolvedValue([memberOnly]);
+
+      const result = await getUserEventGroups({ ctx: mockCtx, input: null });
+
+      expect(result.teamPermissions[100]).toMatchObject({ canCreateEventType: false });
+      expect(mockMembershipFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: 1,
+            accepted: true,
+            role: { in: [MembershipRole.OWNER, MembershipRole.ADMIN] },
+          }),
+        })
+      );
     });
   });
 

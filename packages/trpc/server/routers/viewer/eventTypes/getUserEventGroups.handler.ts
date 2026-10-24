@@ -1,4 +1,5 @@
 import { MembershipRepository } from "@calcom/features/membership/repositories/MembershipRepository";
+import { PermissionCheckService } from "@calcom/features/pbac/services/permission-check.service";
 import { ProfileRepository } from "@calcom/features/profile/repositories/ProfileRepository";
 import { checkRateLimitAndThrowError } from "@calcom/lib/checkRateLimitAndThrowError";
 import type { PrismaClient } from "@calcom/prisma";
@@ -10,13 +11,6 @@ import { TeamAccessUseCase } from "./teamAccessUseCase";
 import { EventGroupBuilder } from "./usecases/EventGroupBuilder";
 import { ProfilePermissionProcessor } from "./usecases/ProfilePermissionProcessor";
 import { EventTypeGroupFilter } from "./utils/EventTypeGroupFilter";
-
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
 
 type GetByViewerOptions = {
   ctx: {
@@ -64,7 +58,7 @@ export const getUserEventGroups = async ({ ctx, input }: GetByViewerOptions) => 
   const profileProcessor = new ProfilePermissionProcessor();
   const profiles = profileProcessor.processProfiles(eventTypeGroups, teamPermissionsMap);
 
-  const permissionCheckService = new PermissionCheckService();
+  const permissionCheckService = new PermissionCheckService(ctx.prisma);
 
   const teamIdsToCheck = filteredEventTypeGroups
     .map((group) => group.teamId)

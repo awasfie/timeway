@@ -1,4 +1,5 @@
 import type { PrismaBookingReportRepository } from "@calcom/features/bookingReport/repositories/PrismaBookingReportRepository";
+import type { PermissionCheckService } from "@calcom/features/pbac/services/permission-check.service";
 import type { WatchlistRepository } from "@calcom/features/watchlist/lib/repository/WatchlistRepository";
 import { BookingReportStatus, MembershipRole, WatchlistType } from "@calcom/prisma/enums";
 import { WatchlistErrors } from "../errors/WatchlistErrors";
@@ -14,12 +15,6 @@ import type {
 import { WatchlistOperationsService } from "./WatchlistOperationsService";
 
 type PermissionString = string;
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
 
 type Deps = {
   watchlistRepo: WatchlistRepository;
