@@ -1,3 +1,4 @@
+import { PermissionCheckService } from "@calcom/features/pbac/services/permission-check.service";
 import { getPlaceholderAvatar } from "@calcom/lib/defaultAvatarImage";
 import { getUserAvatarUrl } from "@calcom/lib/getAvatarUrl";
 import type { PrismaClient } from "@calcom/prisma";
@@ -8,12 +9,6 @@ import { TRPCError } from "@trpc/server";
 import type { TTeamsAndUserProfilesQueryInputSchema } from "./teamsAndUserProfilesQuery.schema";
 
 type PermissionString = string;
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
 
 type TeamsAndUserProfileOptions = {
   ctx: {
@@ -104,8 +99,13 @@ export const teamsAndUserProfilesQuery = async ({ ctx, input }: TeamsAndUserProf
   // Filter teams based on permission if provided
   let hasPermissionForFiltered: boolean[] = [];
   if (input?.withPermission) {
-    const permissionService = new PermissionCheckService();
+    const permissionService = new PermissionCheckService(prisma);
     const { permission, fallbackRoles } = input.withPermission;
+    // fallbackRoles is client input: keep only real roles so an unknown string cannot reach the query.
+    const knownRoles: string[] = Object.values(MembershipRole);
+    const validFallbackRoles = (fallbackRoles ?? []).filter((role): role is MembershipRole =>
+      knownRoles.includes(role)
+    );
 
     const permissionChecks = await Promise.all(
       teamsData.map((membership) =>
@@ -113,7 +113,7 @@ export const teamsAndUserProfilesQuery = async ({ ctx, input }: TeamsAndUserProf
           userId: ctx.user.id,
           teamId: membership.team.id,
           permission: permission as PermissionString,
-          fallbackRoles: fallbackRoles ? (fallbackRoles as MembershipRole[]) : [],
+          fallbackRoles: validFallbackRoles,
         })
       )
     );

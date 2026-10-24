@@ -1,10 +1,5 @@
 import { MembershipRole } from "@calcom/prisma/enums";
 
-const getResourcePermissions = async (..._args: unknown[]) => ({
-  canCreate: true, canEdit: true, canDelete: true, canRead: true
-});
-const Resource = { EventType: 'EventType' } as const;
-
 export interface TeamPermissions {
   canCreate: boolean;
   canEdit: boolean;
@@ -34,47 +29,14 @@ export function getEffectiveRole(
   return orgMembership && hasHigherPrivilege(orgMembership, membershipRole) ? orgMembership : membershipRole;
 }
 
+// t_082ff878: the PBAC engine is gone and the old local getResourcePermissions stub granted every
+// permission to every role; event-type permissions now come from the effective membership role only.
 export async function getTeamPermissions(
-  userId: number,
-  teamId: number,
+  _userId: number,
+  _teamId: number,
   effectiveRole: MembershipRole
 ): Promise<TeamPermissions> {
-  try {
-    const permissions = await getResourcePermissions({
-      userId,
-      teamId,
-      resource: Resource.EventType,
-      userRole: effectiveRole,
-      fallbackRoles: {
-        read: {
-          roles: [MembershipRole.ADMIN, MembershipRole.OWNER, MembershipRole.MEMBER],
-        },
-        create: {
-          roles: [MembershipRole.ADMIN, MembershipRole.OWNER],
-        },
-        update: {
-          roles: [MembershipRole.ADMIN, MembershipRole.OWNER],
-        },
-        delete: {
-          roles: [MembershipRole.ADMIN, MembershipRole.OWNER],
-        },
-      },
-    });
-
-    return {
-      canCreate: permissions.canCreate,
-      canEdit: permissions.canEdit,
-      canDelete: permissions.canDelete,
-      canRead: permissions.canRead,
-    };
-  } catch (error) {
-    console.warn(
-      `PBAC check failed for user ${userId} on team ${teamId}, falling back to role check:`,
-      error
-    );
-
-    return getFallbackPermissions(effectiveRole);
-  }
+  return getFallbackPermissions(effectiveRole);
 }
 
 function getFallbackPermissions(role: MembershipRole): TeamPermissions {

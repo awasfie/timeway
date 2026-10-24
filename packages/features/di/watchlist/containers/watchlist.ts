@@ -3,6 +3,7 @@ import { moduleLoader as prismaModuleLoader } from "@calcom/features/di/modules/
 import { moduleLoader as loggerModuleLoader } from "@calcom/features/di/shared/services/logger.service";
 import { taskerServiceModule } from "@calcom/features/di/shared/services/tasker.service";
 import { SHARED_TOKENS } from "@calcom/features/di/shared/shared.tokens";
+import { PermissionCheckService } from "@calcom/features/pbac/services/permission-check.service";
 import { UserRepository } from "@calcom/features/users/repositories/UserRepository";
 import {
   createWatchlistFeature,
@@ -26,14 +27,7 @@ import { createContainer } from "@evyweb/ioctopus";
 import { watchlistModule } from "../modules/Watchlist.module";
 import { WATCHLIST_DI_TOKENS } from "../Watchlist.tokens";
 
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
-
-export const watchlistContainer= createContainer();
+export const watchlistContainer = createContainer();
 
 prismaModuleLoader.loadModule(watchlistContainer);
 loggerModuleLoader.loadModule(watchlistContainer);
@@ -97,7 +91,7 @@ export function getOrganizationWatchlistOperationsService(
 ): OrganizationWatchlistOperationsService {
   const watchlistRepo = new WatchlistRepository(prisma);
   const bookingReportRepo = new PrismaBookingReportRepository(prisma);
-  const permissionCheckService = new PermissionCheckService();
+  const permissionCheckService = new PermissionCheckService(prisma);
 
   return new OrganizationWatchlistOperationsService({
     watchlistRepo,
@@ -123,7 +117,7 @@ export function getAdminWatchlistQueryService(): AdminWatchlistQueryService {
 export function getOrganizationWatchlistQueryService(): OrganizationWatchlistQueryService {
   const watchlistRepo = new WatchlistRepository(prisma);
   const userRepo = new UserRepository(prisma);
-  const permissionCheckService = new PermissionCheckService();
+  const permissionCheckService = new PermissionCheckService(prisma);
 
   return new OrganizationWatchlistQueryService({
     watchlistRepo,

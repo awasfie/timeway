@@ -94,7 +94,7 @@ describe("getHandler", () => {
   });
 });
 
-describe("getBookings - stub PermissionCheckService behavior", () => {
+describe("getBookings - role-fallback PermissionCheckService", () => {
   const mockUser = {
     id: 1,
     email: "user@example.com",
@@ -103,7 +103,10 @@ describe("getBookings - stub PermissionCheckService behavior", () => {
 
   const mockPrisma = {
     membership: {
-      findMany: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    team: {
+      findMany: vi.fn().mockResolvedValue([]),
     },
     user: {
       findMany: vi.fn(),
@@ -201,6 +204,35 @@ describe("getBookings - stub PermissionCheckService behavior", () => {
     ).rejects.toMatchObject({
       code: "BAD_REQUEST",
       message: "The requested users do not exist.",
+    });
+  });
+
+  it("refuses filtering by a user of another org when the caller has no ADMIN/OWNER team (t_082ff878)", async () => {
+    // User 4 exists (org B) but the caller holds no qualifying membership, so no team ids are permitted.
+    mockPrisma.membership.findMany = vi.fn().mockResolvedValue([]);
+    mockPrisma.user.findMany = vi.fn((args: { where?: { id?: { in?: number[] }; teams?: unknown } }) => {
+      if (args?.where?.teams) return Promise.resolve([]) as ReturnType<typeof mockPrisma.user.findMany>;
+      return Promise.resolve([{ id: 4, email: "member@org-b.example" }]) as ReturnType<
+        typeof mockPrisma.user.findMany
+      >;
+    });
+    mockPrisma.eventType.findMany = vi.fn().mockResolvedValue([]);
+    mockPrisma.booking.groupBy = vi.fn().mockResolvedValue([]);
+
+    await expect(
+      getBookings({
+        user: mockUser,
+        prisma: mockPrisma,
+        kysely: mockKysely as unknown as Kysely<DB>,
+        bookingListingByStatus: ["upcoming"],
+        filters: { userIds: [4] },
+        take: 10,
+        skip: 0,
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(mockPrisma.membership.findMany).toHaveBeenCalledWith({
+      where: { userId: 1, accepted: true, role: { in: ["ADMIN", "OWNER"] } },
+      select: { teamId: true },
     });
   });
 
