@@ -2,6 +2,7 @@ name: Lineage security (CC-63)
 # WC-TW-1: fail on any downgrade below the patched floors, or regression of the lineage auth/XSS fixes.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]  # CI-COST-2: ready_for_review re-runs the full suite on the head SHA
   push:
     branches: [main]
   workflow_dispatch:
@@ -27,6 +28,8 @@ jobs:
       - name: Image references (by digest, CC-93 ratchet)
         run: python3 scripts/supply-chain/check_image_refs.py
   lineage-floor:
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     name: Lineage floor
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -36,3 +39,23 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/security/lineage-floor.mjs
+
+  # CI-COST-2 (t_9b638c09): one honest check per run. On a ready PR, main, merge_group, schedule or dispatch it
+  # fails unless every full job concluded `success` (a job skipped by `if:` fails it). It is skipped on drafts and
+  # branch pushes, and its name carries the event, so a skipped push/draft run never shadows the PR result.
+  full-suite-gate:
+    name: Full suite gate (${{ github.event_name }})
+    needs: [image-refs, lineage-floor]
+    if: ${{ always() && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every full job ran and passed on this head
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key)=\(.value.result)"'
+          bad=$(echo "$NEEDS" | jq -r '[to_entries[] | select(.value.result != "success") | .key] | join(",")')
+          if [ -n "$bad" ]; then echo "::error::full suite incomplete on $HEAD (not success: $bad)"; exit 1; fi
+          echo "full suite green on $HEAD"
