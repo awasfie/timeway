@@ -186,19 +186,24 @@ describe("CC-13 apiV2 webhook probes: config isolation", () => {
       const before = await row(A.eventTypeWebhook.id);
       const base = `/v2/event-types/${A.eventTypeId}/webhooks`;
       const reqs = [
-        request(app.getHttpServer()).get(base).set("Authorization", bearer(B)),
-        request(app.getHttpServer()).get(`${base}/${A.eventTypeWebhook.id}`).set("Authorization", bearer(B)),
-        request(app.getHttpServer())
-          .patch(`${base}/${A.eventTypeWebhook.id}`)
-          .set("Authorization", bearer(B))
-          .send({ subscriberUrl: "https://example.com/hijacked", active: false }),
-        request(app.getHttpServer())
-          .delete(`${base}/${A.eventTypeWebhook.id}`)
-          .set("Authorization", bearer(B)),
-        request(app.getHttpServer()).delete(base).set("Authorization", bearer(B)),
+        () => request(app.getHttpServer()).get(base).set("Authorization", bearer(B)),
+        () =>
+          request(app.getHttpServer())
+            .get(`${base}/${A.eventTypeWebhook.id}`)
+            .set("Authorization", bearer(B)),
+        () =>
+          request(app.getHttpServer())
+            .patch(`${base}/${A.eventTypeWebhook.id}`)
+            .set("Authorization", bearer(B))
+            .send({ subscriberUrl: "https://example.com/hijacked", active: false }),
+        () =>
+          request(app.getHttpServer())
+            .delete(`${base}/${A.eventTypeWebhook.id}`)
+            .set("Authorization", bearer(B)),
+        () => request(app.getHttpServer()).delete(base).set("Authorization", bearer(B)),
       ];
       for (const r of reqs) {
-        const res = await r;
+        const res = await r();
         expect(DENIED).toContain(res.status);
         expect(JSON.stringify(res.body)).not.toContain(A.eventTypeWebhook.secret as string);
       }
@@ -232,17 +237,22 @@ describe("CC-13 apiV2 webhook probes: config isolation", () => {
       const before = await row(A.clientWebhook.id);
       const base = `/v2/oauth-clients/${A.client.id}/webhooks`;
       const reqs = [
-        request(app.getHttpServer()).get(base).set("Authorization", bearer(B)),
-        request(app.getHttpServer()).get(`${base}/${A.clientWebhook.id}`).set("Authorization", bearer(B)),
-        request(app.getHttpServer())
-          .patch(`${base}/${A.clientWebhook.id}`)
-          .set("Authorization", bearer(B))
-          .send({ subscriberUrl: "https://example.com/hijacked", active: false }),
-        request(app.getHttpServer()).delete(`${base}/${A.clientWebhook.id}`).set("Authorization", bearer(B)),
-        request(app.getHttpServer()).delete(base).set("Authorization", bearer(B)),
+        () => request(app.getHttpServer()).get(base).set("Authorization", bearer(B)),
+        () =>
+          request(app.getHttpServer()).get(`${base}/${A.clientWebhook.id}`).set("Authorization", bearer(B)),
+        () =>
+          request(app.getHttpServer())
+            .patch(`${base}/${A.clientWebhook.id}`)
+            .set("Authorization", bearer(B))
+            .send({ subscriberUrl: "https://example.com/hijacked", active: false }),
+        () =>
+          request(app.getHttpServer())
+            .delete(`${base}/${A.clientWebhook.id}`)
+            .set("Authorization", bearer(B)),
+        () => request(app.getHttpServer()).delete(base).set("Authorization", bearer(B)),
       ];
       for (const r of reqs) {
-        const res = await r;
+        const res = await r();
         expect(DENIED).toContain(res.status);
         expect(JSON.stringify(res.body)).not.toContain(A.clientWebhook.secret as string);
       }
