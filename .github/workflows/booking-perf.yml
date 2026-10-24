@@ -90,7 +90,8 @@ jobs:
           # WC-TW-6c-9b: SessionProvider mounts only in the logged-in tree, sonner's Toaster on the first toast.
           # next-auth/react is matched by its useSession error string: the __NEXTAUTH const is renamed by the minifier.
           # WC-TW-6c-9c: the embed-iframe runtime chunk loads only inside an embed (embed-iframe/load-runtime.ts).
-          FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar;form-builder fields=data-fob-field-name;phone input=react-tel-input;VerifyCodeDialog=webkit-text-fill-color:currentColor;Turnstile=challenges.cloudflare.com/turnstile;next-auth/react=nextauth.message;sonner=data-sonner-toaster;embed-iframe runtime=Embed SDK Skipped as we are in top"
+          # WC-TW-6c-9c-2a: useLocale reads PagesRouterI18nContext; react-i18next ships only with the pages router.
+          FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar;form-builder fields=data-fob-field-name;phone input=react-tel-input;VerifyCodeDialog=webkit-text-fill-color:currentColor;Turnstile=challenges.cloudflare.com/turnstile;next-auth/react=nextauth.message;sonner=data-sonner-toaster;embed-iframe runtime=Embed SDK Skipped as we are in top;react-i18next=pass in an i18next instance by using initReactI18next"
       - name: (b) Lighthouse CI, 5 runs median
         id: lhci
         continue-on-error: true
