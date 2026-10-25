@@ -26,7 +26,10 @@ const getFallbackLocale = (): useLocaleReturnType => {
 };
 
 // @internal
-const serverI18nInstances = new Map();
+const serverI18nInstances = new Map<
+  string,
+  { translations: Record<string, string>; loadAll?: () => void; value: useLocaleReturnType }
+>();
 
 export const useLocale = (): useLocaleReturnType => {
   const appRouterContext = useContext(AppRouterI18nContext);
@@ -35,11 +38,12 @@ export const useLocale = (): useLocaleReturnType => {
   const atomsContext = useAtomsContext();
 
   if (appRouterContext) {
-    const { translations, locale, ns } = customI18nContext ?? appRouterContext;
-    const instanceKey = `${locale}-${ns}`;
+    const { translations, locale, ns, isSubset, loadAll } = customI18nContext ?? appRouterContext;
+    // A subset instance is replaced once the full dictionary arrives (the context value changes).
+    const instanceKey = `${locale}-${ns}-${isSubset ? "subset" : "full"}`;
 
-    // Check if we already have an instance for this locale and namespace
-    if (!serverI18nInstances.has(instanceKey)) {
+    const cached = serverI18nInstances.get(instanceKey);
+    if (cached?.translations !== translations || cached?.loadAll !== loadAll) {
       const i18n = createInstance();
       i18n.init({
         lng: locale,
@@ -48,16 +52,25 @@ export const useLocale = (): useLocaleReturnType => {
             [ns]: translations,
           },
         },
+        // Booker subset: a key outside it renders as the key until the full dictionary is loaded.
+        ...(isSubset && loadAll
+          ? {
+              saveMissing: true,
+              missingKeyHandler: () => {
+                if (typeof window !== "undefined") setTimeout(loadAll, 0);
+              },
+            }
+          : {}),
       });
 
       serverI18nInstances.set(instanceKey, {
-        t: i18n.getFixedT(locale, ns),
-        isLocaleReady: true,
-        i18n,
+        translations,
+        loadAll,
+        value: { t: i18n.getFixedT(locale, ns), isLocaleReady: true, i18n },
       });
     }
 
-    return serverI18nInstances.get(instanceKey);
+    return (serverI18nInstances.get(instanceKey) as { value: useLocaleReturnType }).value;
   }
 
   if (atomsContext?.clientId) {
