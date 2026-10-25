@@ -33,6 +33,25 @@ describe("useLocale", () => {
     expect(result.current.t("hello")).toBe("مرحبا");
   });
 
+  it("loads the full dictionary once when a key is outside the booker subset", () => {
+    vi.useFakeTimers();
+    const loadAll = vi.fn();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <AppRouterI18nContext.Provider
+        value={{ translations: { hello: "Hello" }, locale: "en", ns: "common", isSubset: true, loadAll }}>
+        {children}
+      </AppRouterI18nContext.Provider>
+    );
+    const { result } = renderHook(() => useLocale(), { wrapper });
+    expect(result.current.t("hello")).toBe("Hello");
+    vi.runAllTimers();
+    expect(loadAll).not.toHaveBeenCalled();
+    expect(result.current.t("not_in_subset")).toBe("not_in_subset");
+    vi.runAllTimers();
+    expect(loadAll).toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
   it("uses the pages-router context when there is no app-router context", () => {
     const i18n = createInstance();
     i18n.init({ lng: "en", resources: { en: { common: { hello: "Hi from pages" } } } });

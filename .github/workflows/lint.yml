@@ -16,6 +16,8 @@ jobs:
       - uses: ./.github/actions/yarn-install
       - name: Run Lint
         run: yarn lint
+      - name: Booker i18n key list is current (WC-TW-6c-9c-2b)
+        run: node scripts/i18n/booker-keys.mjs --check
 
   registry-refs:
     # WC-TW-7e / D-R74 D2: no Docker Hub anywhere in CI config; nothing is allowlisted.

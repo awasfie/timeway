@@ -20,15 +20,10 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const outPath = join(root, "packages/i18n/booker-keys.json");
 const web = join(root, "apps/web");
 
-// The booking route tree: root layout chain, the (booking-page-wrapper) group and the reschedule redirects.
-const ENTRY_GLOBS = [
-  "apps/web/app/layout.tsx",
-  "apps/web/app/providers.tsx",
-  "apps/web/app/error.tsx",
-  "apps/web/app/not-found.tsx",
-  "apps/web/app/(booking-page-wrapper)",
-  "apps/web/app/reschedule",
-];
+// Everything that renders under the root layout's subset provider: every app/ route outside
+// (use-page-wrapper) (whose layout passes the full dictionary) and outside api/.
+const APP_DIR = "apps/web/app";
+const SKIP_APP_DIRS = new Set(["(use-page-wrapper)", "api"]);
 // Keys rendered by code the walk cannot see as literals (keep short; each line says why).
 const EXTRA_KEYS = [];
 
@@ -106,7 +101,8 @@ function scan(file, src) {
       if (node.moduleSpecifier && !node.isTypeOnly) specs.push(node.moduleSpecifier.text);
       return;
     }
-    if (ts.isImportTypeNode(node) || ts.isTypeAliasDeclaration(node) || ts.isInterfaceDeclaration(node)) return;
+    if (ts.isImportTypeNode(node) || ts.isTypeAliasDeclaration(node) || ts.isInterfaceDeclaration(node))
+      return;
     if (
       ts.isCallExpression(node) &&
       (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
@@ -130,7 +126,8 @@ function listEntries() {
     if (st.isDirectory()) for (const n of readdirSync(p)) walk(join(p, n));
     else if (/\.(tsx?|jsx?)$/.test(p) && !/\.(test|spec)\.[jt]sx?$/.test(p)) out.push(p);
   };
-  for (const g of ENTRY_GLOBS) walk(join(root, g));
+  for (const name of readdirSync(join(root, APP_DIR)))
+    if (!SKIP_APP_DIRS.has(name)) walk(join(root, APP_DIR, name));
   return out;
 }
 
@@ -174,8 +171,20 @@ export function collectKeys() {
         nested.push(m[1]);
       }
   }
-  if (process.env.BK_SEEN) writeFileSync(process.env.BK_SEEN, [...seen].map((f) => relative(root, f)).sort().join("\n"));
-  return { keys: [...keys].filter((k) => keySet.has(k)).sort(), files: seen.size, total: allKeys.length, unresolved };
+  if (process.env.BK_SEEN)
+    writeFileSync(
+      process.env.BK_SEEN,
+      [...seen]
+        .map((f) => relative(root, f))
+        .sort()
+        .join("\n")
+    );
+  return {
+    keys: [...keys].filter((k) => keySet.has(k)).sort(),
+    files: seen.size,
+    total: allKeys.length,
+    unresolved,
+  };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

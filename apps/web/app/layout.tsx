@@ -1,5 +1,5 @@
 import { getLocale } from "@calcom/features/auth/lib/getLocale";
-import { loadTranslations } from "@calcom/i18n/server";
+import { loadTranslationSubset } from "@calcom/i18n/server";
 import { IconSprites } from "@calcom/ui/components/icon";
 import { buildLegacyRequest } from "@lib/buildLegacyCtx";
 import { getBookingPageLocale } from "@lib/i18n/getBookingPageLocale";
@@ -108,7 +108,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { locale, direction, isEmbed, embedColorScheme } = await getInitialProps();
 
   const ns = "common";
-  const translations = await loadTranslations(locale, ns);
+  // Booker subset only (WC-TW-6c-9c-2b): the full dictionary would be inlined into every booking page's
+  // flight data. (use-page-wrapper)/layout.tsx passes the full one to app pages; misses load lazily.
+  const translations = await loadTranslationSubset(locale, ns);
 
   return (
     <html
@@ -167,7 +169,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
 
         <Providers isEmbed={isEmbed} nonce={nonce} country={country}>
-          <AppRouterI18nProvider translations={translations} locale={locale} ns={ns}>
+          <AppRouterI18nProvider translations={translations} locale={locale} ns={ns} isSubset>
             {children}
           </AppRouterI18nProvider>
         </Providers>

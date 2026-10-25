@@ -1,5 +1,5 @@
 import { WEBAPP_URL } from "@calcom/lib/constants";
-import { loadTranslations } from "@calcom/i18n/server";
+import { loadTranslationSubset } from "@calcom/i18n/server";
 import { buildLegacyCtx, decodeParams } from "@lib/buildLegacyCtx";
 import { getServerSideProps } from "@server/lib/[user]/[type]/getServerSideProps";
 import type { PageProps } from "app/_types";
@@ -22,9 +22,9 @@ const ServerPage = async ({ params, searchParams }: PageProps): Promise<JSX.Elem
   const locale = props.eventData?.interfaceLanguage;
   if (locale) {
     const ns = "common";
-    const translations = await loadTranslations(locale, ns);
+    const translations = await loadTranslationSubset(locale, ns);
     return (
-      <CustomI18nProvider translations={translations} locale={locale} ns={ns}>
+      <CustomI18nProvider translations={translations} locale={locale} ns={ns} isSubset>
         <LegacyPage {...props} />
       </CustomI18nProvider>
     );
