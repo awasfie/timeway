@@ -1,6 +1,6 @@
 import type { ICalendarCacheEventRepository } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventRepository.interface";
+import { isCalendarCacheStale } from "@calcom/features/calendar-subscription/lib/reconcile/CalendarReconciliationService";
 import logger from "@calcom/lib/logger";
-import { metrics } from "@sentry/nextjs";
 import type {
   Calendar,
   CalendarEvent,
@@ -10,8 +10,17 @@ import type {
   IntegrationCalendar,
   NewCalendarEventType,
 } from "@calcom/types/Calendar";
+import { metrics } from "@sentry/nextjs";
 
 const log = logger.getSubLogger({ prefix: ["CachedCalendarWrapper"] });
+
+/**
+ * WC-TW-3: a calendar whose last sync is older than 15 min is read live instead of from cache (the
+ * reconciliation cron refreshes it). syncedAt is only judged when the caller selected it.
+ */
+const isServableFromCache = (c: IntegrationCalendar): boolean =>
+  Boolean(c.syncToken && c.syncSubscribedAt) &&
+  (c.syncedAt === undefined || !isCalendarCacheStale(c.syncedAt));
 
 export class CalendarCacheWrapper implements Calendar {
   constructor(
@@ -64,8 +73,8 @@ export class CalendarCacheWrapper implements Calendar {
 
     if (!selectedCalendars?.length) return [];
 
-    const withSync = selectedCalendars.filter((c) => c.syncToken && c.syncSubscribedAt);
-    const withoutSync = selectedCalendars.filter((c) => !c.syncToken || !c.syncSubscribedAt);
+    const withSync = selectedCalendars.filter(isServableFromCache);
+    const withoutSync = selectedCalendars.filter((c) => !isServableFromCache(c));
 
     const results: EventBusyDate[] = [];
 
@@ -151,8 +160,8 @@ export class CalendarCacheWrapper implements Calendar {
 
     if (!selectedCalendars?.length) return [];
 
-    const withSync = selectedCalendars.filter((c) => c.syncToken && c.syncSubscribedAt);
-    const withoutSync = selectedCalendars.filter((c) => !c.syncToken || !c.syncSubscribedAt);
+    const withSync = selectedCalendars.filter(isServableFromCache);
+    const withoutSync = selectedCalendars.filter((c) => !isServableFromCache(c));
 
     const results: EventBusyDate[] = [];
 

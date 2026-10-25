@@ -7,6 +7,7 @@ name: Docker image + migrate job
 # Throwaway Postgres on a docker network only; no secrets.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]  # CI-COST-2: ready_for_review re-runs the full suite on the head SHA
     paths:
       - "Dockerfile"
       - "scripts/start.sh"
@@ -17,8 +18,17 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  # CI-COST-1 (t_2d660e6e): a newer push to the same PR or non-main branch cancels the superseded run.
+  # main, tags, schedule, workflow_dispatch and merge_group get a per-run group (github.run_id): never queued
+  # behind another run, never cancelled.
+  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main')) && format('{0}-{1}', github.event_name, github.event.pull_request.number || github.ref) || github.run_id }}
+  cancel-in-progress: ${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main')) }}
+
 jobs:
   docker-migrate-job:
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     name: docker-migrate-job
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -48,10 +58,16 @@ jobs:
           if grep -E '^(DATABASE_URL|DATABASE_DIRECT_URL|TIMEWAY_MIGRATE_DATABASE_URL)$' env-names.txt; then
             echo "FAIL: database URL baked into the image"; exit 1
           fi
+      - name: 1b) runtime image has no npm, no -dev packages, 0 CRITICAL with fix (IMGSCAN-A1, CC-93)
+        run: |
+          docker run --rm --entrypoint sh "$IMG" -c 'for b in npm npx; do if command -v $b; then echo "FAIL: $b in runtime"; exit 1; fi; done; dpkg-query -W -f="\${Package}\n" | grep -E -- "-dev$|^imagemagick|^libmagick|^(gcc|g\+\+|cpp)(-[0-9]+)?$|^make$" && exit 1; echo "no npm, no -dev/toolchain packages"'
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa \
+            image --scanners vuln --severity CRITICAL --ignore-unfixed --exit-code 1 --no-progress "$IMG"
       - name: Throwaway Postgres with prod-shaped roles
         run: |
           docker network create "$NET"
-          docker run -d --name tw-db --network "$NET" -e POSTGRES_PASSWORD=postgres postgres:16
+          docker run -d --name tw-db --network "$NET" -e POSTGRES_PASSWORD=postgres postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
           for i in $(seq 1 60); do docker exec tw-db pg_isready -U postgres -q && break; sleep 1; done
           sleep 2
           P="docker exec -i tw-db psql -U postgres -v ON_ERROR_STOP=1 -X"
@@ -121,3 +137,23 @@ jobs:
         run: |
           docker rm -f tw-app tw-db >/dev/null 2>&1 || true
           docker network rm "$NET" >/dev/null 2>&1 || true
+
+  # CI-COST-2 (t_9b638c09): one honest check per run. On a ready PR, main, merge_group, schedule or dispatch it
+  # fails unless every full job concluded `success` (a job skipped by `if:` fails it). It is skipped on drafts and
+  # branch pushes, and its name carries the event, so a skipped push/draft run never shadows the PR result.
+  full-suite-gate:
+    name: Full suite gate (${{ github.event_name }})
+    needs: [docker-migrate-job]
+    if: ${{ always() && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every full job ran and passed on this head
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key)=\(.value.result)"'
+          bad=$(echo "$NEEDS" | jq -r '[to_entries[] | select(.value.result != "success") | .key] | join(",")')
+          if [ -n "$bad" ]; then echo "::error::full suite incomplete on $HEAD (not success: $bad)"; exit 1; fi
+          echo "full suite green on $HEAD"

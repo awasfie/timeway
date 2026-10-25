@@ -1,5 +1,6 @@
 import type { NextApiRequest } from "next";
 
+import { onCalendarCredentialCreated } from "@calcom/features/tw-activation/activation";
 import { HttpError } from "@calcom/lib/http-error";
 import prisma from "@calcom/prisma";
 
@@ -31,7 +32,7 @@ const createOAuthAppCredential = async (
     // Check that the user belongs to the team
     await throwIfNotHaveAdminAccessToTeam({ teamId: state?.teamId ?? null, userId });
 
-    return await prisma.credential.create({
+    const teamCredential = await prisma.credential.create({
       data: {
         type: appData.type,
         key: key || {},
@@ -39,9 +40,12 @@ const createOAuthAppCredential = async (
         appId: appData.appId,
       },
     });
+    // Team credentials have no userId; attribute activation to the installing user's org.
+    await onCalendarCredentialCreated({ ...teamCredential, userId }, "oauth");
+    return teamCredential;
   }
 
-  return await prisma.credential.create({
+  const credential = await prisma.credential.create({
     data: {
       type: appData.type,
       key: key || {},
@@ -49,6 +53,8 @@ const createOAuthAppCredential = async (
       appId: appData.appId,
     },
   });
+  await onCalendarCredentialCreated(credential, "oauth");
+  return credential;
 };
 
 export default createOAuthAppCredential;

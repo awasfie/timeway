@@ -4,6 +4,7 @@ import { TimeFormat } from "@calcom/lib/timeFormat";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
 import type { TFunction } from "i18next";
 import {
+  AddToCalendarLinks,
   AppsStatus,
   BaseEmailHtml,
   Info,
@@ -126,6 +127,9 @@ export const BaseScheduledEmail = (
       <LocationInfo calEvent={props.calEvent} t={t} />
       <Info label={t("description")} description={props.calEvent.description} withSpacer formatted />
       <Info label={t("additional_notes")} description={props.calEvent.additionalNotes} withSpacer />
+      {!props.calEvent.cancellationReason && !props.calEvent.rejectionReason && (
+        <AddToCalendarLinks calEvent={props.calEvent} />
+      )}
       {props.includeAppsStatus && <AppsStatus calEvent={props.calEvent} t={t} />}
       {props.isOrganizer && props.calEvent.assignmentReason && (
         <Info

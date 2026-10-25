@@ -1,4 +1,3 @@
-import process from "node:process";
 import { BookingRepository } from "@calcom/features/bookings/repositories/BookingRepository";
 import { DefaultAdapterFactory } from "@calcom/features/calendar-subscription/adapters/AdaptersFactory";
 import { CalendarSubscriptionService } from "@calcom/features/calendar-subscription/lib/CalendarSubscriptionService";
@@ -9,6 +8,7 @@ import { getFeatureRepository } from "@calcom/features/di/containers/FeatureRepo
 import { getTeamFeatureRepository } from "@calcom/features/di/containers/TeamFeatureRepository";
 import { getUserFeatureRepository } from "@calcom/features/di/containers/UserFeatureRepository";
 import { SelectedCalendarRepository } from "@calcom/features/selectedCalendar/repositories/SelectedCalendarRepository";
+import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import { prisma } from "@calcom/prisma";
 import { defaultResponderForAppDir } from "@calcom/web/app/api/defaultResponderForAppDir";
@@ -23,9 +23,7 @@ import { NextResponse } from "next/server";
  * @returns
  */
 async function getHandler(request: NextRequest) {
-  const apiKey = request.headers.get("authorization") || request.nextUrl.searchParams.get("apiKey");
-
-  if (![process.env.CRON_API_KEY, `Bearer ${process.env.CRON_SECRET}`].includes(`${apiKey}`)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ message: "Forbiden" }, { status: 403 });
   }
 

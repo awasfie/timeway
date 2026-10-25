@@ -1,9 +1,8 @@
 // `responses` is merged with it during handleNewBooking call because `responses` schema is dynamic and depends on eventType
-import z from "zod";
 
 import { timeZoneSchema } from "@calcom/lib/dayjs/timeZone.schema";
-
 import { CreationSource } from "@calcom/prisma/enums";
+import z from "zod";
 
 export const bookingCreateBodySchema = z.object({
   end: z.string().optional(),
@@ -47,6 +46,10 @@ export const bookingCreateBodySchema = z.object({
   dub_id: z.string().nullish(),
   creationSource: z.nativeEnum(CreationSource).optional(),
   verificationCode: z.string().optional(),
+  /**
+   * WC-TW-3: uid of the booker's own 5-minute slot hold (from reserveSlot), so their hold never blocks them.
+   */
+  reservedSlotUid: z.string().max(100).optional(),
 });
 
 export type BookingCreateBody = z.input<typeof bookingCreateBodySchema>;

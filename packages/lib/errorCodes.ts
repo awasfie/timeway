@@ -30,6 +30,8 @@ export enum ErrorCode {
   CreatingOauthClientError = "creating_oauth_client_error",
   BookingTimeOutOfBounds = "booking_time_out_of_bounds_error",
   BookingConflict = "booking_conflict_error",
+  // WC-TW-3: the host calendar rejected the event, so the booking was rolled back
+  CalendarWriteFailed = "booking_calendar_write_failed_error",
   BookerLimitExceeded = "booker_limit_exceeded_error",
   BookerLimitExceededReschedule = "booker_limit_exceeded_error_reschedule",
   BookingNotAllowedByRestrictionSchedule = "booking_not_allowed_by_restriction_schedule_error",
@@ -41,4 +43,9 @@ export enum ErrorCode {
   BookerEmailRequiresLogin = "booker_email_requires_login",
   InvalidVerificationCode = "invalid_verification_code",
   UnableToValidateVerificationCode = "unable_to_validate_verification_code",
+  // WC-31 clinic-tenant residency refusals; values are the @family/residency codes verbatim.
+  ResidencyCellRequired = "residency_cell_required",
+  ResidencyCellUnknown = "residency_cell_unknown",
+  ResidencyCellNotActive = "residency_cell_not_active",
+  ResidencyCellMismatch = "residency_cell_mismatch",
 }

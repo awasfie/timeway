@@ -1,5 +1,3 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-
 import type { ICalendarCacheEventRepository } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventRepository.interface";
 import type {
   Calendar,
@@ -9,7 +7,7 @@ import type {
   IntegrationCalendar,
   NewCalendarEventType,
 } from "@calcom/types/Calendar";
-
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CalendarCacheWrapper } from "../CalendarCacheWrapper";
 
 describe("CalendarCacheWrapper", () => {
@@ -51,6 +49,29 @@ describe("CalendarCacheWrapper", () => {
       expect(result).toEqual([]);
       expect(mockRepository.findAllBySelectedCalendarIdsBetween).not.toHaveBeenCalled();
       expect(mockOriginalCalendar.getAvailability).not.toHaveBeenCalled();
+    });
+
+    it("WC-TW-3: a calendar whose last sync is older than 15 min is read live, not from cache", async () => {
+      const selectedCalendars: IntegrationCalendar[] = [
+        {
+          id: "cal-stale",
+          externalId: "ext-stale",
+          integration: "google_calendar",
+          syncToken: "token-1",
+          syncSubscribedAt: new Date(),
+          syncedAt: new Date(Date.now() - 16 * 60 * 1000),
+        },
+      ];
+
+      await wrapper.getAvailability({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-01-02",
+        selectedCalendars,
+        mode: "slots",
+      });
+
+      expect(mockRepository.findAllBySelectedCalendarIdsBetween).not.toHaveBeenCalled();
+      expect(mockOriginalCalendar.getAvailability).toHaveBeenCalledTimes(1);
     });
 
     it("should fetch only from cache when all calendars have syncToken and syncSubscribedAt", async () => {

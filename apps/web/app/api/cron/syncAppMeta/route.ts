@@ -8,6 +8,7 @@ import { shouldEnableApp } from "@calcom/app-store/_utils/validateAppKeys";
 import logger from "@calcom/lib/logger";
 import { prisma } from "@calcom/prisma";
 import type { AppCategories, Prisma } from "@calcom/prisma/client";
+import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
 
 const isDryRun = process.env.CRON_ENABLE_APP_SYNC !== "true";
 const log = logger.getSubLogger({
@@ -19,10 +20,8 @@ const log = logger.getSubLogger({
  * remains synchronized with any changes made to the app config files.
  */
 async function postHandler(request: NextRequest) {
-  const apiKey = request.headers.get("authorization") || request.nextUrl.searchParams.get("apiKey");
-
-  if (process.env.CRON_API_KEY !== apiKey) {
-    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+  if (!isCronAuthorized(request, { allowBearerSecret: false })) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
   log.info(`🧐 Checking DB apps are in-sync with app metadata`);

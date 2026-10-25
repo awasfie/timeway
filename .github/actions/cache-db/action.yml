@@ -29,6 +29,14 @@ runs:
         key: ${{ steps.cache-key.outputs.key }}
     # node_modules cache hits skip the root postinstall, so the Prisma client
     # (packages/prisma/generated, not cached) must be generated before seeding.
+    # TW-T9.2d: the CI database is one Timeway org (scripts/tw-t9/ci-single-org.sql). The
+    # database-level setting is not in the dump, so it is applied on both cache paths.
+    - name: CI org setting (TW-T9.2d)
+      run: |
+        docker run --rm --network host \
+          -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} \
+          postgres:18 psql "${{ inputs.DATABASE_URL }}" -v ON_ERROR_STOP=1 -v phase=guc -f scripts/tw-t9/ci-single-org.sql
+      shell: bash
     - name: Generate Prisma client
       if: steps.cache-db.outputs.cache-hit != 'true'
       run: yarn prisma generate
@@ -36,18 +44,25 @@ runs:
     - run: yarn db-seed
       if: steps.cache-db.outputs.cache-hit != 'true'
       shell: bash
+    - name: CI org rows (TW-T9.2d)
+      if: steps.cache-db.outputs.cache-hit != 'true'
+      run: |
+        docker run --rm --network host \
+          -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} \
+          postgres:18 psql "${{ inputs.DATABASE_URL }}" -v ON_ERROR_STOP=1 -v phase=org -f scripts/tw-t9/ci-single-org.sql
+      shell: bash
     - name: Postgres Dump Backup
       if: steps.cache-db.outputs.cache-hit != 'true'
       run: |
         mkdir -p $(dirname "${{ inputs.path }}")
         docker run --rm --network host \
           -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} \
-          postgres:18 pg_dump "${{ inputs.DATABASE_URL }}" -O -f ${{ inputs.path }}
+          postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336 pg_dump "${{ inputs.DATABASE_URL }}" -O -f ${{ inputs.path }}
       shell: bash
     - name: Postgres Backup Restore
       if: steps.cache-db.outputs.cache-hit == 'true'
       run: |
         docker run --rm -i --network host \
           -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} \
-          postgres:18 psql "${{ inputs.DATABASE_URL }}" -f ${{ inputs.path }}
+          postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336 psql "${{ inputs.DATABASE_URL }}" -f ${{ inputs.path }}
       shell: bash

@@ -61,10 +61,18 @@ describe("DefaultAdapterFactory", () => {
     test("keeps the Google exclusions and adds none for office365 (Graph ids are opaque)", () => {
       expect(factory.getGenericCalendarSuffixes()).toEqual([
         "@group.v.calendar.google.com",
-        "@group.calendar.google.com",
         "@import.calendar.google.com",
         "@resource.calendar.google.com",
       ]);
+    });
+
+    test("WC-TW-4f: user-created Google secondary calendars (@group.calendar.google.com) are not excluded", () => {
+      const suffixes = factory.getGenericCalendarSuffixes();
+      const secondary = "c_0b1f2e3d4c5b6a7980@group.calendar.google.com";
+      expect(suffixes).not.toContain("@group.calendar.google.com");
+      expect(suffixes.some((s) => secondary.endsWith(s))).toBe(false);
+      // holidays stay excluded
+      expect(suffixes.some((s) => "en.usa#holiday@group.v.calendar.google.com".endsWith(s))).toBe(true);
     });
   });
 });

@@ -6,13 +6,15 @@ export type CalendarSubscriptionProvider = "google_calendar" | "office365_calend
 
 /**
  * Generic calendar suffixes that should be excluded from subscription.
- * These are special calendars (holidays, contacts, shared, imported, resources)
- * that are not user's personal calendars and shouldn't be subscribed to for sync.
+ * These are special calendars (holidays, imported, resources) that are not the user's own
+ * calendars and shouldn't be subscribed to for sync.
+ *
+ * WC-TW-4f: "@group.calendar.google.com" is NOT excluded: user-created secondary calendars carry
+ * that suffix too, and a selected secondary calendar is a deliberate user choice.
  */
 export const GENERIC_CALENDAR_SUFFIXES: Record<CalendarSubscriptionProvider, string[]> = {
   google_calendar: [
     "@group.v.calendar.google.com",
-    "@group.calendar.google.com",
     "@import.calendar.google.com",
     "@resource.calendar.google.com",
   ],

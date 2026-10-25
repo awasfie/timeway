@@ -40,6 +40,7 @@ import { getEventName, updateHostInEventName } from "@calcom/features/eventtypes
 import { getFullName } from "@calcom/features/form-builder/utils";
 import type { HashedLinkService } from "@calcom/features/hashedLink/lib/service/HashedLinkService";
 import { ProfileRepository } from "@calcom/features/profile/repositories/ProfileRepository";
+import { PrismaSelectedSlotRepository } from "@calcom/features/selectedSlots/repositories/PrismaSelectedSlotRepository";
 import { handleAnalyticsEvents } from "@calcom/features/tasker/tasks/analytics/handleAnalyticsEvents";
 import type { UserRepository } from "@calcom/features/users/repositories/UserRepository";
 import { UsersRepository } from "@calcom/features/users/users.repository";
@@ -53,10 +54,12 @@ import {
 } from "@calcom/features/webhooks/lib/scheduleTrigger";
 import type { EventPayloadType, EventTypeInfo } from "@calcom/features/webhooks/lib/sendPayload";
 import { getTranslation } from "@calcom/i18n/server";
+import { captureFirstBookingReceived } from "@calcom/lib/analytics/activation";
 import { groupHostsByGroupId } from "@calcom/lib/bookings/hostGroupUtils";
 import { shouldIgnoreContactOwner } from "@calcom/lib/bookings/routing/utils";
 import { getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
 import { DEFAULT_GROUP_ID, ENABLE_ASYNC_TASKER } from "@calcom/lib/constants";
+import { onBookingCreated } from "@calcom/features/tw-activation/activation";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
 import { extractBaseEmail } from "@calcom/lib/extract-base-email";
@@ -89,6 +92,11 @@ import getBookingDataSchema from "../getBookingDataSchema";
 import type { LuckyUserService } from "../getLuckyUser";
 import { checkActiveBookingsLimitForBooker } from "../handleNewBooking/checkActiveBookingsLimitForBooker";
 import { checkIfBookerEmailIsBlocked } from "../handleNewBooking/checkIfBookerEmailIsBlocked";
+import {
+  assertSlotNotReservedByOthers,
+  didProviderCalendarWriteFail,
+  failBookingOnCalendarWriteFailure,
+} from "../handleNewBooking/conflictGuards";
 import type { Booking } from "../handleNewBooking/createBooking";
 import { createBooking } from "../handleNewBooking/createBooking";
 import { ensureAvailableUsers } from "../handleNewBooking/ensureAvailableUsers";
@@ -861,6 +869,15 @@ async function handler(
   }
 
   //checks what users are available
+  if (isFirstSeat && !eventType.seatsPerTimeSlot && !skipAvailabilityCheck && !isDryRun) {
+    await assertSlotNotReservedByOthers({
+      selectedSlotRepository: new PrismaSelectedSlotRepository(deps.prismaClient),
+      eventTypeId: eventType.id,
+      startTime: dayjs(reqBody.start).utc().toDate(),
+      endTime: dayjs(reqBody.end).utc().toDate(),
+      reservedSlotUid: reqBody.reservedSlotUid,
+    });
+  }
   if (isFirstSeat) {
     const eventTypeWithUsers: Omit<getEventTypeResponse, "users"> & {
       users: IsFixedAwareUserWithCredentials[];
@@ -1083,7 +1100,7 @@ async function handler(
             } catch {
               notAvailableLuckyUsers.push(newLuckyUser);
               tracingLogger.info(
-                `Round robin host ${newLuckyUser.name} not available for first two slots. Trying to find another host.`
+                `Round robin host ${newLuckyUser.name} not available for every recurring slot. Trying to find another host.`
               );
             }
           } else {
@@ -1149,6 +1166,17 @@ async function handler(
   if (users.length === 0 && eventType.schedulingType === SchedulingType.ROUND_ROBIN) {
     tracingLogger.error(`No available users found for round robin event.`);
     throw new Error(ErrorCode.RoundRobinHostsUnavailableForBooking);
+  }
+
+  // TW-HOST-1: collective events keep a deterministic order so the highest-priority fixed host
+  // (Ahmed) is always the organizer, regardless of which email is requested or DB row order.
+  // Dynamic group bookings keep URL order (organizer = first username in the URL).
+  if (eventType.schedulingType === SchedulingType.COLLECTIVE && !eventType.isDynamic) {
+    users = [...users].sort(
+      (a, b) =>
+        ((b as { priority?: number | null }).priority ?? 0) -
+          ((a as { priority?: number | null }).priority ?? 0) || a.id - b.id
+    );
   }
 
   // If the team member is requested then they should be the organizer
@@ -1733,6 +1761,10 @@ async function handler(
         tracking: reqBody.tracking,
       });
 
+      if (booking) {
+        await onBookingCreated(booking, input.bookingData.creationSource ?? "unknown");
+      }
+
       if (booking?.userId) {
         const usersRepository = new UsersRepository();
         await usersRepository.updateLastActiveAt(booking.userId);
@@ -2062,6 +2094,19 @@ async function handler(
     referencesToCreate = createManager.referencesToCreate;
     videoCallUrl = evt.videoCallData?.url ? evt.videoCallData.url : null;
 
+    if (!isDryRun && !shouldSkipCalendarEvents && didProviderCalendarWriteFail(results)) {
+      await failBookingOnCalendarWriteFailure({
+        prismaClient: deps.prismaClient,
+        bookingId: booking.id,
+        cleanup: (references) =>
+          eventManager instanceof EventManager
+            ? eventManager.deleteEventsAndMeetings({ event: evt, bookingReferences: references })
+            : Promise.resolve(),
+        results,
+        referencesToCreate,
+        logger: tracingLogger,
+      });
+    }
     if (results.length > 0 && results.every((res) => !res.success)) {
       const error = {
         errorCode: "BookingCreatingMeetingFailed",
@@ -2072,6 +2117,30 @@ async function handler(
         `EventManager.create failure in some of the integrations ${organizerUser.username}`,
         safeStringify({ error, results })
       );
+
+      // TW-MAIL-2: the booking row is already ACCEPTED. A calendar/meeting failure (e.g. a Google
+      // rate limit) must not swallow the attendee's confirmation email, so send it anyway.
+      if (!noEmail && !isDryRun && !(eventType.seatsPerTimeSlot && rescheduleUid)) {
+        try {
+          await emailsAndSmsHandler.send({
+            action: BookingActionMap.confirmed,
+            data: {
+              eventType: {
+                metadata: eventType.metadata,
+                schedulingType: eventType.schedulingType,
+              },
+              eventNameObject,
+              evt,
+              additionalInformation: {},
+              additionalNotes,
+              customInputs,
+            },
+          });
+          bookingEmailsAndSmsTaskerAction = BookingActionMap.confirmed;
+        } catch (err) {
+          tracingLogger.error("confirmation email after calendar failure failed", safeStringify(err));
+        }
+      }
     } else {
       const additionalInformation: AdditionalInformation = {};
 
@@ -2229,6 +2298,18 @@ async function handler(
     isRecurringBooking: !!input.bookingData.allRecurringDates,
     tracingLogger,
   });
+
+  if (booking?.twOrgId) {
+    // Fire-and-forget: analytics must never delay or fail a booking.
+    void captureFirstBookingReceived({
+      twOrgId: booking.twOrgId,
+      organizerUuid: organizerUser.uuid,
+      organizerLocale: organizerUser.locale,
+      isDryRun,
+      isReschedule: !!originalRescheduledBooking,
+      bookingFindMany: (args) => deps.prismaClient.booking.findMany(args),
+    });
+  }
 
   const webhookLocation = metadata?.videoCallUrl || evt.location;
 

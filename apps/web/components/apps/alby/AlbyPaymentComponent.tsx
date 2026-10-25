@@ -74,9 +74,10 @@ export const AlbyPaymentComponent = (props: IAlbyPaymentComponentProps) => {
   const [showQRCode, setShowQRCode] = useState(window.webln === undefined);
   const [isPaying, setPaying] = useState(false);
   const { copyToClipboard, isCopied } = useCopy();
+  const { t } = useLocale();
   const wrongUrl = (
     <>
-      <p className="mt-3 text-center">Couldn&apos;t obtain payment URL</p>
+      <p className="mt-3 text-center">{t("payment_url_unavailable")}</p>
     </>
   );
 
@@ -95,7 +96,7 @@ export const AlbyPaymentComponent = (props: IAlbyPaymentComponentProps) => {
           {!showQRCode && (
             <div className="flex gap-4">
               <Button color="secondary" onClick={() => setShowQRCode(true)}>
-                Show QR
+                {t("show_qr_code")}
               </Button>
               {window.webln && (
                 <Button
@@ -112,7 +113,7 @@ export const AlbyPaymentComponent = (props: IAlbyPaymentComponentProps) => {
                       alert((error as Error).message);
                     }
                   }}>
-                  Pay Now
+                  {t("pay_now")}
                 </Button>
               )}
             </div>
@@ -121,9 +122,9 @@ export const AlbyPaymentComponent = (props: IAlbyPaymentComponentProps) => {
             <>
               <div className="flex items-center justify-center gap-2">
                 <Spinner className="h-4 w-4" />
-                <p className="text-xs">Waiting for payment</p>
+                <p className="text-xs">{t("waiting_for_payment")}</p>
               </div>
-              <p className="text-sm">Click or scan the invoice below to pay</p>
+              <p className="text-sm">{t("scan_invoice_to_pay")}</p>
               <Link
                 href={`lightning:${paymentRequest}`}
                 className="inline-flex items-center justify-center rounded-2xl border border-transparent bg-white p-2 font-medium text-black shadow-sm hover:brightness-95 focus:outline-none focus:ring-offset-2">
@@ -136,10 +137,10 @@ export const AlbyPaymentComponent = (props: IAlbyPaymentComponentProps) => {
                 onClick={() => copyToClipboard(paymentRequest)}
                 className="rounded-md text-subtle"
                 StartIcon={isCopied ? "clipboard-check" : "clipboard"}>
-                Copy Invoice
+                {t("copy_invoice")}
               </Button>
               <Link target="_blank" href="https://getalby.com" className="link mt-4 text-sm underline">
-                Don&apos;t have a lightning wallet?
+                {t("no_lightning_wallet")}
               </Link>
             </>
           )}
@@ -147,7 +148,7 @@ export const AlbyPaymentComponent = (props: IAlbyPaymentComponentProps) => {
       )}
       <Link target="_blank" href="https://getalby.com">
         <div className="mt-4 flex items-center text-sm">
-          Powered by&nbsp;
+          {t("payment_powered_by")}&nbsp;
           <img title="Alby" src="/app-store/alby/logo.svg" alt="Alby" className="h-8 dark:hidden" />
           <img
             title="Alby"

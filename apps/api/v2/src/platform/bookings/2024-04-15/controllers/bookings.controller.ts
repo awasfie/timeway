@@ -208,7 +208,10 @@ export class BookingsController_2024_04_15 {
 
       const bookingRequest = await this.createNextApiBookingRequest(req, oAuthClientId, locationUrl, isEmbed);
       const booking = await this.regularBookingService.createBooking({
-        bookingData: bookingRequest.body,
+        bookingData: {
+          ...bookingRequest.body,
+          reservedSlotUid: this.getReservedSlotUid(req, body.reservedSlotUid),
+        },
         bookingMeta: {
           userId: bookingRequest.userId,
           hostname: bookingRequest.headers?.host || "",
@@ -328,7 +331,11 @@ export class BookingsController_2024_04_15 {
       }
       const bookingRequest = await this.createNextApiBookingRequest(req, oAuthClientId, undefined, isEmbed);
       const createdBookings: BookingResponse[] = await this.recurringBookingService.createBooking({
-        bookingData: body.map((booking) => ({ ...booking, creationSource: CreationSource.API_V2 })),
+        bookingData: body.map((booking) => ({
+          ...booking,
+          reservedSlotUid: this.getReservedSlotUid(req, booking.reservedSlotUid),
+          creationSource: CreationSource.API_V2,
+        })),
         bookingMeta: {
           userId: bookingRequest.userId,
           hostname: bookingRequest.headers?.host || "",
@@ -519,6 +526,13 @@ export class BookingsController_2024_04_15 {
       this.logger.error(err);
       return res;
     }
+  }
+
+  // WC-TW-3: /slots/reserve sets the `uid` cookie (same-origin web/atoms) and returns the uid (other clients);
+  // either identifies the caller's own hold so the binding-hold guard does not reject it.
+  private getReservedSlotUid(req: BookingRequest, bodyUid?: string): string | undefined {
+    const cookieUid: unknown = req.cookies?.uid;
+    return bodyUid ?? (typeof cookieUid === "string" && cookieUid ? cookieUid : undefined);
   }
 
   private async createNextApiBookingRequest(

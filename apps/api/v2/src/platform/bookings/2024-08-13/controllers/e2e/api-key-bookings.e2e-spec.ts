@@ -1,4 +1,9 @@
-import { CAL_API_VERSION_HEADER, SUCCESS_STATUS, VERSION_2024_08_13 } from "@calcom/platform-constants";
+import {
+  CAL_API_VERSION_HEADER,
+  SUCCESS_STATUS,
+  VERSION_2024_08_13,
+  VERSION_2024_09_04,
+} from "@calcom/platform-constants";
 import {
   AttendeeCancelledEmail,
   AttendeeRescheduledEmail,
@@ -281,6 +286,55 @@ describe("Bookings Endpoints 2024-08-13", () => {
           expect(AttendeeCancelledEmail.prototype.getHtml).toHaveBeenCalled();
           expect(OrganizerCancelledEmail.prototype.getHtml).toHaveBeenCalled();
         });
+    });
+
+    describe("WC-TW-3 binding slot hold", () => {
+      const reservationUids: string[] = [];
+
+      afterAll(async () => {
+        for (const uid of reservationUids) {
+          await request(app.getHttpServer())
+            .delete(`/v2/slots/reservations/${uid}`)
+            .set(CAL_API_VERSION_HEADER, VERSION_2024_09_04);
+        }
+      });
+
+      it("rejects a booking on a slot reserved by someone else, then lets the holder book it", async () => {
+        const start = new Date(Date.UTC(2030, 0, 9, 13, 0, 0)).toISOString();
+        const reserveResponse = await request(app.getHttpServer())
+          .post("/v2/slots/reservations")
+          .send({ eventTypeId, slotStart: start })
+          .set(CAL_API_VERSION_HEADER, VERSION_2024_09_04)
+          .expect(201);
+        const reservationUid: string = reserveResponse.body.data.reservationUid;
+        expect(reservationUid).toBeDefined();
+        reservationUids.push(reservationUid);
+
+        const body: CreateBookingInput_2024_08_13 = {
+          start,
+          eventTypeId,
+          attendee: { name: "Hold Tester", email: "hold_tester@gmail.com", timeZone: "Europe/Rome" },
+        };
+
+        await request(app.getHttpServer())
+          .post("/v2/bookings")
+          .send(body)
+          .set({ Authorization: `Bearer cal_test_${apiKeyString}` })
+          .set(CAL_API_VERSION_HEADER, VERSION_2024_08_13)
+          .expect(409);
+
+        const response = await request(app.getHttpServer())
+          .post("/v2/bookings")
+          .send({ ...body, reservedSlotUid: reservationUid })
+          .set({ Authorization: `Bearer cal_test_${apiKeyString}` })
+          .set(CAL_API_VERSION_HEADER, VERSION_2024_08_13)
+          .expect(201);
+        const responseBody: CreateBookingOutput_2024_08_13 = response.body;
+        expect(responseDataIsBooking(responseBody.data)).toBe(true);
+        if (responseDataIsBooking(responseBody.data)) {
+          expect(responseBody.data.start).toEqual(start);
+        }
+      });
     });
 
     function responseDataIsBooking(data: any): data is BookingOutput_2024_08_13 {

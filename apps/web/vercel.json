@@ -9,6 +9,18 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/calendar-subscriptions-reconcile",
+      "schedule": "30 2 * * *"
+    },
+    {
+      "path": "/api/cron/calendar-subscriptions-reconcile?mode=stale",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/custom-hostnames-cleanup",
+      "schedule": "15 3 * * *"
+    },
+    {
       "path": "/api/cron/queuedFormResponseCleanup",
       "schedule": "0 */12 * * *"
     },

@@ -47,6 +47,11 @@ export type { ConnectedDestinationCalendars } from "@calcom/features/calendars/l
 export { getConnectedDestinationCalendarsAndEnsureDefaultsInDb } from "@calcom/features/calendars/lib/getConnectedDestinationCalendars";
 export type { CityTimezones } from "@calcom/features/cityTimezones/cityTimezonesHandler";
 export { cityTimezonesHandler } from "@calcom/features/cityTimezones/cityTimezonesHandler";
+export {
+  type TeamResidencyFields,
+  TeamResidencyService,
+  teamResidencySelect,
+} from "@calcom/features/residency/TeamResidencyService";
 export { ENABLE_ASYNC_TASKER, MINUTES_TO_BOOK } from "@calcom/lib/constants";
 export { TRPCError } from "@trpc/server";
 
@@ -90,12 +95,12 @@ export { paymentDataSelect };
 export { confirmHandler as confirmBookingHandler } from "@calcom/trpc/server/routers/viewer/bookings/confirm.handler";
 export { getBookingFieldsWithSystemFields };
 
-export { checkAdminOrOwner } from "@calcom/features/auth/lib/checkAdminOrOwner";
 export { sendLocationChangeEmailsAndSMS } from "@calcom/emails/email-manager";
+export { checkAdminOrOwner } from "@calcom/features/auth/lib/checkAdminOrOwner";
 export { verifyCodeUnAuthenticated } from "@calcom/features/auth/lib/verifyCodeUnAuthenticated";
 export { sendEmailVerificationByCode } from "@calcom/features/auth/lib/verifyEmail";
-export { getCalendarLinks } from "@calcom/features/bookings/lib/getCalendarLinks";
 export { BookingReferenceRepository } from "@calcom/features/bookingReference/repositories/BookingReferenceRepository";
+export { getCalendarLinks } from "@calcom/features/bookings/lib/getCalendarLinks";
 export { BookingAccessService } from "@calcom/features/bookings/services/BookingAccessService";
 export { CredentialRepository } from "@calcom/features/credentials/repositories/CredentialRepository";
 export type { OrgMembershipLookup } from "@calcom/features/di/modules/OrgMembershipLookup";

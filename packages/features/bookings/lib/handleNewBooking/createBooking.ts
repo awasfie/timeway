@@ -147,6 +147,11 @@ async function saveBooking(
   });
 }
 
+export function getEventTypeTwOrgId(eventTypeData: NewBookingEventType | undefined): string | null {
+  if (!eventTypeData || !("twOrgId" in eventTypeData)) return null;
+  return eventTypeData.twOrgId ?? null;
+}
+
 function getEventTypeRel(eventTypeId: EventTypeId) {
   return eventTypeId ? { connect: { id: eventTypeId } } : {};
 }
@@ -217,6 +222,9 @@ function buildNewBookingData(params: CreateBookingParams) {
         : undefined,
     creationSource,
     tracking: tracking ? { create: tracking } : undefined,
+    // TW-ORGID-INS: always the booked event type's org, never the request's org context;
+    // the public booking path has none. Dynamic (no event type) bookings stay NULL.
+    twOrgId: getEventTypeTwOrgId(eventType.eventTypeData),
   };
 
   if (reqBody.recurringEventId) {

@@ -119,6 +119,67 @@ export class SelectedCalendarRepository implements ISelectedCalendarRepository {
     });
   }
 
+  /**
+   * WC-TW-3: subscribed calendars to reconcile against the provider, least recently synced first.
+   * With staleBefore, only calendars whose last sync is older than it (or never synced).
+   */
+  async findForReconciliation({
+    integrations,
+    staleBefore,
+    take,
+  }: {
+    integrations: string[];
+    staleBefore?: Date;
+    take: number;
+  }) {
+    return this.prismaClient.selectedCalendar.findMany({
+      where: {
+        integration: { in: integrations },
+        syncSubscribedAt: { not: null },
+        ...(staleBefore ? { OR: [{ syncedAt: null }, { syncedAt: { lt: staleBefore } }] } : {}),
+      },
+      orderBy: { syncedAt: { sort: "asc", nulls: "first" } },
+      take,
+    });
+  }
+
+  /**
+   * WC-TW-3: per-provider counts of subscribed calendars that are stale (last sync before
+   * staleBefore, or never synced) and whose provider channel has expired or expires before expiringBefore.
+   */
+  async countSubscriptionHealth({
+    integrations,
+    staleBefore,
+    now,
+    expiringBefore,
+  }: {
+    integrations: string[];
+    staleBefore: Date;
+    now: Date;
+    expiringBefore: Date;
+  }) {
+    const subscribed = { integration: { in: integrations }, syncSubscribedAt: { not: null } };
+    const countBy = (where: Prisma.SelectedCalendarWhereInput) =>
+      this.prismaClient.selectedCalendar.groupBy({
+        by: ["integration"],
+        where: { ...subscribed, ...where },
+        _count: { _all: true },
+      });
+    const [stale, expired, expiring] = await Promise.all([
+      countBy({ OR: [{ syncedAt: null }, { syncedAt: { lt: staleBefore } }] }),
+      countBy({ channelExpiration: { lte: now } }),
+      countBy({ channelExpiration: { gt: now, lte: expiringBefore } }),
+    ]);
+    const byProvider = (rows: { integration: string; _count: { _all: number } }[], provider: string) =>
+      rows.find((row) => row.integration === provider)?._count._all ?? 0;
+    return integrations.map((provider) => ({
+      provider,
+      stale: byProvider(stale, provider),
+      channelsExpired: byProvider(expired, provider),
+      channelsExpiringWithin1h: byProvider(expiring, provider),
+    }));
+  }
+
   async updateSyncStatus(
     id: string,
     data: Pick<

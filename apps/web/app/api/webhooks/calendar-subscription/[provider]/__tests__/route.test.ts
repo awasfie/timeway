@@ -25,6 +25,7 @@ vi.mock("next/server", () => ({
       has: (key: string): boolean => this._headers.has(key.toLowerCase()),
     };
   },
+  after: undefined,
   NextResponse: {
     json: vi.fn((body, init) => ({
       json: vi.fn().mockResolvedValue(body),
@@ -82,18 +83,28 @@ describe("/api/webhooks/calendar-subscription/[provider]", () => {
       const mockIsCacheEnabled = vi.fn().mockResolvedValue(true);
       const mockIsSyncEnabled = vi.fn().mockResolvedValue(false);
       const mockProcessWebhook = vi.fn().mockResolvedValue(undefined);
+      const mockProcessGraphNotifications = vi.fn().mockResolvedValue({});
+      (request as unknown as { json: () => Promise<unknown> }).json = vi
+        .fn()
+        .mockResolvedValue({ value: [{ subscriptionId: "s1", clientState: "t" }] });
 
       mockCalendarSubscriptionService.prototype.isCacheEnabled = mockIsCacheEnabled;
       mockCalendarSubscriptionService.prototype.isSyncEnabled = mockIsSyncEnabled;
       mockCalendarSubscriptionService.prototype.processWebhook = mockProcessWebhook;
+      mockCalendarSubscriptionService.prototype.processGraphNotifications = mockProcessGraphNotifications;
 
       const { POST } = await import("../route");
       const response = await POST(request, {
         params: Promise.resolve({ provider: "office365_calendar" }),
       });
 
-      expect(response.status).toBe(200);
-      expect(mockProcessWebhook).toHaveBeenCalledWith("office365_calendar", request);
+      // WC-TW-4f: Graph change notifications are parsed by the route and acked 202
+      expect(response.status).toBe(202);
+      expect(mockProcessWebhook).not.toHaveBeenCalled();
+      expect(mockProcessGraphNotifications).toHaveBeenCalledWith(
+        [{ subscriptionId: "s1", clientState: "t" }],
+        process.env.MICROSOFT_WEBHOOK_TOKEN
+      );
     });
 
     test("should reject unsupported provider", async () => {

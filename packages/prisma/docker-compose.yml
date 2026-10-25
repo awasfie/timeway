@@ -2,7 +2,7 @@
 # starts a postgres 18 instance on port 5450 to use as a local db
 services:
   postgres:
-    image: postgres:18
+    image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
     ports:
       - "5450:5432" # expose pg on port 5450 to not collide with pg from elsewhere
     restart: always
@@ -18,7 +18,7 @@ services:
       timeout: 5s
       retries: 5
   postgres_is_ready:
-    image: postgres
+    image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
     depends_on:
       postgres:
         condition: service_healthy

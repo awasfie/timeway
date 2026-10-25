@@ -336,7 +336,7 @@ export default function Login({
                         }
                         setErrorMessage(null);
                       }}>
-                      <Icon name="arrow-left" className="mr-2 size-4" />
+                      <Icon name="arrow-left" className="me-2 size-4" />
                       {t("go_back")}
                     </Button>
                     {!twoFactorLostAccess && (
@@ -347,7 +347,7 @@ export default function Login({
                           setErrorMessage(null);
                           methods.setValue("totpCode", "");
                         }}>
-                        <Icon name="lock" className="mr-2 size-4" />
+                        <Icon name="lock" className="me-2 size-4" />
                         {t("lost_access")}
                       </Button>
                     )}
