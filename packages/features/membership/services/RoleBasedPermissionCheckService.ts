@@ -55,6 +55,6 @@ export class RoleBasedPermissionCheckService {
       ids.add(m.teamId);
       for (const child of m.team.children) ids.add(child.id);
     }
-    return [...ids];
+    return Array.from(ids);
   }
 }

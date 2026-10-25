@@ -5,6 +5,14 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import type { authedProcedure } from "../../../procedures/authedProcedure";
 import { createEventPbacProcedure, ensureEmailOrPhoneNumberIsPresent } from "../util";
 
+const { mockCheckPermission } = vi.hoisted(() => ({ mockCheckPermission: vi.fn() }));
+vi.mock("@calcom/features/membership/services/RoleBasedPermissionCheckService", () => ({
+  RoleBasedPermissionCheckService: class {
+    checkPermission = mockCheckPermission;
+    hasPermission = mockCheckPermission;
+  },
+}));
+
 describe("createEventPbacProcedure", () => {
   const mockPrisma = {
     eventType: {
@@ -28,6 +36,7 @@ describe("createEventPbacProcedure", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCheckPermission.mockResolvedValue(true);
   });
 
   describe("personal events", () => {
@@ -202,7 +211,7 @@ describe("createEventPbacProcedure", () => {
       const procedure = createEventPbacProcedure("eventType.update");
       const middleware = getMiddleware(procedure);
 
-      // PermissionCheckService stub always returns true, so org admin access is always granted
+      // permission check mocked to allow (org admin via parent-org membership)
       await expect(
         middleware({
           ctx: mockCtx,
@@ -214,6 +223,35 @@ describe("createEventPbacProcedure", () => {
           meta: undefined,
         })
       ).resolves.not.toThrow();
+    });
+  });
+
+  describe("team events - without permission", () => {
+    it("should deny a user without a qualifying team membership (CC-13)", async () => {
+      mockPrisma.eventType.findUnique = vi.fn().mockResolvedValue({
+        id: 2,
+        userId: null,
+        teamId: 10,
+        users: [],
+        team: { members: [{ userId: 2 }] },
+      });
+      mockCheckPermission.mockResolvedValue(false);
+
+      const middleware = getMiddleware(createEventPbacProcedure("eventType.delete"));
+
+      await expect(
+        middleware({
+          ctx: mockCtx,
+          input: { id: 2 },
+          next: mockNext,
+          path: "test",
+          type: "mutation",
+          getRawInput: async () => ({}),
+          meta: undefined,
+        })
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockCheckPermission).toHaveBeenCalledWith(expect.objectContaining({ userId: 1, teamId: 10 }));
     });
   });
 
@@ -419,7 +457,7 @@ describe("createEventPbacProcedure", () => {
       const procedure = createEventPbacProcedure("eventType.delete");
       const middleware = getMiddleware(procedure);
 
-      // PermissionCheckService stub always returns true
+      // permission check mocked to allow
       await expect(
         middleware({
           ctx: mockCtx,
@@ -439,7 +477,7 @@ describe("createEventPbacProcedure", () => {
       const procedure = createEventPbacProcedure("eventType.create", [MembershipRole.OWNER]);
       const middleware = getMiddleware(procedure);
 
-      // PermissionCheckService stub always returns true
+      // permission check mocked to allow
       await expect(
         middleware({
           ctx: mockCtx,
