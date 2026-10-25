@@ -1,11 +1,10 @@
-import { RRule } from "rrule";
-
 import type { Dayjs } from "@calcom/dayjs";
 import dayjs from "@calcom/dayjs";
 import { detectBrowserTimeFormat, TimeFormat } from "@calcom/lib/timeFormat";
 import type { RecurringEvent } from "@calcom/types/Calendar";
-
+import { RRule } from "rrule";
 import { parseZone } from "./parse-zone";
+import { wallClockParts, wallClockToInstant } from "./timeZoneWallClock";
 
 type ExtraOptions = { withDefaultTimeFormat?: boolean; selectedTimeFormat?: TimeFormat };
 
@@ -96,17 +95,35 @@ export const parseRecurringDates = (
 ): [string[], Date[]] => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { count, ...restRecurringEvent } = recurringEvent || {};
+  // RFC 5545: occurrences repeat DTSTART's wall clock in DTSTART's zone, which for a booking is the time the
+  // booker picked in the booker's timeZone. rrule works in UTC, so expand a floating (UTC-as-wall-clock)
+  // start and map each occurrence back through timeZone; independent of the runtime's own TZ.
+  const startMs = dayjs(startDate).valueOf();
+  const startWall = wallClockParts(startMs, timeZone);
   const rule = new RRule({
     ...restRecurringEvent,
     count: recurringCount,
-    dtstart: new Date(dayjs(startDate).valueOf()),
+    dtstart: new Date(
+      Date.UTC(
+        startWall.year,
+        startWall.month - 1,
+        startWall.day,
+        startWall.hour,
+        startWall.minute,
+        startWall.second
+      )
+    ),
   });
 
-  const startUtcOffset = dayjs(startDate).utcOffset();
-  // UTC still need to have DST applied, rrule does not do this.
   const times = rule.all().map((t) => {
-    // applying the DST offset.
-    return dayjs.utc(t).add(startUtcOffset - dayjs(t).utcOffset(), "minute");
+    const minutesOfDay = t.getUTCHours() * 60 + t.getUTCMinutes();
+    const instant = wallClockToInstant(
+      { year: t.getUTCFullYear(), month: t.getUTCMonth() + 1, day: t.getUTCDate() },
+      minutesOfDay,
+      timeZone,
+      "earlier"
+    );
+    return dayjs.utc(instant + t.getUTCSeconds() * 1000 + (startMs % 1000));
   });
   const dateStrings = times.map((t) => {
     // finally; show in local timeZone again

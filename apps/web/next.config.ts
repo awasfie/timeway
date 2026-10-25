@@ -237,6 +237,8 @@ const nextConfig = (phase: string): NextConfig => {
       optimizePackageImports: ["@calcom/ui"],
     },
     productionBrowserSourceMaps: true,
+    // PostHog posts to /ingest/e/ etc.; a 308 to the slashless path would break the proxy.
+    skipTrailingSlashRedirect: true,
     transpilePackages: [
       "@calcom/app-store",
       "@calcom/dayjs",
@@ -260,6 +262,15 @@ const nextConfig = (phase: string): NextConfig => {
     async rewrites() {
       const { orgSlug } = nextJsOrgRewriteConfig;
       const beforeFiles = [
+        // WC-DX-3c-2: first-party PostHog proxy (no third-party origin). Static assets first: more specific.
+        {
+          source: "/ingest/static/:path*",
+          destination: `${process.env.POSTHOG_INTERNAL_HOST || "https://ph.awstreams.co"}/static/:path*`,
+        },
+        {
+          source: "/ingest/:path*",
+          destination: `${process.env.POSTHOG_INTERNAL_HOST || "https://ph.awstreams.co"}/:path*`,
+        },
         {
           source: `/(${locales.join("|")})/:path*`,
           destination: "/:path*",
