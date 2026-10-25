@@ -3,5 +3,26 @@
   "lcp_ms": 8170,
   "tbt_ms": 746,
   "tolerance": 0.1,
-  "source": "booking-perf run 39741527677 (PR #123 head a6e4c6b627, WC-TW-6c-4), region=gh-runner"
+  "source": "booking-perf run 39741527677 (PR #123 head a6e4c6b627, WC-TW-6c-4), region=gh-runner",
+  "regions": {
+    "_comment": "WC-TW-6c-10 per-region ratchet. lcp_ms = measured median for that region. tbt_ms is CPU-only (RTT does not change it), so it carries the gh-runner TBT baseline; a single region sample swings 830-1470 ms.",
+    "cairo": {
+      "lcp_ms": 9881,
+      "tbt_ms": 1511,
+      "city_rtt_ms": 47,
+      "source": "booking-perf run 40144176236 (wt/t_49b22425 b71b211e81), Lighthouse on the GH runner with slow-4G + Globalping-measured city RTT"
+    },
+    "riyadh": {
+      "lcp_ms": 9917,
+      "tbt_ms": 1511,
+      "city_rtt_ms": 9,
+      "source": "booking-perf run 40144176236 (wt/t_49b22425 b71b211e81), Lighthouse on the GH runner with slow-4G + Globalping-measured city RTT"
+    },
+    "dubai": {
+      "lcp_ms": 10042,
+      "tbt_ms": 1511,
+      "city_rtt_ms": 113,
+      "source": "booking-perf run 40144176236 (wt/t_49b22425 b71b211e81), Lighthouse on the GH runner with slow-4G + Globalping-measured city RTT"
+    }
+  }
 }
