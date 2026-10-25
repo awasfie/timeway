@@ -41,6 +41,9 @@ export const TW_UNATTENDED_PLATFORM_REASONS = [
   // apps/web/app/api/tasks/<dir> (tasker: scheduled webhooks, reminders, workflow tasks)
   "tasks-cron",
   "tasks-cleanup",
+  // secret-gated internal reads that span orgs
+  "custom-domain-approve", // proxy TLS ask hook: is this hostname approved in any org
+  "calendar-sync-metrics", // Prometheus scrape: subscription health counted across orgs
   // webhooks whose event names no booking uid or credential id
   "app-credential-webhook",
   "alby-webhook",
