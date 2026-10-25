@@ -11,7 +11,9 @@ export const errorConversionMiddleware = middleware(async ({ next }) => {
     const result = await next();
     // tRPC v11 hands downstream failures back as { ok: false } instead of throwing, with the original
     // error as the cause; without this an ErrorWithCode (e.g. Forbidden) reached clients as a 500.
-    if (!result.ok) {
+    // Only rewrap what tRPC itself wrapped (INTERNAL_SERVER_ERROR); a TRPCError a handler threw on purpose
+    // keeps its code and message (e.g. OAuth pkce_required).
+    if (!result.ok && result.error.code === "INTERNAL_SERVER_ERROR") {
       const converted = convertErrorWithCodeToTRPCError(result.error.cause);
       if (converted instanceof TRPCError) throw converted;
     }
