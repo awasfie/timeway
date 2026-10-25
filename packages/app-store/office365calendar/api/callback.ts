@@ -1,6 +1,7 @@
 import type { Calendar as OfficeCalendar } from "@microsoft/microsoft-graph-types-beta";
 import type { NextApiRequest, NextApiResponse } from "next";
 
+import { onCalendarCredentialCreated } from "@calcom/features/tw-activation/activation";
 import { renewSelectedCalendarCredentialId } from "@calcom/lib/connectedCalendar";
 import { WEBAPP_URL, WEBAPP_URL_FOR_OAUTH } from "@calcom/lib/constants";
 import { handleErrorsJson } from "@calcom/lib/errors";
@@ -140,6 +141,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         appId: "office365-calendar",
       },
     });
+    await onCalendarCredentialCreated(credential, "office365_callback");
     const selectedCalendarWhereUnique = {
       userId: req.session?.user.id,
       integration: "office365_calendar",

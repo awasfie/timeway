@@ -23,7 +23,13 @@ ARG ORGANIZATIONS_ENABLED
 ## TW-T7: read at build time by apps/web/app/api/camv/booking-window (Camv integration)
 ARG CAMV_INTERNAL_SECRET
 
+## WC-DX-3c-2: PostHog key is inlined into the client bundle; the host is baked into the /ingest rewrite at build time
+ARG NEXT_PUBLIC_POSTHOG_KEY
+ARG POSTHOG_INTERNAL_HOST=https://ph.awstreams.co
+
 ENV NEXT_PUBLIC_WEBAPP_URL=http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER \
+  NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY \
+  POSTHOG_INTERNAL_HOST=$POSTHOG_INTERNAL_HOST \
   NEXT_PUBLIC_API_V2_URL=$NEXT_PUBLIC_API_V2_URL \
   NEXT_PUBLIC_LICENSE_CONSENT=$NEXT_PUBLIC_LICENSE_CONSENT \
   NEXT_PUBLIC_WEBSITE_TERMS_URL=$NEXT_PUBLIC_WEBSITE_TERMS_URL \
@@ -44,6 +50,8 @@ COPY .yarn ./.yarn
 COPY apps/web ./apps/web
 COPY apps/api/v2 ./apps/api/v2
 COPY packages ./packages
+# WC-DX-3c-2: vendored analytics module (imported by relative path from apps/web and packages/lib)
+COPY vendor ./vendor
 
 RUN yarn config set httpTimeout 1200000
 # No `turbo prune` here: its out/ tree was never copied, so it changed nothing in the image, and turbo's berry
