@@ -1,0 +1,84 @@
+name: WC-TW-6c-9c-2b ar screenshot (throwaway, not for merge)
+on:
+  push:
+    branches: [wt/t_6a9cadcb-shot]
+permissions:
+  contents: read
+jobs:
+  build-gates:
+    name: JS budget + Lighthouse (gh-runner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: calendso
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      # CI-only public dummies (same values as e2e.yml fallbacks); the DB is this job's service.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/calendso
+      DATABASE_DIRECT_URL: postgresql://postgres:postgres@localhost:5432/calendso
+      CALENDSO_ENCRYPTION_KEY: 0zfLtY99wjeLnsM7qsa8xsT+Q0oSgnOL
+      NEXTAUTH_SECRET: EI4qqDpcfdvf4A+0aQEEx8JjHxHSy4uWiZw/F32K+pA=
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_WEBAPP_URL: http://localhost:3000
+      NEXT_PUBLIC_WEBSITE_URL: http://localhost:3000
+      ALLOWED_HOSTNAMES: '"cal.local:3000","localhost:3000"'
+      NEXT_TELEMETRY_DISABLED: "1"
+      BOOKING_URL: http://localhost:3000/pro/30min
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: ./.github/actions/cache-checkout
+      - uses: ./.github/actions/yarn-install
+      - run: yarn prisma generate
+      - uses: ./.github/actions/cache-db
+      - uses: ./.github/actions/cache-build
+      - name: Start production server
+        run: |
+          (cd apps/web && nohup npx next start -p 3000 > "$RUNNER_TEMP/next.log" 2>&1 &)
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$BOOKING_URL" || true)
+            [ "$code" = "200" ] && echo "booking page up after ${i}x2s" && exit 0
+            sleep 2
+          done
+          echo "::error::booking page $BOOKING_URL never returned 200 (last $code)"
+          tail -100 "$RUNNER_TEMP/next.log"
+          exit 1
+      - name: Screenshot en + ar booking page
+        run: |
+          npx -y playwright@1.56.1 install --with-deps chromium
+          cat > shot.mjs <<'JS'
+          import { chromium } from "playwright";
+          const b = await chromium.launch();
+          for (const lang of ["ar", "en"]) {
+            const ctx = await b.newContext({ locale: lang, extraHTTPHeaders: { "Accept-Language": lang }, viewport: { width: 1280, height: 900 } });
+            const p = await ctx.newPage();
+            const missing = [];
+            p.on("console", (m) => { if (/missingKey|i18n/.test(m.text())) missing.push(m.text()); });
+            await p.goto(process.env.BOOKING_URL, { waitUntil: "networkidle" });
+            await p.waitForTimeout(1500);
+            const dir = await p.evaluate(() => document.documentElement.dir + " " + document.documentElement.lang);
+            const fetched = await p.evaluate(() => performance.getEntriesByType("resource").filter((e) => e.name.includes("/api/i18n/")).map((e) => e.name));
+            console.log(lang, "html dir/lang:", dir, "lazy i18n fetches:", JSON.stringify(fetched), "console:", JSON.stringify(missing));
+            await p.screenshot({ path: `perf/out/booking-${lang}.png`, fullPage: true });
+            await ctx.close();
+          }
+          await b.close();
+          JS
+          mkdir -p perf/out && NODE_PATH=$(npm root -g) node shot.mjs || (npm i --no-save playwright@1.56.1 >/dev/null && node shot.mjs)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: booking-screens
+          path: perf/out/
