@@ -57,9 +57,9 @@ jobs:
           exit 1
       - name: Screenshot en + ar booking page
         run: |
-          npx -y playwright@1.56.1 install --with-deps chromium
+          yarn playwright install --with-deps chromium
           cat > shot.mjs <<'JS'
-          import { chromium } from "playwright";
+          import { chromium } from "@playwright/test";
           const b = await chromium.launch();
           for (const lang of ["ar", "en"]) {
             const ctx = await b.newContext({ locale: lang, extraHTTPHeaders: { "Accept-Language": lang }, viewport: { width: 1280, height: 900 } });
@@ -76,7 +76,7 @@ jobs:
           }
           await b.close();
           JS
-          mkdir -p perf/out && NODE_PATH=$(npm root -g) node shot.mjs || (npm i --no-save playwright@1.56.1 >/dev/null && node shot.mjs)
+          mkdir -p perf/out && node shot.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
