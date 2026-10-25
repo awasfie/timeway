@@ -3,8 +3,8 @@
  * Handlers run in-process with a constructed ctx (no HTTP), as bookings/get.handler.integration-test.ts does.
  */
 import { prisma } from "@calcom/prisma";
-import { appRouter } from "@calcom/trpc/server/routers/_app";
 import { createContextInner } from "@calcom/trpc/server/createContext";
+import { appRouter } from "@calcom/trpc/server/routers/_app";
 import { createCallerFactory } from "@calcom/trpc/server/trpc";
 import { expect } from "vitest";
 
@@ -30,17 +30,28 @@ export async function attempt(fn: () => Promise<unknown>): Promise<Outcome> {
   }
 }
 
-/** B is denied when the call throws NOT_FOUND/FORBIDDEN/UNAUTHORIZED, or returns something `isEmpty` accepts. */
-export function expectDenied(o: Outcome, isEmpty?: (v: unknown) => boolean) {
+/**
+ * An extra error a probe accepts as a deny when the handler hides its own access check behind a
+ * catch-all. Narrow on purpose: the code must match and, when given, the message too. A probe that
+ * accepts one must also prove A's data unchanged.
+ */
+export type AcceptedDeny = { code: string; message?: RegExp };
+
+/** B is denied when the call throws NOT_FOUND/FORBIDDEN/UNAUTHORIZED (or `accept`), or returns something `isEmpty` accepts. */
+export function expectDenied(o: Outcome, isEmpty?: (v: unknown) => boolean, accept?: AcceptedDeny) {
   if (o.kind === "threw") {
-    const denied = DENY_CODES.has(o.code) || /UNAUTHORIZED|FORBIDDEN|NOT_FOUND|not found/i.test(o.message);
+    const accepted =
+      !!accept && o.code === accept.code && (!accept.message || accept.message.test(o.message));
+    const denied =
+      accepted || DENY_CODES.has(o.code) || /UNAUTHORIZED|FORBIDDEN|NOT_FOUND|not found/i.test(o.message);
     expect({ threw: o.code, message: o.message.slice(0, 120), denied }).toMatchObject({ denied: true });
     return;
   }
   expect(isEmpty, `call returned data for tenant B: ${JSON.stringify(o.value)?.slice(0, 200)}`).toBeDefined();
-  expect(isEmpty?.(o.value), `call returned data for tenant B: ${JSON.stringify(o.value)?.slice(0, 200)}`).toBe(
-    true
-  );
+  expect(
+    isEmpty?.(o.value),
+    `call returned data for tenant B: ${JSON.stringify(o.value)?.slice(0, 200)}`
+  ).toBe(true);
 }
 
 /** A's row, read directly, before and after the attempt: the write must not have landed. */

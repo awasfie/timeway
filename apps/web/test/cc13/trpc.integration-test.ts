@@ -5,8 +5,9 @@
  * cannot poison the next probe.
  */
 import { randomUUID } from "node:crypto";
-import { withTwPlatform } from "@calcom/prisma/tw-org-context";
+import process from "node:process";
 import { BookingStatus, WebhookTriggerEvents } from "@calcom/prisma/enums";
+import { withTwPlatform } from "@calcom/prisma/tw-org-context";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Cc13Seed, SeededTenant } from "./seed";
 import { seedCc13Tenants } from "./seed";
@@ -43,8 +44,24 @@ const mkBooking = (t: SeededTenant, status: BookingStatus = BookingStatus.ACCEPT
       eventType: { connect: { id: t.eventType.id } },
       status,
       twOrgId: t.twOrg.id,
+      attendees: {
+        create: { email: `${tag(t)}-guest${n}@cc13.test`, name: `${tag(t)} guest`, timeZone: "UTC" },
+      },
     },
     select: { id: true, uid: true },
+  });
+};
+
+/** A's booking with one seat: getBookingAttendees looks a booking up by seat reference uid. */
+const mkSeat = async (t: SeededTenant) => {
+  const b = await mkBooking(t);
+  const attendee = await prisma.attendee.findFirstOrThrow({
+    where: { bookingId: b.id },
+    select: { id: true },
+  });
+  return prisma.bookingSeat.create({
+    data: { referenceUid: randomUUID(), bookingId: b.id, attendeeId: attendee.id },
+    select: { referenceUid: true },
   });
 };
 
@@ -122,7 +139,11 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
       const o = await attempt(() =>
         viewerB.eventTypes.getEventTypesFromGroup({ group: { teamId: seed.A.team.id }, limit: 10 } as never)
       );
-      expectDenied(o, (v) => noRows((v as { eventTypes?: unknown }).eventTypes));
+      expectDenied(o, (v) => noRows((v as { eventTypes?: unknown }).eventTypes), {
+        code: "INTERNAL_SERVER_ERROR",
+        // The repository's membership check throws ErrorWithCode(Unauthorized), which tRPC wraps as INTERNAL_SERVER_ERROR.
+        message: /User is not a member of this team/,
+      });
     });
   });
 
@@ -130,18 +151,28 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
     it("viewer.bookings.getBookingDetails: B gets nothing of A's booking", async () => {
       const o = await attempt(() => viewerB.bookings.getBookingDetails({ uid: seed.A.booking.uid }));
       expectDenied(o, (v) => {
-        const d = v as { rescheduledToBooking?: unknown; previousBooking?: unknown; tracking?: unknown } | null;
+        const d = v as {
+          rescheduledToBooking?: unknown;
+          previousBooking?: unknown;
+          tracking?: unknown;
+        } | null;
         return !d || (!d.rescheduledToBooking && !d.previousBooking && !d.tracking);
       });
     });
 
     it("viewer.bookings.getBookingAttendees: B cannot list A's booking attendees", async () => {
-      const o = await attempt(() => viewerB.bookings.getBookingAttendees({ bookingUid: seed.A.booking.uid } as never));
-      expectDenied(o, noRows);
+      const seat = await mkSeat(seed.A);
+      const o = await attempt(() =>
+        viewerB.bookings.getBookingAttendees({ seatReferenceUid: seat.referenceUid })
+      );
+      // The handler returns A's seat count: any number handed to B is a read of A's booking.
+      expectDenied(o, (v) => v === null || v === undefined);
     });
 
     it("viewer.bookings.getBookingHistory: B cannot read A's booking audit log", async () => {
-      expectDenied(await attempt(() => viewerB.bookings.getBookingHistory({ bookingUid: seed.A.booking.uid } as never)));
+      expectDenied(
+        await attempt(() => viewerB.bookings.getBookingHistory({ bookingUid: seed.A.booking.uid } as never))
+      );
     });
 
     it("viewer.bookings.get: B's booking list contains none of A's bookings", async () => {
@@ -190,7 +221,9 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
 
   describe("availability", () => {
     it("viewer.availability.schedule.get: B cannot read A's schedule", async () => {
-      const o = await attempt(() => viewerB.availability.schedule.get({ scheduleId: seed.A.schedule.id } as never));
+      const o = await attempt(() =>
+        viewerB.availability.schedule.get({ scheduleId: seed.A.schedule.id } as never)
+      );
       expectDenied(o, (v) => !v);
     });
 
@@ -199,7 +232,9 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
       const read = () => prisma.schedule.findUnique({ where: { id: fx.id } });
       await expectUnchanged(read, async () => {
         expectDenied(
-          await attempt(() => viewerB.availability.schedule.update({ scheduleId: fx.id, name: "hijacked by B" } as never))
+          await attempt(() =>
+            viewerB.availability.schedule.update({ scheduleId: fx.id, name: "hijacked by B" } as never)
+          )
         );
       });
     });
@@ -219,7 +254,13 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
         copiesOwnedByB: await prisma.schedule.count({ where: { userId: seed.B.owner.id } }),
       });
       await expectUnchanged(read, async () => {
-        expectDenied(await attempt(() => viewerB.availability.schedule.duplicate({ scheduleId: fx.id } as never)));
+        // The handler's own UNAUTHORIZED is rethrown as INTERNAL_SERVER_ERROR by its catch-all;
+        // the copy count of B and A's row (read above) prove nothing was duplicated.
+        expectDenied(
+          await attempt(() => viewerB.availability.schedule.duplicate({ scheduleId: fx.id } as never)),
+          undefined,
+          { code: "INTERNAL_SERVER_ERROR" }
+        );
       });
     });
   });
@@ -272,7 +313,8 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
           teamId: seed.A.team.id,
         } as never)
       );
-      expectDenied(o);
+      // INTERNAL_SERVER_ERROR counts as a deny only together with A's unchanged webhook count below.
+      expectDenied(o, undefined, { code: "INTERNAL_SERVER_ERROR" });
       expect(await prisma.webhook.count({ where: { teamId: seed.A.team.id } })).toBe(before);
     });
   });
@@ -295,7 +337,12 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
       const fx = await mkApiKey(seed.A);
       const read = () => prisma.apiKey.findUnique({ where: { id: fx.id } });
       await expectUnchanged(read, async () => {
-        expectDenied(await attempt(() => viewerB.apiKeys.delete({ id: fx.id })));
+        // The handler deletes through B's own user.apiKeys relation, so Prisma refuses with
+        // "records ... are not connected" (P2017); A's key surviving (read above) is the proof.
+        expectDenied(await attempt(() => viewerB.apiKeys.delete({ id: fx.id })), undefined, {
+          code: "INTERNAL_SERVER_ERROR",
+          message: /are not connected/,
+        });
       });
     });
   });
@@ -303,7 +350,11 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
   describe("credentials", () => {
     it("viewer.credentials.delete: B cannot delete A's credential", async () => {
       const fx = await mkCredential(seed.A);
-      const read = () => prisma.credential.findUnique({ where: { id: fx.id }, select: { id: true, type: true, teamId: true, userId: true, twOrgId: true } });
+      const read = () =>
+        prisma.credential.findUnique({
+          where: { id: fx.id },
+          select: { id: true, type: true, teamId: true, userId: true, twOrgId: true },
+        });
       await expectUnchanged(read, async () => {
         expectDenied(await attempt(() => viewerB.credentials.delete({ id: fx.id })));
         expectDenied(await attempt(() => viewerB.credentials.delete({ id: fx.id, teamId: seed.A.team.id })));
@@ -313,24 +364,37 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
 
   describe("organizations.customDomain", () => {
     const hostRow = (orgId: string) => () =>
-      withTwPlatform(prisma, "CC-13 probe read", (tx) => tx.customHostname.findUnique({ where: { orgId } }));
+      withTwPlatform(prisma, "CC-13 probe read", (tx) =>
+        tx.twCustomHostname.findUnique({ where: { orgId } })
+      );
 
     it("viewer.organizations.customDomain.get: B cannot read A's org custom hostname", async () => {
-      expectDenied(await attempt(() => viewerB.organizations.customDomain.get({ orgId: seed.A.twOrg.id } as never)));
+      expectDenied(
+        await attempt(() => viewerB.organizations.customDomain.get({ orgId: seed.A.twOrg.id } as never))
+      );
     });
 
     it("viewer.organizations.customDomain.add and remove: B cannot change A's org custom hostname", async () => {
       await withTwPlatform(prisma, "CC-13 probe seed", (tx) =>
-        tx.customHostname.create({ data: { orgId: seed.A.twOrg.id, hostname: `${tag(seed.A)}.cc13.invalid` } })
+        tx.twCustomHostname.create({
+          data: { orgId: seed.A.twOrg.id, hostname: `${tag(seed.A)}.cc13.invalid` },
+        })
       );
       await expectUnchanged(hostRow(seed.A.twOrg.id), async () => {
         expectDenied(
           await attempt(() =>
-            viewerB.organizations.customDomain.add({ orgId: seed.A.twOrg.id, hostname: "stolen.cc13.invalid" } as never)
+            viewerB.organizations.customDomain.add({
+              orgId: seed.A.twOrg.id,
+              hostname: "stolen.cc13.invalid",
+            } as never)
           )
         );
-        expectDenied(await attempt(() => viewerB.organizations.customDomain.refresh({ orgId: seed.A.twOrg.id } as never)));
-        expectDenied(await attempt(() => viewerB.organizations.customDomain.remove({ orgId: seed.A.twOrg.id } as never)));
+        expectDenied(
+          await attempt(() => viewerB.organizations.customDomain.refresh({ orgId: seed.A.twOrg.id } as never))
+        );
+        expectDenied(
+          await attempt(() => viewerB.organizations.customDomain.remove({ orgId: seed.A.twOrg.id } as never))
+        );
       });
     });
   });
