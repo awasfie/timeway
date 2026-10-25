@@ -3,6 +3,8 @@
 // Lighthouse run. Globalping (the region-ttfb provider) has public probes in Cairo, Riyadh and
 // Dubai; no hosted Lighthouse provider has all three without a new paid account, so the Lighthouse
 // run stays on the GitHub runner and its simulated network uses slow-4G (150 ms) + this city RTT.
+// The ping target is behind Cloudflare, so this is RTT to the anycast edge only; the edge-to-origin
+// leg is not modelled. Real-network per-city TTFB comes from region-ttfb (Globalping HTTP).
 // No answering probe, or a provider error, exits non-zero: the region job fails, never skips.
 // Usage: node scripts/perf/region-rtt.mjs --region cairo --host timeway.co [--probes 3] [--out f.json]
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";

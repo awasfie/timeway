@@ -77,7 +77,9 @@ const result = {
     note:
       region === "gh-runner"
         ? "Lighthouse default slow-4G on a GitHub runner"
-        : "Lighthouse on a GitHub runner, simulated RTT = slow-4G 150 ms + city RTT measured from this region",
+        : "Lighthouse on a GitHub runner, simulated RTT = slow-4G 150 ms + city RTT measured from this region. " +
+          "city_rtt_ms is ICMP RTT from the city probe to the Cloudflare anycast edge only; the edge-to-origin leg is " +
+          "not modelled, so this underestimates real latency. Real-network TTFB per city = region-ttfb artifact.",
   },
   commit: process.env.GITHUB_SHA ?? null,
   measured_at: new Date().toISOString(),
