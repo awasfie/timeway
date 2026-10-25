@@ -1,3 +1,4 @@
+import { metadata as camvMetadata } from "@calcom/app-store/livekitvideo/_metadata";
 import type { ICSCalendarEvent } from "@calcom/emails/lib/generateIcsString";
 import generateIcsString from "@calcom/emails/lib/generateIcsString";
 import { publicLookupsForBookingUid, resolvePublicTwOrgFirst } from "@calcom/lib/server/tw-org-scope/public";
@@ -24,6 +25,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
         endTime: true,
         location: true,
         status: true,
+        references: { select: { type: true, meetingUrl: true } },
         user: { select: { name: true, email: true, timeZone: true } },
         attendees: { select: { name: true, email: true, timeZone: true } },
       },
@@ -38,6 +40,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
     timeZone: p.timeZone,
     language: { translate: ((k: string) => k) as never, locale: "en" },
   });
+  // TW-ICS-1a: a Camv booking carries its room URL on the livekit_video reference.
+  // daily_video refs with an empty meetingUrl are ignored; generateIcsString derives the
+  // Camv URL from the uid when no usable reference exists.
+  const camvRef = booking.references.find((r) => r.type === camvMetadata.type && r.meetingUrl);
   const event = {
     uid: booking.uid,
     iCalUID: booking.iCalUID ?? undefined,
@@ -45,6 +51,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
     startTime: booking.startTime.toISOString(),
     endTime: booking.endTime.toISOString(),
     location: booking.location,
+    ...(camvRef?.meetingUrl
+      ? { videoCallData: { type: camvRef.type, id: "", password: "", url: camvRef.meetingUrl } }
+      : {}),
     organizer: person(booking.user),
     attendees: booking.attendees.map(person),
     type: "",
