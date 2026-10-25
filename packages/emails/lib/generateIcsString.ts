@@ -50,7 +50,9 @@ const CAMV_VIDEO_TYPE = camvMetadata.type;
  * same helper the Camv adapter uses). Other integration keys fall back to the provider
  * label ("Cal Video", "Zoom", ...).
  */
-export const resolveIcsLocation = (event: ICSCalendarEvent): string | undefined => {
+export type IcsLocationEvent = Pick<CalendarEvent, "uid" | "location" | "videoCallData" | "additionalInformation">;
+
+export const resolveIcsLocation = (event: IcsLocationEvent): string | undefined => {
   if (event.location === CAMV_LOCATION_TYPE) {
     const v = event.videoCallData;
     if (v?.type === CAMV_VIDEO_TYPE && v.url) return v.url;
