@@ -1,4 +1,5 @@
 import type { EventTypeRepository } from "@calcom/features/eventtypes/repositories/eventTypeRepository";
+import { RoleBasedPermissionCheckService as PermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import { UserRepository } from "@calcom/features/users/repositories/UserRepository";
 import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 import prisma from "@calcom/prisma";
@@ -12,12 +13,6 @@ import authedProcedure from "../../../procedures/authedProcedure";
 import type { TUpdateInputSchema } from "./types";
 
 type PermissionString = string;
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
 
 type EventType = Awaited<ReturnType<EventTypeRepository["findAllByUpId"]>>[number];
 
