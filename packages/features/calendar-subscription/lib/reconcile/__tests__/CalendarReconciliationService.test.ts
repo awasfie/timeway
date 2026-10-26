@@ -174,6 +174,101 @@ describe("CalendarReconciliationService", () => {
     expect(metrics.count).toHaveBeenCalledWith("calendar.reconciliation.error", 1, expect.anything());
   });
 
+  describe("office365_calendar (WC-TW-2-GRAPH-ON)", () => {
+    const outlook = (id: string, over: Partial<SelectedCalendar> = {}): SelectedCalendar =>
+      calendar(id, { integration: "office365_calendar", externalId: `AAMk-${id}`, ...over });
+
+    test("nightly and stale runs ask for office365 calendars from the real factory providers", async () => {
+      const { DefaultAdapterFactory } = await import("../../../adapters/AdaptersFactory");
+      deps.adapterFactory.getProviders = (): string[] => new DefaultAdapterFactory().getProviders();
+
+      await service.reconcileAll();
+      await service.reconcileStale(new Date("2026-10-21T10:00:00Z"));
+
+      expect(deps.selectedCalendarRepository.findForReconciliation).toHaveBeenCalledTimes(2);
+      for (const [args] of deps.selectedCalendarRepository.findForReconciliation.mock.calls) {
+        expect(args.integrations).toContain("office365_calendar");
+      }
+    });
+
+    test("routes to the office365 adapter; Graph's null etag is not counted as drift", async () => {
+      fetchEvents.mockResolvedValue({
+        provider: "office365_calendar",
+        syncToken: "graph-state",
+        items: [item("o-kept", { etag: null }), item("o-new", { etag: null })],
+      });
+      // CalendarCacheEventService stores a null etag as "".
+      deps.calendarCacheEventRepository.findManyBySelectedCalendarIdBetween.mockResolvedValue([
+        { externalId: "o-kept", externalEtag: "" },
+        { externalId: "o-orphan", externalEtag: "" },
+      ]);
+
+      const diff = await service.reconcileCalendar(outlook("o365-1"));
+
+      expect(deps.adapterFactory.get).toHaveBeenCalledWith("office365_calendar");
+      expect(diff).toEqual({ added: 1, removed: 1, changed: 0 });
+      expect(renderSyncMetrics()).toContain(
+        'timeway_reconciliation_diff_total{kind="removed",provider="office365_calendar"} 1'
+      );
+    });
+
+    test("end to end with the real Graph adapter: full calendarView/delta round, @removed rows dropped", async () => {
+      const { Office365CalendarSubscriptionAdapter } = await import(
+        "../../../adapters/Office365CalendarSubscription.adapter"
+      );
+      const base = "https://graph.microsoft.com/v1.0";
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => "",
+        json: async () => ({
+          value: [
+            {
+              id: "g-busy",
+              showAs: "busy",
+              start: { dateTime: "2030-01-02T09:00:00.0000000", timeZone: "UTC" },
+              end: { dateTime: "2030-01-02T10:00:00.0000000", timeZone: "UTC" },
+            },
+            { id: "g-removed", "@removed": { reason: "deleted" } },
+          ],
+          "@odata.deltaLink": `${base}/me/calendarView/delta?$deltatoken=d9`,
+        }),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      try {
+        const adapter = new Office365CalendarSubscriptionAdapter({ getAccessToken: async () => "access" });
+        deps.adapterFactory.get = vi.fn().mockReturnValue(adapter);
+        deps.calendarCacheEventRepository.findManyBySelectedCalendarIdBetween.mockResolvedValue([
+          { externalId: "g-removed", externalEtag: "" },
+        ]);
+        const stored = Office365CalendarSubscriptionAdapter.encodeSyncToken(
+          `${base}/me/calendarView/delta?$deltatoken=old`,
+          new Date(Date.now() + 88 * 86400000)
+        );
+
+        const diff = await service.reconcileCalendar(outlook("o365-2", { syncToken: stored }));
+
+        // Reconciliation must not reuse the stored deltaLink: it starts a new window round.
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const url = new URL(String(fetchMock.mock.calls[0][0]));
+        expect(url.pathname).toBe(
+          `/v1.0/me/calendars/${encodeURIComponent("AAMk-o365-2")}/calendarView/delta`
+        );
+        expect(url.searchParams.get("startDateTime")).toBeTruthy();
+        expect(diff).toEqual({ added: 1, removed: 1, changed: 0 });
+        expect(deps.calendarCacheEventRepository.deleteMany).toHaveBeenCalledWith([
+          { externalId: "g-removed", selectedCalendarId: "o365-2" },
+        ]);
+        const update = deps.selectedCalendarRepository.updateSyncStatus.mock.calls[0][1];
+        expect(Office365CalendarSubscriptionAdapter.decodeSyncToken(update.syncToken)?.deltaLink).toBe(
+          `${base}/me/calendarView/delta?$deltatoken=d9`
+        );
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+  });
+
   test("no alert when every calendar reconciles", async () => {
     deps.selectedCalendarRepository.findForReconciliation.mockResolvedValue([calendar("good")]);
     fetchEvents.mockResolvedValue({ provider: "google_calendar", syncToken: "t", items: [] });
