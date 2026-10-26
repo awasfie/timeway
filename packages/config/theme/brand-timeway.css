@@ -1,5 +1,5 @@
 /* UX-T0 — Timeway brand tokens (Bible v12.6 UX.1.2), mirrored from packages/ui/brand-tokens.ts.
-   Self-hosted fonts in apps/web/public/fonts/brand (woff2 from brand-assets + OFL). Tailwind v4 utilities:
+   Self-hosted fonts in apps/web/public/fonts/brand (woff2 from packages/ui/brand/timeway + OFL). Tailwind v4 utilities:
    bg-brand-primary, bg-brand-seafoam, text-brand-ink, rounded-brand-md, font-brand, font-brand-ar … */
 @font-face { font-family: "DM Sans"; src: url("/fonts/brand/DMSans-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "DM Sans"; src: url("/fonts/brand/DMSans-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
