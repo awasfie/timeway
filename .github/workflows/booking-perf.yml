@@ -9,6 +9,7 @@ on:
   pull_request:
     branches: [main]
   push:
+    paths-ignore: ['docs/**', '**.md']  # CI-COST-3: docs-only pushes (ledger, group-log) skip CI; PR runs are unchanged
     branches: [main]
   schedule:
     # WC.2.5 synthetic TTFB probe; GitHub may delay scheduled runs under load.
@@ -27,7 +28,7 @@ env:
 
 jobs:
   build-gates:
-    name: JS budget + Lighthouse (gh-runner)
+    name: JS budget + Lighthouse (gh-runner, cairo, riyadh, dubai)
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -92,6 +93,36 @@ jobs:
           npx -y @lhci/cli@0.15.1 upload --config=perf/lighthouserc.cjs
           node scripts/perf/lhci-summary.mjs --dir perf/out/lhci --region gh-runner --out perf/out/lhci-gh-runner.json
           npx -y @lhci/cli@0.15.1 assert --config=perf/lighthouserc.cjs
+      # WC-TW-6c-10: the same Lighthouse collect tagged region=cairo|riyadh|dubai. The city RTT is
+      # measured from that city by Globalping each run and added to the slow-4G RTT; a city with no
+      # answering probe fails the step (never a skip). Ratchet per region in perf/lhci-baseline.json.
+      - name: (c) Lighthouse region-tagged (cairo, riyadh, dubai)
+        id: lhci_regions
+        continue-on-error: true
+        env:
+          LHCI_URL: ${{ env.BOOKING_URL }}
+          GLOBALPING_TOKEN: ${{ secrets.GLOBALPING_TOKEN }}
+          RTT_HOST: ${{ vars.BOOKING_PERF_RTT_HOST || 'timeway.co' }}
+        run: |
+          fail=0
+          for region in cairo riyadh dubai; do
+            echo "::group::region=$region"
+            if ! node scripts/perf/region-rtt.mjs --region "$region" --host "$RTT_HOST" --out "perf/out/region-rtt-$region.json"; then
+              echo "::error::region=$region RTT measurement failed"; fail=1; echo "::endgroup::"; continue
+            fi
+            rtt=$(node -p "require('./perf/out/region-rtt-$region.json').rtt_median_ms")
+            export LHCI_REGION="$region" LHCI_CITY_RTT_MS="$rtt" LHCI_OUT_DIR="perf/out/lhci-$region"
+            rm -rf .lighthouseci
+            if npx -y @lhci/cli@0.15.1 collect --config=perf/lighthouserc.cjs \
+              && npx -y @lhci/cli@0.15.1 upload --config=perf/lighthouserc.cjs \
+              && node scripts/perf/lhci-summary.mjs --dir "$LHCI_OUT_DIR" --region "$region" --out "perf/out/lhci-$region.json"; then
+              npx -y @lhci/cli@0.15.1 assert --config=perf/lighthouserc.cjs || { echo "::error::region=$region Lighthouse assertions failed"; fail=1; }
+            else
+              echo "::error::region=$region Lighthouse collect failed"; fail=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $fail
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -101,8 +132,8 @@ jobs:
       - name: Gate verdict
         if: always()
         run: |
-          echo "js=${{ steps.js.outcome }} lhci=${{ steps.lhci.outcome }}"
-          [ "${{ steps.js.outcome }}" = "success" ] && [ "${{ steps.lhci.outcome }}" = "success" ]
+          echo "js=${{ steps.js.outcome }} lhci=${{ steps.lhci.outcome }} lhci_regions=${{ steps.lhci_regions.outcome }}"
+          [ "${{ steps.js.outcome }}" = "success" ] && [ "${{ steps.lhci.outcome }}" = "success" ] && [ "${{ steps.lhci_regions.outcome }}" = "success" ]
 
   region-ttfb:
     name: Region TTFB (cairo, riyadh, dubai)
