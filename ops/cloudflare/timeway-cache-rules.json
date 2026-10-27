@@ -1,0 +1,31 @@
+{
+  "zone": "timeway.co",
+  "phase": "http_request_cache_settings",
+  "_why": "WC-TW-6b. Only rules whose ref starts with managed_ref_prefix are owned by apply.py; any other rule in the phase is left untouched. Later rules override earlier ones, so the bypass rule must stay last. The cookie bypass skips the shell paths on purpose: hashed assets and icons are user-independent, and bypassing them would make logged-in page loads slower than today (Cloudflare already caches /_next/static by extension).",
+  "managed_ref_prefix": "tw6b_",
+  "rules": [
+    {
+      "ref": "tw6b_static_shell",
+      "description": "WC-TW-6b: edge-cache the static shell (hashed Next assets, fonts, icons, brand marks); edge TTL from origin Cache-Control, browser TTL left to the zone setting",
+      "expression": "(starts_with(http.request.uri.path, \"/_next/static/\") or starts_with(http.request.uri.path, \"/fonts/\") or starts_with(http.request.uri.path, \"/icons/\") or http.request.uri.path in {\"/favicon.ico\" \"/favicon-16x16.png\" \"/favicon-32x32.png\" \"/apple-touch-icon.png\" \"/android-chrome-192x192.png\" \"/android-chrome-256x256.png\" \"/android-chrome-384x384.png\" \"/android-chrome-512x512.png\" \"/mstile-70x70.png\" \"/mstile-144x144.png\" \"/mstile-150x150.png\" \"/mstile-310x150.png\" \"/mstile-310x310.png\" \"/safari-pinned-tab.svg\" \"/cal-logo-word.svg\" \"/cal-logo-word-dark.svg\" \"/cal-logo-word-black.svg\" \"/calcom-logo-white-word.svg\" \"/cal-com-icon.svg\" \"/cal-com-icon-white.svg\"})",
+      "action": "set_cache_settings",
+      "action_parameters": {
+        "cache": true,
+        "edge_ttl": {
+          "mode": "respect_origin"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "ref": "tw6b_bypass_session_api",
+      "description": "WC-TW-6b: never cache /api/*, /trpc/*, /auth/*, or any non-shell request carrying a session cookie",
+      "expression": "starts_with(http.request.uri.path, \"/api/\") or starts_with(http.request.uri.path, \"/trpc/\") or starts_with(http.request.uri.path, \"/auth/\") or (http.cookie contains \"next-auth.session-token\" and not (starts_with(http.request.uri.path, \"/_next/static/\") or starts_with(http.request.uri.path, \"/fonts/\") or starts_with(http.request.uri.path, \"/icons/\") or http.request.uri.path in {\"/favicon.ico\" \"/favicon-16x16.png\" \"/favicon-32x32.png\" \"/apple-touch-icon.png\" \"/android-chrome-192x192.png\" \"/android-chrome-256x256.png\" \"/android-chrome-384x384.png\" \"/android-chrome-512x512.png\" \"/mstile-70x70.png\" \"/mstile-144x144.png\" \"/mstile-150x150.png\" \"/mstile-310x150.png\" \"/mstile-310x310.png\" \"/safari-pinned-tab.svg\" \"/cal-logo-word.svg\" \"/cal-logo-word-dark.svg\" \"/cal-logo-word-black.svg\" \"/calcom-logo-white-word.svg\" \"/cal-com-icon.svg\" \"/cal-com-icon-white.svg\"}))",
+      "action": "set_cache_settings",
+      "action_parameters": {
+        "cache": false
+      },
+      "enabled": true
+    }
+  ]
+}

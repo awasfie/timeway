@@ -118,5 +118,8 @@ agents/devin-knowledge.json
 # pagefind
 _pagefind/
 
+# ops tooling bytecode
+ops/cloudflare/__pycache__/
+
 # WC-TW-6c perf gate outputs
 perf/out/
