@@ -1,3 +1,4 @@
+import { onCalendarCredentialCreated } from "@calcom/features/tw-activation/activation";
 import { buildNonDelegationCredential } from "@calcom/lib/delegationCredential";
 import logger from "@calcom/lib/logger";
 import { prisma } from "@calcom/prisma";
@@ -57,6 +58,8 @@ export class CredentialRepository {
     const credential = await prisma.credential.create({
       data,
     });
+    // Google / Outlook calendar connect (OAuth callback and sign-in) land here, not in _utils/installation.
+    await onCalendarCredentialCreated(credential, "repository");
     return buildNonDelegationCredential(credential);
   }
   static async findByAppIdAndUserId({ appId, userId }: { appId: string; userId: number }) {
