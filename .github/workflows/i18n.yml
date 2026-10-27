@@ -1,6 +1,7 @@
 name: Run i18n AI automation
 on:
   push:
+    paths-ignore: ['docs/**', '**.md']  # CI-COST-3: docs-only pushes (ledger, group-log) skip CI; PR runs are unchanged
     branches:
       - main
 concurrency:
