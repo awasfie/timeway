@@ -43,4 +43,13 @@ runs:
     - name: Yarn playwright install
       if: ${{ (inputs.skip-install-if-cache-hit != 'true' && steps.playwright-cache.outputs.cache-hit != 'true') || (inputs.skip-install-if-cache-hit == 'true' && steps.playwright-cache-check.outputs.cache-hit != 'true') }}
       shell: bash
-      run: yarn playwright install --with-deps
+      # CI-PRUPDATE-1 (t_f1ca49bb): in skip mode yarn-install only looks the node_modules cache up and restores
+      # nothing, so on a playwright cache miss there is no node_modules state and `yarn playwright` fails with
+      # "Couldn't find the node_modules state file" (PR Update Prepare, runs 40553347235, 40491859512).
+      # Fall back to the exact pinned version through npx; browsers land in ~/.cache/ms-playwright either way.
+      run: |
+        if [ -x node_modules/.bin/playwright ]; then
+          yarn playwright install --with-deps
+        else
+          npx --yes "playwright@${PLAYWRIGHT_VERSION}" install --with-deps
+        fi
