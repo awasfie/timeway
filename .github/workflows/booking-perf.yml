@@ -1,7 +1,7 @@
 name: Booking perf gates
 # WC-TW-6c (WC-9 WC-TW-6 step 3; WC.2.5 LCP p75 / TTFB p75 rows), CC-56 evidence format.
 # (a) JS budget: gzip JS of a first load of /[user]/[type] on a CI production build, <= 200 KB.
-# (b) Lighthouse CI on that build: Moto G Power / slow 4G default profile, 3 runs, median.
+# (b) Lighthouse CI on that build: Moto G Power / slow 4G default profile, 5 runs, median.
 # (c) Region TTFB from Cairo / Riyadh / Dubai via Globalping against the deployed booking page.
 # Every result is a JSON artifact tagged region=gh-runner|cairo|riyadh|dubai plus a job summary.
 # No job is skippable: a provider outage or a missing city fails the job.
@@ -82,7 +82,7 @@ jobs:
         id: js
         continue-on-error: true
         run: node scripts/perf/booking-js-budget.mjs --url "$BOOKING_URL" --static-dir apps/web/.next/static --budget-kb 200 --baseline perf/js-baseline.json --out perf/out/js-budget-gh-runner.json
-      - name: (b) Lighthouse CI, 3 runs median
+      - name: (b) Lighthouse CI, 5 runs median
         id: lhci
         continue-on-error: true
         env:
@@ -93,7 +93,7 @@ jobs:
           npx -y @lhci/cli@0.15.1 upload --config=perf/lighthouserc.cjs
           node scripts/perf/lhci-summary.mjs --dir perf/out/lhci --region gh-runner --out perf/out/lhci-gh-runner.json
           npx -y @lhci/cli@0.15.1 assert --config=perf/lighthouserc.cjs
-      # WC-TW-6c-10: the same Lighthouse collect tagged region=cairo|riyadh|dubai. The city RTT is
+      # WC-TW-6c-10: the same 5-run Lighthouse collect tagged region=cairo|riyadh|dubai. The city RTT is
       # measured from that city by Globalping each run and added to the slow-4G RTT; a city with no
       # answering probe fails the step (never a skip). Ratchet per region in perf/lhci-baseline.json.
       - name: (c) Lighthouse region-tagged (cairo, riyadh, dubai)

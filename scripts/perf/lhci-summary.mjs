@@ -55,6 +55,8 @@ const runs = manifest.map((entry) => {
     form_factor: lhr.configSettings.formFactor,
     throttling: lhr.configSettings.throttling,
     lighthouse_version: lhr.lighthouseVersion,
+    // Runner CPU score; TBT scales with it (WC-TW-6c-12: ~2400 runners give ~2x the TBT of ~4000 ones).
+    benchmark_index: lhr.environment?.benchmarkIndex ?? null,
     ...metrics,
   };
 });
@@ -112,6 +114,7 @@ const lines = [
   `| TTFB | ${med.ttfb_ms} ms | < 500 warn |`,
   `| FCP | ${med.fcp_ms} ms | — |`,
   `| CLS | ${med.cls} | — |`,
+  `| runner benchmarkIndex | ${median(runs.map((r) => r.benchmark_index ?? 0))} | — |`,
   "",
 ];
 console.log(lines.join("\n"));

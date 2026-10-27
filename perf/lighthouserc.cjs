@@ -8,6 +8,7 @@ const url = process.env.LHCI_URL || "http://localhost:3000/pro/30min";
 // thresholds (which today's page fails), so a missing baseline is red, never a silent pass.
 const region = process.env.LHCI_REGION || "gh-runner";
 const SLOW_4G_RTT_MS = 150;
+const NUMBER_OF_RUNS = 5;
 const cityRtt = Number(process.env.LHCI_CITY_RTT_MS ?? 0);
 if (region !== "gh-runner" && !(cityRtt > 0))
   throw new Error(`LHCI_REGION=${region} needs a measured LHCI_CITY_RTT_MS (got ${process.env.LHCI_CITY_RTT_MS})`);
@@ -18,15 +19,19 @@ module.exports.region = { region, city_rtt_ms: cityRtt, rtt_ms: SLOW_4G_RTT_MS +
 // Ratchet: while main's median is over an absolute error threshold, the error asserts the committed
 // baseline + tolerance (no regression) and the absolute threshold drops to a warning.
 const ABSOLUTE = { lcp_ms: 2500, tbt_ms: 200 };
+// WC-TW-6c-12: TBT is CPU-bound and swings ~3x run to run on shared GH runners at the same code, so
+// it carries its own wider band (tbt_tolerance); LCP keeps the tight one. Rule in perf/lhci-baseline.json.
+const TOLERANCE_KEY = { lcp_ms: "tolerance", tbt_ms: "tbt_tolerance" };
 const limit = (key) => {
   const base = Number(baseline[key]);
   if (!Number.isFinite(base) || base <= ABSOLUTE[key]) return { max: ABSOLUTE[key], ratchet: false };
-  const tolerance = Number(baseline.tolerance ?? allBaselines.tolerance ?? 0.1);
-  return { max: Math.round(base * (1 + tolerance)), ratchet: true };
+  const tk = TOLERANCE_KEY[key];
+  const tolerance = Number(baseline[tk] ?? allBaselines[tk] ?? allBaselines.tolerance ?? 0.1);
+  return { max: Math.round(base * (1 + tolerance)), ratchet: true, tolerance };
 };
 const lcp = limit("lcp_ms");
 const tbt = limit("tbt_ms");
-module.exports.limits = { lcp, tbt, absolute: ABSOLUTE };
+module.exports.limits = { lcp, tbt, absolute: ABSOLUTE, runs: NUMBER_OF_RUNS };
 
 const errors = {
   "largest-contentful-paint": ["error", { maxNumericValue: lcp.max, aggregationMethod: "median-run" }],
@@ -55,7 +60,9 @@ const warnings = {
 module.exports.ci = {
   collect: {
     url: [url],
-    numberOfRuns: 3,
+    // 5 runs: the first run on a fresh `next start` is a cold outlier (TBT 2-7 s), and a median of 3
+    // then rests on two samples; a median of 5 rests on three warm ones.
+    numberOfRuns: NUMBER_OF_RUNS,
     settings: {
       chromeFlags: "--no-sandbox --headless=new",
       onlyCategories: ["performance"],
