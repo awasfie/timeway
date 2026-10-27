@@ -7,7 +7,7 @@ import { FromToTime } from "@calcom/features/bookings/Booker/utils/dates";
 import { useTimePreferences } from "@calcom/features/bookings/lib";
 import type { BookerEvent } from "@calcom/features/bookings/types";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { markdownToSafeHTMLClient } from "@calcom/lib/markdownToSafeHTMLClient";
+import { sanitizeSafeHtmlClient } from "@calcom/lib/safeHtmlClient";
 import { CURRENT_TIMEZONE } from "@calcom/lib/timezoneConstants";
 import type { EventTypeTranslation } from "@calcom/prisma/client";
 import { EventTypeAutoTranslatedField } from "@calcom/prisma/enums";
@@ -181,10 +181,10 @@ export const EventMeta = ({
               <ScrollableWithGradients
                 className="wrap-break-word scroll-bar max-h-[180px] max-w-full overflow-y-auto pr-4"
                 ariaLabel={t("description")}>
-                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized via markdownToSafeHTMLClient */}
+                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: rendered by markdownToSafeHTML in getPublicEvent, re-sanitized with DOMPurify */}
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: markdownToSafeHTMLClient(translatedDescription ?? event.description),
+                    __html: sanitizeSafeHtmlClient(translatedDescription ?? event.description),
                   }}
                 />
               </ScrollableWithGradients>
