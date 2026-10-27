@@ -9,6 +9,7 @@ on:
   pull_request:
     branches: [main]
   push:
+    paths-ignore: ['docs/**', '**.md']  # CI-COST-3: docs-only pushes (ledger, group-log) skip CI; PR runs are unchanged
     branches: [main]
   schedule:
     # WC.2.5 synthetic TTFB probe; GitHub may delay scheduled runs under load.
