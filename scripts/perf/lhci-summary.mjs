@@ -15,7 +15,13 @@ const args = Object.fromEntries(
 const dir = args.dir ?? "perf/out/lhci";
 const region = args.region ?? "gh-runner";
 const out = args.out ?? `perf/out/lhci-${region}.json`;
-const { limits } = createRequire(import.meta.url)(resolve(args.config ?? "perf/lighthouserc.cjs"));
+const { limits, region: regionInfo } = createRequire(import.meta.url)(
+  resolve(args.config ?? "perf/lighthouserc.cjs")
+);
+if (regionInfo.region !== region) {
+  console.error(`::error::--region ${region} but the config ran as LHCI_REGION=${regionInfo.region}`);
+  process.exit(1);
+}
 const gate = (l, abs) => (l.ratchet ? `< ${l.max} error (ratchet), < ${abs} warn` : `< ${l.max} error`);
 
 const AUDITS = {
@@ -64,6 +70,17 @@ const result = {
   gate: "booking-lighthouse",
   region,
   url: runs[0].url,
+  network: {
+    provider: region === "gh-runner" ? null : "globalping",
+    city_rtt_ms: regionInfo.city_rtt_ms || null,
+    simulated_rtt_ms: runs[0].throttling?.rttMs ?? null,
+    note:
+      region === "gh-runner"
+        ? "Lighthouse default slow-4G on a GitHub runner"
+        : "Lighthouse on a GitHub runner, simulated RTT = slow-4G 150 ms + city RTT measured from this region. " +
+          "city_rtt_ms is ICMP RTT from the city probe to the Cloudflare anycast edge only; the edge-to-origin leg is " +
+          "not modelled, so this underestimates real latency. Real-network TTFB per city = region-ttfb artifact.",
+  },
   commit: process.env.GITHUB_SHA ?? null,
   measured_at: new Date().toISOString(),
   runs: runs.length,
