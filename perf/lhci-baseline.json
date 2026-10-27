@@ -1,7 +1,7 @@
 {
   "_comment": "WC-TW-6c LHCI ratchet: medians of 3 runs on the CI production build. While a median is over its absolute error threshold the gate asserts median <= baseline x (1 + tolerance) and the absolute threshold is a warning; lower these in every reduction PR.",
   "lcp_ms": 8170,
-  "tbt_ms": 746,
+  "tbt_ms": 1511,
   "tolerance": 0.1,
   "source": "booking-perf run 39741527677 (PR #123 head a6e4c6b627, WC-TW-6c-4), region=gh-runner",
   "regions": {
@@ -24,5 +24,6 @@
       "city_rtt_ms": 113,
       "source": "booking-perf run 40144176236 (wt/t_49b22425 b71b211e81), Lighthouse on the GH runner with slow-4G + Globalping-measured city RTT"
     }
-  }
+  },
+  "tbt_note": "TBT is CPU-bound and swings 557-1515 ms run to run on GH runners at the same code (main 319c67a063: runs 40490460276=607, 40507644481=1294, 40491804089=1515; PR #182: 40516243793=829). A single-run baseline (746, run 39741527677) made the ratchet noise and main red; tbt_ms carries the top of the observed spread, same as the region baselines. Bundle regressions are hard-gated by perf/js-baseline.json."
 }
