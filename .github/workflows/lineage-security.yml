@@ -4,6 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]  # CI-COST-2: ready_for_review re-runs the full suite on the head SHA
   push:
+    paths-ignore: ['docs/**', '**.md']  # CI-COST-3: docs-only pushes (ledger, group-log) skip CI; PR runs are unchanged
     branches: [main]
   workflow_dispatch:
 
