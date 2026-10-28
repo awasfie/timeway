@@ -56,4 +56,10 @@ runs:
         else
           PW="npx --yes playwright@${PLAYWRIGHT_VERSION}"
         fi
+        # Playwright 1.57 has no ubuntu26.04 chromium build even for plain install; on 26.04 report the 24.04 host
+        # platform (PLAYWRIGHT_HOST_PLATFORM_OVERRIDE) so the chromium download resolves. Browser deps are then
+        # installed by the runner image, not by --with-deps.
+        if grep -q 'VERSION_ID="26.04"' /etc/os-release 2>/dev/null; then
+          export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64
+        fi
         $PW install chromium || $PW install --with-deps
