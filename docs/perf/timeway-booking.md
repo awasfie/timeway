@@ -54,6 +54,45 @@ this card stays open until every row passes on a later deploy.
 - **RUM.** The live page HTML contains no Plausible script and no `Server-Timing` header: WC-TW-9a (timeway#89),
   9c (#101), 6a (#105) and 6a3 (#115) are open drafts, not on main.
 
+## WC-TW-6e: why Dubai TTFB misses (card t_a47ce8d0, 2026-10-28 03:40 to 04:10Z)
+
+Still **not met**; this section is the diagnosis and the chosen fix, not a pass. Raw samples:
+`evidence/2026-10-28-wc-tw-6e-dubai-colo.json` (Globalping, Dubai+AE, 3 rounds x 6 probes, page and an edge-cached
+asset from the same probes in the same minute).
+
+| Dubai+AE, 18 samples each | p50 | p75 | by colo (min-max ms) |
+| --- | ---: | ---: | --- |
+| booking page `/ahmedwasfie/30min` (`cf-cache-status: DYNAMIC`) | 658.5 | 1230 | MCT 314-1737, MRS 442-1362, AMS 432-1277, LHR 676-966, NRT 1090-1474, CDG 624 |
+| `/favicon.ico` (`HIT`, same probes) | 72 | 143 | MCT 16-27, DXB 10-13, MRS 117-124, AMS 135-146, CDG 128, NRT 173, LHR 456-784 |
+
+Findings:
+
+1. **The colo is not the cause.** From the same probes, an edge `HIT` answers in 10-27 ms on MCT/DXB and 117-173 ms on
+   MRS/AMS/CDG/NRT. Every page miss pays the full trip to the origin in Germany (62.171.141.202) plus the render, from
+   every colo. The page is `private, no-store` and `DYNAMIC`, so no colo can answer it.
+2. **Origin render is fine when measured on the host:** 80-200 ms through Traefik on 62.171.141.202 (15 samples
+   110-199 ms, TLS on loopback 20-25 ms). The rest of the 300-1700 ms is the colo-to-Germany leg and its variance
+   (MCT went from 434 ms at 01:10Z to 1737 ms at 03:58Z on the same probe).
+3. **The LHR samples are one probe network, not Cloudflare routing:** every LHR sample is CloudBlast AS207847, whose TCP
+   handshake to the edge alone is 463-1721 ms; its edge `HIT` on a 1 KB favicon is still 456-784 ms. No server change
+   brings that probe under 500 ms. It is 1 of 6 Dubai probes (17%), so p75 can pass with it in the set.
+4. **Cloudflare knobs on this zone (Pro):** Tiered Cache off, Regional Tiered Cache not on the plan (403), Argo Smart
+   Routing not enabled (paid add-on, and it only shortens the colo-to-origin leg). Cache rules cannot key on
+   `Accept-Language` (`forbidden header`) and custom cache keys are not on the plan (`not entitled`); both probed with a
+   disabled rule that was removed (entrypoint back to version with only the two `tw6b_` rules).
+5. **A Cloudflare Tunnel origin does not help:** a tunnel from the origin host (`edge-probe.timeway.co`, connectors in
+   FRA) measured the same as the direct origin (Dubai 12 samples: tunnel MCT 492-879 / AMS 432-616 vs direct
+   MCT 403-780 / AMS 288-517). Tunnel, DNS record, connector container and token were deleted after the test.
+
+**Fix chosen (engineering decision, recorded on the card):** serve the anonymous booking-page HTML from the Cloudflare
+edge with a Worker in front of `timeway.co/<user>/<type>`: Cache API key = URL + language bucket from `Accept-Language`
+(the root layout picks `<html lang>` from it), bypass for any `next-auth.session-token` cookie, any query string other
+than a known-safe list, non-GET, and non-200; short TTL with background revalidation so event edits show within a
+minute. Expected Dubai TTFB = edge hit time above (p75 143 ms on the favicon). The HTML carries no per-visitor data for
+anonymous visitors (no CSP nonce on platform-host booking paths: `proxy.ts` passes them through; country is used only
+for authenticated analytics identify; two anonymous `en` fetches 03:41Z were byte-identical, 353165 bytes, `nonce=""`;
+an `ar` fetch differed, 458304 bytes, `lang="ar"`). Built and proven on the follow-up card named in the card thread.
+
 ## Re-run
 
 1. Region TTFB: `GLOBALPING_TOKEN=... node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false --out perf/out/region-ttfb.json`
