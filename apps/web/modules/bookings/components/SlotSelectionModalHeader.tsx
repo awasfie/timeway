@@ -1,4 +1,3 @@
-import { Timezone as PlatformTimezoneSelect } from "@calcom/atoms/timezone";
 import dayjs from "@calcom/dayjs";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import type { Timezone } from "@calcom/features/bookings/Booker/types";
@@ -27,6 +26,15 @@ type TimezoneSelectProps = Omit<
 > & {
   timeZones?: Timezone[];
 };
+
+// Lazy like the web select so the platform atom's react-select/timezone data stay off first load.
+const PlatformTimezoneSelect: ComponentType<TimezoneSelectProps> = dynamic(
+  () => import("@calcom/atoms/timezone").then((mod) => mod.Timezone),
+  {
+    ssr: false,
+    loading: () => <LoadingState />,
+  }
+);
 
 const WebTimezoneSelect: ComponentType<TimezoneSelectProps> = dynamic(
   () => import("@calcom/web/modules/timezone/components/TimezoneSelect").then((mod) => mod.TimezoneSelect),
