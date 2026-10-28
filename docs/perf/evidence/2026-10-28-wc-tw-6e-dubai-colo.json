@@ -1,0 +1,445 @@
+{
+ "card": "t_a47ce8d0",
+ "measured_at": "2026-10-28T03:54:12.729909Z",
+ "deploy_note": "live timeway.co, Coolify timeway-web container poyzdsncp9jsvc3gr4hkitaf-20261028T020721 (image bfebbeca82, same app code as d43cce3dda)",
+ "runs": [
+  {
+   "kind": "page",
+   "path": "/ahmedwasfie/30min",
+   "measurement_id": "2ENee3j3IUbTdhchO00021OiA",
+   "samples": [
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 10,
+     "tls": 19,
+     "fb": 1737,
+     "mid": "2ENee3j3IUbTdhchO00021OiA"
+    },
+    {
+     "asn": 207847,
+     "net": "CloudBlast",
+     "colo": "LHR",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 642,
+     "tls": 643,
+     "fb": 899,
+     "mid": "2ENee3j3IUbTdhchO00021OiA"
+    },
+    {
+     "asn": 154177,
+     "net": "LIGHT NODE",
+     "colo": "NRT",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 155,
+     "tls": 177,
+     "fb": 1474,
+     "mid": "2ENee3j3IUbTdhchO00021OiA"
+    },
+    {
+     "asn": 136258,
+     "net": "BrainStorm Network",
+     "colo": "AMS",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 115,
+     "tls": 138,
+     "fb": 1277,
+     "mid": "2ENee3j3IUbTdhchO00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MRS",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 107,
+     "tls": 118,
+     "fb": 1348,
+     "mid": "2ENee3j3IUbTdhchO00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MRS",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 103,
+     "tls": 110,
+     "fb": 1362,
+     "mid": "2ENee3j3IUbTdhchO00021OiA"
+    }
+   ]
+  },
+  {
+   "kind": "edge_hit",
+   "path": "/favicon.ico",
+   "measurement_id": "2LWMnU4PLyjJpNmAf00021OiA",
+   "samples": [
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 9,
+     "tls": 19,
+     "fb": 16,
+     "mid": "2LWMnU4PLyjJpNmAf00021OiA"
+    },
+    {
+     "asn": 136258,
+     "net": "BrainStorm Network",
+     "colo": "AMS",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 114,
+     "tls": 138,
+     "fb": 146,
+     "mid": "2LWMnU4PLyjJpNmAf00021OiA"
+    },
+    {
+     "asn": 154177,
+     "net": "LIGHT NODE",
+     "colo": "CDG",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 111,
+     "tls": 123,
+     "fb": 128,
+     "mid": "2LWMnU4PLyjJpNmAf00021OiA"
+    },
+    {
+     "asn": 207847,
+     "net": "CloudBlast",
+     "colo": "LHR",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 579,
+     "tls": 601,
+     "fb": 612,
+     "mid": "2LWMnU4PLyjJpNmAf00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 10,
+     "tls": 23,
+     "fb": 27,
+     "mid": "2LWMnU4PLyjJpNmAf00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 10,
+     "tls": 18,
+     "fb": 16,
+     "mid": "2LWMnU4PLyjJpNmAf00021OiA"
+    }
+   ]
+  },
+  {
+   "kind": "page",
+   "path": "/ahmedwasfie/30min",
+   "measurement_id": "2GylGCrmJic4oaEr200021OiA",
+   "samples": [
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MRS",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 120,
+     "tls": 137,
+     "fb": 641,
+     "mid": "2GylGCrmJic4oaEr200021OiA"
+    },
+    {
+     "asn": 136258,
+     "net": "BrainStorm Network",
+     "colo": "AMS",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 122,
+     "tls": 149,
+     "fb": 432,
+     "mid": "2GylGCrmJic4oaEr200021OiA"
+    },
+    {
+     "asn": 207847,
+     "net": "CloudBlast",
+     "colo": "LHR",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 557,
+     "tls": 671,
+     "fb": 966,
+     "mid": "2GylGCrmJic4oaEr200021OiA"
+    },
+    {
+     "asn": 154177,
+     "net": "LIGHT NODE",
+     "colo": "NRT",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 154,
+     "tls": 183,
+     "fb": 1090,
+     "mid": "2GylGCrmJic4oaEr200021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 10,
+     "tls": 18,
+     "fb": 492,
+     "mid": "2GylGCrmJic4oaEr200021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MRS",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 105,
+     "tls": 115,
+     "fb": 495,
+     "mid": "2GylGCrmJic4oaEr200021OiA"
+    }
+   ]
+  },
+  {
+   "kind": "edge_hit",
+   "path": "/favicon.ico",
+   "measurement_id": "2j0N4kM1EmQ0RumNp00021OiA",
+   "samples": [
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 12,
+     "tls": 24,
+     "fb": 19,
+     "mid": "2j0N4kM1EmQ0RumNp00021OiA"
+    },
+    {
+     "asn": 136258,
+     "net": "BrainStorm Network",
+     "colo": "AMS",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 119,
+     "tls": 138,
+     "fb": 135,
+     "mid": "2j0N4kM1EmQ0RumNp00021OiA"
+    },
+    {
+     "asn": 207847,
+     "net": "CloudBlast",
+     "colo": "LHR",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 1721,
+     "tls": 745,
+     "fb": 784,
+     "mid": "2j0N4kM1EmQ0RumNp00021OiA"
+    },
+    {
+     "asn": 154177,
+     "net": "LIGHT NODE",
+     "colo": "NRT",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 148,
+     "tls": 162,
+     "fb": 173,
+     "mid": "2j0N4kM1EmQ0RumNp00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MRS",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 103,
+     "tls": 110,
+     "fb": 117,
+     "mid": "2j0N4kM1EmQ0RumNp00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MRS",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 109,
+     "tls": 127,
+     "fb": 124,
+     "mid": "2j0N4kM1EmQ0RumNp00021OiA"
+    }
+   ]
+  },
+  {
+   "kind": "page",
+   "path": "/ahmedwasfie/30min",
+   "measurement_id": "2pddyfVM1F8vxoHXJ00021OiA",
+   "samples": [
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MRS",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 117,
+     "tls": 123,
+     "fb": 442,
+     "mid": "2pddyfVM1F8vxoHXJ00021OiA"
+    },
+    {
+     "asn": 154177,
+     "net": "LIGHT NODE",
+     "colo": "CDG",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 113,
+     "tls": 125,
+     "fb": 624,
+     "mid": "2pddyfVM1F8vxoHXJ00021OiA"
+    },
+    {
+     "asn": 136258,
+     "net": "BrainStorm Network",
+     "colo": "AMS",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 119,
+     "tls": 145,
+     "fb": 605,
+     "mid": "2pddyfVM1F8vxoHXJ00021OiA"
+    },
+    {
+     "asn": 207847,
+     "net": "CloudBlast",
+     "colo": "LHR",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 471,
+     "tls": 463,
+     "fb": 676,
+     "mid": "2pddyfVM1F8vxoHXJ00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 8,
+     "tls": 20,
+     "fb": 314,
+     "mid": "2pddyfVM1F8vxoHXJ00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MRS",
+     "cache": "DYNAMIC",
+     "code": 200,
+     "tcp": 102,
+     "tls": 111,
+     "fb": 564,
+     "mid": "2pddyfVM1F8vxoHXJ00021OiA"
+    }
+   ]
+  },
+  {
+   "kind": "edge_hit",
+   "path": "/favicon.ico",
+   "measurement_id": "2ysMHT7etwWVZSaJH00021OiA",
+   "samples": [
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 10,
+     "tls": 21,
+     "fb": 24,
+     "mid": "2ysMHT7etwWVZSaJH00021OiA"
+    },
+    {
+     "asn": 207847,
+     "net": "CloudBlast",
+     "colo": "LHR",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 463,
+     "tls": 490,
+     "fb": 456,
+     "mid": "2ysMHT7etwWVZSaJH00021OiA"
+    },
+    {
+     "asn": 136258,
+     "net": "BrainStorm Network",
+     "colo": "DXB",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 4,
+     "tls": 29,
+     "fb": 13,
+     "mid": "2ysMHT7etwWVZSaJH00021OiA"
+    },
+    {
+     "asn": 154177,
+     "net": "LIGHT NODE",
+     "colo": "DXB",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 4,
+     "tls": 16,
+     "fb": 10,
+     "mid": "2ysMHT7etwWVZSaJH00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 13,
+     "tls": 32,
+     "fb": 19,
+     "mid": "2ysMHT7etwWVZSaJH00021OiA"
+    },
+    {
+     "asn": 9009,
+     "net": "M247",
+     "colo": "MCT",
+     "cache": "HIT",
+     "code": 200,
+     "tcp": 9,
+     "tls": 16,
+     "fb": 21,
+     "mid": "2ysMHT7etwWVZSaJH00021OiA"
+    }
+   ]
+  }
+ ]
+}
