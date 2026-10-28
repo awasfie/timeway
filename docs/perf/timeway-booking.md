@@ -93,6 +93,46 @@ anonymous visitors (no CSP nonce on platform-host booking paths: `proxy.ts` pass
 for authenticated analytics identify; two anonymous `en` fetches 03:41Z were byte-identical, 353165 bytes, `nonce=""`;
 an `ar` fetch differed, 458304 bytes, `lang="ar"`). Built and proven on the follow-up card named in the card thread.
 
+## WC-TW-6g: booking HTML served from the edge (card t_682a1117, 2026-10-28 06:31Z)
+
+Dubai TTFB gate **met** on this measurement. Worker `timeway-booking-edge` (bundle `eaacb21f97b074ce`, source
+`ops/cloudflare/worker/booking-edge.mjs` at `b421e77db9`) on `timeway.co/*`, with no-worker routes for `_next`, `api`,
+`trpc`, `auth`, `ingest`, `apps`, `settings`, `bookings`, `event-types`, `availability`, `fonts`, `icons`
+(`ops/cloudflare/timeway-worker.json`). Raw samples: `evidence/2026-10-28-wc-tw-6g-edge-worker.json`
+(Globalping, 6 rounds x 3 probes per region, all 200).
+
+| region, 18 samples each | p50 | p75 | max | by colo (min-max ms) |
+| --- | ---: | ---: | ---: | --- |
+| Cairo+EG | 71 | 77 | 94 | ZRH 65-94, MRS 55-83 |
+| Riyadh+SA | 95 | 99 | 125 | MRS 85-125 |
+| Dubai+AE | 154.5 | 188 | 1067 | MCT 45-686, MRS 121-143, AMS 149-188, LHR 595-680, NRT 1067 |
+
+Dubai p75 went from 1230 ms (WC-TW-6e, page `DYNAMIC`) to 188 ms. The LHR samples are the CloudBlast probe from 6e
+finding 3; NRT and the slow MCT sample are first requests at a colo with no copy yet (a miss pays the origin trip).
+
+What the Worker does (unit tests `node --test ops/cloudflare/worker/booking-edge.test.mjs`, 10 pass):
+
+- Caches only `GET`/`HEAD` `/<user>/<type>` (no trailing slash, no extension, first segment not an app route), no
+  query other than `utm_*`, no `next-auth.session-token` cookie, no `Authorization`, no RSC/Next router headers, and
+  only a 200 `text/html` without `Set-Cookie`. Everything else is `x-tw-edge: BYPASS` or untouched.
+- Key = path + language bucket. The bucket is what `getLocale.ts` resolves for a visitor with no session (same
+  parser steps and `bcp-47-match` lookup over `i18n.json`; 21 headers checked against the real libraries, 0
+  differences); unsupported languages collapse to `en`. On a miss the origin gets `Accept-Language: <bucket>` and no
+  cookie.
+- Fresh 60 s, then served stale while one background refresh runs, until 300 s; a refresh that gets non-200 evicts.
+  Browsers still get `private, no-cache, no-store`, so only the edge keeps a copy. Header `x-tw-edge: HIT|STALE|MISS`.
+- The cached HTML carries the first visitor's `cf-ipcountry` in the GeoProvider payload; its only reader
+  (`AnalyticsIdentify`) acts for authenticated sessions, which bypass the cache.
+
+Live checks after apply: `en` MISS then HIT, two HITs byte-identical; `ar` renders `lang="ar" dir="rtl"`, a second `ar`
+header variant is a HIT on the same entry; bogus session cookie, `?month=`, unknown event (404) are BYPASS; `/`,
+`/auth/login`, `/api/version`, `/apps/installed`, `/favicon.ico` unchanged (no `x-tw-edge`).
+
+Operate: `CLOUDFLARE_API_TOKEN=... python3 ops/cloudflare/worker.py plan|apply --yes|rollback --yes [--delete-script]`
+(token `CLOUDFLARE_TIMEWAY_WORKER_TOKEN`, Infisical `platform:/cloudflare`). Rollback deletes the routes, so traffic
+goes straight to the origin at once (exercised 06:40Z: rollback -> page `DYNAMIC`, no `x-tw-edge`; re-apply -> `plan`
+shows no changes and the page is served from the edge again).
+
 ## Re-run
 
 1. Region TTFB: `GLOBALPING_TOKEN=... node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false --out perf/out/region-ttfb.json`
