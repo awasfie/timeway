@@ -10,7 +10,8 @@ these numbers were taken (2026-10-28 01:10 to 01:25Z).
 
 ## Verdict
 
-The gate is **not met**. 2 of 9 rows pass (TTFB from Cairo and from Riyadh). Fix cards hold the measured numbers;
+The gate is **not met**. 2 of 9 rows passed on 2026-10-28 01:25Z (TTFB from Cairo and from Riyadh); the slot API row
+passes after the WC-TW-6f re-measure (below), so 3 rows pass. Fix cards hold the measured numbers;
 this card stays open until every row passes on a later deploy.
 
 | region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
@@ -25,7 +26,7 @@ this card stays open until every row passes on a later deploy.
 | all | INP (lab TBT proxy) | < 200 ms | prod 392 ms median; CI cairo 626, riyadh 696, dubai 589 | 5 per source | same as LCP rows | d43cce3dda | FAIL |
 | all | INP (RUM, Plausible) | < 200 ms | no data: Plausible is not on the deployed page | 0 | page HTML has no Plausible script; timeway#89 and #101 are open drafts | d43cce3dda | MISSING |
 | gh-runner | booking-route first-load JS | <= 200 KB gz | 857.5 KB gz in 49 scripts (prod transfer 837 KB) | 1 build | booking-perf run 40600454883, `js-budget-gh-runner.json` | d43cce3dda | FAIL |
-| dubai | slot API `slots/getSchedule` (the booker's own call, 2-month range) | p95 < 800 ms | 811 ms (p50 740, max 837) | 30 | curl from the Dubai host; `evidence/2026-10-28-wc-tw-6d.json` | d43cce3dda | FAIL |
+| dubai | slot API `slots/getSchedule` (the booker's own call, 2-month range) | p95 < 800 ms | 458 ms warm (p50 386, max 471); cold 1034 | 30 + 30 | `node scripts/perf/slot-api.mjs` from the Dubai host; `evidence/2026-10-28-slot-api-wc-tw-6f.json` (WC-TW-6f) | bfebbeca82 (= d43cce3dda code) | PASS |
 | any org | per-tenant RUM in Plausible | visible for >= 1 org | not visible: not deployed | 0 | see INP RUM row | d43cce3dda | MISSING |
 
 ## How each number was taken
@@ -54,10 +55,35 @@ this card stays open until every row passes on a later deploy.
 - **RUM.** The live page HTML contains no Plausible script and no `Server-Timing` header: WC-TW-9a (timeway#89),
   9c (#101), 6a (#105) and 6a3 (#115) are open drafts, not on main.
 
+## Slot API p95 (WC-TW-6f, card t_019259ca)
+
+The 811 ms first recorded above was a measurement artifact, not server time. Each of those 30 curls opened a new
+TCP + TLS connection from Dubai to the Cloudflare AMS colo (TCP RTT ~195 ms, handshake ~390 ms), which the deployed
+booker never pays: it calls same-origin `/api/trpc/slots/getSchedule` on the HTTP/2 connection the page load already
+opened. Measured 2026-10-28 04:17Z on the running image `bfebbeca82` (Coolify container
+`poyzdsncp9jsvc3gr4hkitaf-20261028T020721`; differs from d43cce3dda in docs only), same URL as the booker sends
+(ahmedwasfie/30min, 2026-09-30T20:00Z..2026-11-30T19:59Z, Asia/Dubai), all 200:
+
+| path | samples | p50 | p95 | max |
+| --- | ---: | ---: | ---: | ---: |
+| origin only: Docker host to the container, no Cloudflare | 30 | 124 ms | 196 ms | 257 ms |
+| Dubai host, warm connection (the booker's path, gated) | 30 | 386 ms | 458 ms | 471 ms |
+| Dubai host, new connection per request (6d method) | 30 | 799 ms | 1034 ms | 1085 ms |
+
+- Server time is 124-196 ms; the remaining ~260 ms warm is the Dubai to AMS to Contabo network path
+  (the same leg as the page TTFB row).
+- Narrowing the client range to the visible month does not help: at the origin the 1-month call was 126 ms p50 vs
+  142 ms for 2 months (20 samples each). The booker range is left as is; seeded/server-side slots
+  (timeway#105/#115) are not needed for this gate.
+- Re-run: `node scripts/perf/slot-api.mjs --month 2026-10 --samples 30 --out perf/out/slot-api.json`
+  (exits 1 when warm p95 >= 800 ms or any non-200; `--enforce false` to record only). The cold series is recorded
+  beside it so a first-request regression stays visible.
+
 ## Re-run
 
 1. Region TTFB: `GLOBALPING_TOKEN=... node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false --out perf/out/region-ttfb.json`
    (or `workflow_dispatch` of Booking perf gates, which enforces 500 ms).
 2. LCP/TBT/JS on the CI build: the `build-gates` job of the same workflow on the deploy SHA.
 3. Prod Lighthouse: `lighthouse https://timeway.co/ahmedwasfie/30min --only-categories=performance --form-factor=mobile --throttling-method=simulate --output=json` x 5, median.
-4. Record the new row set here with its deploy SHA; a row passes only on a measured number.
+4. Slot API: `node scripts/perf/slot-api.mjs --month <YYYY-MM> --samples 30`.
+5. Record the new row set here with its deploy SHA; a row passes only on a measured number.
