@@ -48,8 +48,18 @@ runs:
       # "Couldn't find the node_modules state file" (PR Update Prepare, runs 40553347235, 40491859512).
       # Fall back to the exact pinned version through npx; browsers land in ~/.cache/ms-playwright either way.
       run: |
+        # ADDRESS-timeway-201 (t_bdd3a944): ubuntu-latest is 26.04 since 2026-10-28 and Playwright 1.57 refuses
+        # `install --with-deps` there ("does not support chromium on ubuntu26.04-x64", run 40661496294). Download
+        # the browser without the OS-deps step first; --with-deps stays as the fallback.
         if [ -x node_modules/.bin/playwright ]; then
-          yarn playwright install --with-deps
+          PW="yarn playwright"
         else
-          npx --yes "playwright@${PLAYWRIGHT_VERSION}" install --with-deps
+          PW="npx --yes playwright@${PLAYWRIGHT_VERSION}"
         fi
+        # Playwright 1.57 has no ubuntu26.04 chromium build even for plain install; on 26.04 report the 24.04 host
+        # platform (PLAYWRIGHT_HOST_PLATFORM_OVERRIDE) so the chromium download resolves. Browser deps are then
+        # installed by the runner image, not by --with-deps.
+        if grep -q 'VERSION_ID="26.04"' /etc/os-release 2>/dev/null; then
+          export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64
+        fi
+        $PW install chromium || $PW install --with-deps
