@@ -94,6 +94,8 @@ export function LazyTimezoneSelect({
     );
   }
 
+  // `relative` lifts the trigger above the host's positioned ::before hover overlay (EventMeta),
+  // which otherwise swallows the click; react-select's container was positioned the same way.
   return (
     <button
       type="button"
@@ -110,7 +112,7 @@ export function LazyTimezoneSelect({
       }}
       onPointerEnter={prefetch}
       onFocus={prefetch}
-      className="flex w-full min-w-0 items-center justify-between gap-1 bg-transparent py-1 text-start text-text disabled:cursor-not-allowed">
+      className="relative flex w-full min-w-0 items-center justify-between gap-1 bg-transparent py-1 text-start text-text disabled:cursor-not-allowed">
       <span className="truncate">{getTimezoneLabel(value)}</span>
       {!isDisabled && <Icon name="chevron-down" className="ms-auto h-4 w-4 shrink-0 text-default" />}
     </button>
