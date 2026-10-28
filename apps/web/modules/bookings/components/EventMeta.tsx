@@ -1,7 +1,6 @@
-import { Timezone as PlatformTimezoneSelect } from "@calcom/atoms/timezone";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
-import { useBookerTime } from "@calcom/features/bookings/Booker/hooks/useBookerTime";
 import { fadeInUp } from "@calcom/features/bookings/Booker/config";
+import { useBookerTime } from "@calcom/features/bookings/Booker/hooks/useBookerTime";
 import type { Timezone } from "@calcom/features/bookings/Booker/types";
 import { FromToTime } from "@calcom/features/bookings/Booker/utils/dates";
 import { useTimePreferences } from "@calcom/features/bookings/lib";
@@ -14,19 +13,12 @@ import { EventTypeAutoTranslatedField } from "@calcom/prisma/enums";
 import { EventMetaBlock } from "@calcom/web/modules/bookings/components/event-meta/Details";
 import { SeatsAvailabilityText } from "@calcom/web/modules/bookings/components/SeatsAvailabilityText";
 import { m } from "framer-motion";
-import dynamic from "next/dynamic";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { shallow } from "zustand/shallow";
 import i18nConfigration from "../../../../../i18n.json";
 import { EventDetails, EventMembers, EventMetaSkeleton, EventTitle } from "./event-meta";
+import { LazyTimezoneSelect } from "./LazyTimezoneSelect";
 import { ScrollableWithGradients } from "./ScrollableWithGradients";
-
-const WebTimezoneSelect = dynamic(
-  () => import("@calcom/web/modules/timezone/components/TimezoneSelect").then((mod) => mod.TimezoneSelect),
-  {
-    ssr: false,
-  }
-);
 
 const getTranslatedField = (
   translations: Array<Pick<EventTypeTranslation, "field" | "targetLocale" | "translatedText">>,
@@ -110,10 +102,6 @@ export const EventMeta = ({
     shallow
   );
   const { i18n, t } = useLocale();
-  const [TimezoneSelect] = useMemo(
-    () => (isPlatform ? [PlatformTimezoneSelect] : [WebTimezoneSelect]),
-    [isPlatform]
-  );
 
   useEffect(() => {
     //In case the event has lockTimeZone enabled ,set the timezone to event's locked timezone
@@ -230,7 +218,8 @@ export const EventMeta = ({
                     event.lockTimeZoneToggleOnBookingPage ? "cursor-not-allowed" : ""
                   }`}
                   data-testid="event-meta-current-timezone">
-                  <TimezoneSelect
+                  <LazyTimezoneSelect
+                    isPlatform={isPlatform}
                     timeZones={timeZones}
                     menuPosition="absolute"
                     timezoneSelectCustomClassname={classNames?.eventMetaTimezoneSelect}
