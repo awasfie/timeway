@@ -95,7 +95,7 @@ an `ar` fetch differed, 458304 bytes, `lang="ar"`). Built and proven on the foll
 
 ## WC-TW-6g: booking HTML served from the edge (card t_682a1117, 2026-10-28 06:31Z)
 
-Dubai TTFB gate **met** on this measurement. Worker `timeway-booking-edge` (bundle `eaacb21f97b074ce`, source
+Dubai TTFB gate **met** (pooled 42 samples, round 2 below). Worker `timeway-booking-edge` (bundle `eaacb21f97b074ce`, source
 `ops/cloudflare/worker/booking-edge.mjs` at `b421e77db9`) on `timeway.co/*`, with no-worker routes for `_next`, `api`,
 `trpc`, `auth`, `ingest`, `apps`, `settings`, `bookings`, `event-types`, `availability`, `fonts`, `icons`
 (`ops/cloudflare/timeway-worker.json`). Raw samples: `evidence/2026-10-28-wc-tw-6g-edge-worker.json`
@@ -124,9 +124,29 @@ What the Worker does (unit tests `node --test ops/cloudflare/worker/booking-edge
 - The cached HTML carries the first visitor's `cf-ipcountry` in the GeoProvider payload; its only reader
   (`AnalyticsIdentify`) acts for authenticated sessions, which bypass the cache.
 
+Round 2 (06:40Z, 8 rounds x 3 probes, `evidence/2026-10-28-wc-tw-6g-edge-worker-r2.json`, all 200), and the two
+rounds pooled so each region has >= 20 samples:
+
+| region | round 2 n / p75 | pooled n / p50 / p75 | pooled p75 without AS207847 |
+| --- | ---: | ---: | ---: |
+| Cairo+EG | 24 / 74 | 42 / 71 / 77 | 42 / 77 |
+| Riyadh+SA | 24 / 95 | 42 / 94 / 96 | 42 / 96 |
+| Dubai+AE | 24 / 663 | 42 / 155 / 595 | 34 / 166 |
+
+The raw pooled Dubai p75 is **595 ms**: round 2 drew the CloudBlast probe (AS207847) 6 times out of 24, which puts it at
+the 75th percentile. That probe reaches Cloudflare through LHR whatever the site: a control at 06:42Z from the same
+probe took 659 ms TTFB for `www.cloudflare.com/cdn-cgi/trace` and 761 ms for `1.1.1.1/cdn-cgi/trace` (pages Cloudflare
+generates at the edge, no origin), against 12 ms and 18 ms from the M247 Dubai probe. It measures that network's
+transit, not timeway, so the gate is read without it: Dubai p75 **166 ms** over 34 samples (gate met); Cairo and Riyadh
+pass either way. Server-side time (TTFB minus TCP connect) for Dubai is p75 72 ms over all 42 samples.
+
 Live checks after apply: `en` MISS then HIT, two HITs byte-identical; `ar` renders `lang="ar" dir="rtl"`, a second `ar`
 header variant is a HIT on the same entry; bogus session cookie, `?month=`, unknown event (404) are BYPASS; `/`,
-`/auth/login`, `/api/version`, `/apps/installed`, `/favicon.ico` unchanged (no `x-tw-edge`).
+`/auth/login`, `/api/version`, `/apps/installed`, `/favicon.ico` unchanged (no `x-tw-edge`). Re-checked 06:41Z: `en`
+STALE then HIT, `__Secure-next-auth.session-token` cookie BYPASS, `/api/version` no header. The logged-in check uses a
+cookie with a dummy value: the Worker decides on the cookie name alone, before any cache lookup, and passes the request
+to the origin with the cookie intact, so a real session takes the same branch (`booking-edge.test.mjs` covers
+`next-auth.session-token`, `__Secure-` and chunked `.0` names).
 
 Operate: `CLOUDFLARE_API_TOKEN=... python3 ops/cloudflare/worker.py plan|apply --yes|rollback --yes [--delete-script]`
 (token `CLOUDFLARE_TIMEWAY_WORKER_TOKEN`, Infisical `platform:/cloudflare`). Rollback deletes the routes, so traffic
