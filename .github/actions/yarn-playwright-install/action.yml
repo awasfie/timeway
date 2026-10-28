@@ -51,13 +51,17 @@ runs:
       # ("Playwright does not support chromium on ubuntu26.04-x64"). pull_request_target runs the base-branch
       # pr.yml, so the 24.04 pin on the PR never applies to Prepare. On 26.04 install the ubuntu24.04 build instead.
       run: |
-        PW_OVERRIDE=""
+        # On 26.04 the apt package names in Playwright's ubuntu24.04 dep list (libicu74, libxml2, libvpx9,
+        # libx264-164) do not exist, so --with-deps fails. Download the browser only on 26.04.
         if grep -q '^VERSION_ID="26\.' /etc/os-release 2>/dev/null; then
-          PW_OVERRIDE="ubuntu24.04-x64"
-          echo "Ubuntu 26.04 runner: installing Playwright ${PW_OVERRIDE} build"
+          echo "Ubuntu 26.04 runner: Playwright ubuntu24.04-x64 browser download, no apt deps"
+          export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="ubuntu24.04-x64"
+          PW_ARGS=""
+        else
+          PW_ARGS="--with-deps"
         fi
         if [ -x node_modules/.bin/playwright ]; then
-          PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="$PW_OVERRIDE" yarn playwright install --with-deps
+          yarn playwright install $PW_ARGS
         else
-          PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="$PW_OVERRIDE" npx --yes "playwright@${PLAYWRIGHT_VERSION}" install --with-deps
+          npx --yes "playwright@${PLAYWRIGHT_VERSION}" install $PW_ARGS
         fi
