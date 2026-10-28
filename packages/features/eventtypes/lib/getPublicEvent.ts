@@ -70,6 +70,7 @@ const userSelect = {
 export const getPublicEventSelect = (fetchAllUsers: boolean) => {
   return {
     id: true,
+    twOrgId: true,
     title: true,
     description: true,
     interfaceLanguage: true,
