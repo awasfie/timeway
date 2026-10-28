@@ -1,8 +1,8 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 
-// The booker's timezone select is a next/dynamic (ssr:false) island since WC-TW-6c-9d;
-// this guards that it still mounts, opens and applies a choice in LTR and RTL locales.
+// Since WC-TW-6c-5 the booker shows a plain trigger and loads the picker chunk on intent;
+// this guards that the trigger renders, the picker loads on click and applies a choice in LTR and RTL.
 test.describe.configure({ mode: "parallel" });
 
 test.afterEach(({ users }) => users.deleteAll());
@@ -21,10 +21,13 @@ for (const { locale, dir } of [
 
       const current = page.getByTestId("event-meta-current-timezone");
       await expect(current).toBeVisible();
+      const trigger = current.getByTestId("timezone-select-trigger");
+      await expect(trigger).toBeVisible();
       const input = current.locator('input[aria-label="Timezone Select"]');
-      await expect(input).toBeAttached();
+      await expect(input).toHaveCount(0);
 
-      await current.click();
+      await trigger.click();
+      await expect(input).toBeAttached();
       await input.fill("Tokyo");
       await page.keyboard.press("Enter");
 
