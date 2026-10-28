@@ -30,7 +30,7 @@ jobs:
   build-gates:
     name: JS budget + Lighthouse (gh-runner, cairo, riyadh, dubai)
     if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     services:
       postgres:
@@ -137,7 +137,7 @@ jobs:
 
   region-ttfb:
     name: Region TTFB (cairo, riyadh, dubai)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
