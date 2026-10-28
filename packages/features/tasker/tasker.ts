@@ -24,6 +24,9 @@ type TaskPayloads = {
   webhookDelivery: z.infer<
     typeof import("@calcom/features/webhooks/lib/types/webhookTask").webhookTaskPayloadSchema
   >;
+  platformFeeUsage: z.infer<
+    typeof import("@calcom/features/payments/gateway/platformFee").platformFeeUsagePayloadSchema
+  >;
 };
 export type TaskTypes = keyof TaskPayloads;
 export type TaskHandler = (payload: string, taskId?: string) => Promise<void>;
