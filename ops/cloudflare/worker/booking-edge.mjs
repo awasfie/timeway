@@ -117,6 +117,9 @@ function originRequest(request, url, bucket) {
   const headers = new Headers(request.headers);
   headers.set("accept-language", bucket);
   headers.delete("cookie");
+  // The root layout embeds cf-ipcountry (GeoProvider) and Cloudflare re-stamps it on this subrequest, so
+  // a cached copy carries the first visitor's country. Its only reader is AnalyticsIdentify, which acts
+  // for authenticated sessions alone, and those bypass this cache.
   headers.delete("if-none-match");
   headers.delete("if-modified-since");
   return new Request(target.toString(), { method: "GET", headers, redirect: "manual" });
