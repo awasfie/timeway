@@ -23,3 +23,5 @@ jobs:
       # WC-TW-5b: host zones of the Timeway launch markets (Egypt observes DST, Saudi does not)
       - run: TZ=Africa/Cairo VITEST_MODE=timezone yarn test -- --no-isolate
       - run: TZ=Asia/Riyadh VITEST_MODE=timezone yarn test -- --no-isolate
+      # WC-TW-6g: booking edge Worker unit tests (node:test, not vitest)
+      - run: node --test ops/cloudflare/worker/booking-edge.test.mjs
