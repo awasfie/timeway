@@ -28,6 +28,30 @@ this card stays open until every row passes on a later deploy.
 | dubai | slot API `slots/getSchedule` (the booker's own call, 2-month range) | p95 < 800 ms | 811 ms (p50 740, max 837) | 30 | curl from the Dubai host; `evidence/2026-10-28-wc-tw-6d.json` | d43cce3dda | FAIL |
 | any org | per-tenant RUM in Plausible | visible for >= 1 org | not visible: not deployed | 0 | see INP RUM row | d43cce3dda | MISSING |
 
+## Re-run r2 (card t_762bea7b run 5301, 2026-10-28 06:50Z), after 6f and 6g
+
+App code under test is still `d43cce3dda` (every later main commit is docs-only: `git diff --stat d43cce3dda origin/main`
+touches only `docs/perf/**`), plus the live Cloudflare Worker `timeway-booking-edge` from WC-TW-6g (timeway#202;
+response header `x-tw-edge: HIT`). Raw numbers: `evidence/2026-10-28-wc-tw-6d-r2.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB | p75 < 500 ms | 77 ms | 42 | Globalping, WC-TW-6g pooled; `evidence/2026-10-28-wc-tw-6g-edge-worker-r2.json` (timeway#202) | d43cce3dda + Worker | PASS |
+| riyadh | TTFB | p75 < 500 ms | 96 ms | 42 | same | d43cce3dda + Worker | PASS |
+| dubai | TTFB | p75 < 500 ms | 166 ms Globalping excl. AS207847 (n=34; raw incl. that probe 595); local Dubai host AS15802 243 ms (p50 223, p95 259) | 34 + 30 | same; local curl in r2 evidence | d43cce3dda + Worker | PASS (Globalping AS207847 probe exclusion is Gosi's call, see 6g) |
+| dubai (prod, real network) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | 7016 ms median (6981-7086) | 5 | r2 evidence | d43cce3dda + Worker | FAIL |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 220 ms median (205-303) | 5 | r2 evidence | d43cce3dda + Worker | FAIL |
+| all | INP (RUM, Plausible) | < 200 ms | no data: page HTML has no Plausible script | 0 | timeway#89, #101 still open drafts | d43cce3dda | MISSING |
+| prod | booking-route first-load JS | <= 200 KB gz | 49 scripts, 837 KB transfer (unchanged; JS stack #125/#126/#127/#130/#154 still open) | 1 | r2 evidence | d43cce3dda | FAIL |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 458 ms | 30 | WC-TW-6f, `evidence/2026-10-28-slot-api-wc-tw-6f.json` (timeway#201) | bfebbeca82 (docs-only over d43cce3dda) | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | not deployed | 0 | see RUM row | d43cce3dda | MISSING |
+
+r2 verdict: **not met**, 4 of 9 rows pass (TTFB x3, slot API). TTFB rows rest on the 6g pooled Globalping run: a fresh
+Globalping run this pass returned `429 rate_limit_exceeded` (anonymous IP hourly quota spent by 6g), so the local Dubai
+host series is the independent cross-check. LCP sits at ~7.0 s with server response ~225 ms, so LCP is JS-bound, not
+network-bound: it moves only when the JS stack merges and deploys (t_25e79885, t_3eb9a771, t_bf71ff0c). RUM rows move
+when #89/#101 merge and deploy (t_75e3ae48).
+
 ## How each number was taken
 
 - **TTFB by city.** `node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false`.
