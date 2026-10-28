@@ -47,9 +47,21 @@ runs:
       # nothing, so on a playwright cache miss there is no node_modules state and `yarn playwright` fails with
       # "Couldn't find the node_modules state file" (PR Update Prepare, runs 40553347235, 40491859512).
       # Fall back to the exact pinned version through npx; browsers land in ~/.cache/ms-playwright either way.
+      # CI-PRUPDATE-2 (t_455f221c, PR #204): ubuntu-latest is Ubuntu 26.04 and Playwright 1.57 refuses chromium there
+      # ("Playwright does not support chromium on ubuntu26.04-x64"). pull_request_target runs the base-branch
+      # pr.yml, so the 24.04 pin on the PR never applies to Prepare. On 26.04 install the ubuntu24.04 build instead.
       run: |
-        if [ -x node_modules/.bin/playwright ]; then
-          yarn playwright install --with-deps
+        # On 26.04 the apt package names in Playwright's ubuntu24.04 dep list (libicu74, libxml2, libvpx9,
+        # libx264-164) do not exist, so --with-deps fails. Download the browser only on 26.04.
+        if grep -q '^VERSION_ID="26\.' /etc/os-release 2>/dev/null; then
+          echo "Ubuntu 26.04 runner: Playwright ubuntu24.04-x64 browser download, no apt deps"
+          export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="ubuntu24.04-x64"
+          PW_ARGS=""
         else
-          npx --yes "playwright@${PLAYWRIGHT_VERSION}" install --with-deps
+          PW_ARGS="--with-deps"
+        fi
+        if [ -x node_modules/.bin/playwright ]; then
+          yarn playwright install $PW_ARGS
+        else
+          npx --yes "playwright@${PLAYWRIGHT_VERSION}" install $PW_ARGS
         fi
