@@ -176,7 +176,9 @@ jobs:
     name: Prepare
     needs: [trust-check]
     if: needs.trust-check.outputs.is-trusted == 'true'
-    runs-on: ubuntu-latest
+    # ubuntu-latest moved to Ubuntu 26.04 (2026-10-19); Playwright does not support chromium there
+    # ("Playwright does not support chromium on ubuntu26.04-x64"), so Prepare failed on PR #202 run 40655117058.
+    runs-on: ubuntu-24.04
     permissions:
       pull-requests: read
     outputs:
