@@ -1,0 +1,161 @@
+name: Booking perf gates
+# WC-TW-6c (WC-9 WC-TW-6 step 3; WC.2.5 LCP p75 / TTFB p75 rows), CC-56 evidence format.
+# (a) JS budget: gzip JS of a first load of /[user]/[type] on a CI production build, <= 200 KB.
+# (b) Lighthouse CI on that build: Moto G Power / slow 4G default profile, 5 runs, median.
+# (c) Region TTFB from Cairo / Riyadh / Dubai via Globalping against the deployed booking page.
+# Every result is a JSON artifact tagged region=gh-runner|cairo|riyadh|dubai plus a job summary.
+# No job is skippable: a provider outage or a missing city fails the job.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    paths-ignore: ['docs/**', '**.md']  # CI-COST-3: docs-only pushes (ledger, group-log) skip CI; PR runs are unchanged
+    branches: [main]
+  schedule:
+    # WC.2.5 synthetic TTFB probe; GitHub may delay scheduled runs under load.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: booking-perf-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGION_URL: ${{ vars.BOOKING_PERF_PROD_URL || 'https://timeway.co/ahmedwasfie/30min' }}
+
+jobs:
+  build-gates:
+    name: JS budget + Lighthouse (gh-runner, cairo, riyadh, dubai)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: calendso
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      # CI-only public dummies (same values as e2e.yml fallbacks); the DB is this job's service.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/calendso
+      DATABASE_DIRECT_URL: postgresql://postgres:postgres@localhost:5432/calendso
+      CALENDSO_ENCRYPTION_KEY: 0zfLtY99wjeLnsM7qsa8xsT+Q0oSgnOL
+      NEXTAUTH_SECRET: EI4qqDpcfdvf4A+0aQEEx8JjHxHSy4uWiZw/F32K+pA=
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_WEBAPP_URL: http://localhost:3000
+      NEXT_PUBLIC_WEBSITE_URL: http://localhost:3000
+      ALLOWED_HOSTNAMES: '"cal.local:3000","localhost:3000"'
+      NEXT_TELEMETRY_DISABLED: "1"
+      BOOKING_URL: http://localhost:3000/pro/30min
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: ./.github/actions/cache-checkout
+      - uses: ./.github/actions/yarn-install
+      - run: yarn prisma generate
+      - uses: ./.github/actions/cache-db
+      - uses: ./.github/actions/cache-build
+      - name: Start production server
+        run: |
+          (cd apps/web && nohup npx next start -p 3000 > "$RUNNER_TEMP/next.log" 2>&1 &)
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$BOOKING_URL" || true)
+            [ "$code" = "200" ] && echo "booking page up after ${i}x2s" && exit 0
+            sleep 2
+          done
+          echo "::error::booking page $BOOKING_URL never returned 200 (last $code)"
+          tail -100 "$RUNNER_TEMP/next.log"
+          exit 1
+      - name: (a) JS ratchet vs perf/js-baseline.json, 200 KB budget reported
+        id: js
+        continue-on-error: true
+        run: node scripts/perf/booking-js-budget.mjs --url "$BOOKING_URL" --static-dir apps/web/.next/static --budget-kb 200 --baseline perf/js-baseline.json --out perf/out/js-budget-gh-runner.json
+      - name: (b) Lighthouse CI, 5 runs median
+        id: lhci
+        continue-on-error: true
+        env:
+          LHCI_URL: ${{ env.BOOKING_URL }}
+          LHCI_OUT_DIR: perf/out/lhci
+        run: |
+          npx -y @lhci/cli@0.15.1 collect --config=perf/lighthouserc.cjs
+          npx -y @lhci/cli@0.15.1 upload --config=perf/lighthouserc.cjs
+          node scripts/perf/lhci-summary.mjs --dir perf/out/lhci --region gh-runner --out perf/out/lhci-gh-runner.json
+          npx -y @lhci/cli@0.15.1 assert --config=perf/lighthouserc.cjs
+      # WC-TW-6c-10: the same 5-run Lighthouse collect tagged region=cairo|riyadh|dubai. The city RTT is
+      # measured from that city by Globalping each run and added to the slow-4G RTT; a city with no
+      # answering probe fails the step (never a skip). Ratchet per region in perf/lhci-baseline.json.
+      - name: (c) Lighthouse region-tagged (cairo, riyadh, dubai)
+        id: lhci_regions
+        continue-on-error: true
+        env:
+          LHCI_URL: ${{ env.BOOKING_URL }}
+          GLOBALPING_TOKEN: ${{ secrets.GLOBALPING_TOKEN }}
+          RTT_HOST: ${{ vars.BOOKING_PERF_RTT_HOST || 'timeway.co' }}
+        run: |
+          fail=0
+          for region in cairo riyadh dubai; do
+            echo "::group::region=$region"
+            if ! node scripts/perf/region-rtt.mjs --region "$region" --host "$RTT_HOST" --out "perf/out/region-rtt-$region.json"; then
+              echo "::error::region=$region RTT measurement failed"; fail=1; echo "::endgroup::"; continue
+            fi
+            rtt=$(node -p "require('./perf/out/region-rtt-$region.json').rtt_median_ms")
+            export LHCI_REGION="$region" LHCI_CITY_RTT_MS="$rtt" LHCI_OUT_DIR="perf/out/lhci-$region"
+            rm -rf .lighthouseci
+            if npx -y @lhci/cli@0.15.1 collect --config=perf/lighthouserc.cjs \
+              && npx -y @lhci/cli@0.15.1 upload --config=perf/lighthouserc.cjs \
+              && node scripts/perf/lhci-summary.mjs --dir "$LHCI_OUT_DIR" --region "$region" --out "perf/out/lhci-$region.json"; then
+              npx -y @lhci/cli@0.15.1 assert --config=perf/lighthouserc.cjs || { echo "::error::region=$region Lighthouse assertions failed"; fail=1; }
+            else
+              echo "::error::region=$region Lighthouse collect failed"; fail=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $fail
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: booking-perf-gh-runner
+          path: perf/out/
+          if-no-files-found: error
+      - name: Gate verdict
+        if: always()
+        run: |
+          echo "js=${{ steps.js.outcome }} lhci=${{ steps.lhci.outcome }} lhci_regions=${{ steps.lhci_regions.outcome }}"
+          [ "${{ steps.js.outcome }}" = "success" ] && [ "${{ steps.lhci.outcome }}" = "success" ] && [ "${{ steps.lhci_regions.outcome }}" = "success" ]
+
+  region-ttfb:
+    name: Region TTFB (cairo, riyadh, dubai)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/perf
+      # No setup-node: its packageManager auto-cache calls yarn, absent in this sparse checkout.
+      - run: node --version
+      - name: Globalping HTTPS probes, 2 samples x up to 3 probes per city
+        env:
+          GLOBALPING_TOKEN: ${{ secrets.GLOBALPING_TOKEN }}
+          # The probe hits the deployed site, not the PR build, so on PR/push/schedule an over-budget
+          # TTFB is a recorded ::warning (WC.2.5 series; reduction is WC-TW-6a/6b). A city with no
+          # answering probe always fails. workflow_dispatch enforces the 500 ms budget.
+          ENFORCE: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+        run: node scripts/perf/region-ttfb.mjs --url "$REGION_URL" --budget-ms 500 --samples 2 --probes 3 --enforce "$ENFORCE" --out perf/out/region-ttfb.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: booking-perf-regions
+          path: perf/out/
+          if-no-files-found: error

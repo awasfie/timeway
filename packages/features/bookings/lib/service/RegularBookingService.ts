@@ -54,10 +54,12 @@ import {
 } from "@calcom/features/webhooks/lib/scheduleTrigger";
 import type { EventPayloadType, EventTypeInfo } from "@calcom/features/webhooks/lib/sendPayload";
 import { getTranslation } from "@calcom/i18n/server";
+import { captureFirstBookingReceived } from "@calcom/lib/analytics/activation";
 import { groupHostsByGroupId } from "@calcom/lib/bookings/hostGroupUtils";
 import { shouldIgnoreContactOwner } from "@calcom/lib/bookings/routing/utils";
 import { getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
 import { DEFAULT_GROUP_ID, ENABLE_ASYNC_TASKER } from "@calcom/lib/constants";
+import { onBookingCreated } from "@calcom/features/tw-activation/activation";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
 import { extractBaseEmail } from "@calcom/lib/extract-base-email";
@@ -1098,7 +1100,7 @@ async function handler(
             } catch {
               notAvailableLuckyUsers.push(newLuckyUser);
               tracingLogger.info(
-                `Round robin host ${newLuckyUser.name} not available for first two slots. Trying to find another host.`
+                `Round robin host ${newLuckyUser.name} not available for every recurring slot. Trying to find another host.`
               );
             }
           } else {
@@ -1172,8 +1174,8 @@ async function handler(
   if (eventType.schedulingType === SchedulingType.COLLECTIVE && !eventType.isDynamic) {
     users = [...users].sort(
       (a, b) =>
-        ((b as { priority?: number | null }).priority ?? 0) - ((a as { priority?: number | null }).priority ?? 0) ||
-        a.id - b.id
+        ((b as { priority?: number | null }).priority ?? 0) -
+          ((a as { priority?: number | null }).priority ?? 0) || a.id - b.id
     );
   }
 
@@ -1759,6 +1761,10 @@ async function handler(
         tracking: reqBody.tracking,
       });
 
+      if (booking) {
+        await onBookingCreated(booking, input.bookingData.creationSource ?? "unknown");
+      }
+
       if (booking?.userId) {
         const usersRepository = new UsersRepository();
         await usersRepository.updateLastActiveAt(booking.userId);
@@ -2292,6 +2298,18 @@ async function handler(
     isRecurringBooking: !!input.bookingData.allRecurringDates,
     tracingLogger,
   });
+
+  if (booking?.twOrgId) {
+    // Fire-and-forget: analytics must never delay or fail a booking.
+    void captureFirstBookingReceived({
+      twOrgId: booking.twOrgId,
+      organizerUuid: organizerUser.uuid,
+      organizerLocale: organizerUser.locale,
+      isDryRun,
+      isReschedule: !!originalRescheduledBooking,
+      bookingFindMany: (args) => deps.prismaClient.booking.findMany(args),
+    });
+  }
 
   const webhookLocation = metadata?.videoCallUrl || evt.location;
 

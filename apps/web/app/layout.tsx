@@ -4,6 +4,7 @@ import { IconSprites } from "@calcom/ui/components/icon";
 import { buildLegacyRequest } from "@lib/buildLegacyCtx";
 import { getBookingPageLocale } from "@lib/i18n/getBookingPageLocale";
 import { PATHNAME_HEADER } from "@lib/i18n/pathnameHeader";
+import { RumBeacon } from "@lib/telemetry/rum-client";
 import { dir } from "i18next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
@@ -155,6 +156,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               }
         }>
         <IconSprites />
+        <RumBeacon />
         <SpeculationRules
           // URLs In Navigation
           prerenderPathsOnHover={[

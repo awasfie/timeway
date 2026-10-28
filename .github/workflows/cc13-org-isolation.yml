@@ -1,15 +1,12 @@
 name: CC-13 org isolation
 # TW-T9 / Bible v12.3 CC-13: cross-org probe suite in CI from the first commit.
 # Runs against a throwaway Postgres service only; no secrets, no live DB.
+# WC-TW-7e: called from pr.yml (in `required`) on every trusted PR; no path filter.
 on:
-  pull_request:
-    paths:
-      - "packages/prisma/**"
-      - ".github/workflows/cc13-org-isolation.yml"
+  workflow_call:
   push:
+    paths-ignore: ['docs/**', '**.md']  # CI-COST-3: docs-only pushes (ledger, group-log) skip CI; PR runs are unchanged
     branches: [main]
-    paths:
-      - "packages/prisma/**"
   workflow_dispatch:
 
 permissions:
@@ -18,7 +15,7 @@ permissions:
 jobs:
   cc13:
     name: CC-13 (DB layer)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       postgres:

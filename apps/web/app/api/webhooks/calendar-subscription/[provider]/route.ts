@@ -1,7 +1,10 @@
 import { BookingRepository } from "@calcom/features/bookings/repositories/BookingRepository";
 import type { CalendarSubscriptionProvider } from "@calcom/features/calendar-subscription/adapters/AdaptersFactory";
 import { DefaultAdapterFactory } from "@calcom/features/calendar-subscription/adapters/AdaptersFactory";
-import { CalendarSubscriptionService } from "@calcom/features/calendar-subscription/lib/CalendarSubscriptionService";
+import {
+  CalendarSubscriptionService,
+  type GraphChangeNotification,
+} from "@calcom/features/calendar-subscription/lib/CalendarSubscriptionService";
 import { CalendarCacheEventRepository } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventRepository";
 import { CalendarCacheEventService } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService";
 import { CalendarSyncService } from "@calcom/features/calendar-subscription/lib/sync/CalendarSyncService";
@@ -52,7 +55,8 @@ async function postHandler(request: NextRequest, ctx: { params: Promise<Params> 
   if (providerFromParams === "office365_calendar" && validationToken) {
     return new Response(validationToken, { status: 200, headers: { "Content-Type": "text/plain" } });
   }
-  const isGraphLifecycle = providerFromParams === "office365_calendar" && searchParams.get("lifecycle") === "1";
+  const isGraphLifecycle =
+    providerFromParams === "office365_calendar" && searchParams.get("lifecycle") === "1";
 
   try {
     // instantiate dependencies
@@ -95,6 +99,19 @@ async function postHandler(request: NextRequest, ctx: { params: Promise<Params> 
       const work = calendarSubscriptionService
         .processGraphLifecycle(notifications, process.env.MICROSOFT_WEBHOOK_TOKEN)
         .catch((error) => log.error("Graph lifecycle failed", { error }));
+      if (typeof after === "function") after(() => work);
+      else await work;
+      return NextResponse.json({ message: "Accepted" }, { status: 202 });
+    }
+
+    if (providerFromParams === "office365_calendar") {
+      // WC-TW-4f: Graph change notifications arrive as JSON `{ value: [...] }`. Read the body once
+      // here (a Request body is a stream), validate each clientState in the service, ack 202 fast.
+      const body = (await request.json().catch(() => ({}))) as { value?: unknown };
+      const notifications = (Array.isArray(body?.value) ? body.value : []) as GraphChangeNotification[];
+      const work = calendarSubscriptionService
+        .processGraphNotifications(notifications, process.env.MICROSOFT_WEBHOOK_TOKEN)
+        .catch((error) => log.error("Graph notifications failed", { error }));
       if (typeof after === "function") after(() => work);
       else await work;
       return NextResponse.json({ message: "Accepted" }, { status: 202 });

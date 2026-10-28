@@ -21,6 +21,8 @@ const TIMEZONE_OFFSETS = {
   "Etc/UTC": 0, // Alternative UTC
   GMT: 0, // GMT is effectively UTC
   "America/Los_Angeles": -480, // UTC-8
+  "Africa/Cairo": 120, // UTC+2 (EET, Jan-Mar 2024)
+  "Asia/Riyadh": 180, // UTC+3
 } as const;
 
 // Helper to get current timezone from TZ environment variable
@@ -43,6 +45,8 @@ const TIMEZONE_EXPECTATIONS = {
     "Asia/Kolkata": "2023-12-31T18:30:00.000Z",
     "Asia/Calcutta": "2023-12-31T18:30:00.000Z",
     "America/Los_Angeles": "2024-01-01T08:00:00.000Z",
+    "Africa/Cairo": "2023-12-31T22:00:00.000Z",
+    "Asia/Riyadh": "2023-12-31T21:00:00.000Z",
   },
   // January 31st end of month
   JAN_END: {
@@ -50,6 +54,8 @@ const TIMEZONE_EXPECTATIONS = {
     "Asia/Kolkata": "2024-01-31T18:29:59.999Z",
     "Asia/Calcutta": "2024-01-31T18:29:59.999Z",
     "America/Los_Angeles": "2024-02-01T07:59:59.999Z",
+    "Africa/Cairo": "2024-01-31T21:59:59.999Z",
+    "Asia/Riyadh": "2024-01-31T20:59:59.999Z",
   },
   // February 1st start of month
   FEB_START: {
@@ -57,6 +63,8 @@ const TIMEZONE_EXPECTATIONS = {
     "Asia/Kolkata": "2024-01-31T18:30:00.000Z",
     "Asia/Calcutta": "2024-01-31T18:30:00.000Z",
     "America/Los_Angeles": "2024-02-01T08:00:00.000Z",
+    "Africa/Cairo": "2024-01-31T22:00:00.000Z",
+    "Asia/Riyadh": "2024-01-31T21:00:00.000Z",
   },
   // February 29th end of month (leap year)
   FEB_END: {
@@ -64,6 +72,8 @@ const TIMEZONE_EXPECTATIONS = {
     "Asia/Kolkata": "2024-02-29T18:29:59.999Z",
     "Asia/Calcutta": "2024-02-29T18:29:59.999Z",
     "America/Los_Angeles": "2024-03-01T07:59:59.999Z",
+    "Africa/Cairo": "2024-02-29T21:59:59.999Z",
+    "Asia/Riyadh": "2024-02-29T20:59:59.999Z",
   },
   // March 31st end of month
   MAR_END: {
@@ -71,6 +81,8 @@ const TIMEZONE_EXPECTATIONS = {
     "Asia/Kolkata": "2024-03-31T18:29:59.999Z",
     "Asia/Calcutta": "2024-03-31T18:29:59.999Z",
     "America/Los_Angeles": "2024-03-31T16:29:59.999Z",
+    "Africa/Cairo": "2024-03-31T21:59:59.999Z",
+    "Asia/Riyadh": "2024-03-31T20:59:59.999Z",
   },
   // January 15th start of day (for day count scenarios)
   JAN_15_START: {
@@ -78,6 +90,8 @@ const TIMEZONE_EXPECTATIONS = {
     "Asia/Kolkata": "2024-01-14T18:30:00.000Z",
     "Asia/Calcutta": "2024-01-14T18:30:00.000Z",
     "America/Los_Angeles": "2024-01-15T08:00:00.000Z",
+    "Africa/Cairo": "2024-01-14T22:00:00.000Z",
+    "Asia/Riyadh": "2024-01-14T21:00:00.000Z",
   },
   // January 18th start of day
   JAN_18_START: {
@@ -85,6 +99,8 @@ const TIMEZONE_EXPECTATIONS = {
     "Asia/Kolkata": "2024-01-17T18:30:00.000Z",
     "Asia/Calcutta": "2024-01-17T18:30:00.000Z",
     "America/Los_Angeles": "2024-01-18T08:00:00.000Z",
+    "Africa/Cairo": "2024-01-17T22:00:00.000Z",
+    "Asia/Riyadh": "2024-01-17T21:00:00.000Z",
   },
   // January 22nd start of day
   JAN_22_START: {
@@ -92,6 +108,8 @@ const TIMEZONE_EXPECTATIONS = {
     "Asia/Kolkata": "2024-01-21T18:30:00.000Z",
     "Asia/Calcutta": "2024-01-21T18:30:00.000Z",
     "America/Los_Angeles": "2024-01-22T08:00:00.000Z",
+    "Africa/Cairo": "2024-01-21T22:00:00.000Z",
+    "Asia/Riyadh": "2024-01-21T21:00:00.000Z",
   },
 } as const;
 

@@ -318,6 +318,11 @@
     "CAMV_INTERNAL_SECRET",
     "G3_TEST_SECRET"
   ],
+  "globalPassThroughEnv": [
+    "OTEL_EXPORTER_OTLP_ENDPOINT",
+    "OTEL_METRIC_EXPORT_INTERVAL",
+    "OTEL_SERVICE_NAME"
+  ],
   "tasks": {
     "@calcom/web#copy-app-store-static": {
       "inputs": ["../../packages/app-store/**/static/**/*"],

@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -16,3 +16,22 @@ jobs:
       - uses: ./.github/actions/yarn-install
       - name: Run Lint
         run: yarn lint
+
+  registry-refs:
+    # WC-TW-7e / D-R74 D2: no Docker Hub anywhere in CI config; nothing is allowlisted.
+    name: No Docker Hub references
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          sparse-checkout: .github
+      - name: Fail on Docker Hub references under .github
+        # The [.] class keeps this pattern from matching its own text.
+        run: |
+          if grep -rnIiE 'docker[.]io|docker[_-]?hub' .github; then
+            echo "::error::Docker Hub reference found under .github (D-R74 D2: GHCR only)"
+            exit 1
+          fi
+          echo "no Docker Hub references under .github"
