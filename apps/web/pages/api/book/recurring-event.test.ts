@@ -1,3 +1,4 @@
+import prismock from "@calcom/testing/lib/__mocks__/prisma";
 import {
   createBookingScenario,
   getBooker,
@@ -10,6 +11,11 @@ import {
   TestData,
   Timezones,
 } from "@calcom/testing/lib/bookingScenario/bookingScenario";
+import process from "node:process";
+import { WEBAPP_URL, WEBSITE_URL } from "@calcom/lib/constants";
+import { ErrorCode } from "@calcom/lib/errorCodes";
+import logger from "@calcom/lib/logger";
+import { BookingStatus, SchedulingType } from "@calcom/prisma/enums";
 import { createMockNextJsRequest } from "@calcom/testing/lib/bookingScenario/createMockNextJsRequest";
 import {
   expectBookingCreatedWebhookToHaveBeenFired,
@@ -19,15 +25,9 @@ import {
 } from "@calcom/testing/lib/bookingScenario/expects";
 import { getMockRequestDataForBooking } from "@calcom/testing/lib/bookingScenario/getMockRequestDataForBooking";
 import { setupAndTeardown } from "@calcom/testing/lib/bookingScenario/setupAndTeardown";
-
+import { test } from "@calcom/testing/lib/fixtures/fixtures";
 import { v4 as uuidv4 } from "uuid";
 import { describe, expect } from "vitest";
-
-import { WEBAPP_URL, WEBSITE_URL } from "@calcom/lib/constants";
-import { ErrorCode } from "@calcom/lib/errorCodes";
-import logger from "@calcom/lib/logger";
-import { BookingStatus, SchedulingType } from "@calcom/prisma/enums";
-import { test } from "@calcom/testing/lib/fixtures/fixtures";
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
@@ -379,13 +379,8 @@ describe("handleNewBooking", () => {
       );
 
       test(
-        `should create successful bookings for the number of slots requested even if the third slot is already booked as long as first two slots are free
-          1. Should create the same number of bookings as requested slots in the database
-          2. Should send emails for the first booking only to the booker as well as organizer
-          3. Should create a calendar event for every booking in the destination calendar
-          3. Should trigger BOOKING_CREATED webhook for every booking
-      `,
-        async ({ emails }) => {
+        `should reject the whole series when the third slot is already booked, even if the first two slots are free (WC-TW-5c)`,
+        async () => {
           const recurringCountInRequest = 4;
 
           const handleRecurringEventBooking = (await import("@calcom/web/pages/api/book/recurring-event"))
@@ -467,7 +462,7 @@ describe("handleNewBooking", () => {
             },
           });
 
-          const calendarMock = await mockCalendarToHaveNoBusySlots("googlecalendar", {
+          await mockCalendarToHaveNoBusySlots("googlecalendar", {
             create: {
               id: "MOCKED_GOOGLE_CALENDAR_EVENT_ID",
               iCalUID: "MOCKED_GOOGLE_CALENDAR_ICS_ID",
@@ -503,105 +498,18 @@ describe("handleNewBooking", () => {
               }),
           });
 
-          const createdBookings = await handleRecurringEventBooking(req);
-          expect(createdBookings.length).toBe(numOfSlotsToBeBooked);
-          for (const [index, createdBooking] of Object.entries(createdBookings)) {
-            logger.debug("Assertion for Booking with index:", index, { createdBooking });
-            expect(createdBooking.responses).toEqual(
-              expect.objectContaining({
-                email: booker.email,
-                name: booker.name,
-              })
-            );
-
-            expect(createdBooking).toEqual(
-              expect.objectContaining({
-                location: "integrations:daily",
-              })
-            );
-
-            await expectBookingToBeInDatabase({
-              description: "",
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              uid: createdBooking.uid!,
-              eventTypeId: mockBookingData.eventTypeId,
-              status: BookingStatus.ACCEPTED,
-              recurringEventId: mockBookingData.recurringEventId,
-              references: [
-                {
-                  type: "daily_video",
-                  uid: "MOCK_ID",
-                  meetingId: "MOCK_ID",
-                  meetingPassword: "MOCK_PASS",
-                  meetingUrl: "http://mock-dailyvideo.example.com/meeting-1",
-                },
-                {
-                  type: "google_calendar",
-                  uid: "MOCKED_GOOGLE_CALENDAR_EVENT_ID",
-                  meetingId: "MOCKED_GOOGLE_CALENDAR_EVENT_ID",
-                  meetingPassword: "MOCK_PASSWORD",
-                },
-              ],
-            });
-
-            expectBookingCreatedWebhookToHaveBeenFired({
-              booker,
-              organizer,
-              location: "integrations:daily",
-              subscriberUrl: "http://my-webhook.example.com",
-              //FIXME: File a bug - All recurring bookings seem to have the same URL. They should have same CalVideo URL which could mean that future recurring meetings would have already expired by the time they are needed.
-              videoCallUrl: `${WEBAPP_URL}/video/${createdBookings[0].uid}`,
-            });
-          }
-
-          expectSuccessfulBookingCreationEmails({
-            booker,
-            booking: {
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              uid: createdBookings[0].uid!,
-              urlOrigin: WEBAPP_URL,
-            },
-            organizer,
-            emails,
-            iCalUID: "MOCKED_GOOGLE_CALENDAR_ICS_ID",
-            recurrence: {
-              ...recurrence,
-              count: recurringCountInRequest,
-            },
+          await expect(handleRecurringEventBooking(req)).rejects.toThrow(ErrorCode.NoAvailableUsersFound);
+          const seriesBookings = await prismock.booking.findMany({
+            where: { recurringEventId: mockBookingData.recurringEventId },
           });
-
-          expect(emails.get().length).toBe(2);
-
-          expectSuccessfulCalendarEventCreationInCalendar(calendarMock, [
-            {
-              calendarId: "event-type-1@google-calendar.com",
-              videoCallUrl: "http://mock-dailyvideo.example.com/meeting-1",
-            },
-            {
-              calendarId: "event-type-1@google-calendar.com",
-              videoCallUrl: "http://mock-dailyvideo.example.com/meeting-1",
-            },
-            {
-              calendarId: "event-type-1@google-calendar.com",
-              videoCallUrl: "http://mock-dailyvideo.example.com/meeting-1",
-            },
-            {
-              calendarId: "event-type-1@google-calendar.com",
-              videoCallUrl: "http://mock-dailyvideo.example.com/meeting-1",
-            },
-          ]);
+          expect(seriesBookings).toHaveLength(0);
         },
         timeout
       );
 
       test(
-        `should create successful bookings for the number of slots requested even if the last slot is already booked as long as first two slots are free
-          1. Should create the same number of bookings as requested slots in the database
-          2. Should send emails for the first booking only to the booker as well as organizer
-          3. Should create a calendar event for every booking in the destination calendar
-          3. Should trigger BOOKING_CREATED webhook for every booking
-      `,
-        async ({ emails }) => {
+        `should reject the whole series when the last slot is already booked, even if the first two slots are free (WC-TW-5c)`,
+        async () => {
           const recurringCountInRequest = 4;
 
           const handleRecurringEventBooking = (await import("@calcom/web/pages/api/book/recurring-event"))
@@ -683,7 +591,7 @@ describe("handleNewBooking", () => {
             },
           });
 
-          const calendarMock = await mockCalendarToHaveNoBusySlots("googlecalendar", {
+          await mockCalendarToHaveNoBusySlots("googlecalendar", {
             create: {
               id: "MOCKED_GOOGLE_CALENDAR_EVENT_ID",
               iCalUID: "MOCKED_GOOGLE_CALENDAR_ICS_ID",
@@ -719,93 +627,11 @@ describe("handleNewBooking", () => {
               }),
           });
 
-          const createdBookings = await handleRecurringEventBooking(req);
-          expect(createdBookings.length).toBe(numOfSlotsToBeBooked);
-          for (const [index, createdBooking] of Object.entries(createdBookings)) {
-            logger.debug("Assertion for Booking with index:", index, { createdBooking });
-            expect(createdBooking.responses).toEqual(
-              expect.objectContaining({
-                email: booker.email,
-                name: booker.name,
-              })
-            );
-
-            expect(createdBooking).toEqual(
-              expect.objectContaining({
-                location: "integrations:daily",
-              })
-            );
-
-            await expectBookingToBeInDatabase({
-              description: "",
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              uid: createdBooking.uid!,
-              eventTypeId: mockBookingData.eventTypeId,
-              status: BookingStatus.ACCEPTED,
-              recurringEventId: mockBookingData.recurringEventId,
-              references: [
-                {
-                  type: "daily_video",
-                  uid: "MOCK_ID",
-                  meetingId: "MOCK_ID",
-                  meetingPassword: "MOCK_PASS",
-                  meetingUrl: "http://mock-dailyvideo.example.com/meeting-1",
-                },
-                {
-                  type: "google_calendar",
-                  uid: "MOCKED_GOOGLE_CALENDAR_EVENT_ID",
-                  meetingId: "MOCKED_GOOGLE_CALENDAR_EVENT_ID",
-                  meetingPassword: "MOCK_PASSWORD",
-                },
-              ],
-            });
-
-            expectBookingCreatedWebhookToHaveBeenFired({
-              booker,
-              organizer,
-              location: "integrations:daily",
-              subscriberUrl: "http://my-webhook.example.com",
-              //FIXME: File a bug - All recurring bookings seem to have the same URL. They should have same CalVideo URL which could mean that future recurring meetings would have already expired by the time they are needed.
-              videoCallUrl: `${WEBAPP_URL}/video/${createdBookings[0].uid}`,
-            });
-          }
-
-          expectSuccessfulBookingCreationEmails({
-            booking: {
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              uid: createdBookings[0].uid!,
-              urlOrigin: WEBAPP_URL,
-            },
-            booker,
-            organizer,
-            emails,
-            iCalUID: "MOCKED_GOOGLE_CALENDAR_ICS_ID",
-            recurrence: {
-              ...recurrence,
-              count: recurringCountInRequest,
-            },
+          await expect(handleRecurringEventBooking(req)).rejects.toThrow(ErrorCode.NoAvailableUsersFound);
+          const seriesBookings = await prismock.booking.findMany({
+            where: { recurringEventId: mockBookingData.recurringEventId },
           });
-
-          expect(emails.get().length).toBe(2);
-
-          expectSuccessfulCalendarEventCreationInCalendar(calendarMock, [
-            {
-              calendarId: "event-type-1@google-calendar.com",
-              videoCallUrl: "http://mock-dailyvideo.example.com/meeting-1",
-            },
-            {
-              calendarId: "event-type-1@google-calendar.com",
-              videoCallUrl: "http://mock-dailyvideo.example.com/meeting-1",
-            },
-            {
-              calendarId: "event-type-1@google-calendar.com",
-              videoCallUrl: "http://mock-dailyvideo.example.com/meeting-1",
-            },
-            {
-              calendarId: "event-type-1@google-calendar.com",
-              videoCallUrl: "http://mock-dailyvideo.example.com/meeting-1",
-            },
-          ]);
+          expect(seriesBookings).toHaveLength(0);
         },
         timeout
       );

@@ -11,7 +11,7 @@ jobs:
     env:
       APP_URL: ${{ secrets.APP_URL }}
       CRON_API_KEY: ${{ secrets.CRON_API_KEY }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check if today is the last day of the month
         id: check-last-day

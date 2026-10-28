@@ -27,14 +27,14 @@ on:
         description: "Tag to build (e.g., v6.0.5) - required if BUILD_FROM_BRANCH is false"
         required: false
       PUSH_IMAGE:
-        description: "Push the Docker image to DockerHub"
+        description: "Push the Docker image to GHCR (ghcr.io/awasfie/timeway)"
         type: boolean
         default: true
 
 jobs:
   prepare:
     name: "Prepare Release"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       release_tag: ${{ steps.determine-tag.outputs.release_tag }}
       checkout_ref: ${{ steps.determine-tag.outputs.checkout_ref }}
@@ -83,7 +83,7 @@ jobs:
   release-amd64:
     name: "Release AMD64"
     needs: prepare
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       RELEASE_TAG: ${{ needs.prepare.outputs.release_tag }}
     steps:
@@ -97,8 +97,6 @@ jobs:
         with:
           platform: "linux/amd64"
           platform-suffix: ""
-          dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
-          dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           postgres-user: ${{ env.POSTGRES_USER }}
           postgres-password: ${{ env.POSTGRES_PASSWORD }}
@@ -146,8 +144,6 @@ jobs:
         with:
           platform: "arm64"
           platform-suffix: "-arm"
-          dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
-          dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           postgres-user: ${{ env.POSTGRES_USER }}
           postgres-password: ${{ env.POSTGRES_PASSWORD }}

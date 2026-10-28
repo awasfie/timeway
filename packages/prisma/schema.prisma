@@ -2929,11 +2929,42 @@ model Organization {
   /// WC-TW-14a (E7): developer sandbox; emits no usage lines (nor do its sub-orgs).
   isSandbox          Boolean              @default(false)
 
-  members OrganizationMember[]
-  apiKeys OrgApiKey[]
+  members          OrganizationMember[]
+  apiKeys          OrgApiKey[]
+  customHostname   TwCustomHostname?
+  activationEvents ActivationEvent[]
 
   @@index([parentOrgId])
   @@map("tw_organization")
+}
+
+// WC-TW-12b (expand): customer custom hostname, one per org, served by the
+// proxy's on-demand TLS only after /api/internal/custom-domain/approve says yes.
+enum TwCustomHostnameStatus {
+  pending_dns
+  active
+  failed
+}
+
+model TwCustomHostname {
+  id              String                 @id @default(uuid()) @db.Uuid
+  orgId           String                 @unique @db.Uuid
+  org             Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  /// Lowercase, no trailing dot; matched exactly by the approval endpoint.
+  hostname        String                 @unique
+  status          TwCustomHostnameStatus @default(pending_dns)
+  /// none | pending | issued
+  sslStatus       String                 @default("none")
+  lastError       String?
+  /// Set when the CNAME resolved to the target; the approval endpoint needs it for pending rows.
+  cnameVerifiedAt DateTime?
+  lastCheckedAt   DateTime?
+  activatedAt     DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@index([status, createdAt])
+  @@map("tw_custom_hostname")
 }
 
 model OrganizationMember {
@@ -2965,4 +2996,27 @@ model OrgApiKey {
 
   @@index([orgId])
   @@map("tw_org_api_key")
+}
+
+/// WC-TW-9b: the three activation milestones (WC-9 step 2). First occurrence per org wins.
+enum TwActivationKind {
+  calendar_connected
+  event_type_published
+  first_external_booking
+}
+
+/// WC-TW-9b: activation ledger, DB source of truth for "activation <= 7 days" (Plausible is the funnel view).
+/// One row per (org, kind); inserts use ON CONFLICT DO NOTHING. RLS forced like the other TW-T9 tables.
+model ActivationEvent {
+  id         String           @id @default(uuid()) @db.Uuid
+  twOrgId    String           @db.Uuid
+  org        Organization     @relation(fields: [twOrgId], references: [id], onDelete: Cascade)
+  kind       TwActivationKind
+  occurredAt DateTime
+  /// credential id / event type id / booking uid, as text.
+  refId      String?
+  createdAt  DateTime         @default(now())
+
+  @@unique([twOrgId, kind])
+  @@map("tw_activation_event")
 }

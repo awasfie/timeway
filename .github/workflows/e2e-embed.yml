@@ -47,7 +47,7 @@ jobs:
   e2e-embed:
     timeout-minutes: 20
     name: E2E Embed Core
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
@@ -72,7 +72,7 @@ jobs:
       fail-fast: false
 
     steps:
-      # Timeway (Q1-R7): Docker Hub login dropped; the fork holds no DOCKERHUB_* secret and public images pull anonymously.
+      # Timeway (Q1-R7, D-R74 D2): no registry login; public images pull anonymously.
       - uses: actions/checkout@v4
         with:
           sparse-checkout: .github

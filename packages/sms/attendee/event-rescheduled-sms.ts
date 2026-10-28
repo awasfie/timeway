@@ -1,6 +1,6 @@
 import { WEBAPP_URL } from "@calcom/lib/constants";
+import { ligyLinksFor } from "@calcom/lib/ligy/attachLigyLinks";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
-
 import SMSManager from "../sms-manager";
 
 export default class EventSuccessfullyReScheduledSMS extends SMSManager {
@@ -11,7 +11,9 @@ export default class EventSuccessfullyReScheduledSMS extends SMSManager {
   getMessage(attendee: Person) {
     const t = attendee.language.translate;
 
-    const bookerUrl = `${this.calEvent.bookerUrl ?? WEBAPP_URL}/booking/${this.calEvent.uid}`;
+    const bookerUrl =
+      ligyLinksFor(this.calEvent, attendee)?.booking ??
+      `${this.calEvent.bookerUrl ?? WEBAPP_URL}/booking/${this.calEvent.uid}`;
     const bookerUrlText = t("you_can_view_booking_details_with_this_url", {
       url: bookerUrl,
       interpolation: { escapeValue: false },

@@ -4,7 +4,7 @@ import { Controller, useFormContext } from "react-hook-form";
 import type { z } from "zod";
 
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
+import { sanitizeSafeHtmlClient } from "@calcom/lib/safeHtmlClient";
 import classNames from "@calcom/ui/classNames";
 import { InfoBadge } from "@calcom/ui/components/badge";
 import { Label } from "@calcom/ui/components/form";
@@ -24,8 +24,8 @@ import { getTranslatedConfig as getTranslatedVariantsConfig } from "@calcom/feat
 const renderLabel = (field: Partial<RhfFormField>) => {
   if (field.labelAsSafeHtml) {
     return (
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized via markdownToSafeHTML
-      <span dangerouslySetInnerHTML={{ __html: markdownToSafeHTML(field.labelAsSafeHtml) }} />
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: rendered by markdownToSafeHTML on the server, re-sanitized with DOMPurify
+      <span dangerouslySetInnerHTML={{ __html: sanitizeSafeHtmlClient(field.labelAsSafeHtml) }} />
     );
   }
   return <span>{field.label}</span>;
