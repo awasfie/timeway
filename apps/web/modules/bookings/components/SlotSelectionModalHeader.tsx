@@ -11,39 +11,7 @@ import { GlobeIcon } from "@coss/ui/icons";
 import { useMemo } from "react";
 import { shallow } from "zustand/shallow";
 import { EventDetails } from "./event-meta/Details";
-<<<<<<< HEAD
-
-const LoadingState = (): JSX.Element => {
-  const { t } = useLocale();
-  return <span className="text-default text-sm">{t("loading")}</span>;
-};
-
-type TimezoneSelectProps = Omit<
-  TimezoneSelectComponentProps,
-  "data" | "isPending" | "isWebTimezoneSelect"
-> & {
-  timeZones?: Timezone[];
-};
-
-// Lazy like the web select so the platform atom's react-select/timezone data stay off first load.
-const PlatformTimezoneSelect: ComponentType<TimezoneSelectProps> = dynamic(
-  () => import("@calcom/atoms/timezone").then((mod) => mod.Timezone),
-  {
-    ssr: false,
-    loading: () => <LoadingState />,
-  }
-);
-
-const WebTimezoneSelect: ComponentType<TimezoneSelectProps> = dynamic(
-  () => import("@calcom/web/modules/timezone/components/TimezoneSelect").then((mod) => mod.TimezoneSelect),
-  {
-    ssr: false,
-    loading: () => <LoadingState />,
-  }
-);
-=======
 import { LazyTimezoneSelect } from "./LazyTimezoneSelect";
->>>>>>> 79bd7040a8 (perf(booker): WC-TW-6c-5 lazy timezone picker — plain trigger, picker chunk loads on intent (WIP))
 
 type SlotSelectionModalHeaderProps = {
   onClick: () => void;
