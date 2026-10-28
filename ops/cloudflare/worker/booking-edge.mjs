@@ -63,16 +63,21 @@ function firstTag(header) {
   return parsed[0];
 }
 
+// bcp-47-match lookup(tags, range): first tag in list order equal to some truncation of the range
+// (so "es-419" resolves to "es", which precedes it in i18n.json).
 function bcp47Lookup(range) {
-  let right = range.toLowerCase();
-  for (;;) {
-    const hit = LOCALES_LC.indexOf(right);
-    if (hit >= 0) return LOCALES[hit];
-    let idx = right.lastIndexOf("-");
-    if (idx < 0) return undefined;
-    if (right.charAt(idx - 2) === "-") idx -= 2;
-    right = right.slice(0, idx);
+  const lc = range.toLowerCase();
+  for (let i = 0; i < LOCALES_LC.length; i++) {
+    let right = lc;
+    for (;;) {
+      if (LOCALES_LC[i] === right) return LOCALES[i];
+      let idx = right.lastIndexOf("-");
+      if (idx < 0) break;
+      if (right.charAt(idx - 2) === "-") idx -= 2;
+      right = right.slice(0, idx);
+    }
   }
+  return undefined;
 }
 
 /**
