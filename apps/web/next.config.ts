@@ -7,13 +7,13 @@ import type { RouteHas } from "next/dist/lib/load-custom-routes";
 import { withAxiom } from "next-axiom";
 import { staticShellHeaders } from "./lib/edgeCacheHeaders";
 import packageJson from "./package.json";
-import { getPlausibleRewrites } from "./plausibleRewrites";
 import {
   nextJsOrgRewriteConfig,
   orgUserRoutePath,
   orgUserTypeEmbedRoutePath,
   orgUserTypeRoutePath,
 } from "./pagesAndRewritePaths";
+import { getPlausibleRewrites } from "./plausibleRewrites";
 import { TRIGGER_VERSION } from "./trigger.version"; // adjust path as needed
 
 dotenvConfig({ path: "../../.env" });
