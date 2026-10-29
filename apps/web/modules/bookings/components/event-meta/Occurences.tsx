@@ -3,15 +3,16 @@ import { useEffect, useState } from "react";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import type { BookerEvent } from "@calcom/features/bookings/types";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { parseRecurringDates } from "@calcom/lib/parse-dates";
 import { getRecurringFreq } from "@calcom/lib/recurringStrings";
 import { getTimeShiftFlags, getFirstShiftFlags } from "@calcom/lib/timeShift";
 import { Alert } from "@calcom/ui/components/alert";
 import { Badge } from "@calcom/ui/components/badge";
-import { Input } from "@calcom/ui/components/form";
+import { Input } from "@calcom/ui/components/form/inputs/TextField";
 import { Tooltip } from "@calcom/ui/components/tooltip";
 
 import { useBookerTime } from "@calcom/features/bookings/Booker/hooks/useBookerTime";
+
+type ParseRecurringDates = typeof import("@calcom/lib/parse-dates").parseRecurringDates;
 
 export const EventOccurences = ({ event }: { event: Pick<BookerEvent, "recurringEvent"> }) => {
   const maxOccurences = event.recurringEvent?.count || null;
@@ -31,6 +32,19 @@ export const EventOccurences = ({ event }: { event: Pick<BookerEvent, "recurring
   const bookerState = useBookerStoreContext((state) => state.state);
   const { timezone, timeFormat } = useBookerTime();
   const [warning, setWarning] = useState(false);
+  // rrule (~13 KB gz) is fetched only for recurring event types, never on the default booking page.
+  const [parseRecurringDates, setParseRecurringDates] = useState<ParseRecurringDates | null>(null);
+  const isRecurring = Boolean(event.recurringEvent);
+  useEffect(() => {
+    if (!isRecurring) return;
+    let active = true;
+    import("@calcom/lib/parse-dates").then((mod) => {
+      if (active) setParseRecurringDates(() => mod.parseRecurringDates);
+    });
+    return () => {
+      active = false;
+    };
+  }, [isRecurring]);
 
   const validateAndSetRecurringEventCount = (value: number | string) => {
     const inputValue = parseInt(value as string);
@@ -58,7 +72,7 @@ export const EventOccurences = ({ event }: { event: Pick<BookerEvent, "recurring
   }, [setRecurringEventCount, event.recurringEvent, recurringEventCount, recurringEventCountQueryParam]);
   if (!event.recurringEvent) return null;
 
-  if (bookerState === "booking" && recurringEventCount && selectedTimeslot) {
+  if (bookerState === "booking" && recurringEventCount && selectedTimeslot && parseRecurringDates) {
     const [recurringStrings, recurringDates] = parseRecurringDates(
       {
         startDate: selectedTimeslot,

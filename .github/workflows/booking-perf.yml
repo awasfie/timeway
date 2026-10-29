@@ -81,7 +81,17 @@ jobs:
       - name: (a) JS ratchet vs perf/js-baseline.json, 200 KB budget reported
         id: js
         continue-on-error: true
-        run: node scripts/perf/booking-js-budget.mjs --url "$BOOKING_URL" --static-dir apps/web/.next/static --budget-kb 200 --baseline perf/js-baseline.json --out perf/out/js-budget-gh-runner.json
+        run: node scripts/perf/booking-js-budget.mjs --url "$BOOKING_URL" --static-dir apps/web/.next/static --budget-kb 200 --baseline perf/js-baseline.json --out perf/out/js-budget-gh-runner.json --forbid "$FORBID"
+        env:
+          # WC-TW-6c-8: literals only framer-motion / the full app catalog ship. getNormalizedAppMetadata
+          # stays on purpose: bookerAppsMetaData (booker-apps subset, used by locations.ts) needs it.
+          # WC-TW-6c-9: form-builder fields, the phone input, VerifyCodeDialog and Turnstile load after a slot pick.
+          # react-hook-form stays: useBookingForm owns the form state in BookerWebWrapper.
+          # WC-TW-6c-9b: SessionProvider mounts only in the logged-in tree, sonner's Toaster on the first toast.
+          # next-auth/react is matched by its useSession error string: the __NEXTAUTH const is renamed by the minifier.
+          # WC-TW-6c-9c: the embed-iframe runtime chunk loads only inside an embed (embed-iframe/load-runtime.ts).
+          # WC-TW-6c-9c-2a: useLocale reads PagesRouterI18nContext; react-i18next ships only with the pages router.
+          FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar;form-builder fields=data-fob-field-name;phone input=react-tel-input;VerifyCodeDialog=webkit-text-fill-color:currentColor;Turnstile=challenges.cloudflare.com/turnstile;next-auth/react=nextauth.message;sonner=data-sonner-toaster;embed-iframe runtime=Embed SDK Skipped as we are in top;react-i18next=pass in an i18next instance by using initReactI18next"
       - name: (b) Lighthouse CI, 5 runs median
         id: lhci
         continue-on-error: true

@@ -1,11 +1,10 @@
-import { createInstance } from "i18next";
-import type { TFunction, i18n } from "i18next";
-import { useContext } from "react";
-import { useTranslation } from "react-i18next";
-
 import { useAtomsContext } from "@calcom/atoms/hooks/useAtomsContext";
 import { AppRouterI18nContext } from "@calcom/web/app/AppRouterI18nProvider";
 import { CustomI18nContext } from "@calcom/web/app/CustomI18nProvider";
+import type { i18n, TFunction } from "i18next";
+import { createInstance } from "i18next";
+import { useContext } from "react";
+import { PagesRouterI18nContext } from "./PagesRouterI18nContext";
 
 type useLocaleReturnType = {
   i18n: i18n;
@@ -14,18 +13,16 @@ type useLocaleReturnType = {
 };
 
 // @internal
-const useClientLocale = (namespace: Parameters<typeof useTranslation>[0] = "common"): useLocaleReturnType => {
-  const context = useAtomsContext();
-  const { i18n, t } = useTranslation(namespace);
-  const isLocaleReady = Object.keys(i18n).length > 0;
-  if (context?.clientId) {
-    return { i18n: context.i18n, t: context.t, isLocaleReady: true } as unknown as useLocaleReturnType;
+let fallbackLocale: useLocaleReturnType | null = null;
+
+// No provider at all (e.g. isolated renders): keys render as-is, like react-i18next without an instance.
+const getFallbackLocale = (): useLocaleReturnType => {
+  if (!fallbackLocale) {
+    const i18n = createInstance();
+    i18n.init({ lng: "en", resources: {} });
+    fallbackLocale = { i18n, t: i18n.getFixedT("en", "common"), isLocaleReady: false };
   }
-  return {
-    i18n,
-    t,
-    isLocaleReady,
-  };
+  return fallbackLocale;
 };
 
 // @internal
@@ -34,7 +31,8 @@ const serverI18nInstances = new Map();
 export const useLocale = (): useLocaleReturnType => {
   const appRouterContext = useContext(AppRouterI18nContext);
   const customI18nContext = useContext(CustomI18nContext);
-  const clientI18n = useClientLocale();
+  const pagesRouterContext = useContext(PagesRouterI18nContext);
+  const atomsContext = useAtomsContext();
 
   if (appRouterContext) {
     const { translations, locale, ns } = customI18nContext ?? appRouterContext;
@@ -62,12 +60,18 @@ export const useLocale = (): useLocaleReturnType => {
     return serverI18nInstances.get(instanceKey);
   }
 
+  if (atomsContext?.clientId) {
+    return {
+      i18n: atomsContext.i18n,
+      t: atomsContext.t,
+      isLocaleReady: true,
+    } as unknown as useLocaleReturnType;
+  }
+
+  if (pagesRouterContext) return pagesRouterContext;
+
   console.warn(
     "useLocale hook is being used outside of App Router - hence this hook will use a global, client-side i18n which can cause a small flicker"
   );
-  return {
-    t: clientI18n.t,
-    isLocaleReady: clientI18n.isLocaleReady,
-    i18n: clientI18n.i18n,
-  };
+  return getFallbackLocale();
 };
