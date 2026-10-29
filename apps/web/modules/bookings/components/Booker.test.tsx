@@ -13,6 +13,19 @@ import "@calcom/lib/__mocks__/logger";
 import React from "react";
 import { vi } from "vitest";
 
+// WC-TW-6j: spy on useDeferredValue so a test can hold the deferred booker state at "loading"
+// for one render; React flushes the deferred re-render inside act(), so the intermediate
+// render is otherwise unobservable.
+const deferredValueOverride = vi.hoisted(() => ({ value: undefined as unknown }));
+vi.mock("react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react")>();
+  const useDeferredValue = <T,>(value: T): T => {
+    const deferred = actual.useDeferredValue(value);
+    return deferredValueOverride.value === undefined ? deferred : (deferredValueOverride.value as T);
+  };
+  return { ...actual, default: { ...actual, useDeferredValue }, useDeferredValue };
+});
+
 vi.mock("next/navigation", async (importOriginal) => {
   const actual = await importOriginal<typeof import("next/navigation")>();
   return {
@@ -40,7 +53,7 @@ import type { WrappedBookerProps } from "../types";
 import { Booker } from "./Booker";
 
 // Mock components that we don't want to test
-vi.mock("./BookEventForm", () => ({
+vi.mock("./BookEventForm/BookEventForm", () => ({
   BookEventForm: ({
     isTimeslotUnavailable,
     onCancel,
@@ -178,6 +191,7 @@ describe("Booker", () => {
       APP_NAME: "Cal.diy",
     });
     vi.clearAllMocks();
+    deferredValueOverride.value = undefined;
   });
 
   it("should render null when in loading state", () => {
@@ -188,6 +202,18 @@ describe("Booker", () => {
       }
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("should render nothing while the deferred state is still loading, then mount the full tree", () => {
+    deferredValueOverride.value = "loading";
+    const props = defaultProps as unknown as BookerProps & WrappedBookerProps;
+    const { container, rerender } = render(<Booker {...props} />, { mockStore: { state: "selecting_date" } });
+    expect(container).toBeEmptyDOMElement();
+
+    // A fresh element is required: rerendering the same element object lets React bail out.
+    deferredValueOverride.value = undefined;
+    rerender(<Booker {...props} />);
+    expect(screen.getByTestId("booker-container")).toBeInTheDocument();
   });
 
   it("should render DryRunMessage when in dry run mode", () => {
@@ -214,7 +240,7 @@ describe("Booker", () => {
     expect(screen.getByTestId("dry-run-message")).toBeInTheDocument();
   });
 
-  it("should invalidate schedule when cancelling booking form", () => {
+  it("should invalidate schedule when cancelling booking form", async () => {
     const mockInvalidate = vi.fn();
     constantsScenarios.set({
       PUBLIC_INVALIDATE_AVAILABLE_SLOTS_ON_BOOKING_FORM: "true",
@@ -232,7 +258,7 @@ describe("Booker", () => {
     });
     screen.logTestingPlaygroundURL();
     // Trigger form cancel
-    const cancelButton = screen.getByRole("button", { name: /cancel/i });
+    const cancelButton = await screen.findByRole("button", { name: /cancel/i });
     cancelButton.click();
 
     expect(mockInvalidate).toHaveBeenCalled();
@@ -252,7 +278,7 @@ describe("Booker", () => {
       render(<Booker {...(propsWithQuickChecks as unknown as BookerProps & WrappedBookerProps)} />, {
         mockStore: { state: "booking" },
       });
-      const bookEventForm = screen.getByTestId("book-event-form");
+      const bookEventForm = await screen.findByTestId("book-event-form");
       await expect(bookEventForm).toHaveAttribute("data-unavailable", "true");
     });
   });

@@ -1,5 +1,4 @@
 import process from "node:process";
-import BookingPageTagManager from "@calcom/app-store/BookingPageTagManager";
 import { useIsPlatformBookerEmbed } from "@calcom/atoms/hooks/useIsPlatformBookerEmbed";
 import dayjs from "@calcom/dayjs";
 import { useEmbedUiConfig } from "@calcom/embed-core/embed-iframe";
@@ -30,18 +29,17 @@ import classNames from "@calcom/ui/classNames";
 import { DialogContent } from "@calcom/ui/components/dialog";
 import { UnpublishedEntity } from "@calcom/ui/components/unpublished-entity";
 import { startBookerWebVitals } from "@calcom/web/lib/telemetry/booker-vitals";
-import TurnstileCaptcha from "@calcom/web/modules/auth/components/Turnstile";
 import { useSkipConfirmStep } from "@calcom/web/modules/bookings/hooks/useSkipConfirmStep";
 import { useNonEmptyScheduleDays } from "@calcom/web/modules/schedules/hooks/useNonEmptyScheduleDays";
-import { useEffect, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
+import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef } from "react";
 import StickyBox from "react-sticky-box";
-import { Toaster } from "sonner";
 import { shallow } from "zustand/shallow";
 import { useIsQuickAvailabilityCheckFeatureEnabled } from "../hooks/useIsQuickAvailabilityCheckFeatureEnabled";
 import type { WrappedBookerProps } from "../types";
 import { AvailableTimeSlots } from "./AvailableTimeSlots";
-import { BookEventForm } from "./BookEventForm";
 import { BookFormAsModal } from "./BookEventForm/BookFormAsModal";
+import { FormSkeleton } from "./BookEventForm/Skeleton";
 import { DatePicker } from "./DatePicker";
 import { DryRunMessage } from "./DryRunMessage";
 import { EventMeta } from "./EventMeta";
@@ -50,7 +48,24 @@ import { LargeCalendar } from "./LargeCalendar";
 import { OverlayCalendar } from "./OverlayCalendar/OverlayCalendar";
 import { SlotSelectionModalHeader } from "./SlotSelectionModalHeader";
 import { NotFound } from "./Unavailable";
-import { VerifyCodeDialog } from "./VerifyCodeDialog";
+
+// WC-TW-6c-9: the booking form (form-builder fields, locations, markdown labels), the email
+// verification dialog and the Turnstile widget are only needed after a slot is picked, so they
+// stay out of the booking page's first-load JS.
+const loadBookEventForm = () => import("./BookEventForm/BookEventForm");
+const BookEventForm = lazy(() => loadBookEventForm().then((m) => ({ default: m.BookEventForm })));
+const VerifyCodeDialog = lazy(() =>
+  import("./VerifyCodeDialog").then((m) => ({ default: m.VerifyCodeDialog }))
+);
+const TurnstileCaptcha = lazy(() => import("@calcom/web/modules/auth/components/Turnstile"));
+
+// WC-TW-6k: neither renders anything the visitor sees on first paint (analytics <Script> tags and
+// an empty toast portal), so load them client-only in their own chunks, out of the first booker
+// mount and the sonner/app-store metadata bundle.
+const BookingPageTagManager = dynamic(() => import("@calcom/app-store/BookingPageTagManager"), {
+  ssr: false,
+});
+const Toaster = dynamic(() => import("sonner").then((mod) => mod.Toaster), { ssr: false });
 
 const BookerComponent = ({
   username,
@@ -94,6 +109,11 @@ const BookerComponent = ({
     (state) => [state.state, state.setState],
     shallow
   );
+  // WC-TW-6j: the loading -> selecting_date flip mounts the whole booker in one synchronous
+  // React task (the largest long task on mobile Lighthouse). Zustand updates render
+  // synchronously, so gate the first full render on a deferred copy of the state: React
+  // renders the tree at transition priority and yields to the main thread every few ms.
+  const deferredBookerState = useDeferredValue(bookerState);
 
   const selectedDate = useBookerStoreContext((state) => state.selectedDate);
 
@@ -219,6 +239,10 @@ const BookerComponent = ({
   updateEmbedBookerState({ bookerState, slotsQuery: schedule });
 
   useEffect(() => {
+    if (selectedDate) void loadBookEventForm();
+  }, [selectedDate]);
+
+  useEffect(() => {
     if (event.isPending) return setBookerState("loading");
     if (!selectedDate) return setBookerState("selecting_date");
     if (!selectedTimeslot) return setBookerState("selecting_time");
@@ -265,42 +289,44 @@ const BookerComponent = ({
     }
 
     return (
-      <BookEventForm
-        key={key}
-        timeslot={selectedTimeslot}
-        shouldRenderCaptcha={shouldRenderCaptcha}
-        onCancel={() => {
-          setSelectedTimeslot(null);
-          // Temporarily allow disabling it, till we are sure that it doesn't cause any significant load on the system
-          if (PUBLIC_INVALIDATE_AVAILABLE_SLOTS_ON_BOOKING_FORM) {
-            // Ensures that user has latest available slots when they want to re-choose from the slots
-            schedule?.invalidate();
-          }
-          if (seatedEventData.bookingUid) {
-            setSeatedEventData({
-              ...seatedEventData,
-              bookingUid: undefined,
-              attendees: undefined,
-            });
-          }
-        }}
-        onSubmit={() => (renderConfirmNotVerifyEmailButtonCond ? handleBookEvent() : handleVerifyEmail())}
-        errorRef={bookerFormErrorRef}
-        errors={{ ...formErrors, ...errors }}
-        isTimeslotUnavailable={unavailableTimeSlots.includes(selectedTimeslot || "")}
-        loadingStates={loadingStates}
-        renderConfirmNotVerifyEmailButtonCond={renderConfirmNotVerifyEmailButtonCond}
-        bookingForm={bookingForm}
-        eventQuery={event}
-        extraOptions={extraOptions}
-        isVerificationCodeSending={isVerificationCodeSending}
-        confirmButtonDisabled={confirmButtonDisabled}
-        classNames={{
-          confirmButton: customClassNames?.confirmStep?.confirmButton,
-          backButton: customClassNames?.confirmStep?.backButton,
-        }}
-        isPlatform={isPlatform}
-      />
+      <Suspense fallback={<FormSkeleton />}>
+        <BookEventForm
+          key={key}
+          timeslot={selectedTimeslot}
+          shouldRenderCaptcha={shouldRenderCaptcha}
+          onCancel={() => {
+            setSelectedTimeslot(null);
+            // Temporarily allow disabling it, till we are sure that it doesn't cause any significant load on the system
+            if (PUBLIC_INVALIDATE_AVAILABLE_SLOTS_ON_BOOKING_FORM) {
+              // Ensures that user has latest available slots when they want to re-choose from the slots
+              schedule?.invalidate();
+            }
+            if (seatedEventData.bookingUid) {
+              setSeatedEventData({
+                ...seatedEventData,
+                bookingUid: undefined,
+                attendees: undefined,
+              });
+            }
+          }}
+          onSubmit={() => (renderConfirmNotVerifyEmailButtonCond ? handleBookEvent() : handleVerifyEmail())}
+          errorRef={bookerFormErrorRef}
+          errors={{ ...formErrors, ...errors }}
+          isTimeslotUnavailable={unavailableTimeSlots.includes(selectedTimeslot || "")}
+          loadingStates={loadingStates}
+          renderConfirmNotVerifyEmailButtonCond={renderConfirmNotVerifyEmailButtonCond}
+          bookingForm={bookingForm}
+          eventQuery={event}
+          extraOptions={extraOptions}
+          isVerificationCodeSending={isVerificationCodeSending}
+          confirmButtonDisabled={confirmButtonDisabled}
+          classNames={{
+            confirmButton: customClassNames?.confirmStep?.confirmButton,
+            backButton: customClassNames?.confirmStep?.backButton,
+          }}
+          isPlatform={isPlatform}
+        />
+      </Suspense>
     );
   }, [
     bookerFormErrorRef,
@@ -339,7 +365,7 @@ const BookerComponent = ({
     return <NotFound />;
   }
 
-  if (bookerState === "loading") {
+  if (bookerState === "loading" || deferredBookerState === "loading") {
     return null;
   }
 
@@ -494,7 +520,10 @@ const BookerComponent = ({
               key="enable-calendar"
               area="main"
               visible={layout === BookerLayouts.WEEK_VIEW}
-              className={classNames("border-subtle sticky top-0 -ml-px h-full md:border-l", fadeInLeftClassName)}>
+              className={classNames(
+                "border-subtle sticky top-0 -ml-px h-full md:border-l",
+                fadeInLeftClassName
+              )}>
               <LargeCalendar
                 extraDays={extraDays}
                 schedule={schedule.data}
@@ -554,12 +583,14 @@ const BookerComponent = ({
 
         {shouldRenderCaptcha && (
           <div className="mb-6 mt-auto pt-6">
-            <TurnstileCaptcha
-              appearance="interaction-only"
-              onVerify={(token) => {
-                bookingForm.setValue("cfToken", token);
-              }}
-            />
+            <Suspense fallback={null}>
+              <TurnstileCaptcha
+                appearance="interaction-only"
+                onVerify={(token) => {
+                  bookingForm.setValue("cfToken", token);
+                }}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -576,19 +607,21 @@ const BookerComponent = ({
         )}
       </div>
       <>
-        {verifyCode && formEmail ? (
-          <VerifyCodeDialog
-            isOpenDialog={isEmailVerificationModalVisible}
-            setIsOpenDialog={setEmailVerificationModalVisible}
-            email={formEmail}
-            isUserSessionRequiredToVerify={false}
-            verifyCodeWithSessionNotRequired={verifyCode.verifyCodeWithSessionNotRequired}
-            verifyCodeWithSessionRequired={verifyCode.verifyCodeWithSessionRequired}
-            error={verifyCode.error}
-            resetErrors={verifyCode.resetErrors}
-            isPending={verifyCode.isPending}
-            setIsPending={verifyCode.setIsPending}
-          />
+        {verifyCode && formEmail && isEmailVerificationModalVisible ? (
+          <Suspense fallback={null}>
+            <VerifyCodeDialog
+              isOpenDialog={isEmailVerificationModalVisible}
+              setIsOpenDialog={setEmailVerificationModalVisible}
+              email={formEmail}
+              isUserSessionRequiredToVerify={false}
+              verifyCodeWithSessionNotRequired={verifyCode.verifyCodeWithSessionNotRequired}
+              verifyCodeWithSessionRequired={verifyCode.verifyCodeWithSessionRequired}
+              error={verifyCode.error}
+              resetErrors={verifyCode.resetErrors}
+              isPending={verifyCode.isPending}
+              setIsPending={verifyCode.setIsPending}
+            />
+          </Suspense>
         ) : (
           <></>
         )}
@@ -640,7 +673,5 @@ const BookerComponent = ({
 };
 
 export const Booker = (props: BookerProps & WrappedBookerProps) => {
-  return (
-<BookerComponent {...props} />
-  );
+  return <BookerComponent {...props} />;
 };
