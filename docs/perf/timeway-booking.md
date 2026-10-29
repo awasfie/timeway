@@ -53,6 +53,30 @@ host series is the independent cross-check. LCP sits at ~7.0 s with server respo
 network-bound: it moves only when the JS stack merges and deploys (t_25e79885, t_3eb9a771, t_bf71ff0c). RUM rows move
 when #89/#101 merge and deploy (t_75e3ae48).
 
+## Re-run r3 (card t_762bea7b run 5697, 2026-10-29 07:53Z), on 11ebad82ee
+
+App under test: `11ebad82ee883b04916eeab577d2d890bd64d9f6` (main tip, Coolify container
+`poyzdsncp9jsvc3gr4hkitaf-20261029T062633`, healthy), which carries the merged JS stack (#126, #127, #154, #160) and
+WC-TW-9c Plausible (#101), plus the `timeway-booking-edge` Worker (`x-tw-edge: HIT`). WC-TW-6h (timeway#218, SSR event
+title) is a draft and is **not** in this deploy. Raw numbers: `evidence/2026-10-29-wc-tw-6d-r3.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 92 ms (p50 83, max 222) | 27 | Globalping 2026-10-29T07:54Z, 9 x 3 probes, 0 failures; r3 evidence | 11ebad82ee + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 109.5 ms (max 148) | 27 | same | 11ebad82ee + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 178 ms, all probes incl. AS207847 (max 281); local Dubai host AS15802 183 ms (p50 171, p95 202, n=30) | 27 + 30 | same; local curl in r3 evidence | 11ebad82ee + Worker | PASS (no probe exclusion needed) |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | 6110 ms median (6075-6256) | 5 | r3 evidence | 11ebad82ee + Worker | FAIL |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 298 ms median (210-374) | 5 | r3 evidence | 11ebad82ee + Worker | FAIL |
+| all | INP (RUM) | < 200 ms | no data: the booking page sends no INP / web-vitals event to Plausible | 0 | Plausible ClickHouse, site 1, 7 days | 11ebad82ee | MISSING |
+| gh-runner | booking-route first-load JS | <= 200 KB gz | 516.7 KB gz excl. noModule (555.3 incl., 42 scripts); prod transfer 628 KB in 45 scripts | 1 build + 5 | booking-perf run 40827805041 (t_48672c49, timeway#217); r3 evidence | 11ebad82ee | FAIL |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 478 ms (p50 339, max 901) | 30 | `scripts/perf/slot-api.mjs`, r3 evidence | 11ebad82ee | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb` (spenai-pilot): booking_page_view 4, slot_selected 1, booking_confirmed 1 | 1 org | ClickHouse `events_v2` site_id 1, 7 days, `meta.org` | 11ebad82ee | PASS |
+
+r3 verdict: **not met**, 5 of 9 rows pass (TTFB x3, slot API, per-tenant RUM). LCP fell 7016 -> 6110 ms with the JS
+stack; its next cut, the SSR title shell, is timeway#218 (draft, not deployed). TBT went 220 -> 298 ms on this
+host (its benchmarkIndex range 2423-3270 is wider than r2's). INP RUM has no emitter. The JS 200 KB row stays a fail:
+t_3eb9a771 recorded the ratchet as the enforced gate and 200 KB as reported only, and the floor on main is 516.7.
+
 ## How each number was taken
 
 - **TTFB by city.** `node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false`.
