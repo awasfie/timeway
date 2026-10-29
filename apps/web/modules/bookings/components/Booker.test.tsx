@@ -181,7 +181,21 @@ describe("Booker", () => {
   });
 
   it("should render the server-renderable title shell when in loading state", () => {
-    render(<Booker {...(defaultProps as unknown as BookerProps & WrappedBookerProps)} />, {
+    // Prod event data always carries profile/entity/schedulingType (the SSR payload); mockEvent does not.
+    const shellProps = {
+      ...defaultProps,
+      event: {
+        ...mockEvent,
+        data: {
+          ...mockEvent.data,
+          schedulingType: null,
+          subsetOfUsers: [],
+          profile: { name: "Test Org", image: "" },
+          entity: { name: "Test Org", considerUnpublished: false },
+        },
+      },
+    };
+    render(<Booker {...(shellProps as unknown as BookerProps & WrappedBookerProps)} />, {
       mockStore: { state: "loading" },
     });
     expect(screen.getByTestId("booker-ssr-shell")).toBeInTheDocument();
