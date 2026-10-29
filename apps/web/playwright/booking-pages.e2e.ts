@@ -373,6 +373,47 @@ test.describe("pro user", () => {
   });
 });
 
+// WC-TW-6c-9: BookEventForm and VerifyCodeDialog are lazy chunks, so both paths must still mount after a slot pick.
+test.describe("lazy booking form", () => {
+  test("form mounts only after a slot pick and the booking succeeds", async ({ page, users }) => {
+    const user = await users.create();
+    await page.goto(`/${user.username}`);
+    await page.locator('[data-testid="event-type-link"]').first().click();
+    await page.getByTestId("incrementMonth").waitFor();
+    await expect(page.locator('[name="email"]')).toHaveCount(0);
+
+    await selectFirstAvailableTimeSlotNextMonth(page);
+    await expect(page.locator('[name="email"]')).toBeVisible();
+    await bookTimeSlot(page);
+    await expect(page.locator("[data-testid=success-page]")).toBeVisible();
+  });
+
+  test("verify-code dialog opens when the event requires booker email verification", async ({
+    page,
+    users,
+    prisma,
+  }) => {
+    const user = await users.create();
+    const [eventType] = user.eventTypes;
+    await prisma.eventType.update({
+      where: { id: eventType.id },
+      data: { requiresBookerEmailVerification: true },
+    });
+    await page.goto(`/${user.username}/${eventType.slug}`);
+    await selectFirstAvailableTimeSlotNextMonth(page);
+    await page.fill('[name="name"]', testName);
+    await page.fill('[name="email"]', `verify-${randomString(4)}@example.com`);
+
+    const sendCode = page.waitForResponse((r) => r.url().includes("sendVerifyEmailCode"));
+    await page.locator('[data-testid="confirm-book-button"]').click();
+    expect((await sendCode).status()).toBe(200);
+    // WC-TW-6k: the booker's sonner Toaster is a next/dynamic chunk; the "email sent" toast must still render.
+    await expect(page.getByTestId("toast-success").first()).toBeVisible();
+    await expect(page.locator('input[name="2fa1"]')).toBeVisible();
+    await expect(page.locator('input[name="2fa6"]')).toBeVisible();
+  });
+});
+
 test.describe("prefill", () => {
   test("logged in", async ({ page, users }) => {
     const prefill = await users.create({ name: "Prefill User" });
