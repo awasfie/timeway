@@ -81,7 +81,11 @@ jobs:
       - name: (a) JS ratchet vs perf/js-baseline.json, 200 KB budget reported
         id: js
         continue-on-error: true
-        run: node scripts/perf/booking-js-budget.mjs --url "$BOOKING_URL" --static-dir apps/web/.next/static --budget-kb 200 --baseline perf/js-baseline.json --out perf/out/js-budget-gh-runner.json
+        run: node scripts/perf/booking-js-budget.mjs --url "$BOOKING_URL" --static-dir apps/web/.next/static --budget-kb 200 --baseline perf/js-baseline.json --out perf/out/js-budget-gh-runner.json --forbid "$FORBID"
+        env:
+          # WC-TW-6c-8: literals only framer-motion / the full app catalog ship. getNormalizedAppMetadata
+          # stays on purpose: bookerAppsMetaData (booker-apps subset, used by locations.ts) needs it.
+          FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar"
       - name: (b) Lighthouse CI, 5 runs median
         id: lhci
         continue-on-error: true

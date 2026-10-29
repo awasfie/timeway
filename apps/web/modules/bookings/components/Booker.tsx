@@ -6,11 +6,10 @@ import { useEmbedUiConfig } from "@calcom/embed-core/embed-iframe";
 import { updateEmbedBookerState } from "@calcom/embed-core/src/embed-iframe";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import {
-  fadeInLeft,
+  fadeInLeftClassName,
   getBookerSizeClassNames,
   useBookerResizeAnimation,
 } from "@calcom/features/bookings/Booker/config";
-import framerFeatures from "@calcom/features/bookings/Booker/framer-features";
 import type { BookerProps } from "@calcom/features/bookings/Booker/types";
 import { isBookingDryRun } from "@calcom/features/bookings/Booker/utils/isBookingDryRun";
 import { isTimeSlotAvailable } from "@calcom/features/bookings/Booker/utils/isTimeslotAvailable";
@@ -32,7 +31,6 @@ import { UnpublishedEntity } from "@calcom/ui/components/unpublished-entity";
 import TurnstileCaptcha from "@calcom/web/modules/auth/components/Turnstile";
 import { useSkipConfirmStep } from "@calcom/web/modules/bookings/hooks/useSkipConfirmStep";
 import { useNonEmptyScheduleDays } from "@calcom/web/modules/schedules/hooks/useNonEmptyScheduleDays";
-import { AnimatePresence, LazyMotion, m } from "framer-motion";
 import { useEffect, useMemo, useRef } from "react";
 import StickyBox from "react-sticky-box";
 import { Toaster } from "sonner";
@@ -357,7 +355,7 @@ const BookerComponent = ({
             !isEmbed && layout === BookerLayouts.MONTH_VIEW && `border-subtle border`,
             `${customClassNames?.bookerContainer}`
           )}>
-          <AnimatePresence>
+          <>
             <BookerSection
               area="header"
               className={classNames(
@@ -452,8 +450,10 @@ const BookerComponent = ({
             <BookerSection
               key="book-event-form"
               area="main"
-              className="sticky top-0 -ml-px h-full p-6 md:w-(--booker-main-width) md:border-l"
-              {...fadeInLeft}
+              className={classNames(
+                "sticky top-0 -ml-px h-full p-6 md:w-(--booker-main-width) md:border-l",
+                fadeInLeftClassName
+              )}
               visible={bookerState === "booking" && !shouldShowFormInDialog}>
               {EventBooker}
             </BookerSection>
@@ -462,8 +462,6 @@ const BookerComponent = ({
               key="datepicker"
               area="main"
               visible={bookerState !== "booking" && layout === BookerLayouts.MONTH_VIEW}
-              {...fadeInLeft}
-              initial="visible"
               className={classNames(
                 "md:border-subtle -ml-px h-full shrink px-5 py-3  lg:w-(--booker-main-width)",
                 hideEventTypeDetails ? "" : "md:border-l"
@@ -482,8 +480,7 @@ const BookerComponent = ({
               key="enable-calendar"
               area="main"
               visible={layout === BookerLayouts.WEEK_VIEW}
-              className="border-subtle sticky top-0 -ml-px h-full md:border-l"
-              {...fadeInLeft}>
+              className={classNames("border-subtle sticky top-0 -ml-px h-full md:border-l", fadeInLeftClassName)}>
               <LargeCalendar
                 extraDays={extraDays}
                 schedule={schedule.data}
@@ -504,10 +501,10 @@ const BookerComponent = ({
                 "border-subtle rtl:border-default flex h-full w-full flex-col overflow-x-auto px-5 py-3 pb-0 rtl:border-r ltr:md:border-l",
                 layout === BookerLayouts.MONTH_VIEW &&
                   "h-full overflow-hidden md:w-(--booker-timeslots-width)",
-                layout !== BookerLayouts.MONTH_VIEW && "sticky top-0"
+                layout !== BookerLayouts.MONTH_VIEW && "sticky top-0",
+                fadeInLeftClassName
               )}
-              ref={timeslotsRef}
-              {...fadeInLeft}>
+              ref={timeslotsRef}>
               <AvailableTimeSlots
                 onAvailableTimeSlotSelect={onAvailableTimeSlotSelect}
                 customClassNames={customClassNames?.availableTimeSlotsCustomClassNames}
@@ -530,7 +527,7 @@ const BookerComponent = ({
                 confirmStepClassNames={customClassNames?.confirmStep}
               />
             </BookerSection>
-          </AnimatePresence>
+          </>
         </div>
         <HavingTroubleFindingTime
           visible={bookerState !== "booking" && layout === BookerLayouts.MONTH_VIEW && !isMobile}
@@ -553,7 +550,7 @@ const BookerComponent = ({
         )}
 
         {!hideBranding && (!isPlatform || isPlatformBookerEmbed) && !shouldRenderCaptcha && (
-          <m.span
+          <span
             key="logo"
             className={classNames(
               "mb-6 mt-auto pt-6 [&_img]:h-[15px]",
@@ -561,7 +558,7 @@ const BookerComponent = ({
               layout === BookerLayouts.MONTH_VIEW ? "block" : "hidden"
             )}>
             {null}
-          </m.span>
+          </span>
         )}
       </div>
       <>
@@ -630,8 +627,6 @@ const BookerComponent = ({
 
 export const Booker = (props: BookerProps & WrappedBookerProps) => {
   return (
-    <LazyMotion strict features={framerFeatures}>
-      <BookerComponent {...props} />
-    </LazyMotion>
+<BookerComponent {...props} />
   );
 };
