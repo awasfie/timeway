@@ -29,6 +29,7 @@ import { BookerLayouts } from "@calcom/prisma/zod-utils";
 import classNames from "@calcom/ui/classNames";
 import { DialogContent } from "@calcom/ui/components/dialog";
 import { UnpublishedEntity } from "@calcom/ui/components/unpublished-entity";
+import { startBookerWebVitals } from "@calcom/web/lib/telemetry/booker-vitals";
 import TurnstileCaptcha from "@calcom/web/modules/auth/components/Turnstile";
 import { useSkipConfirmStep } from "@calcom/web/modules/bookings/hooks/useSkipConfirmStep";
 import { useNonEmptyScheduleDays } from "@calcom/web/modules/schedules/hooks/useNonEmptyScheduleDays";
@@ -246,6 +247,7 @@ const BookerComponent = ({
       eventType: trackedEventTypeId,
       source: isEmbed ? "embed" : "direct",
     });
+    startBookerWebVitals();
   }, [isPlatform, isEmbed, trackedEventTypeId, trackedOrgId]);
 
   const slot = getQueryParam("slot");

@@ -64,7 +64,38 @@ export function trackSlotSelected(slot: string | null) {
   send("slot_selected");
 }
 
+export type WebVitalSample = { name: string; value: number; rating: string };
+
+const sentVitals = new Set<string>();
+
+// Field INP/LCP (WC-TW-6i): one `web_vital` event per metric per page load, same first-party path and
+// org/event_type props as the funnel events. Value in ms, rounded; nothing else leaves the page.
+export function trackWebVital(m: WebVitalSample): boolean {
+  if (m.name !== "INP" && m.name !== "LCP") return false;
+  if (!Number.isFinite(m.value) || m.value < 0 || sentVitals.has(m.name)) return false;
+  const plausible = getPlausible();
+  const u = sanitizedUrl();
+  if (!plausible || !u) return false;
+  sentVitals.add(m.name);
+  plausible("web_vital", {
+    u,
+    props: {
+      name: m.name,
+      value: Math.round(m.value),
+      rating: m.rating,
+      org: context.org ?? "none",
+      event_type: context.eventType ?? 0,
+    },
+  });
+  return true;
+}
+
+export function isBookerAnalyticsEnabled(): boolean {
+  return getPlausible() !== null;
+}
+
 export function resetBookerAnalytics() {
   context = NO_CONTEXT;
   lastSlot = null;
+  sentVitals.clear();
 }
