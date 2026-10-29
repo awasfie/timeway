@@ -77,6 +77,29 @@ stack; its next cut, the SSR title shell, is timeway#218 (draft, not deployed). 
 host (its benchmarkIndex range 2423-3270 is wider than r2's). INP RUM has no emitter. The JS 200 KB row stays a fail:
 t_3eb9a771 recorded the ratchet as the enforced gate and 200 KB as reported only, and the floor on main is 516.7.
 
+## Re-run r4 (card t_762bea7b run 5729, 2026-10-29 10:16Z), on 819bf85549
+
+App under test: `819bf855498a9e5b2316c917857ae26bf3e6fe0d` (main tip, WC-TW-6i web-vitals emitter, Coolify deployment
+`xifccx3merpmslnwgw7wd3gw`), plus the `timeway-booking-edge` Worker. Neither the LCP cut (WC-TW-6h, timeway#218) nor the
+TBT cut (WC-TW-6j, timeway#220) is deployed: both are open, ready, CI green, awaiting Gosi (REVIEW t_ed4bc646, t_7976cf21).
+Raw numbers: `evidence/2026-10-29-wc-tw-6d-r4.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 96.5 ms (p50 86, max 663) | 27 | Globalping 2026-10-29T10:19Z, 9 x 3 probes, 0 failures; r4 evidence | 819bf85549 + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 121 ms (p50 114, max 131) | 27 | same | 819bf85549 + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 450 ms all probes (p50 181; CloudBlast AS207847 routes via LHR, 6 samples 510-828); local Dubai host AS15802 188 ms (p50 176, p95 230, n=30) | 27 + 30 | same; local curl in r4 evidence | 819bf85549 + Worker | PASS (no exclusion; thin margin, carried by the LHR probe) |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | 6015 ms median (5888-6041) | 5 | r4 evidence | 819bf85549 + Worker | FAIL (#218 not deployed) |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 215 ms median (187-269) | 5 | r4 evidence | 819bf85549 + Worker | FAIL (#220 not deployed) |
+| all | INP (RUM, Plausible) | < 200 ms | 48 ms, rating good (one field visit; LCP field 1900 ms) | 1 | ClickHouse `events_v2` site 1, `name='web_vital'`, 2026-10-29 09:42:41Z (WC-TW-6i proof, t_b14501d1) | 819bf85549 | PASS (n=1; p75 needs more traffic) |
+| prod | booking-route first-load JS | <= 200 KB gz | 46 scripts, 630 KB transfer (CI floor 516.7 KB gz on 11ebad82ee) | 5 | r4 evidence | 819bf85549 | FAIL (ratchet is the enforced gate, t_3eb9a771) |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 457 ms (p50 387, max 532) | 30 | `scripts/perf/slot-api.mjs --month 2026-11`, r4 evidence | 819bf85549 | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb`: booking events (r3) plus web_vital LCP/INP rows | 1 org | ClickHouse `events_v2` site 1 | 819bf85549 | PASS |
+
+r4 verdict: **not met**, 6 of 9 rows pass (TTFB x3, INP RUM, slot API, per-tenant RUM). Left: LCP 6015 ms (moves with
+#218 deploy), TBT 215 ms (moves with #220 deploy; its measured floor was 197.5 ms, so a further slice t_4e55324f is
+open), JS 200 KB (reported only; ratchet enforced). Next re-run after Gosi merges and deploys #218 and #220.
+
 ## How each number was taken
 
 - **TTFB by city.** `node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false`.
