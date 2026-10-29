@@ -261,7 +261,12 @@ const nextConfig = (phase: string): NextConfig => {
     images: {
       unoptimized: true,
     },
-    turbopack: {},
+    turbopack: {
+      // Client bundles get a console-only tslog (packages/lib/tslog.browser.ts); servers keep the real one.
+      resolveAlias: {
+        tslog: { browser: "@calcom/lib/tslog.browser" },
+      },
+    },
     async rewrites() {
       const { orgSlug } = nextJsOrgRewriteConfig;
       const beforeFiles = [
