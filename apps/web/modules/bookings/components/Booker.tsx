@@ -40,6 +40,7 @@ import type { WrappedBookerProps } from "../types";
 import { AvailableTimeSlots } from "./AvailableTimeSlots";
 import { BookFormAsModal } from "./BookEventForm/BookFormAsModal";
 import { FormSkeleton } from "./BookEventForm/Skeleton";
+import { BookerSsrShell } from "./BookerSsrShell";
 import { DatePicker } from "./DatePicker";
 import { DryRunMessage } from "./DryRunMessage";
 import { EventMeta } from "./EventMeta";
@@ -366,7 +367,15 @@ const BookerComponent = ({
   }
 
   if (bookerState === "loading" || deferredBookerState === "loading") {
-    return null;
+    if (isPlatform || isEmbed || hideEventTypeDetails || !event.data) return null;
+    return (
+      <BookerSsrShell
+        event={event.data}
+        isPrivateLink={!!hashedLink}
+        roundRobinHideOrgAndTeam={roundRobinHideOrgAndTeam}
+        hideOrgTeamAvatar={hideOrgTeamAvatar}
+      />
+    );
   }
 
   return (

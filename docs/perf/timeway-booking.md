@@ -178,6 +178,27 @@ Operate: `CLOUDFLARE_API_TOKEN=... python3 ops/cloudflare/worker.py plan|apply -
 goes straight to the origin at once (exercised 06:40Z: rollback -> page `DYNAMIC`, no `x-tw-edge`; re-apply -> `plan`
 shows no changes and the page is served from the edge again).
 
+## WC-TW-6h: booking page LCP (card t_2f74da73)
+
+Before, measured 2026-10-29 ~07:00Z on deploy `11ebad82ee` (Coolify `timeway-web` deployment `yr5zcntadk39dogzvwplpjya`,
+JS stack #125/#126/#127/#130/#154 + 6c-9c/9d on main), edge Worker in front (`x-tw-edge`), Lighthouse 13.5.0 mobile
+simulated slow 4G, 5 runs from the Dubai host (benchmarkIndex 3006-3379), 65 requests:
+
+| run | LCP | TBT | FCP | SI | server response |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1-5 | 5658-6016 ms, median **5982** | 191-219, median 200 | 1573-2364, median 2056 | 3666-5933 | 164-179 |
+
+Still **not met** (gate 2500 ms, target 1500). LCP element: the event title `h1[data-testid=event-title]`
+(lcp-breakdown run 3: TTFB 504 ms simulated, element render delay 1319 ms of observed time).
+
+Cause: the server HTML has an empty `<main>`. The Booker store starts in state `loading`, and `Booker` returns `null`
+while `loading`; the state only leaves `loading` in a client `useEffect`, so nothing of the booker (title included)
+paints until every first-load chunk has downloaded, executed and hydrated.
+
+Cut: while `loading`, `Booker` renders a server-renderable shell of the event meta (members line, title, duration)
+from the SSR event data, in the same grid position. It depends only on props, so server and first client render
+match; the full booker replaces it after hydration.
+
 ## Re-run
 
 1. Region TTFB: `GLOBALPING_TOKEN=... node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false --out perf/out/region-ttfb.json`

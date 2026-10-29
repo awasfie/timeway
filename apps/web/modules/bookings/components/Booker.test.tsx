@@ -183,6 +183,21 @@ const defaultProps = {
   hasSession: false,
 };
 
+// Prod event data always carries profile/entity/schedulingType (the SSR payload); mockEvent does not.
+const shellProps = {
+  ...defaultProps,
+  event: {
+    ...mockEvent,
+    data: {
+      ...mockEvent.data,
+      schedulingType: null,
+      subsetOfUsers: [],
+      profile: { name: "Test Org", image: "" },
+      entity: { name: "Test Org", considerUnpublished: false },
+    },
+  },
+};
+
 describe("Booker", () => {
   beforeEach(() => {
     constantsScenarios.set({
@@ -194,9 +209,21 @@ describe("Booker", () => {
     deferredValueOverride.value = undefined;
   });
 
-  it("should render null when in loading state", () => {
+  it("should render the server-renderable title shell when in loading state", () => {
+    render(<Booker {...(shellProps as unknown as BookerProps & WrappedBookerProps)} />, {
+      mockStore: { state: "loading" },
+    });
+    expect(screen.getByTestId("booker-ssr-shell")).toBeInTheDocument();
+    expect(screen.getByTestId("event-title")).toHaveTextContent("Test Event");
+  });
+
+  it("should render null when in loading state inside an embed", () => {
+    const embedProps = {
+      ...defaultProps,
+      bookerLayout: { ...defaultProps.bookerLayout, isEmbed: true },
+    };
     const { container } = render(
-      <Booker {...(defaultProps as unknown as BookerProps & WrappedBookerProps)} />,
+      <Booker {...(embedProps as unknown as BookerProps & WrappedBookerProps)} />,
       {
         mockStore: { state: "loading" },
       }
@@ -204,13 +231,32 @@ describe("Booker", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("should render nothing while the deferred state is still loading, then mount the full tree", () => {
+  it("should keep the title shell while the deferred state is still loading, then mount the full tree", () => {
+    // WC-TW-6h + WC-TW-6j: the store already left "loading" but the deferred copy has not; the
+    // shell must stay up (not flash to null) until the deferred render mounts the full booker.
     deferredValueOverride.value = "loading";
-    const props = defaultProps as unknown as BookerProps & WrappedBookerProps;
+    const props = shellProps as unknown as BookerProps & WrappedBookerProps;
+    const { rerender } = render(<Booker {...props} />, { mockStore: { state: "selecting_date" } });
+    expect(screen.getByTestId("booker-ssr-shell")).toBeInTheDocument();
+    expect(screen.getByTestId("event-title")).toHaveTextContent("Test Event");
+    expect(screen.queryByTestId("booker-container")).not.toBeInTheDocument();
+
+    // A fresh element is required: rerendering the same element object lets React bail out.
+    deferredValueOverride.value = undefined;
+    rerender(<Booker {...props} />);
+    expect(screen.queryByTestId("booker-ssr-shell")).not.toBeInTheDocument();
+    expect(screen.getByTestId("booker-container")).toBeInTheDocument();
+  });
+
+  it("should render nothing while the deferred state is still loading inside an embed, then mount the full tree", () => {
+    deferredValueOverride.value = "loading";
+    const props = {
+      ...shellProps,
+      bookerLayout: { ...shellProps.bookerLayout, isEmbed: true },
+    } as unknown as BookerProps & WrappedBookerProps;
     const { container, rerender } = render(<Booker {...props} />, { mockStore: { state: "selecting_date" } });
     expect(container).toBeEmptyDOMElement();
 
-    // A fresh element is required: rerendering the same element object lets React bail out.
     deferredValueOverride.value = undefined;
     rerender(<Booker {...props} />);
     expect(screen.getByTestId("booker-container")).toBeInTheDocument();
