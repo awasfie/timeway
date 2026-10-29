@@ -1,6 +1,6 @@
 {
-  "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200.",
-  "total_kb_gz": 555.0,
+  "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build, excluding <script nomodule> chunks modern browsers never fetch. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200.",
+  "total_kb_gz": 516.7,
   "tolerance_kb": 5,
-  "source": "booking-perf run 40797877860 (PR #160 head ae4d40cb18, 42 scripts; code-identical rebase onto #154, only this file differs), region=gh-runner"
+  "source": "booking-perf push run 40827805041 on main 11ebad82ee: 555.3 KB gz / 42 scripts minus noModule polyfills chunk 0cz1d0mv5g_q7.js (38.6 KB gz, unfetched in all 20 Lighthouse runs) = 516.7 KB gz / 41 scripts, region=gh-runner (WC-TW-6c-13d)"
 }
