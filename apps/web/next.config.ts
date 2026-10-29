@@ -13,6 +13,7 @@ import {
   orgUserTypeEmbedRoutePath,
   orgUserTypeRoutePath,
 } from "./pagesAndRewritePaths";
+import { getPlausibleRewrites } from "./plausibleRewrites";
 import { TRIGGER_VERSION } from "./trigger.version"; // adjust path as needed
 
 dotenvConfig({ path: "../../.env" });
@@ -313,6 +314,7 @@ const nextConfig = (phase: string): NextConfig => {
           source: "/login",
           destination: "/auth/login",
         },
+        ...getPlausibleRewrites(process.env.PLAUSIBLE_HOST),
         ...(isOrganizationsEnabled
           ? [
               orgDomainMatcherConfig.root
