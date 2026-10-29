@@ -208,6 +208,25 @@ match; the full booker replaces it after hydration.
 4. Slot API: `node scripts/perf/slot-api.mjs --month <YYYY-MM> --samples 30`.
 5. Record the new row set here with its deploy SHA; a row passes only on a measured number.
 
+## WC-TW-6j: TBT on 819bf85549 (card t_84384338, 2026-10-29 09:45-09:52Z)
+
+Lighthouse 13.5.0 mobile simulated, Dubai host, `https://timeway.co/ahmedwasfie/30min`, deploy 819bf85549
+(container `poyzdsncp9jsvc3gr4hkitaf:819bf855498a…`, healthy). timeway#218 (6h SSR shell) not yet merged.
+
+| batch | TBT runs (ms) | median |
+|---|---|---|
+| A | 238, 184.5, 202, 191, 193 | 193 |
+| B | 298, 208, 177, 190, 212 | 208 |
+| all 10 | | 197.5 |
+
+Gate < 200 ms sits inside run-to-run noise. Long tasks (trace run, TBT 260): 249 ms in `25sq9vkyrxchr.js`
+(react-dom) at ~5.06 s, then 68/68/65/65/56/54 ms. CPU profile of the 249 ms task: one synchronous React commit
+(the store flip `loading -> selecting_date` mounts the full booker), not a single heavy library; non-React self time
+is small (BookingPageTagManager `sdkActionManager.on("*")` listener 5.7 ms, dayjs ~2 ms).
+
+Slice in this PR: `Booker.tsx` gates the first full render on `useDeferredValue(bookerState)` so the mount renders at
+transition priority and yields, splitting the 249 ms task. After-numbers: pending deploy (x5, same host).
+
 ## WC-TW-6k: lazy BookingPageTagManager + sonner Toaster (card t_4e55324f, 2026-10-29)
 
 Independent of timeway#220 (6j); rebased onto main a2a4be43c8 (6c-9). Long tasks on the 819bf85549 trace after the

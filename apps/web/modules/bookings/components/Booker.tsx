@@ -32,15 +32,15 @@ import { startBookerWebVitals } from "@calcom/web/lib/telemetry/booker-vitals";
 import { useSkipConfirmStep } from "@calcom/web/modules/bookings/hooks/useSkipConfirmStep";
 import { useNonEmptyScheduleDays } from "@calcom/web/modules/schedules/hooks/useNonEmptyScheduleDays";
 import dynamic from "next/dynamic";
-import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
+import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef } from "react";
 import StickyBox from "react-sticky-box";
 import { shallow } from "zustand/shallow";
 import { useIsQuickAvailabilityCheckFeatureEnabled } from "../hooks/useIsQuickAvailabilityCheckFeatureEnabled";
 import type { WrappedBookerProps } from "../types";
 import { AvailableTimeSlots } from "./AvailableTimeSlots";
-import { BookerSsrShell } from "./BookerSsrShell";
 import { BookFormAsModal } from "./BookEventForm/BookFormAsModal";
 import { FormSkeleton } from "./BookEventForm/Skeleton";
+import { BookerSsrShell } from "./BookerSsrShell";
 import { DatePicker } from "./DatePicker";
 import { DryRunMessage } from "./DryRunMessage";
 import { EventMeta } from "./EventMeta";
@@ -110,6 +110,11 @@ const BookerComponent = ({
     (state) => [state.state, state.setState],
     shallow
   );
+  // WC-TW-6j: the loading -> selecting_date flip mounts the whole booker in one synchronous
+  // React task (the largest long task on mobile Lighthouse). Zustand updates render
+  // synchronously, so gate the first full render on a deferred copy of the state: React
+  // renders the tree at transition priority and yields to the main thread every few ms.
+  const deferredBookerState = useDeferredValue(bookerState);
 
   const selectedDate = useBookerStoreContext((state) => state.selectedDate);
 
@@ -361,7 +366,7 @@ const BookerComponent = ({
     return <NotFound />;
   }
 
-  if (bookerState === "loading") {
+  if (bookerState === "loading" || deferredBookerState === "loading") {
     if (isPlatform || isEmbed || hideEventTypeDetails || !event.data) return null;
     return (
       <BookerSsrShell
