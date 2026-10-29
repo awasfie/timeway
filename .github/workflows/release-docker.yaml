@@ -34,7 +34,7 @@ on:
 jobs:
   prepare:
     name: "Prepare Release"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       release_tag: ${{ steps.determine-tag.outputs.release_tag }}
       checkout_ref: ${{ steps.determine-tag.outputs.checkout_ref }}
@@ -83,7 +83,7 @@ jobs:
   release-amd64:
     name: "Release AMD64"
     needs: prepare
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       RELEASE_TAG: ${{ needs.prepare.outputs.release_tag }}
     steps:

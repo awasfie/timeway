@@ -39,13 +39,6 @@ import type { BookerProps } from "@calcom/features/bookings/Booker/types";
 import type { WrappedBookerProps } from "../types";
 import { Booker } from "./Booker";
 
-vi.mock("framer-motion", async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
-  return {
-    ...actual,
-  };
-});
-
 // Mock components that we don't want to test
 vi.mock("./BookEventForm", () => ({
   BookEventForm: ({

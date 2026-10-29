@@ -30,7 +30,7 @@ jobs:
     # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
     if: ${{ github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     name: docker-migrate-job
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
       IMG: timeway:ci
@@ -145,7 +145,7 @@ jobs:
     name: Full suite gate (${{ github.event_name }})
     needs: [docker-migrate-job]
     if: ${{ always() && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Every full job ran and passed on this head
