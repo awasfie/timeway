@@ -186,3 +186,22 @@ shows no changes and the page is served from the edge again).
 3. Prod Lighthouse: `lighthouse https://timeway.co/ahmedwasfie/30min --only-categories=performance --form-factor=mobile --throttling-method=simulate --output=json` x 5, median.
 4. Slot API: `node scripts/perf/slot-api.mjs --month <YYYY-MM> --samples 30`.
 5. Record the new row set here with its deploy SHA; a row passes only on a measured number.
+
+## WC-TW-6j: TBT on 819bf85549 (card t_84384338, 2026-10-29 09:45-09:52Z)
+
+Lighthouse 13.5.0 mobile simulated, Dubai host, `https://timeway.co/ahmedwasfie/30min`, deploy 819bf85549
+(container `poyzdsncp9jsvc3gr4hkitaf:819bf855498a…`, healthy). timeway#218 (6h SSR shell) not yet merged.
+
+| batch | TBT runs (ms) | median |
+|---|---|---|
+| A | 238, 184.5, 202, 191, 193 | 193 |
+| B | 298, 208, 177, 190, 212 | 208 |
+| all 10 | | 197.5 |
+
+Gate < 200 ms sits inside run-to-run noise. Long tasks (trace run, TBT 260): 249 ms in `25sq9vkyrxchr.js`
+(react-dom) at ~5.06 s, then 68/68/65/65/56/54 ms. CPU profile of the 249 ms task: one synchronous React commit
+(the store flip `loading -> selecting_date` mounts the full booker), not a single heavy library; non-React self time
+is small (BookingPageTagManager `sdkActionManager.on("*")` listener 5.7 ms, dayjs ~2 ms).
+
+Slice in this PR: `Booker.tsx` gates the first full render on `useDeferredValue(bookerState)` so the mount renders at
+transition priority and yields, splitting the 249 ms task. After-numbers: pending deploy (x5, same host).

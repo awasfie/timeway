@@ -33,7 +33,7 @@ import { startBookerWebVitals } from "@calcom/web/lib/telemetry/booker-vitals";
 import TurnstileCaptcha from "@calcom/web/modules/auth/components/Turnstile";
 import { useSkipConfirmStep } from "@calcom/web/modules/bookings/hooks/useSkipConfirmStep";
 import { useNonEmptyScheduleDays } from "@calcom/web/modules/schedules/hooks/useNonEmptyScheduleDays";
-import { useEffect, useMemo, useRef } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef } from "react";
 import StickyBox from "react-sticky-box";
 import { Toaster } from "sonner";
 import { shallow } from "zustand/shallow";
@@ -94,6 +94,11 @@ const BookerComponent = ({
     (state) => [state.state, state.setState],
     shallow
   );
+  // WC-TW-6j: the loading -> selecting_date flip mounts the whole booker in one synchronous
+  // React task (the largest long task on mobile Lighthouse). Zustand updates render
+  // synchronously, so gate the first full render on a deferred copy of the state: React
+  // renders the tree at transition priority and yields to the main thread every few ms.
+  const deferredBookerState = useDeferredValue(bookerState);
 
   const selectedDate = useBookerStoreContext((state) => state.selectedDate);
 
@@ -339,7 +344,7 @@ const BookerComponent = ({
     return <NotFound />;
   }
 
-  if (bookerState === "loading") {
+  if (bookerState === "loading" || deferredBookerState === "loading") {
     return null;
   }
 
