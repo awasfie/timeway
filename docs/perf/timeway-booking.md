@@ -77,6 +77,36 @@ stack; its next cut, the SSR title shell, is timeway#218 (draft, not deployed). 
 host (its benchmarkIndex range 2423-3270 is wider than r2's). INP RUM has no emitter. The JS 200 KB row stays a fail:
 t_3eb9a771 recorded the ratchet as the enforced gate and 200 KB as reported only, and the floor on main is 516.7.
 
+## Re-run r6 (card t_762bea7b run 5815, 2026-10-29 17:28Z), on a27b36f7d7
+
+App under test: `a27b36f7d70e82c8d04056d656d1d812f23d8586` (main tip, #218 WC-TW-6h SSR title shell; Coolify deployment
+`rfetl6bwh89kxetvmmup9okw`, container `poyzdsncp9jsvc3gr4hkitaf-20261029T172537`, healthy), plus the `timeway-booking-edge`
+Worker (`x-tw-edge: HIT`). The served HTML now carries `booker-ssr-shell` and the event-title h1.
+Raw numbers: `evidence/2026-10-29-wc-tw-6d-r6.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 97 ms (p50 88, max 353) | 27 | Globalping 2026-10-29T17:31Z, 9 x 3 probes, 0 failures; r6 evidence | a27b36f7d7 + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 135.5 ms (p50 127, max 556) | 27 | same | a27b36f7d7 + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 236 ms all probes (p50 202, max 786; AS9009, AS136258, AS154177, AS207847 not drawn); local Dubai host AS15802 212 ms (n=30) | 27 + 30 | same; local curl in r6 evidence | a27b36f7d7 + Worker | PASS (no exclusion) |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | p75 5986 ms, median 4015.5 (2235-6017) | 10 | r6 evidence, 2 batches of 5 | a27b36f7d7 + Worker | FAIL, fix card t_063d46b1 |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 103.5 ms median (75-179) | 10 | r6 evidence | a27b36f7d7 + Worker | PASS |
+| all | INP (RUM, Plausible) | < 200 ms | 48 ms, rating good (no new field rows since 09:42Z) | 1 | ClickHouse `events_v2` site 1, `name='web_vital'`, re-queried 17:35Z | 819bf85549 | PASS (n=1) |
+| prod | booking-route first-load JS | <= 200 KB gz | 49 scripts, 629.6 KB transfer | 10 | r6 evidence | a27b36f7d7 | FAIL (reported only; ratchet is the enforced gate, t_3eb9a771) |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 445 ms (p50 381, max 455) | 30 | `scripts/perf/slot-api.mjs --month 2026-11`, r6 evidence | a27b36f7d7 | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb`: booking events plus web_vital LCP/INP rows | 1 org | ClickHouse `events_v2` site 1 | a27b36f7d7 | PASS |
+
+r6 verdict: **not met**, 7 of 9 rows pass. #218 moved LCP but not past the gate, and the runs split in two:
+- 6 of 10 runs paint early (observed FCP 894-1072 ms). The SSR shell h1 is the LCP; simulated LCP 2235-4293 ms, 4 of
+  them at or under 2537.
+- 4 of 10 runs paint late (observed FCP 1758-2803 ms, while DOMContentLoaded is ~930 ms). The LCP element is the
+  hydrated booker h1 (`div.[grid-area:meta] > div.relative > div.animate-in > h1`), element render delay 1.9-2.9 s,
+  simulated LCP 5976-6017 ms. In batch B (edge status read before each run) the one late run (#9) followed an
+  `x-tw-edge: STALE` response and the four HIT runs painted early; batch A's edge status was not recorded. So the
+  STALE/revalidate path is a suspect, not a proven cause.
+The cause of the held first paint is the work of fix card t_063d46b1 (WC-TW-6l). JS stays reported only. Next re-run
+after t_063d46b1 deploys.
+
 ## Re-run r5 (card t_762bea7b run 5802, 2026-10-29 16:09Z), on 9f2dfb867d
 
 App under test: `9f2dfb867dffc9ba3651d99f60fdb3a558d1611c` (main tip; Coolify deployment `1qbfxfjgret7xz5f3vpqdvrh`,
