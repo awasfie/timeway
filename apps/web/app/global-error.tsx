@@ -1,6 +1,5 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import { type NextPage } from "next";
 import { useEffect } from "react";
 
@@ -9,7 +8,9 @@ import type { ErrorProps } from "./error";
 
 export const GlobalError: NextPage<ErrorProps> = (props) => {
   useEffect(() => {
-    Sentry.captureException(props.error);
+    void import("@sentry/nextjs")
+      .then(({ captureException }) => captureException(props.error))
+      .catch(() => undefined);
   }, [props.error]);
   return (
     <html>
