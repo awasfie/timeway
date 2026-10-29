@@ -5,15 +5,15 @@ Card t_75e3ae48 (WC-TW-9e), closes the WC-TW-9 proof (t_a5bf8b29). Bible WC-9, W
 Dashboard (decision 2: no new dashboard tool):
 
 - Plausible CE, site `timeway.co` (site_id 1, tz Asia/Dubai) at `https://stats.timeway.co`.
-  Shared link (password in Infisical `timeway:/plausible` `PLAUSIBLE_SHARED_LINK_PASSWORD`):
-  `https://stats.timeway.co/share/timeway.co?auth=OON_EFpk_GlYs8CgP3SpP`.
+  Shared link `https://stats.timeway.co/share/timeway.co`; the full URL with its `auth` token is in Infisical
+  `timeway:/plausible` `PLAUSIBLE_SHARED_LINK_URL` and the password in `PLAUSIBLE_SHARED_LINK_PASSWORD`.
   Goals: `booking_page_view` -> `slot_selected` -> `booking_confirmed` (goal ratio; the server event cannot join a browser-visitor funnel, see Status).
 - `scripts/activation.ts` output (timeway) and `api/scripts/messaging-metrics.js` output (whatsaff), pasted below with date.
 
 ## Status on 2026-10-29
 
 The pipeline is live and every metric owned by WC-TW-9 now has a first production value. timeway#89 and #101 merged
-(58b31b6fdc, 65f2630df5), deployed by t_ff5073b0. The web app runs image `:65f2630df5` with `PLAUSIBLE_HOST` and
+(58b31b6fdc, 65f2630df5), deployed by t_ff5073b0. When this doc was measured (2026-10-29T06:22Z) the web app ran image `:65f2630df5` with `PLAUSIBLE_HOST` and
 `PLAUSIBLE_DOMAIN` set.
 
 Proof booking (decision 3; named on the card before it was made). Booked through the public booker UI at
