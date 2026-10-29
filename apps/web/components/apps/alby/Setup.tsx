@@ -144,14 +144,14 @@ function AlbySetupPage(props: IAlbySetupProps) {
                   bookings.
                 </p>
                 <button
-                  className="font-body flex h-10 w-56 items-center justify-center gap-2 rounded-md font-bold text-black shadow transition-all hover:brightness-90 active:scale-95"
+                  className="font-body flex h-10 w-56 items-center justify-center gap-2 rounded-md font-bold text-black shadow transition-[filter,transform,box-shadow] hover:brightness-90 active:scale-95"
                   style={{
                     background: "linear-gradient(180deg, #FFDE6E 63.72%, #F8C455 95.24%)",
                   }}
                   type="button"
                   onClick={connectWithAlby}>
                   {albyIcon}
-                  <span className="mr-2">Connect with Alby</span>
+                  <span className="me-2">Connect with Alby</span>
                 </button>
               </>
             ) : (

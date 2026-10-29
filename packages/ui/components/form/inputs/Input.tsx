@@ -30,7 +30,7 @@ export const PasswordField = forwardRef<HTMLInputElement, InputFieldProps>(
         ref={ref}
         {...props}
         className={classNames(
-          "addon-wrapper mb-0 ltr:border-r-0 ltr:pr-10 rtl:border-l-0 rtl:pl-10",
+          "addon-wrapper mb-0 border-e-0 pe-10",
           props.className
         )}
         addOnSuffix={

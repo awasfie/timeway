@@ -114,14 +114,14 @@ export function UserDropdown({ small }: UserDropdownProps) {
           <button
             data-testid="user-dropdown-trigger-button"
             className={classNames(
-              "hover:bg-emphasis todesktop:!bg-transparent group mx-0 flex w-full cursor-pointer appearance-none items-center rounded-full text-left outline-none transition focus:outline-none focus:ring-0 md:rounded-none lg:rounded",
+              "hover:bg-emphasis todesktop:!bg-transparent group mx-0 flex w-full cursor-pointer appearance-none items-center rounded-full text-start outline-none transition focus:outline-none focus:ring-0 md:rounded-none lg:rounded",
               small ? "p-2" : "px-2 py-1.5"
             )}
           />
         }>
         <span
           className={classNames(
-            small ? "h-4 w-4" : "h-5 w-5 ltr:mr-2 rtl:ml-2",
+            small ? "h-4 w-4" : "h-5 w-5 me-2",
             "relative shrink-0 rounded-full"
           )}>
           <Avatar
@@ -132,8 +132,8 @@ export function UserDropdown({ small }: UserDropdownProps) {
           />
           <span
             className={classNames(
-              "border-muted absolute -bottom-1 -right-1 rounded-full border bg-green-500",
-              small ? "-bottom-0.5 -right-0.5 h-2.5 w-2.5" : "-bottom-0.5 right-0 h-2 w-2"
+              "border-muted absolute -bottom-1 -end-1 rounded-full border bg-green-500",
+              small ? "-bottom-0.5 -end-0.5 h-2.5 w-2.5" : "-bottom-0.5 end-0 h-2 w-2"
             )}
           />
         </span>
@@ -146,12 +146,12 @@ export function UserDropdown({ small }: UserDropdownProps) {
             </span>
             {menuOpen ? (
               <ChevronUpIcon
-                className="group-hover:text-subtle text-muted h-4 w-4 shrink-0 transition rtl:mr-4"
+                className="group-hover:text-subtle text-muted h-4 w-4 shrink-0 transition rtl:ms-4"
                 aria-hidden="true"
               />
             ) : (
               <ChevronDownIcon
-                className="group-hover:text-subtle text-muted h-4 w-4 shrink-0 transition rtl:mr-4"
+                className="group-hover:text-subtle text-muted h-4 w-4 shrink-0 transition rtl:ms-4"
                 aria-hidden="true"
               />
             )}

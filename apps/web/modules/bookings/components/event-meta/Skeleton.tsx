@@ -10,7 +10,7 @@ export const EventMetaSkeleton = () => (
     <div className="mt-8">
       {Array.from({ length: 4 }).map((_, i) => (
         <div className="mb-2 flex flex-row items-center" key={i}>
-          <SkeletonText className="mr-3 h-5 w-5 rounded-full" />
+          <SkeletonText className="me-3 h-5 w-5 rounded-full" />
           <SkeletonText className={classNames("h-6", i > 1 ? "w-24" : "w-32")} />
         </div>
       ))}

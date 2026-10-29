@@ -54,7 +54,7 @@ export const AvailableTimesHeader = ({
         </span>
         <span
           className={classNames(
-            isColumnView && isToday && "bg-brand-default text-brand ml-2",
+            isColumnView && isToday && "bg-brand-default text-brand ms-2",
             "inline-flex items-center justify-center rounded-3xl px-1 pt-0.5 font-medium",
             isMonthView
               ? `text-default text-sm ${customClassNames?.availableTimeSlotsTitle}`
@@ -66,7 +66,7 @@ export const AvailableTimesHeader = ({
       </span>
 
       {showTimeFormatToggle && (
-        <div className="ml-auto rtl:mr-auto">
+        <div className="ms-auto">
           <TimeFormatToggle customClassName={customClassNames?.availableTimeSlotsTimeFormatToggle} />
         </div>
       )}

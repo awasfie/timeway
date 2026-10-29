@@ -25,7 +25,7 @@ export const AppDependencyComponent = ({
             <div className="items-start space-x-2.5">
               <div className="flex items-start">
                 <div>
-                  <CheckIcon className="mr-2 mt-1 font-semibold" />
+                  <CheckIcon className="me-2 mt-1 font-semibold" />
                 </div>
                 <div>
                   <span className="font-semibold">
@@ -49,7 +49,7 @@ export const AppDependencyComponent = ({
             <div className="items-start space-x-2.5">
               <div className="text-error flex items-start">
                 <div>
-                  <CircleXIcon className="mr-2 mt-1 font-semibold" />
+                  <CircleXIcon className="me-2 mt-1 font-semibold" />
                 </div>
                 <div>
                   <span className="font-semibold">
@@ -65,7 +65,7 @@ export const AppDependencyComponent = ({
                         <Link
                           href={`${WEBAPP_URL}/apps/${dependency.slug}`}
                           className="text-error flex items-center underline">
-                          <span className="mr-1">
+                          <span className="me-1">
                             {t("connect_app", { dependencyName: dependency.name })}
                           </span>
                           <ArrowRightIcon />

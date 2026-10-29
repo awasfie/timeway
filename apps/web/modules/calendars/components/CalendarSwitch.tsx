@@ -79,7 +79,7 @@ const CalendarSwitch = (props: ICalendarSwitchProps) => {
   });
   return (
     <div className={classNames("my-2 flex flex-row items-center")}>
-      <div className="flex pl-2">
+      <div className="flex ps-2">
         <Switch
           id={externalId}
           checked={checkedInternal}
@@ -92,20 +92,20 @@ const CalendarSwitch = (props: ICalendarSwitchProps) => {
       </div>
       <label
         className={classNames(
-          "ml-3 break-all text-sm font-medium leading-5",
+          "ms-3 break-all text-sm font-medium leading-5",
           disabled ? "cursor-not-allowed opacity-25" : "cursor-pointer"
         )}
         htmlFor={externalId}>
         {name}
       </label>
       {!!props.destination && (
-        <span className="bg-subtle text-default ml-8 inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-normal sm:ml-4">
+        <span className="bg-subtle text-default ms-8 inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-normal sm:ms-4">
           <ArrowLeftIcon className="h-4 w-4" />
           {t("adding_events_to")}
         </span>
       )}
       {mutation.isPending && (
-        <RotateCwIcon className="text-muted h-4 w-4 animate-spin ltr:ml-1 rtl:mr-1" />
+        <RotateCwIcon className="text-muted h-4 w-4 animate-spin ms-1" />
       )}
     </div>
   );

@@ -56,7 +56,7 @@ export const TroubleshooterComponent = ({
               />
             </div>
 
-            <div className="ml-[-1px] border-subtle [grid-area:main]">
+            <div className="ms-[-1px] border-subtle [grid-area:main]">
               <LargeCalendar />
             </div>
           </div>

@@ -76,7 +76,7 @@ export default function DisableReschedulingController({
                 shouldShowRadioButtons && "rounded-b-none",
                 customClassNames?.container
               )}
-              childrenClassName={classNames("lg:ml-0", customClassNames?.children)}
+              childrenClassName={classNames("lg:ms-0", customClassNames?.children)}
               descriptionClassName={customClassNames?.description}
               title={t("disable_rescheduling")}
               data-testid="disable-rescheduling-toggle"

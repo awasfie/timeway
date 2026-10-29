@@ -50,7 +50,7 @@ export function FilterSelect({
         <Button color="secondary" data-testid={`${testId}-button`} StartIcon={buttonIcon}>
           {title}
           {selectedValue && (
-            <div className="ml-2 hidden space-x-1 md:flex">
+            <div className="ms-2 hidden space-x-1 md:flex">
               <Badge color="gray" className="rounded-sm px-1 font-normal">
                 {selectedOption?.label}
               </Badge>
@@ -75,7 +75,7 @@ export function FilterSelect({
                     data-testId={`${testId}-group-option-${index}`}>
                     <div
                       className={classNames(
-                        "border-subtle mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
+                        "border-subtle me-2 flex h-4 w-4 items-center justify-center rounded-sm border",
                         isSelected ? "text-emphasis" : "opacity-50 [&_svg]:invisible"
                       )}>
                       <Icon name="check" className="h-4 w-4" />

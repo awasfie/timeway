@@ -315,7 +315,7 @@ export const Components: Record<FieldType, Component> = {
                 value.push("");
                 setValue(value);
               }}
-              className="mr-auto h-fit whitespace-normal text-left">
+              className="me-auto h-fit whitespace-normal text-start">
               <span className="flex-1">{label}</span>
             </Button>
           )}
@@ -452,7 +452,7 @@ export const Components: Record<FieldType, Component> = {
                         type="radio"
                         disabled={readOnly}
                         name={name}
-                        className="bg-default after:bg-default border-emphasis hover:bg-subtle hover:after:bg-subtle checked:bg-brand-default checked:hover:bg-brand-default checked:after:bg-default dark:checked:bg-brand-default dark:checked:after:bg-brand-accent dark:hover:bg-subtle dark:checked:hover:bg-brand-default text-(--cal-brand) flex h-4 w-4 cursor-pointer items-center justify-center transition after:h-[6px] after:w-[6px] after:rounded-full after:content-[''] after:hover:block focus:ring-0 focus:ring-offset-0 focus:outline-none ltr:mr-2 rtl:ml-2"
+                        className="bg-default after:bg-default border-emphasis hover:bg-subtle hover:after:bg-subtle checked:bg-brand-default checked:hover:bg-brand-default checked:after:bg-default dark:checked:bg-brand-default dark:checked:after:bg-brand-accent dark:hover:bg-subtle dark:checked:hover:bg-brand-default text-(--cal-brand) flex h-4 w-4 cursor-pointer items-center justify-center transition after:h-[6px] after:w-[6px] after:rounded-full after:content-[''] after:hover:block focus:ring-0 focus:ring-offset-0 focus:outline-none me-2"
                         value={option.value}
                         onChange={(e) => {
                           setValue({
@@ -486,7 +486,7 @@ export const Components: Record<FieldType, Component> = {
                           didUserProvideLabel(label, translatedDefaultLabel) ? label : options[0].label
                         )}
                     {!readOnly && optionsInputs[options[0].value]?.required ? (
-                      <span className="text-default -mb-2 ml-1 text-sm font-medium">*</span>
+                      <span className="text-default -mb-2 ms-1 text-sm font-medium">*</span>
                     ) : null}
                     {options[0].value === "phone" && (
                       <InfoBadge content={t("number_in_international_format")} />

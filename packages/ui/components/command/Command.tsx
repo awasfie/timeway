@@ -43,7 +43,7 @@ const CommandInput = React.forwardRef<
     <CommandPrimitive.Input
       ref={ref}
       className={classNames(
-        "border-default hover:border-emphasis placeholder:text-muted text-emphasis disabled:hover:border-default disabled:bg-subtle focus:border-emphasis focus:ring-0 focus:shadow-outline-gray-focused shadow-outline-gray-rested transition-all flex h-[28px] w-full rounded-md border bg-transparent px-3 py-1.5 text-sm leading-4 outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+        "border-default hover:border-emphasis placeholder:text-muted text-emphasis disabled:hover:border-default disabled:bg-subtle focus:border-emphasis focus:ring-0 focus:shadow-outline-gray-focused shadow-outline-gray-rested transition-[color,background-color,border-color,box-shadow] flex h-[28px] w-full rounded-md border bg-transparent px-3 py-1.5 text-sm leading-4 outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -118,7 +118,7 @@ const CommandItem = React.forwardRef<
 CommandItem.displayName = CommandPrimitive.Item.displayName;
 
 const CommandShortcut = ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) => {
-  return <span className={classNames("text-muted ml-auto text-xs tracking-widest", className)} {...props} />;
+  return <span className={classNames("text-muted ms-auto text-xs tracking-widest", className)} {...props} />;
 };
 
 CommandShortcut.displayName = "CommandShortcut";

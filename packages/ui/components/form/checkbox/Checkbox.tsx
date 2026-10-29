@@ -79,7 +79,7 @@ const CheckboxField = forwardRef<HTMLInputElement, Props>(
                     disabled={disabled}
                     id={rest.id ? rest.id : id}
                     className={classNames(
-                      "text-emphasis focus:ring-emphasis dark:text-muted border-default bg-default focus:bg-default active:bg-default checked:border-transparent! checked:bg-gray-800! h-4 w-4 rounded-[4px] transition focus:outline-none focus:ring-0 ltr:mr-2 rtl:ml-2",
+                      "text-emphasis focus:ring-emphasis dark:text-muted border-default bg-default focus:bg-default active:bg-default checked:border-transparent! checked:bg-gray-800! h-4 w-4 rounded-[4px] transition focus:outline-none focus:ring-0 me-2",
                       !error && disabled
                         ? "cursor-not-allowed bg-gray-300 checked:bg-gray-300 hover:bg-gray-300 hover:checked:bg-gray-300"
                         : "hover:bg-subtle hover:border-emphasis",
@@ -93,7 +93,7 @@ const CheckboxField = forwardRef<HTMLInputElement, Props>(
                   // biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized via descriptionAsSafeHtml prop
                   <span
                     className={classNames(
-                      "text-default ml-2 text-sm [&_a]:text-blue-500",
+                      "text-default ms-2 text-sm [&_a]:text-blue-500",
                       !label && "font-medium",
                       rest.descriptionClassName
                     )}
@@ -104,7 +104,7 @@ const CheckboxField = forwardRef<HTMLInputElement, Props>(
                 ) : (
                   <span
                     className={classNames(
-                      "text-default ml-2 text-sm",
+                      "text-default ms-2 text-sm",
                       !label && "font-medium",
                       rest.descriptionClassName
                     )}>

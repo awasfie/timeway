@@ -738,7 +738,7 @@ const ProfileForm = ({
             <div className="flex items-center">
               <span className="text-default text-sm capitalize">{user.identityProvider.toLowerCase()}</span>
               {user.identityProviderEmail && (
-                <span className="ml-2 text-default text-sm">{user.identityProviderEmail}</span>
+                <span className="ms-2 text-default text-sm">{user.identityProviderEmail}</span>
               )}
               <div className="flex flex-1 justify-end">
                 <Button color="destructive" onClick={onDisconnect}>

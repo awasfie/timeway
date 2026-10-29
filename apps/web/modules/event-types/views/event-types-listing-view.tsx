@@ -190,7 +190,7 @@ const Item = ({
   const content = (): JSX.Element => (
     <div>
       <span
-        className="break-words font-semibold text-default ltr:mr-1 rtl:ml-1"
+        className="break-words font-semibold text-default me-1"
         data-testid={`event-type-title-${type.id}`}>
         {type.title}
       </span>
@@ -202,16 +202,16 @@ const Item = ({
         </small>
       ) : null}
       {!isManagedEventType && type.hidden && (
-        <span className="ml-2 text-gray-400 text-sm sm:hidden">{t("hidden")}</span>
+        <span className="ms-2 text-gray-400 text-sm sm:hidden">{t("hidden")}</span>
       )}
       {readOnly && (
-        <Badge variant="gray" className="ml-2" data-testid="readonly-badge">
+        <Badge variant="gray" className="ms-2" data-testid="readonly-badge">
           {t("readonly")}
         </Badge>
       )}
       {showAssignedBadge && (
         <Tooltip content={t("you_are_assigned_to_this_event")}>
-          <Badge variant="blue" className="ml-2" data-testid="assigned-badge">
+          <Badge variant="blue" className="ms-2" data-testid="assigned-badge">
             {t("assigned")}
           </Badge>
         </Tooltip>
@@ -220,11 +220,11 @@ const Item = ({
   );
 
   return (
-    <div className={classNames(eventTypeColor && "-ml-3", "relative flex-1 overflow-hidden pr-4 text-sm")}>
+    <div className={classNames(eventTypeColor && "-ms-3", "relative flex-1 overflow-hidden pe-4 text-sm")}>
       {eventTypeColor && (
         <div className="absolute h-full w-0.5" style={{ backgroundColor: eventTypeColor }} />
       )}
-      <div className={classNames(eventTypeColor && "ml-3")}>
+      <div className={classNames(eventTypeColor && "ms-3")}>
         {readOnly ? (
           <div>
             {content()}
@@ -234,7 +234,7 @@ const Item = ({
           <Link href={`/event-types/${type.id}?tabName=setup`} title={type.title}>
             <div>
               <span
-                className="break-words font-semibold text-default ltr:mr-1 rtl:ml-1"
+                className="break-words font-semibold text-default me-1"
                 data-testid={`event-type-title-${type.id}`}>
                 {type.title}
               </span>
@@ -246,16 +246,16 @@ const Item = ({
                 </small>
               ) : null}
               {!isManagedEventType && type.hidden && (
-                <span className="ml-2 text-gray-400 text-sm sm:hidden">{t("hidden")}</span>
+                <span className="ms-2 text-gray-400 text-sm sm:hidden">{t("hidden")}</span>
               )}
               {readOnly && (
-                <Badge variant="gray" className="ml-2" data-testid="readonly-badge">
+                <Badge variant="gray" className="ms-2" data-testid="readonly-badge">
                   {t("readonly")}
                 </Badge>
               )}
               {showAssignedBadge && (
                 <Tooltip content={t("you_are_assigned_to_this_event")}>
-                  <Badge variant="blue" className="ml-2" data-testid="assigned-badge">
+                  <Badge variant="blue" className="ms-2" data-testid="assigned-badge">
                     {t("assigned")}
                   </Badge>
                 </Tooltip>
@@ -574,10 +574,10 @@ export const InfiniteEventTypeList = ({
                     )}
                     <MemoizedItem type={type} group={group} readOnly={readOnly} />
                     <div className="mt-4 hidden sm:mt-0 sm:flex">
-                      <div className="flex justify-between space-x-2 rtl:space-x-reverse">
+                      <div className="flex justify-between space-x-2">
                         {!!type.teamId && !isManagedEventType && (
                           <UserAvatarGroup
-                            className="relative right-3"
+                            className="relative end-3"
                             size="sm"
                             truncateAfter={4}
                             hideTruncatedAvatarsCount={true}
@@ -586,14 +586,14 @@ export const InfiniteEventTypeList = ({
                         )}
                         {isManagedEventType && type?.children && type.children?.length > 0 && (
                           <UserAvatarGroup
-                            className="relative right-3"
+                            className="relative end-3"
                             size="sm"
                             truncateAfter={4}
                             hideTruncatedAvatarsCount={true}
                             users={type?.children.flatMap((ch) => ch.users) ?? []}
                           />
                         )}
-                        <div className="flex items-center justify-between space-x-2 rtl:space-x-reverse">
+                        <div className="flex items-center justify-between space-x-2">
                           {!isManagedEventType && (
                             <>
                               {type.hidden && <span className="text-gray-400 text-sm">{t("hidden")}</span>}
@@ -675,7 +675,7 @@ export const InfiniteEventTypeList = ({
                                   color="secondary"
                                   StartIcon="ellipsis"
                                   // Unusual practice to use radix state open but for some reason this dropdown and only this dropdown clears the border radius of this button.
-                                  className="ltr:radix-state-open:rounded-r-(--btn-group-radius) rtl:radix-state-open:rounded-l-(--btn-group-radius)"
+                                  className="radix-state-open:rounded-e-(--btn-group-radius)"
                                 />
                               </DropdownMenuTrigger>
                               <DropdownMenuContent>
@@ -768,7 +768,7 @@ export const InfiniteEventTypeList = ({
                                     showToast(t("link_copied"), "success");
                                   }}
                                   StartIcon="clipboard"
-                                  className="w-full rounded-none text-left">
+                                  className="w-full rounded-none text-start">
                                   {t("copy_link")}
                                 </DropdownItem>
                               </DropdownMenuItem>
@@ -838,7 +838,7 @@ export const InfiniteEventTypeList = ({
                               <Skeleton
                                 as={Label}
                                 htmlFor="hiddenSwitch"
-                                className="mt-2 inline cursor-pointer self-center pr-2">
+                                className="mt-2 inline cursor-pointer self-center pe-2">
                                 {type.hidden ? t("show_eventtype_on_profile") : t("hide_from_profile")}
                               </Skeleton>
                               <Switch
@@ -878,7 +878,7 @@ export const InfiniteEventTypeList = ({
           }}>
           <p className="mt-5">
             {deleteDialogTypeSchedulingType === SchedulingType.MANAGED ? (
-              <ul className="ml-4 list-disc">
+              <ul className="ms-4 list-disc">
                 <li>{t("delete_managed_event_type_description_1")}</li>
                 <li>{t("delete_managed_event_type_description_2")}</li>
               </ul>

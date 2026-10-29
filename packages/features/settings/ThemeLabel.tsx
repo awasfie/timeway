@@ -12,18 +12,18 @@ export default function ThemeLabel(props: ThemeLabelProps) {
 
   return (
     <label
-      className="relative mb-4 flex-1 cursor-pointer text-center last:mb-0 last:mr-0 sm:mb-0 sm:mr-4"
+      className="relative mb-4 flex-1 cursor-pointer text-center last:mb-0 last:me-0 sm:mb-0 sm:me-4"
       htmlFor={`${fieldName}-${variant}`}
       data-testid={`${fieldName}-${variant}`}>
       <input
-        className="peer absolute left-8 top-8"
+        className="peer absolute start-8 top-8"
         type="radio"
         value={value}
         id={`${fieldName}-${variant}`}
         defaultChecked={defaultChecked}
         {...register(fieldName)}
       />
-      <div className="ring-inverted relative z-10 rounded-lg ring-offset-2 transition-all peer-checked:ring-2">
+      <div className="ring-inverted relative z-10 rounded-lg ring-offset-2 transition-[box-shadow] peer-checked:ring-2">
         <img
           aria-hidden="true"
           className="cover w-full rounded-lg"

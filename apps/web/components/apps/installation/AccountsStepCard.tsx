@@ -60,7 +60,7 @@ const AccountSelector: FC<AccountSelectorProps> = ({
       />
       <div className="text-md text-subtle pt-0.5 font-medium">
         {name}
-        {alreadyInstalled ? <span className="text-subtle ml-2 text-sm">({t("already_installed")})</span> : ""}
+        {alreadyInstalled ? <span className="text-subtle ms-2 text-sm">({t("already_installed")})</span> : ""}
       </div>
     </div>
   );

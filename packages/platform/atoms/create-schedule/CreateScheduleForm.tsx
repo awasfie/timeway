@@ -82,7 +82,7 @@ export const CreateScheduleForm = ({
         />
         <div
           className={cn(
-            "mt-5 justify-end space-x-2 rtl:space-x-reverse sm:mt-4 sm:flex",
+            "mt-5 justify-end space-x-2 sm:mt-4 sm:flex",
             customClassNames?.actionsButtons?.container
           )}>
           {onCancel && (

@@ -292,7 +292,7 @@ export const MultiplePrivateLinksController = ({
                           )
                         }
                       />
-                      <div className="ml-2 flex items-center">
+                      <div className="ms-2 flex items-center">
                         {!isExpired && (
                           <Tooltip content={t("preview")}>
                             <Button
@@ -323,7 +323,7 @@ export const MultiplePrivateLinksController = ({
                           type="button"
                           StartIcon="trash-2"
                           color="destructive"
-                          className="ml-1 border-none"
+                          className="ms-1 border-none"
                           onClick={() => removePrivateLink(originalIndex)}
                         />
                       </div>

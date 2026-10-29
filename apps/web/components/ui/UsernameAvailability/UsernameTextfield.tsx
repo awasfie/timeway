@@ -127,7 +127,7 @@ const UsernameTextfield = (props: ICustomUsernameProps & Partial<React.Component
             autoCorrect="none"
             containerClassName="[&>div]:gap-0"
             className={classNames(
-              "mb-0 mt-0 rounded-md rounded-l-none pl-0",
+              "mb-0 mt-0 rounded-md rounded-s-none ps-0",
               markAsError
                 ? "focus:shadow-0 focus:ring-shadow-0 border-red-500 focus:border-red-500 focus:outline-none focus:ring-0"
                 : ""
@@ -140,7 +140,7 @@ const UsernameTextfield = (props: ICustomUsernameProps & Partial<React.Component
             {...rest}
           />
           {currentUsername !== inputUsernameValue && (
-            <div className="absolute right-[2px] top-6 flex h-7 flex-row">
+            <div className="absolute end-[2px] top-6 flex h-7 flex-row">
               <span className={classNames("bg-default mx-0 p-3")}>
                 {usernameIsAvailable ? (
                   <CheckIcon className="relative bottom-[6px] h-4 w-4" />

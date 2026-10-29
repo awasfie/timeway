@@ -128,7 +128,7 @@ export const EventTypeCalendarViewComponent = (
         key="large-calendar"
         area="main"
         visible={true}
-        className="border-subtle sticky top-0 ml-[-1px] h-full md:border-l">
+        className="border-subtle sticky top-0 ms-[-1px] h-full md:border-s">
         <LargeCalendar
           extraDays={7}
           availableTimeslots={availableTimeSlots}

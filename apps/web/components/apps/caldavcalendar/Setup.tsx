@@ -95,7 +95,7 @@ export default function CalDavCalendarSetup() {
                           href={errorActionUrl}
                           color="secondary"
                           target="_blank"
-                          className="ml-5 w-32 p-5!">
+                          className="ms-5 w-32 p-5!">
                           Go to Admin
                         </Button>
                       ) : undefined
@@ -103,7 +103,7 @@ export default function CalDavCalendarSetup() {
                     className="my-4"
                   />
                 )}
-                <div className="mt-5 justify-end space-x-2 rtl:space-x-reverse sm:mt-4 sm:flex">
+                <div className="mt-5 justify-end space-x-2 sm:mt-4 sm:flex">
                   <Button type="button" color="secondary" onClick={() => router.back()}>
                     {t("cancel")}
                   </Button>

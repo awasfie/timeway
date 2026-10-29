@@ -41,7 +41,7 @@ const SkeletonLoader = () => {
       </div>
       <div className="rounded-b-xl">
         <SectionBottomActions align="end">
-          <SkeletonButton className="ml-auto h-8 w-20 rounded-md" />
+          <SkeletonButton className="ms-auto h-8 w-20 rounded-md" />
         </SectionBottomActions>
       </div>
     </SkeletonContainer>

@@ -231,9 +231,9 @@ export default function FileUploader({
         <div className="mt-2 stack-y-1 transition">
           {files.map((fileData) => (
             <div key={fileData.id} className="flex items-center justify-between rounded-md border">
-              <div className="flex min-w-0 items-center gap-2 pl-2">
+              <div className="flex min-w-0 items-center gap-2 ps-2">
                 <Icon name={getFileIcon(fileData.file.type)} className="h-5 w-5 shrink-0" />
-                <div className="min-w-0 border-l py-2 pl-3">
+                <div className="min-w-0 border-s py-2 ps-3">
                   <p className="text-emphasis truncate text-sm font-medium">{fileData.file.name}</p>
                   <p className="text-xs">{formatFileSize(fileData.file.size)}</p>
                 </div>

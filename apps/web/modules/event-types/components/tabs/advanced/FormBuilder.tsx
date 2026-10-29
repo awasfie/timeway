@@ -164,7 +164,7 @@ export const FormBuilder = function FormBuilder({
   return (
     <div>
       <div>
-        <div className="text-default text-sm font-semibold leading-none ltr:mr-1 rtl:ml-1">
+        <div className="text-default text-sm font-semibold leading-none me-1">
           {title}
           {LockedIcon}
         </div>
@@ -226,7 +226,7 @@ export const FormBuilder = function FormBuilder({
             />
           )}
         </div>
-        <p className="text-default mt-5 text-sm font-semibold leading-none ltr:mr-1 rtl:ml-1">
+        <p className="text-default mt-5 text-sm font-semibold leading-none me-1">
           {t("questions")}
         </p>
         <p className="text-subtle mt-1 max-w-[280px] wrap-break-word text-sm sm:max-w-[500px]">
@@ -298,7 +298,7 @@ export const FormBuilder = function FormBuilder({
                     {index >= 1 && (
                       <button
                         type="button"
-                        className="bg-default text-muted hover:text-emphasis disabled:hover:text-muted border-subtle hover:border-emphasis invisible absolute -left-[12px] -ml-4 -mt-4 mb-4 hidden h-6 w-6 scale-0 items-center justify-center rounded-md border p-1 transition-all hover:shadow disabled:hover:border-inherit disabled:hover:shadow-none group-hover:visible group-hover:scale-100 sm:ml-0 sm:flex"
+                        className="bg-default text-muted hover:text-emphasis disabled:hover:text-muted border-subtle hover:border-emphasis invisible absolute -start-[12px] -ms-4 -mt-4 mb-4 hidden h-6 w-6 scale-0 items-center justify-center rounded-md border p-1 transition-[transform,box-shadow,border-color] hover:shadow disabled:hover:border-inherit disabled:hover:shadow-none group-hover:visible group-hover:scale-100 sm:ms-0 sm:flex"
                         onClick={() => swap(index, index - 1)}>
                         <ArrowUpIcon className="h-5 w-5" />
                       </button>
@@ -306,7 +306,7 @@ export const FormBuilder = function FormBuilder({
                     {index < fields.length - 1 && (
                       <button
                         type="button"
-                        className="bg-default text-muted hover:border-emphasis border-subtle hover:text-emphasis disabled:hover:text-muted invisible absolute -left-[12px] -ml-4 mt-8 hidden h-6 w-6 scale-0 items-center justify-center rounded-md border p-1 transition-all hover:shadow disabled:hover:border-inherit disabled:hover:shadow-none group-hover:visible group-hover:scale-100 sm:ml-0 sm:flex"
+                        className="bg-default text-muted hover:border-emphasis border-subtle hover:text-emphasis disabled:hover:text-muted invisible absolute -start-[12px] -ms-4 mt-8 hidden h-6 w-6 scale-0 items-center justify-center rounded-md border p-1 transition-[transform,box-shadow,border-color] hover:shadow disabled:hover:border-inherit disabled:hover:shadow-none group-hover:visible group-hover:scale-100 sm:ms-0 sm:flex"
                         onClick={() => swap(index, index + 1)}>
                         <ArrowDownIcon className="h-5 w-5" />
                       </button>
@@ -314,8 +314,8 @@ export const FormBuilder = function FormBuilder({
                   </>
                 )}
                 <div>
-                  <div className="mr-4 flex flex-col lg:flex-row lg:items-center">
-                    <div className="text-default text-sm font-semibold ltr:mr-2 rtl:ml-2">
+                  <div className="me-4 flex flex-col lg:flex-row lg:items-center">
+                    <div className="text-default text-sm font-semibold me-2">
                       <FieldLabel field={field} />
                     </div>
                     <div className="flex items-center space-x-2">
@@ -508,12 +508,12 @@ function Options({
                     }}
                     readOnly={readOnly}
                     placeholder={t("enter_option", { index: index + 1 })}
-                    className={value.length > 2 && !readOnly ? "pr-8" : ""}
+                    className={value.length > 2 && !readOnly ? "pe-8" : ""}
                   />
                   {value.length > 2 && !readOnly && (
                     <Button
                       type="button"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 hover:bg-transparent! focus:bg-transparent! focus:outline-none! focus:ring-0!"
+                      className="absolute end-1 top-1/2 -translate-y-1/2 hover:bg-transparent! focus:bg-transparent! focus:outline-none! focus:ring-0!"
                       size="sm"
                       color="minimal"
                       StartIcon="x"

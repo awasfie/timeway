@@ -109,9 +109,9 @@ const LockStatusTable = ({
                     alt={`Avatar of ${user.username || "Nameless"}`}
                     imageSrc={getUserAvatarUrl(user)}
                   />
-                  <div className="text-subtle ml-4 font-medium">
+                  <div className="text-subtle ms-4 font-medium">
                     <span className="text-default">{user.name}</span>
-                    <span className="ml-3">/{user.username}</span>
+                    <span className="ms-3">/{user.username}</span>
                     <br />
                     <span className="break-all">{user.email}</span>
                   </div>
@@ -133,9 +133,9 @@ const LockStatusTable = ({
                     alt={`Avatar of ${team.name}`}
                     imageSrc={getPlaceholderAvatar(team.logoUrl, team.name)}
                   />
-                  <div className="text-subtle ml-4 font-medium">
+                  <div className="text-subtle ms-4 font-medium">
                     <span className="text-default">{team.name}</span>
-                    <span className="ml-3 break-all">/team/{team.slug}</span>
+                    <span className="ms-3 break-all">/team/{team.slug}</span>
                   </div>
                 </div>
               </Cell>

@@ -140,7 +140,7 @@ export function EditForm({
               render={({ field: { value } }) => (
                 <div className="flex items-center">
                   <Avatar alt={`${selectedUser?.name} avatar`} imageSrc={value} size="mdLg" />
-                  <div className="ml-4">
+                  <div className="ms-4">
                     <ImageUploader
                       target="avatar"
                       id="avatar-upload"

@@ -81,7 +81,7 @@ export const AnimatedPopover = ({
               </Tooltip>
               <Icon
                 name="chevron-down"
-                className={classNames("ml-2 w-4 transition-transform duration-150", open && "rotate-180")}
+                className={classNames("ms-2 w-4 transition-transform duration-150", open && "rotate-180")}
               />
             </div>
           )}

@@ -39,11 +39,11 @@ function TabsSkeletonLoader() {
     <div className="mb-2.5 max-w-full">
       <nav className="no-scrollbar flex space-x-0.5 overflow-x-scroll rounded-md">
         <div className="bg-subtle inline-flex h-fit items-center justify-center whitespace-nowrap rounded-md p-1">
-          <SkeletonAvatar className="mb-1 mr-1 h-4 w-4 rounded-full" />
+          <SkeletonAvatar className="mb-1 me-1 h-4 w-4 rounded-full" />
           <SkeletonText className="h-4 w-16" />
         </div>
         <div className="inline-flex h-fit items-center justify-center whitespace-nowrap rounded-md p-1">
-          <SkeletonAvatar className="mb-1 mr-1 h-4 w-4 rounded-full" />
+          <SkeletonAvatar className="mb-1 me-1 h-4 w-4 rounded-full" />
           <SkeletonText className="h-4 w-16" />
         </div>
       </nav>
@@ -86,13 +86,13 @@ function SkeletonItem() {
           <SkeletonText className="h-5 w-32" />
         </div>
         <div className="">
-          <ul className="mt-2 flex space-x-4 rtl:space-x-reverse ">
+          <ul className="mt-2 flex space-x-4 ">
             <li className="flex items-center whitespace-nowrap">
-              <ClockIcon className="text-subtle mr-1.5 mt-0.5 inline h-4 w-4" />
+              <ClockIcon className="text-subtle me-1.5 mt-0.5 inline h-4 w-4" />
               <SkeletonText className="h-4 w-12" />
             </li>
             <li className="flex items-center whitespace-nowrap">
-              <UserIcon className="text-subtle mr-1.5 mt-0.5 inline h-4 w-4" />
+              <UserIcon className="text-subtle me-1.5 mt-0.5 inline h-4 w-4" />
               <SkeletonText className="h-4 w-12" />
             </li>
           </ul>

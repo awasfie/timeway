@@ -217,7 +217,7 @@ export const SelectedCalendarsSettingsWebWrapperSkeleton = () => {
         <div className="border-subtle mt-4 rounded-lg border p-4">
           <div className="flex items-center">
             <div className="bg-emphasis h-10 w-10 animate-pulse rounded-md" />
-            <div className="ml-4 stack-y-2">
+            <div className="ms-4 stack-y-2">
               <div className="bg-emphasis h-4 w-32 animate-pulse rounded-md" />
               <div className="bg-emphasis h-4 w-48 animate-pulse rounded-md" />
             </div>

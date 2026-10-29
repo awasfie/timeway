@@ -92,7 +92,7 @@ export default function RequiresConfirmationController({
                 requiresConfirmation && "rounded-b-none",
                 customClassNames?.container
               )}
-              childrenClassName={classNames("lg:ml-0", customClassNames?.children)}
+              childrenClassName={classNames("lg:ms-0", customClassNames?.children)}
               descriptionClassName={customClassNames?.description}
               title={t("requires_confirmation")}
               data-testid="requires-confirmation"
@@ -198,7 +198,7 @@ export default function RequiresConfirmationController({
                                     });
                                       }}
                                       className={classNames(
-                                    "m-0! block w-16 rounded-r-none border-default border-r-0 text-sm [appearance:textfield] focus:z-10 focus:border-r",
+                                    "m-0! block w-16 rounded-e-none border-default border-e-0 text-sm [appearance:textfield] focus:z-10 focus:border-e",
                                         customClassNames?.conditionalConfirmationRadio?.timeInput
                                       )}
                                       defaultValue={metadata?.requiresConfirmationThreshold?.time || 30}
@@ -238,7 +238,7 @@ export default function RequiresConfirmationController({
                           id="notice"
                           value="notice"
                         />
-                        <div className="stack-y-2 -ml-1">
+                        <div className="stack-y-2 -ms-1">
                           <CheckboxField
                             checked={requiresConfirmationWillBlockSlot}
                             descriptionAsLabel

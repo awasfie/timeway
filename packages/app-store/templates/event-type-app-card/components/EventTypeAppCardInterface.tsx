@@ -32,7 +32,7 @@ const EventTypeAppCard: EventTypeAppCardComponent = function EventTypeAppCard({
       teamId={eventType.team?.id || undefined}>
       <div className="mt-2 text-sm">
         <div className="flex">
-          <span className="ltr:mr-2 rtl:ml-2">
+          <span className="me-2">
             <Icon name={isSunrise ? "sunrise" : "sunset"} />
           </span>
           I am an AppCard for Event with Title: {eventType.title}

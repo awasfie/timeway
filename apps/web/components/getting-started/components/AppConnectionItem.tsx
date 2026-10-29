@@ -79,7 +79,7 @@ const AppConnectionItem = (props: IAppConnectionItem) => {
                   <div className="items-start space-x-2.5">
                     <div className="flex items-start">
                       <div>
-                        <CircleAlertIcon className="mr-2 mt-1 font-semibold" />
+                        <CircleAlertIcon className="me-2 mt-1 font-semibold" />
                       </div>
                       <div>
                         <span className="text-xs font-semibold">
@@ -96,7 +96,7 @@ const AppConnectionItem = (props: IAppConnectionItem) => {
                               <Link
                                 href={`${WEBAPP_URL}/getting-started/connected-calendar`}
                                 className="flex items-center text-xs underline">
-                                <span className="mr-1">
+                                <span className="me-1">
                                   {t("connect_app", { dependencyName: dependency.name })}
                                 </span>
                                 <ArrowRightIcon className="inline-block h-3 w-3" />
@@ -129,7 +129,7 @@ const AppConnectionItem = (props: IAppConnectionItem) => {
         {installed && !isDefault && (
           <Button
             color="secondary"
-            className="ml-2"
+            className="ms-2"
             type="button"
             loading={setDefaultConferencingApp.isPending}
             onClick={() => {

@@ -283,16 +283,16 @@ function BookingListItem(booking: BookingItemProps) {
       data-booking-list-item="true"
       data-booking-uid={booking.uid}
       className={classNames(
-        "group relative w-full transition-all duration-100 ease-out",
+        "group relative w-full transition-[background-color,opacity] duration-100 ease-out",
         "hover:bg-cal-muted",
         isSelected &&
-          "bg-cal-muted before:bg-brand-default rounded-r-md before:absolute before:left-0 before:top-0 before:h-full before:w-1"
+          "bg-cal-muted before:bg-brand-default rounded-e-md before:absolute before:start-0 before:top-0 before:h-full before:w-1"
       )}>
       <div className="flex flex-col sm:flex-row">
-        <div className="sm:min-w-48 hidden align-top ltr:pl-3 rtl:pr-6 sm:table-cell">
+        <div className="sm:min-w-48 hidden align-top ps-3 sm:table-cell">
           <div className="flex h-full items-center">
             {eventTypeColor && <div className="h-[70%] w-0.5" style={{ backgroundColor: eventTypeColor }} />}
-            <ConditionalLink onClick={onClick} bookingLink={bookingLink} className="ml-3">
+            <ConditionalLink onClick={onClick} bookingLink={bookingLink} className="ms-3">
               <div className="cursor-pointer py-4">
                 <div className="text-emphasis text-sm leading-6">{startTime}</div>
                 <div className="text-subtle text-sm">
@@ -349,7 +349,7 @@ function BookingListItem(booking: BookingItemProps) {
             <div className="w-full pb-2 pt-4 sm:hidden">
               <div className="flex w-full items-center justify-between sm:hidden">
                 <div className="text-emphasis text-sm leading-6">{startTime}</div>
-                <div className="text-subtle pr-2 text-sm">
+                <div className="text-subtle pe-2 text-sm">
                   {formatTime(booking.startTime, userTimeFormat, userTimeZone)} -{" "}
                   {formatTime(booking.endTime, userTimeFormat, userTimeZone)}
                   <MeetingTimeInTimezones
@@ -363,23 +363,23 @@ function BookingListItem(booking: BookingItemProps) {
               </div>
 
               {isPending && (
-                <Badge className="ltr:mr-2 rtl:ml-2 sm:hidden" variant="orange">
+                <Badge className="me-2 sm:hidden" variant="orange">
                   {t("unconfirmed")}
                 </Badge>
               )}
               {booking.eventType?.team && (
-                <Badge className="ltr:mr-2 rtl:ml-2 sm:hidden" variant="gray">
+                <Badge className="me-2 sm:hidden" variant="gray">
                   {booking.eventType.team.name}
                 </Badge>
               )}
               {showPendingPayment && (
-                <Badge className="ltr:mr-2 rtl:ml-2 sm:hidden" variant="orange">
+                <Badge className="me-2 sm:hidden" variant="orange">
                   {t("pending_payment")}
                 </Badge>
               )}
               {isRescheduled && (
                 <Tooltip content={`${t("rescheduled_by")} ${booking.rescheduler}`}>
-                  <Badge variant="orange" className="ltr:mr-2 rtl:ml-2 sm:hidden">
+                  <Badge variant="orange" className="me-2 sm:hidden">
                     {t("rescheduled")}
                   </Badge>
                 </Tooltip>
@@ -469,9 +469,9 @@ function BookingListItem(booking: BookingItemProps) {
             </div>
           </ConditionalLink>
         </div>
-        <div className="flex flex-col flex-wrap items-end justify-end gap-2 py-4 pl-4 text-right text-sm font-medium ltr:pr-4 rtl:pl-4 sm:flex-shrink-0 sm:flex-row sm:flex-nowrap sm:items-start sm:pl-0">
+        <div className="flex flex-col flex-wrap items-end justify-end gap-2 py-4 ps-4 text-end text-sm font-medium pe-4 sm:flex-shrink-0 sm:flex-row sm:flex-nowrap sm:items-start sm:ps-0">
           {shouldShowPendingActions(actionContext) && (
-            <div className="flex space-x-2 rtl:space-x-reverse">
+            <div className="flex space-x-2">
               <RejectBookingButton
                 bookingId={booking.id}
                 bookingUid={booking.uid}
@@ -565,26 +565,26 @@ const BookingItemBadges = ({
   const { t } = useLocale();
 
   return (
-    <div className="hidden h-9 flex-row items-center pb-4 pl-6 sm:flex">
+    <div className="hidden h-9 flex-row items-center pb-4 ps-6 sm:flex">
       {isPending && (
-        <Badge className="ltr:mr-2 rtl:ml-2" variant="orange">
+        <Badge className="me-2" variant="orange">
           {t("unconfirmed")}
         </Badge>
       )}
       {isRescheduled && (
         <Tooltip content={`${t("rescheduled_by")} ${booking.rescheduler}`}>
-          <Badge variant="orange" className="ltr:mr-2 rtl:ml-2">
+          <Badge variant="orange" className="me-2">
             {t("rescheduled")}
           </Badge>
         </Tooltip>
       )}
       {isRejected && !isRescheduled && booking.assignmentReasonSortedByCreatedAt.length === 0 && (
-        <Badge variant="gray" className="ltr:mr-2 rtl:ml-2">
+        <Badge variant="gray" className="me-2">
           {t("rejected")}
         </Badge>
       )}
       {booking.eventType?.team && (
-        <Badge className="ltr:mr-2 rtl:ml-2" variant="gray">
+        <Badge className="me-2" variant="gray">
           {booking.eventType.team.name}
         </Badge>
       )}
@@ -607,17 +607,17 @@ const BookingItemBadges = ({
               })()}
             </div>
           }>
-          <Badge className="ltr:mr-2 rtl:ml-2" variant="red">
+          <Badge className="me-2" variant="red">
             {t("reported")}
           </Badge>
         </Tooltip>
       )}
       {booking.paid && !booking.payment[0] ? (
-        <Badge className="ltr:mr-2 rtl:ml-2" variant="orange">
+        <Badge className="me-2" variant="orange">
           {t("error_collecting_card")}
         </Badge>
       ) : booking.paid ? (
-        <Badge className="ltr:mr-2 rtl:ml-2" variant="green" data-testid="paid_badge">
+        <Badge className="me-2" variant="green" data-testid="paid_badge">
           {booking.payment[0].paymentOption === "HOLD" ? t("card_held") : t("paid")}
         </Badge>
       ) : null}
@@ -689,9 +689,9 @@ const RecurringBookingsTooltip = ({
                 <Icon
                   name="refresh-ccw"
                   strokeWidth="3"
-                  className="text-muted float-left mr-1 mt-1.5 inline-block h-3 w-3"
+                  className="text-muted float-left me-1 mt-1.5 inline-block h-3 w-3"
                 />
-                <p className="mt-1 pl-5 text-xs">
+                <p className="mt-1 ps-5 text-xs">
                   {booking.status === BookingStatus.ACCEPTED
                     ? `${t("event_remaining_other", {
                         count: recurringCount,
@@ -1000,13 +1000,13 @@ const GroupedGuests = ({ guests }: { guests: BookingAttendee[] }) => {
           return (
             <DropdownMenuItem key={guest.id}>
               <DropdownItem
-                className="pr-6 focus:outline-none"
+                className="pe-6 focus:outline-none"
                 StartIcon={selectedEmail === guest.email ? "circle-check" : undefined}
                 onClick={(e) => {
                   e.preventDefault();
                   setSelectedEmail(guest.email);
                 }}>
-                <div className={`${selectedEmail !== guest.email ? "pl-6" : ""}`}>
+                <div className={`${selectedEmail !== guest.email ? "ps-6" : ""}`}>
                   {hasName ? (
                     <>
                       <div>{displayName}</div>
@@ -1136,7 +1136,7 @@ const AssignmentReasonTooltip = ({
   return (
     <Tooltip content={<p>{assignmentReason.reasonString}</p>}>
       <Badge
-        className={classNames("ltr:mr-2 rtl:ml-2", onClick && "cursor-pointer hover:opacity-80")}
+        className={classNames("me-2", onClick && "cursor-pointer hover:opacity-80")}
         variant="gray"
         onClick={onClick}>
         {t(badgeTitle)}

@@ -32,12 +32,12 @@ export const InstallableAppCard = ({
   return (
     <div className="border-subtle bg-default relative flex flex-col items-start gap-4 rounded-xl border p-5">
       {isInstalled && (
-        <span className="bg-success text-success absolute right-2 top-2 rounded-md px-2 py-1 text-xs font-medium">
+        <span className="bg-success text-success absolute end-2 top-2 rounded-md px-2 py-1 text-xs font-medium">
           {t("connected")}
         </span>
       )}
       {app.logo && <img src={app.logo} alt={app.name} className="h-9 w-9 rounded-md" />}
-      <p className="text-default line-clamp-1 break-words text-left text-sm font-medium" title={app.name}>
+      <p className="text-default line-clamp-1 break-words text-start text-sm font-medium" title={app.name}>
         {app.name}
       </p>
       <InstallAppButtonWithoutPlanCheck

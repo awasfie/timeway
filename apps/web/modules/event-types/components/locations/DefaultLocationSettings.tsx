@@ -49,7 +49,7 @@ const DefaultLocationSettings = ({
         errors={formState.errors?.locations?.[index]}
         name={eventLocationType.defaultValueVariable}
         className={classNames(
-          "text-error my-1 ml-6 text-sm",
+          "text-error my-1 ms-6 text-sm",
           customClassNames?.organizerContactInput?.errorMessage
         )}
         as="div"

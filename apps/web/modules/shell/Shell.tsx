@@ -146,16 +146,16 @@ export function ShellMain(props: LayoutProps) {
               }
               StartIcon="arrow-left"
               aria-label="Go Back"
-              className="rounded-md ltr:mr-2 rtl:ml-2"
+              className="rounded-md me-2"
               data-testid="go-back-button"
             />
           )}
           {props.heading && (
             <header
               className={classNames(props.large && "py-8", "flex w-full max-w-full items-center truncate")}>
-              {props.HeadingLeftIcon && <div className="ltr:mr-4">{props.HeadingLeftIcon}</div>}
+              {props.HeadingLeftIcon && <div className="me-4">{props.HeadingLeftIcon}</div>}
               <div
-                className={classNames("w-full truncate ltr:mr-4 rtl:ml-4 md:block", props.headerClassName)}>
+                className={classNames("w-full truncate me-4 md:block", props.headerClassName)}>
                 {props.heading && (
                   <h3
                     className={classNames(
@@ -177,8 +177,8 @@ export function ShellMain(props: LayoutProps) {
                   className={classNames(
                     props.backPath
                       ? "relative"
-                      : "pwa:bottom-[max(7rem,_calc(5rem_+_env(safe-area-inset-bottom)))] fixed bottom-20 z-40 ltr:right-4 rtl:left-4 md:z-auto md:ltr:right-0 md:rtl:left-0",
-                    "shrink-0 [-webkit-app-region:no-drag] md:relative md:bottom-auto md:right-auto"
+                      : "pwa:bottom-[max(7rem,_calc(5rem_+_env(safe-area-inset-bottom)))] fixed bottom-20 z-40 end-4 md:z-auto md:end-0",
+                    "shrink-0 [-webkit-app-region:no-drag] md:relative md:bottom-auto md:end-auto"
                   )}>
                   {isLocaleReady && props.CTA}
                 </div>

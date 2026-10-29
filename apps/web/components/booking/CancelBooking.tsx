@@ -258,18 +258,18 @@ export default function CancelBooking(props: Props) {
                   onChange={(e) => setAcknowledgeCancellationNoShowFee(e.target.checked)}
                   descriptionClassName="text-info font-semibold"
                 />
-                <p className="text-subtle ml-9 mt-2 text-sm">{t("contact_organizer")}</p>
+                <p className="text-subtle ms-9 mt-2 text-sm">{t("contact_organizer")}</p>
               </div>
             </div>
           )}
-          <div className="flex flex-col-reverse rtl:space-x-reverse ">
+          <div className="flex flex-col-reverse ">
             <div
               className={classNames(
-                "ml-auto flex w-full space-x-4",
+                "ms-auto flex w-full space-x-4",
                 isRenderedAsCancelDialog && "justify-end"
               )}>
               <Button
-                className="ml-auto"
+                className="ms-auto"
                 color="secondary"
                 onClick={() => props.setIsCancellationMode(false)}>
                 {t("nevermind")}

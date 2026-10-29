@@ -82,7 +82,7 @@ export default function RecurringEventController({
                 recurringEventState !== null && "rounded-b-none",
                 customClassNames?.recurringToggle?.container
               )}
-              childrenClassName={classNames("lg:ml-0", customClassNames?.recurringToggle?.children)}
+              childrenClassName={classNames("lg:ms-0", customClassNames?.recurringToggle?.children)}
               descriptionClassName={customClassNames?.recurringToggle?.description}
               title={t("recurring_event")}
               {...recurringLocked}
@@ -123,7 +123,7 @@ export default function RecurringEventController({
                     <div className="flex items-center">
                       <p
                         className={classNames(
-                          "text-emphasis ltr:mr-2 rtl:ml-2",
+                          "text-emphasis me-2",
                           customClassNames?.frequencyInput?.label
                         )}>
                         {t("repeats_every")}
@@ -149,7 +149,7 @@ export default function RecurringEventController({
                         value={recurringEventFreqOptions[recurringEventState.freq]}
                         isSearchable={false}
                         className={classNames(
-                          "ml-2 block w-18 min-w-0 rounded-md text-sm",
+                          "ms-2 block w-18 min-w-0 rounded-md text-sm",
                           customClassNames?.frequencyUnitSelect?.select
                         )}
                         innerClassNames={customClassNames?.frequencyUnitSelect?.innerClassNames}
@@ -171,7 +171,7 @@ export default function RecurringEventController({
                       )}>
                       <p
                         className={classNames(
-                          "text-emphasis ltr:mr-2 rtl:ml-2",
+                          "text-emphasis me-2",
                           customClassNames?.maxEventsInput?.labelText
                         )}>
                         {t("for_a_maximum_of")}
@@ -194,7 +194,7 @@ export default function RecurringEventController({
                       />
                       <p
                         className={classNames(
-                          "text-emphasis ltr:ml-2 rtl:mr-2",
+                          "text-emphasis ms-2",
                           customClassNames?.maxEventsInput?.suffixText
                         )}>
                         {t("events", {

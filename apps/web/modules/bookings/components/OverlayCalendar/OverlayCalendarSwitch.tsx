@@ -40,7 +40,7 @@ export function OverlayCalendarSwitch({ enabled, hasSession, onStateChange }: Ov
         "hidden gap-2",
         layout === "week_view" || layout === "column_view" ? "xl:flex" : "md:flex"
       )}>
-      <div className="flex items-center gap-2 pr-2">
+      <div className="flex items-center gap-2 pe-2">
         <Switch
           data-testid="overlay-calendar-switch"
           checked={switchEnabled}

@@ -106,7 +106,7 @@ const DateOverrideList = ({
               ))
             )}
           </div>
-          <div className="flex flex-row-reverse gap-5 space-x-2 rtl:space-x-reverse">
+          <div className="flex flex-row-reverse gap-5 space-x-2">
             <DateOverrideInputDialog
               userTimeFormat={userTimeFormat}
               excludedDates={excludedDates}

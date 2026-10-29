@@ -36,7 +36,7 @@ export const CheckedSelect = ({
       {value.map((option) => (
         <div key={option.value} className="border p-2 font-medium">
           <Avatar
-            className="inline ltr:mr-2 rtl:ml-2"
+            className="inline me-2"
             size="sm"
             imageSrc={option.avatar}
             alt={option.label}

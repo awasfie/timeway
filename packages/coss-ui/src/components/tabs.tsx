@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @family/ui/no-physical-direction -- slide-in: indicator offset is JS-measured offsetLeft, physical by construction */
 
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 

@@ -133,7 +133,7 @@ export const CheckedTeamSelect = ({
                 )}>
                 {option.label}
               </p>
-              <div className="ml-auto flex items-center">
+              <div className="ms-auto flex items-center">
                 {option && !option.isFixed ? (
                   <>
                     <Tooltip content={t("change_priority")}>
@@ -144,7 +144,7 @@ export const CheckedTeamSelect = ({
                           setCurrentOption(option);
                         }}
                         className={classNames(
-                          "mr-6 h-2 p-0 text-sm hover:bg-transparent",
+                          "me-6 h-2 p-0 text-sm hover:bg-transparent",
                           getPriorityTextAndColor(option.priority).color,
                           customClassNames?.selectedHostList?.listItem?.changePriorityButton
                         )}>
@@ -155,7 +155,7 @@ export const CheckedTeamSelect = ({
                       <Button
                         color="minimal"
                         className={classNames(
-                          "mr-6 h-2 w-4 p-0 text-sm hover:bg-transparent",
+                          "me-6 h-2 w-4 p-0 text-sm hover:bg-transparent",
                           customClassNames?.selectedHostList?.listItem?.changeWeightButton
                         )}
                         onClick={() => {
@@ -176,7 +176,7 @@ export const CheckedTeamSelect = ({
                   name="x"
                   onClick={() => props.onChange(value.filter((item) => item.value !== option.value))}
                   className={classNames(
-                    "my-auto ml-2 h-4 w-4",
+                    "my-auto ms-2 h-4 w-4",
                     customClassNames?.selectedHostList?.listItem?.removeButton
                   )}
                 />

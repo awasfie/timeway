@@ -63,15 +63,15 @@ export const OnboardingContinuationPrompt = () => {
   };
 
   return (
-    <div className="animate-fade-in fixed bottom-4 right-4 z-50">
+    <div className="animate-fade-in fixed bottom-4 end-4 z-50">
       <div className="bg-default border-muted shadow-default relative w-[360px] rounded-lg border p-4">
         <button
           onClick={() => setIsVisible(false)}
-          className="text-muted hover:text-emphasis absolute right-2 top-2 rounded-md p-1 transition-colors">
+          className="text-muted hover:text-emphasis absolute end-2 top-2 rounded-md p-1 transition-colors">
           <XIcon className="h-4 w-4" />
         </button>
 
-        <div className="mb-3 pr-6">
+        <div className="mb-3 pe-6">
           <h3 className="text-emphasis mb-1 text-base font-semibold">
             {t("onboarding_continue_prompt_title")}
           </h3>
@@ -80,7 +80,7 @@ export const OnboardingContinuationPrompt = () => {
           </p>
         </div>
 
-        <div className="ml-auto flex gap-2">
+        <div className="ms-auto flex gap-2">
           <Button onClick={handleStartOver} color="secondary">
             {t("onboarding_start_over")}
           </Button>

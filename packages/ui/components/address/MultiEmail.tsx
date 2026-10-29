@@ -88,7 +88,7 @@ function MultiEmail({ value, readOnly, label, setValue, placeholder }: MultiEmai
             updatedValue.push("");
             setValue(updatedValue);
           }}
-          className="mr-auto">
+          className="me-auto">
           {label}
         </Button>
       )}

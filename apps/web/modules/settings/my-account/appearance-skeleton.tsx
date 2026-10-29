@@ -28,7 +28,7 @@ export const SkeletonLoader = () => {
         </div>
         <div className="rounded-b-lg">
           <SectionBottomActions align="end">
-            <SkeletonButton className="mr-6 h-8 w-20 rounded-md p-5" />
+            <SkeletonButton className="me-6 h-8 w-20 rounded-md p-5" />
           </SectionBottomActions>
         </div>
       </SkeletonContainer>

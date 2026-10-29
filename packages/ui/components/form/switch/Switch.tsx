@@ -49,7 +49,7 @@ export const Switch = (
           padding && "hover:bg-subtle rounded-md p-1.5",
           classNames?.container
         )}>
-        {LockedIcon && <div className="mr-2">{LockedIcon}</div>}
+        {LockedIcon && <div className="me-2">{LockedIcon}</div>}
         <PrimitiveSwitch.Root
           {...primitiveProps}
           id={id}
@@ -74,7 +74,7 @@ export const Switch = (
             htmlFor={id}
             className={cx(
               "text-emphasis font-medium",
-              size === "sm" ? "m-1 text-xs" : labelOnLeading ? "mr-2 text-sm" : "ml-2 text-sm",
+              size === "sm" ? "m-1 text-xs" : labelOnLeading ? "me-2 text-sm" : "ms-2 text-sm",
               primitiveProps.disabled ? "cursor-not-allowed opacity-25" : "cursor-pointer",
               labelOnLeading && "flex-1"
             )}>

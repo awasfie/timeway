@@ -95,7 +95,7 @@ const UserProfile = ({ user }: UserProfileProps) => {
 
   return (
     <form onSubmit={onSubmit}>
-      <div className="flex flex-row items-center justify-start rtl:justify-end">
+      <div className="flex flex-row items-center justify-start">
         {user && <UserAvatar size="lg" user={user} previewSrc={imageSrc} />}
         <input
           ref={avatarRef}

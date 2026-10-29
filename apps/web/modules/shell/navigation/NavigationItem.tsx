@@ -170,7 +170,7 @@ export const NavigationItem: React.FC<{
                 <Icon
                   name={item.isLoading ? "rotate-cw" : item.icon}
                   className={classNames(
-                    "todesktop:!text-blue-500 h-4 w-4 shrink-0 lg:ltr:mr-2 lg:rtl:ml-2",
+                    "todesktop:!text-blue-500 h-4 w-4 shrink-0 lg:me-2",
                     item.isLoading && "animate-spin"
                   )}
                   aria-hidden="true"
@@ -178,7 +178,7 @@ export const NavigationItem: React.FC<{
                 {shouldShowChevron && (
                   <Icon
                     name={isExpanded ? "chevron-up" : "chevron-down"}
-                    className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-subtle p-0.5 lg:hidden"
+                    className="absolute -bottom-0.5 -end-0.5 h-2.5 w-2.5 rounded-full bg-subtle p-0.5 lg:hidden"
                   />
                 )}
               </div>
@@ -196,7 +196,7 @@ export const NavigationItem: React.FC<{
             {shouldShowChevron && (
               <Icon
                 name={isExpanded ? "chevron-up" : "chevron-down"}
-                className="ml-auto hidden h-4 w-4 lg:block"
+                className="ms-auto hidden h-4 w-4 lg:block"
               />
             )}
           </button>
@@ -215,7 +215,7 @@ export const NavigationItem: React.FC<{
                 ? `aria-[aria-current='page']:bg-transparent!`
                 : `[&[aria-current='page']]:bg-emphasis`,
               isChild
-                ? `[&[aria-current='page']]:text-emphasis [&[aria-current='page']]:bg-emphasis hidden h-8 pl-16 lg:flex lg:pl-11 ${
+                ? `[&[aria-current='page']]:text-emphasis [&[aria-current='page']]:bg-emphasis hidden h-8 ps-16 lg:flex lg:ps-11 ${
                     props.index === 0 ? "mt-0" : "mt-1  hover:mt-1 [&[aria-current='page']]:mt-1"
                   }`
                 : "[&[aria-current='page']]:text-emphasis mt-0.5 text-sm md:justify-center lg:justify-start",
@@ -228,7 +228,7 @@ export const NavigationItem: React.FC<{
               <Icon
                 name={item.isLoading ? "rotate-cw" : item.icon}
                 className={classNames(
-                  "todesktop:!text-blue-500 h-4 w-4 shrink-0 aria-[aria-current='page']:text-inherit lg:ltr:mr-2 lg:rtl:ml-2",
+                  "todesktop:!text-blue-500 h-4 w-4 shrink-0 aria-[aria-current='page']:text-inherit lg:me-2",
                   item.isLoading && "animate-spin"
                 )}
                 aria-hidden="true"
@@ -251,7 +251,7 @@ export const NavigationItem: React.FC<{
       {hasChildren && (
         <div
           className={classNames(
-            "grid transition-all duration-300 ease-in-out",
+            "grid transition-[grid-template-rows] duration-300 ease-in-out",
             shouldShowChildren ? "grid-rows-[1fr] opacity-100 visible" : "grid-rows-[0fr] opacity-0 invisible"
           )}
           aria-hidden={!shouldShowChildren}>
@@ -285,7 +285,7 @@ export const MobileNavigationItem: React.FC<{
       target={item.target}
       className="[&[aria-current='page']]:text-emphasis hover:text-default text-muted bg-transparent! relative my-2 min-w-0 flex-1 overflow-hidden rounded-md p-1 text-center text-xs font-medium focus:z-10 sm:text-sm"
       aria-current={current ? "page" : undefined}>
-      {item.badge && <div className="absolute right-1 top-1">{item.badge}</div>}
+      {item.badge && <div className="absolute end-1 top-1">{item.badge}</div>}
       {item.icon && (
         <Icon
           name={item.icon}
@@ -317,7 +317,7 @@ export const MobileNavigationMoreItem: React.FC<{
     <>
       <span className="text-default flex items-center font-semibold ">
         {item.icon && (
-          <Icon name={item.icon} className="h-5 w-5 shrink-0 ltr:mr-3 rtl:ml-3" aria-hidden="true" />
+          <Icon name={item.icon} className="h-5 w-5 shrink-0 me-3" aria-hidden="true" />
         )}
         {isLocaleReady ? t(item.name) : <SkeletonText />}
       </span>
@@ -331,10 +331,10 @@ export const MobileNavigationMoreItem: React.FC<{
         <>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="hover:bg-subtle flex w-full items-center justify-between p-5 text-left transition">
+            className="hover:bg-subtle flex w-full items-center justify-between p-5 text-start transition">
             <span className="text-default flex items-center font-semibold">
               {item.icon && (
-                <Icon name={item.icon} className="h-5 w-5 shrink-0 ltr:mr-3 rtl:ml-3" aria-hidden="true" />
+                <Icon name={item.icon} className="h-5 w-5 shrink-0 me-3" aria-hidden="true" />
               )}
               {isLocaleReady ? t(item.name) : <SkeletonText />}
             </span>
@@ -342,7 +342,7 @@ export const MobileNavigationMoreItem: React.FC<{
           </button>
           <div
             className={classNames(
-              "grid transition-all duration-300 ease-in-out",
+              "grid transition-[grid-template-rows] duration-300 ease-in-out",
               isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
             )}>
             <div className="overflow-hidden">
@@ -352,7 +352,7 @@ export const MobileNavigationMoreItem: React.FC<{
                     <li key={childItem.name} className="border-subtle border-t">
                       <Link
                         href={childItem.href}
-                        className="hover:bg-cal-muted flex items-center p-4 pl-12 transition">
+                        className="hover:bg-cal-muted flex items-center p-4 ps-12 transition">
                         <span className="text-default font-medium">
                           {isLocaleReady ? t(childItem.name) : <SkeletonText />}
                         </span>
@@ -367,7 +367,7 @@ export const MobileNavigationMoreItem: React.FC<{
       ) : isActionItem ? (
         <button
           onClick={item.onClick}
-          className="hover:bg-subtle flex w-full items-center justify-between p-5 text-left transition">
+          className="hover:bg-subtle flex w-full items-center justify-between p-5 text-start transition">
           {itemContent}
         </button>
       ) : (

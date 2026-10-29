@@ -70,7 +70,7 @@ export default function MakeSetup({ inviteLink }: InferGetServerSidePropsType<ty
               {/* eslint-disable @next/next/no-img-element */}
               <img className="h-11" src="/api/app-store/make/icon.svg" alt="Make Logo" />
             </div>
-            <div className="ml-2 md:ml-5 ltr:mr-2 rtl:ml-2">
+            <div className="ms-2 md:ms-5 me-2">
               <div className="text-default">{t("setting_up_make")}</div>
 
               <>
@@ -110,7 +110,7 @@ export default function MakeSetup({ inviteLink }: InferGetServerSidePropsType<ty
                 )}
               </>
 
-              <ol className="mb-5 ml-5 mt-5 list-decimal ltr:mr-5 rtl:ml-5">
+              <ol className="mb-5 ms-5 mt-5 list-decimal me-5">
                 <li>
                   <ServerTrans
                     t={t}
@@ -119,7 +119,7 @@ export default function MakeSetup({ inviteLink }: InferGetServerSidePropsType<ty
                       <a
                         key="make-invite-link"
                         href={inviteLink}
-                        className="ml-1 mr-1 text-orange-600 underline">
+                        className="ms-1 me-1 text-orange-600 underline">
                         Make Invite Link
                       </a>,
                     ]}
@@ -150,7 +150,7 @@ const CopyApiKey = ({ apiKey }: { apiKey: string }) => {
   return (
     <div>
       <div className="my-2 mt-3 flex-wrap sm:flex sm:flex-nowrap">
-        <code className="bg-subtle h-full w-full whitespace-pre-wrap rounded-md py-[6px] pl-2 pr-2 sm:rounded-r-none sm:pr-5">
+        <code className="bg-subtle h-full w-full whitespace-pre-wrap rounded-md py-[6px] ps-2 pe-2 sm:rounded-e-none sm:pe-5">
           {apiKey}
         </code>
         <Tooltip side="top" content={t("copy_to_clipboard")}>
@@ -160,8 +160,8 @@ const CopyApiKey = ({ apiKey }: { apiKey: string }) => {
               showToast(t("api_key_copied"), "success");
             }}
             type="button"
-            className="mt-4 text-base sm:mt-0 sm:rounded-l-none">
-            <ClipboardIcon className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+            className="mt-4 text-base sm:mt-0 sm:rounded-s-none">
+            <ClipboardIcon className="h-4 w-4 me-2" />
             {t("copy")}
           </Button>
         </Tooltip>

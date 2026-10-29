@@ -175,7 +175,7 @@ export const EventSetupTab = (
               customClassNames?.titleSection?.urlInput?.container
             )}
             labelClassName={classNames(customClassNames?.titleSection?.urlInput?.label)}
-            className={classNames("pl-0", customClassNames?.titleSection?.urlInput?.input)}
+            className={classNames("ps-0", customClassNames?.titleSection?.urlInput?.input)}
             addOnLeading={
               isPlatform ? undefined : (
                 <span className="flex items-center h-full min-w-0 max-w-24 overflow-hidden text-ellipsis whitespace-nowrap md:max-w-56 text-sm leading-[1.5] relative top-[1px]">

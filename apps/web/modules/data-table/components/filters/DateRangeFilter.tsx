@@ -178,7 +178,7 @@ export const DateRangeFilter = ({
           {showColumnName && (
             <>
               <span>{column.title}</span>
-              <Badge variant="gray" className="ml-2">
+              <Badge variant="gray" className="ms-2">
                 {selectedValue}
               </Badge>
             </>
@@ -188,7 +188,7 @@ export const DateRangeFilter = ({
       </PopoverTrigger>
       <PopoverContent className="flex w-fit p-0" align="end">
         {isCustomPreset && (
-          <div className="border-subtle border-r">
+          <div className="border-subtle border-e">
             <DateRangePicker
               dates={{
                 startDate: startDate?.toDate(),

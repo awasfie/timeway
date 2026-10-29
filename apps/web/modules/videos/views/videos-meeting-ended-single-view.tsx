@@ -23,7 +23,7 @@ export default function MeetingUnavailable(props: PageProps) {
                 &#8203;
               </span>
               <div
-                className="bg-default inline-block transform overflow-hidden rounded-lg px-4 pb-4 pt-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6 sm:align-middle"
+                className="bg-default inline-block transform overflow-hidden rounded-lg px-4 pb-4 pt-5 text-start align-bottom shadow-xl transition-[opacity,transform] sm:my-8 sm:w-full sm:max-w-sm sm:p-6 sm:align-middle"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="modal-headline">
@@ -41,7 +41,7 @@ export default function MeetingUnavailable(props: PageProps) {
                       {props.booking.title}
                     </h2>
                     <p className="text-subtle text-center">
-                      <CalendarIcon className="-mt-1 mr-1 inline-block h-4 w-4" />
+                      <CalendarIcon className="-mt-1 me-1 inline-block h-4 w-4" />
                       {dayjs(props.booking.startTime).format(`${detectBrowserTimeFormat}, dddd DD MMMM YYYY`)}
                     </p>
                   </div>

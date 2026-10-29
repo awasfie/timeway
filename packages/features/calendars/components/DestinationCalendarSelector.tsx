@@ -85,8 +85,8 @@ export const OptionComponent = ({ ...props }: OptionProps<Option>) => {
   return (
     <components.Option {...props}>
       <div className="flex">
-        <span className="mr-auto">{label}</span>
-        {props.isSelected && <CheckIcon className="ml-2 h-4 w-4" />}
+        <span className="me-auto">{label}</span>
+        {props.isSelected && <CheckIcon className="ms-2 h-4 w-4" />}
       </div>
     </components.Option>
   );
@@ -203,7 +203,7 @@ const DestinationCalendarSelector = ({
         }}
         isSearchable={false}
         className={classNames(
-          "border-default my-2 block w-full min-w-0 flex-1 rounded-none rounded-r-sm text-sm",
+          "border-default my-2 block w-full min-w-0 flex-1 rounded-none rounded-e-sm text-sm",
           customClassNames?.select
         )}
         innerClassNames={customClassNames?.innerClassNames}

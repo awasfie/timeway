@@ -182,7 +182,7 @@ export function EventTypesList({ table, orgTeams }: Props) {
           </Command>
           <div className="my-1.5 flex w-full">
             <Button
-              className="ml-auto mr-1.5 rounded-md"
+              className="ms-auto me-1.5 rounded-md"
               size="sm"
               onClick={() => {
                 const userIds = selectedUsers.map((user) => user.id);
@@ -226,7 +226,7 @@ const ListItem = ({ onSelect, text, isSelected, isTeam }: ListItemProps) => {
       {text}
       <div
         className={classNames(
-          "border-subtle ml-auto flex h-4 w-4 items-center justify-center rounded-sm border",
+          "border-subtle ms-auto flex h-4 w-4 items-center justify-center rounded-sm border",
           isSelected ? "text-emphasis" : "opacity-50 [&_svg]:invisible"
         )}>
         <CheckIcon className={classNames("h-4 w-4")} />

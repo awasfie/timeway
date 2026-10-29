@@ -192,7 +192,7 @@ export function SaveFilterSegmentButton() {
 
             {isAdminOrOwner && saveMode === "create" && (
               <>
-                <div className="-ml-2 mt-4">
+                <div className="-ms-2 mt-4">
                   <Switch
                     id="teamSegment"
                     label={t("save_for_team")}

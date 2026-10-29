@@ -141,7 +141,7 @@ function RangeLimitRadioItem({
           <RadioGroup.Item
             id={radioValue}
             value={radioValue}
-            className="flex h-4 w-4 min-w-4 cursor-pointer items-center rounded-full border border-default bg-default focus:border-2 focus:outline-none ltr:mr-2 rtl:ml-2">
+            className="flex h-4 w-4 min-w-4 cursor-pointer items-center rounded-full border border-default bg-default focus:border-2 focus:outline-none me-2">
             <RadioGroup.Indicator className="relative flex h-4 w-4 items-center justify-center after:block after:h-2 after:w-2 after:rounded-full after:bg-inverted" />
           </RadioGroup.Item>
         )}
@@ -150,7 +150,7 @@ function RangeLimitRadioItem({
       <div>
         <div
           className={classNames(
-            "mt-2 mr-2 ml-0 w-full sm:mt-0 sm:ml-2 sm:w-auto",
+            "mt-2 me-2 ms-0 w-full sm:mt-0 sm:ms-2 sm:w-auto",
             customClassNames?.datePickerWraper
           )}>
           <Controller
@@ -224,7 +224,7 @@ function RollingLimitRadioItem({
         <RadioGroup.Item
           id={radioValue}
           value={radioValue}
-          className="flex h-4 w-4 min-w-4 cursor-pointer items-center rounded-full border border-default bg-default focus:border-2 focus:outline-none ltr:mr-2 rtl:ml-2">
+          className="flex h-4 w-4 min-w-4 cursor-pointer items-center rounded-full border border-default bg-default focus:border-2 focus:outline-none me-2">
           <RadioGroup.Indicator className="relative flex h-4 w-4 items-center justify-center after:block after:h-2 after:w-2 after:rounded-full after:bg-inverted" />
         </RadioGroup.Item>
       )}
@@ -253,14 +253,14 @@ function RollingLimitRadioItem({
             value={getSelectedOption()}
             defaultValue={getSelectedOption()}
             className={classNames(
-              "mt-0! ml-2 w-28 shrink sm:w-36",
+              "mt-0! ms-2 w-28 shrink sm:w-36",
               customClassNames?.periodTypeSelect?.select
             )}
             innerClassNames={customClassNames?.periodTypeSelect?.innerClassNames}
           />
           <span className="ms-2 me-2">&nbsp;{t("into_the_future")}</span>
         </div>
-        <div className="-ml-6 flex flex-col py-2">
+        <div className="-ms-6 flex flex-col py-2">
           <div className="flex items-center">
             <CheckboxField
               checked={!!rollingExcludeUnavailableDays}
@@ -367,7 +367,7 @@ const MinimumBookingNoticeInput = function MinimumBookingNoticeInput({
           label={t("minimum_booking_notice")}
           type="number"
           placeholder="0"
-          className={classNames("mb-0 h-8 ltr:mr-2 rtl:ml-2", customClassNames?.input)}
+          className={classNames("mb-0 h-8 me-2", customClassNames?.input)}
           min={0}
         />
         <input type="hidden" ref={ref} {...passThroughProps} />
@@ -376,7 +376,7 @@ const MinimumBookingNoticeInput = function MinimumBookingNoticeInput({
         isSearchable={false}
         isDisabled={passThroughProps.disabled}
         className={classNames(
-          "mb-0 ml-2 w-full capitalize md:min-w-[150px] md:max-w-[200px]",
+          "mb-0 ms-2 w-full capitalize md:min-w-[150px] md:max-w-[200px]",
           customClassNames?.select
         )}
         innerClassNames={customClassNames?.innerClassNames}
@@ -686,7 +686,7 @@ export const EventLimitsTab = ({ eventType, customClassNames }: EventLimitsTabPr
                 isChecked && "rounded-b-none",
                 customClassNames?.bookingFrequencyLimit?.container
               )}
-              childrenClassName={classNames("lg:ml-0", customClassNames?.bookingFrequencyLimit?.children)}
+              childrenClassName={classNames("lg:ms-0", customClassNames?.bookingFrequencyLimit?.children)}
               descriptionClassName={customClassNames?.bookingFrequencyLimit?.description}>
               <div
                 className={classNames(
@@ -744,7 +744,7 @@ export const EventLimitsTab = ({ eventType, customClassNames }: EventLimitsTabPr
                 isChecked && "rounded-b-none",
                 customClassNames?.totalDurationLimit?.container
               )}
-              childrenClassName={classNames("lg:ml-0", customClassNames?.totalDurationLimit?.children)}
+              childrenClassName={classNames("lg:ms-0", customClassNames?.totalDurationLimit?.children)}
               descriptionClassName={customClassNames?.totalDurationLimit?.description}
               title={t("limit_total_booking_duration")}
               description={t("limit_total_booking_duration_description")}
@@ -794,7 +794,7 @@ export const EventLimitsTab = ({ eventType, customClassNames }: EventLimitsTabPr
                 isChecked && "rounded-b-none",
                 customClassNames?.futureBookingLimit?.container
               )}
-              childrenClassName={classNames("lg:ml-0", customClassNames?.futureBookingLimit?.children)}
+              childrenClassName={classNames("lg:ms-0", customClassNames?.futureBookingLimit?.children)}
               descriptionClassName={customClassNames?.futureBookingLimit?.description}
               title={t("limit_future_bookings")}
               description={
@@ -865,7 +865,7 @@ export const EventLimitsTab = ({ eventType, customClassNames }: EventLimitsTabPr
             offsetToggle && "rounded-b-none",
             customClassNames?.offsetStartTimes?.container
           )}
-          childrenClassName={classNames("lg:ml-0", customClassNames?.offsetStartTimes?.children)}
+          childrenClassName={classNames("lg:ms-0", customClassNames?.offsetStartTimes?.children)}
           title={t("offset_toggle")}
           descriptionClassName={customClassNames?.offsetStartTimes?.description}
           description={t("offset_toggle_description")}
@@ -949,7 +949,7 @@ const IntervalLimitItem = ({
     <div
       data-testid="add-limit"
       className={classNames(
-        "mb-4 flex w-full min-w-0 items-center gap-x-2 text-sm rtl:space-x-reverse",
+        "mb-4 flex w-full min-w-0 items-center gap-x-2 text-sm",
         customClassNames?.container
       )}
       key={limitKey}>

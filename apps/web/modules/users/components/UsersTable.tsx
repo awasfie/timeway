@@ -149,7 +149,7 @@ export function UsersTable() {
                       alt={`Avatar of ${user.username || "Nameless"}`}
                       imageSrc={`${WEBAPP_URL}/${user.username}/avatar.png`}
                     />
-                    <div className="text-subtle ml-4 font-medium">
+                    <div className="text-subtle ms-4 font-medium">
                       <div className="flex gap-3">
                         <span className="text-default">{user.name}</span>
                         <span>/{user.username}</span>

@@ -23,7 +23,7 @@ export const CalendarViewComponent = () => {
         key="large-calendar"
         area="main"
         visible={true}
-        className="border-subtle sticky top-0 ml-px h-full md:border-l">
+        className="border-subtle sticky top-0 ms-px h-full md:border-s">
         <LargeCalendar extraDays={7} isLoading={false} />
       </BookerSection>
     </AtomsWrapper>

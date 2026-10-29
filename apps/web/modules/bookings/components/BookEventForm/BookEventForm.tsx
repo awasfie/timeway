@@ -221,7 +221,7 @@ export const BookEventForm = ({
             .
           </div>
         )}
-        <div className="flex justify-end mt-auto space-x-2 modalsticky rtl:space-x-reverse">
+        <div className="flex justify-end mt-auto space-x-2 modalsticky">
           {!!onCancel && (
             <Button
               color="minimal"
@@ -311,7 +311,7 @@ const getError = ({
       {error.data?.traceId && (
         <div className="mt-2 text-xs text-subtle">
           <span className="font-medium">{t("trace_reference_id")}:</span>
-          <code className="ml-1 font-mono break-all select-all">{error.data.traceId}</code>
+          <code className="ms-1 font-mono break-all select-all">{error.data.traceId}</code>
         </div>
       )}
     </>

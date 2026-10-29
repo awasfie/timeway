@@ -51,7 +51,7 @@ function FilterButton({ table, displayedFilterCount, setShowFilters }: FilterBut
       size="sm"
       onClick={() => setShowFilters((value) => !value)}>
       {t("filter")}
-      <Badge variant="gray" className="ml-1">
+      <Badge variant="gray" className="ms-1">
         {displayedFilterCount}
       </Badge>
     </Button>

@@ -54,7 +54,7 @@ export default function AppCard({
             <div className="flex w-full items-center gap-1">
               <Section.Title>{app?.name}</Section.Title>
               {!app?.isInstalled && (
-                <span className="bg-emphasis ml-1 rounded px-1 py-0.5 text-xs font-medium leading-3 tracking-[0.01em]">
+                <span className="bg-emphasis ms-1 rounded px-1 py-0.5 text-xs font-medium leading-3 tracking-[0.01em]">
                   {app?.categories[0].charAt(0).toUpperCase() + app?.categories[0].slice(1)}
                 </span>
               )}
@@ -92,7 +92,7 @@ export default function AppCard({
               </div>
             )} */}
             {app?.isInstalled || app.credentialOwner ? (
-              <div className="ml-auto flex items-center">
+              <div className="ms-auto flex items-center">
                 <Switch
                   size="sm"
                   disabled={!app.enabled || managedDisabled || disableSwitch}
@@ -114,7 +114,7 @@ export default function AppCard({
               </div>
             ) : (
               <OmniInstallAppButton
-                className="ml-auto flex items-center"
+                className="ms-auto flex items-center"
                 app={app}
                 returnTo={returnTo}
                 teamId={teamId}
@@ -132,7 +132,7 @@ export default function AppCard({
             {app.isSetupAlready === undefined || app.isSetupAlready ? (
               <div className="relative text-sm [&_input]:mb-0 [&_input]:leading-4">
                 {!hideSettingsIcon && !isPlatform && (
-                  <Link href={`/apps/${app.slug}/setup`} className="absolute right-0 top-0 ">
+                  <Link href={`/apps/${app.slug}/setup`} className="absolute end-0 top-0 ">
                     <Icon name="settings" className="text-default h-4 w-4" aria-hidden="true" />
                   </Link>
                 )}

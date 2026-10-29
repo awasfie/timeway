@@ -32,9 +32,9 @@ export function DynamicLink<T extends { username: string | null }>({
       {isVisible ? (
         <div className="w-full gap-1 rounded-lg text-sm font-medium leading-none md:flex">
           <div className="items-center truncate p-2 md:max-w-[300px]">
-            <p className="text-center md:text-left">{domainWithoutHttps}</p>
+            <p className="text-center md:text-start">{domainWithoutHttps}</p>
           </div>
-          <div className="ml-auto flex items-center justify-center gap-1 md:justify-start">
+          <div className="ms-auto flex items-center justify-center gap-1 md:justify-start">
             <Button
               variant="icon"
               StartIcon={isCopied ? "check" : "copy"}

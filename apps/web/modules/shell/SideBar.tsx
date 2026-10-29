@@ -60,7 +60,7 @@ export function SideBar({ bannersHeight, user }: SideBarProps) {
       <aside
         style={sidebarStylingAttributes}
         className={classNames(
-          "fixed left-0 hidden h-full w-14 flex-col overflow-y-auto overflow-x-hidden border-muted border-r bg-cal-muted md:sticky md:flex lg:w-56 lg:px-3",
+          "fixed start-0 hidden h-full w-14 flex-col overflow-y-auto overflow-x-hidden border-muted border-e bg-cal-muted md:sticky md:flex lg:w-56 lg:px-3",
           "max-h-screen"
         )}>
         <div className="flex h-full flex-col justify-between py-3 lg:pt-4">
@@ -92,7 +92,7 @@ export function SideBar({ bannersHeight, user }: SideBarProps) {
                 </span>
               </div>
             )}
-            <div className="flex w-full justify-end rtl:space-x-reverse">
+            <div className="flex w-full justify-end">
               <button
                 color="minimal"
                 onClick={() => window.history.back()}
@@ -129,7 +129,7 @@ export function SideBar({ bannersHeight, user }: SideBarProps) {
                 aria-label={t(item.name)}
                 target={item.target}
                 className={classNames(
-                  "text-left",
+                  "text-start",
                   "justify-right group flex items-center rounded-md px-2 py-1.5 font-medium text-default text-sm transition [&[aria-current='page']]:bg-emphasis",
                   "mt-0.5 w-full text-sm [&[aria-current='page']]:text-emphasis",
                   isLocaleReady ? "hover:bg-subtle hover:text-emphasis" : "",
@@ -141,7 +141,7 @@ export function SideBar({ bannersHeight, user }: SideBarProps) {
                     name={item.isLoading ? "rotate-cw" : item.icon}
                     className={classNames(
                       "h-4 w-4 shrink-0 aria-[aria-current='page']:text-inherit",
-                      "ml-3 md:mx-auto lg:ltr:mr-2 lg:rtl:ml-2",
+                      "ms-3 md:mx-auto lg:me-2",
                       item.isLoading && "animate-spin"
                     )}
                     aria-hidden="true"

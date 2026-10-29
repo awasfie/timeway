@@ -72,7 +72,7 @@ export default function Apps({ isAdmin, categories, appStore, userAdminTeams }: 
       subtitle={t("app_store_description")}
       actions={(className) => (
         <div className="flex w-full flex-col pt-4 md:flex-row md:justify-between md:pt-0 lg:w-auto">
-          <div className="ltr:mr-2 rtl:ml-2 lg:hidden">
+          <div className="me-2 lg:hidden">
             <HorizontalTabs tabs={tabs} />
           </div>
           <div>

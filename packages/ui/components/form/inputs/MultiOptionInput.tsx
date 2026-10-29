@@ -279,7 +279,7 @@ export const MultiOptionInput = <TFieldValues extends FieldValues>({
                   onClick={() => moveUp(index)}
                   disabled={index === 0 || disabled}
                   className={classNames(
-                    "bg-default text-muted hover:text-emphasis invisible flex h-6 w-6 items-center justify-center rounded-t-md border p-1 transition-all hover:border-transparent hover:shadow group-hover:visible",
+                    "bg-default text-muted hover:text-emphasis invisible flex h-6 w-6 items-center justify-center rounded-t-md border p-1 transition-[box-shadow,border-color] hover:border-transparent hover:shadow group-hover:visible",
                     index === 0 ? "cursor-not-allowed opacity-30" : "cursor-pointer"
                   )}>
                   <ArrowUpIcon className="h-3 w-3" />
@@ -289,7 +289,7 @@ export const MultiOptionInput = <TFieldValues extends FieldValues>({
                   onClick={() => moveDown(index)}
                   disabled={index === options.length - 1 || disabled}
                   className={classNames(
-                    "bg-default text-muted hover:text-emphasis invisible -mt-px flex h-6 w-6 items-center justify-center rounded-b-md border p-1 transition-all hover:border-transparent hover:shadow group-hover:visible",
+                    "bg-default text-muted hover:text-emphasis invisible -mt-px flex h-6 w-6 items-center justify-center rounded-b-md border p-1 transition-[box-shadow,border-color] hover:border-transparent hover:shadow group-hover:visible",
                     index === options.length - 1 ? "cursor-not-allowed opacity-30" : "cursor-pointer"
                   )}>
                   <ArrowDownIcon className="h-3 w-3" />

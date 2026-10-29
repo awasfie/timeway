@@ -39,7 +39,7 @@ type SelectedLabelsProps = {
 };
 
 function Operator({ children }: { children: React.ReactNode }) {
-  return <span className="ml-2 text-sm lowercase opacity-75">{children}</span>;
+  return <span className="ms-2 text-sm lowercase opacity-75">{children}</span>;
 }
 
 function AppliedTextFilterValue({ filterValue }: SelectedLabelsProps) {
@@ -58,7 +58,7 @@ function AppliedTextFilterValue({ filterValue }: SelectedLabelsProps) {
   return (
     <>
       <Operator>{operatorOption.label}</Operator>
-      <Badge variant="gray" className="ml-2">
+      <Badge variant="gray" className="ms-2">
         {operand}
       </Badge>
     </>
@@ -75,7 +75,7 @@ function AppliedNumberFilterValue({ filterValue }: SelectedLabelsProps) {
   return (
     <>
       <Operator>{operatorOption.label}</Operator>
-      <Badge variant="gray" className="ml-2">
+      <Badge variant="gray" className="ms-2">
         {filterValue.data.operand}
       </Badge>
     </>
@@ -100,11 +100,11 @@ function AppliedSelectFilterValue({ column, filterValue }: SelectedLabelsProps) 
 
   return (
     <>
-      <Badge variant="gray" className="ml-2">
+      <Badge variant="gray" className="ms-2">
         {text}
       </Badge>
       {moreCount > 0 && (
-        <Badge variant="gray" className="ml-2">
+        <Badge variant="gray" className="ms-2">
           +{moreCount}
         </Badge>
       )}

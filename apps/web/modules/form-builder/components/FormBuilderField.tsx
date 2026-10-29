@@ -125,7 +125,7 @@ export const FormBuilderField = ({
                     <div
                       data-testid={`error-message-${field.name}`}
                       className="mt-2 flex items-center text-sm text-red-700 ">
-                      <InfoIcon className="h-3 w-3 ltr:mr-2 rtl:ml-2" />
+                      <InfoIcon className="h-3 w-3 me-2" />
                       <p>{t(message || "invalid_input")}</p>
                     </div>
                   );
@@ -173,7 +173,7 @@ const WithLabel = ({
             <div className="mb-2 flex items-center">
               <Label className="mb-0! flex items-center" htmlFor={htmlFor}>
                 {renderLabel(field)}
-                <span className="text-emphasis -mb-1 ml-1 text-sm font-medium leading-none">
+                <span className="text-emphasis -mb-1 ms-1 text-sm font-medium leading-none">
                   {!readOnly && field.required ? "*" : ""}
                 </span>
                 {field.type === "phone" && <InfoBadge content={t("number_in_international_format")} />}

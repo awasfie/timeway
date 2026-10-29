@@ -127,7 +127,7 @@ export default function WebhookListItem(props: {
                 <TooltipProvider delay={0}>
                   <Tooltip>
                     <TooltipTrigger
-                      className="after:absolute after:left-full after:h-full after:w-1"
+                      className="after:absolute after:start-full after:h-full after:w-1"
                       render={<Badge variant="info" />}>
                       {getWebhookVersionLabel(webhook.version)}
                     </TooltipTrigger>

@@ -255,7 +255,7 @@ const OAuthClientDetailsDialog = ({
               <div className="flex">
                 <code
                   data-testid="oauth-client-details-client-id"
-                  className="px-2 py-1 w-full font-mono text-sm truncate align-middle rounded-md rounded-r-none bg-subtle text-default">
+                  className="px-2 py-1 w-full font-mono text-sm truncate align-middle rounded-md rounded-e-none bg-subtle text-default">
                   {client.clientId}
                 </code>
                 <Tooltip side="top" content={t("copy_to_clipboard")}>
@@ -268,7 +268,7 @@ const OAuthClientDetailsDialog = ({
                     }}
                     type="button"
                     size="sm"
-                    className="rounded-l-none"
+                    className="rounded-s-none"
                     StartIcon="clipboard">
                     {t("copy")}
                   </Button>

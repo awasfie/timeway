@@ -203,7 +203,7 @@ const PremiumTextfield = (props: ICustomUsernameProps) => {
         <span
           className={classNames(
             isInputUsernamePremium ? "border border-orange-400 " : "",
-            "border-default bg-cal-muted text-subtle hidden h-8 items-center rounded-l-md border border-r-0 px-3 text-sm md:inline-flex"
+            "border-default bg-cal-muted text-subtle hidden h-8 items-center rounded-s-md border border-e-0 px-3 text-sm md:inline-flex"
           )}>
           {process.env.NEXT_PUBLIC_WEBSITE_URL.replace("https://", "").replace("http://", "")}/
         </span>
@@ -217,13 +217,13 @@ const PremiumTextfield = (props: ICustomUsernameProps) => {
             autoCorrect="none"
             disabled={disabled}
             className={classNames(
-              "border-l my-0 rounded-md font-sans text-sm leading-4 focus:ring-0! sm:rounded-l-none",
+              "border-s my-0 rounded-md font-sans text-sm leading-4 focus:ring-0! sm:rounded-s-none",
               isInputUsernamePremium
                 ? "border border-orange-400 focus:border focus:border-orange-400"
                 : "border focus:border",
               markAsError
                 ? "focus:shadow-0 focus:ring-shadow-0 border-red-500  focus:border-red-500 focus:outline-none"
-                : "border-l-default",
+                : "border-s-default",
               disabled ? "bg-subtle text-muted focus:border-0" : ""
             )}
             value={inputUsernameValue}
@@ -239,7 +239,7 @@ const PremiumTextfield = (props: ICustomUsernameProps) => {
             }}
             data-testid="username-input"
           />
-          <div className="absolute right-2 top-0 flex flex-row">
+          <div className="absolute end-2 top-0 flex flex-row">
             <span
               className={classNames(
                 "mx-2 py-2",
@@ -289,7 +289,7 @@ const PremiumTextfield = (props: ICustomUsernameProps) => {
                     {currentUsername}
                   </p>
                 </div>
-                <div className="ml-6 flex-1">
+                <div className="ms-6 flex-1">
                   <p className="text-subtle" data-testid="new-username">
                     {t("new_username")}
                   </p>
@@ -308,7 +308,7 @@ const PremiumTextfield = (props: ICustomUsernameProps) => {
                 data-testid="go-to-billing"
                 href={paymentLink}>
                 <>
-                  {t("go_to_stripe_billing")} <ExternalLinkIcon className="ml-1 h-4 w-4" />
+                  {t("go_to_stripe_billing")} <ExternalLinkIcon className="ms-1 h-4 w-4" />
                 </>
               </Button>
             )}

@@ -77,7 +77,7 @@ export const AddGuestsDialog = (props: IAddGuestsDialog) => {
                 <div className="shrink-0">
                   <TriangleAlertIcon className="h-5 w-5" />
                 </div>
-                <div className="ml-3">
+                <div className="ms-3">
                   <p className="font-medium">{t("emails_must_be_unique_valid")}</p>
                 </div>
               </div>

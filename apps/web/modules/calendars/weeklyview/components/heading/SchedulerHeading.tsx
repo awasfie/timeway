@@ -17,7 +17,7 @@ export function SchedulerHeading() {
         {startDate.format("MMM DD")}-{endDate.format("DD")}
         <span className="text-subtle">,{startDate.format("YYYY")}</span>
       </h1>
-      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+      <div className="flex items-center space-x-2">
         {/* TODO: Renable when we have daily/mobile support */}
         {/* <ToggleGroup
           options={[

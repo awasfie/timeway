@@ -108,7 +108,7 @@ export function WizardForm({
               color="primary"
               form={`wizard-step-${currentStep}`}
               disabled={currentStepData.isEnabled === false}
-              className="relative ml-2">
+              className="relative ms-2">
               {isLastStep ? finishLabel : nextLabel}
             </Button>
           </div>

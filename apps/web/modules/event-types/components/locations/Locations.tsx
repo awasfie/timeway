@@ -286,7 +286,7 @@ const Locations: React.FC<LocationsProps> = ({
                       errors={formState.errors?.locations?.[index]}
                       name={eventLocationType.defaultValueVariable}
                       className={classNames(
-                        "text-error my-1 ml-6 text-sm",
+                        "text-error my-1 ms-6 text-sm",
                         customClassNames?.organizerContactInput?.errorMessage
                       )}
                       as="div"
@@ -295,7 +295,7 @@ const Locations: React.FC<LocationsProps> = ({
                   </div>
                   <div
                     className={classNames(
-                      "ml-6",
+                      "ms-6",
                       customClassNames?.organizerContactInput?.publicDisplayCheckbox?.container
                     )}>
                     <CheckboxField
@@ -372,7 +372,7 @@ const Locations: React.FC<LocationsProps> = ({
             location.type === MeetLocationType && props.destinationCalendar?.integration !== "google_calendar"
         ) && (
           <div className="text-default flex items-center text-sm">
-            <div className="mr-1.5 h-3 w-3">
+            <div className="me-1.5 h-3 w-3">
               <CheckIcon className="h-3 w-3" />
             </div>
             <p className="text-default text-sm">
@@ -392,7 +392,7 @@ const Locations: React.FC<LocationsProps> = ({
           </div>
         )}
         {isChildrenManagedEventType && !locationAvailable && locationDetails && (
-          <p className="pl-1 text-sm leading-none text-red-600">
+          <p className="ps-1 text-sm leading-none text-red-600">
             {t("app_not_connected", { appName: locationDetails.name })}{" "}
             <a className="underline" href={`${WEBAPP_URL}/apps/${locationDetails.slug}`}>
               {t("connect_now")}

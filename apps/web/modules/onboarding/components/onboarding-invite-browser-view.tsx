@@ -160,7 +160,7 @@ export const OnboardingInviteBrowserView = ({
   }
 
   return (
-    <div className="border-subtle bg-cal-muted hidden h-full w-full flex-col overflow-hidden rounded-l-2xl border xl:flex">
+    <div className="border-subtle bg-cal-muted hidden h-full w-full flex-col overflow-hidden rounded-s-2xl border xl:flex">
       {/* Content */}
       <div className="h-full px-6 pt-6">
         <AnimatePresence mode="wait">
@@ -206,12 +206,12 @@ export const OnboardingInviteBrowserView = ({
 
                   {/* Organization Avatar - Overlaying the banner */}
                   {useOrganizationInvites && avatar && (
-                    <div className="absolute -bottom-6 left-4">
+                    <div className="absolute -bottom-6 start-4">
                       <Avatar size="lg" imageSrc={avatar} alt={displayName} className="h-12 w-12 border" />
                     </div>
                   )}
                   {!useOrganizationInvites && organizationBrand.banner && avatar && (
-                    <div className="absolute -bottom-6 left-4">
+                    <div className="absolute -bottom-6 start-4">
                       <Avatar size="lg" imageSrc={avatar} alt={displayName} className="h-12 w-12 border" />
                     </div>
                   )}
@@ -232,10 +232,10 @@ export const OnboardingInviteBrowserView = ({
                     className="border-default mb-4 h-12 w-12 border-2"
                   />
                 )}
-                <h2 className="text-emphasis font-cal w-full text-left text-xl font-semibold leading-tight">
+                <h2 className="text-emphasis font-cal w-full text-start text-xl font-semibold leading-tight">
                   {displayName}
                 </h2>
-                <p className="text-subtle text-left text-sm font-normal leading-tight">
+                <p className="text-subtle text-start text-sm font-normal leading-tight">
                   {displayBio || "We're emailing you all the details"}
                 </p>
               </div>

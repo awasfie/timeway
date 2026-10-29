@@ -159,7 +159,7 @@ export function UserForm({
                 })}
                 size="lg"
               />
-              <div className="ml-4">
+              <div className="ms-4">
                 <ImageUploader
                   target="avatar"
                   id="avatar-upload"

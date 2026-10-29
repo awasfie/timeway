@@ -544,10 +544,10 @@ export function VideoMeetingInfo(props: VideoMeetingInfo) {
   return (
     <aside
       className={classNames(
-        "no-scrollbar fixed top-0 left-0 z-30 flex h-full w-64 transform justify-between overflow-x-hidden overflow-y-scroll transition-all duration-300 ease-in-out",
-        open ? "translate-x-0" : "-translate-x-[232px]"
+        "no-scrollbar fixed top-0 start-0 z-30 flex h-full w-64 transform justify-between overflow-x-hidden overflow-y-scroll transition-[left,transform] duration-300 ease-in-out",
+        open ? "translate-x-0" : "-translate-x-[232px] rtl:translate-x-[232px]"
       )}>
-      <main className="prose-sm prose scroll-bar scrollbar-track-w-20 overflow-x-hidden! w-full max-w-64 overflow-scroll border-subtle border-r bg-default p-4 prose-h3:font-cal prose-a:text-emphasis prose-h3:text-emphasis text-emphasis shadow-sm backdrop-blur-lg">
+      <main className="prose-sm prose scroll-bar scrollbar-track-w-20 overflow-x-hidden! w-full max-w-64 overflow-scroll border-subtle border-e bg-default p-4 prose-h3:font-cal prose-a:text-emphasis prose-h3:text-emphasis text-emphasis shadow-sm backdrop-blur-lg">
         <h3>{t("what")}:</h3>
         <p>{booking.title}</p>
         <h3>{t("invitee_timezone")}:</h3>
@@ -593,11 +593,11 @@ export function VideoMeetingInfo(props: VideoMeetingInfo) {
       <div className="flex items-center justify-center">
         <button
           aria-label={`${open ? "close" : "open"} booking description sidebar`}
-          className="h-20 w-6 rounded-r-md border border-gray-300/20 border-l-0 bg-black/60 text-white shadow-sm backdrop-blur-lg"
+          className="h-20 w-6 rounded-e-md border border-gray-300/20 border-s-0 bg-black/60 text-white shadow-sm backdrop-blur-lg"
           onClick={() => setOpen(!open)}>
           <ChevronRightIcon
             aria-hidden
-            className={classNames(open && "rotate-180", "w-5 transition-all duration-300 ease-in-out")}
+            className={classNames(open && "rotate-180", "w-5 transition-transform duration-300 ease-in-out")}
           />
         </button>
       </div>

@@ -143,7 +143,7 @@ const DateOverrideForm = ({
         setSelectedDates([]);
       }}
       className="p-6 sm:flex sm:p-0 xl:flex-row">
-      <div className="sm:border-subtle w-full sm:border-r sm:p-4 sm:pr-6 md:p-8">
+      <div className="sm:border-subtle w-full sm:border-e sm:p-4 sm:pe-6 md:p-8">
         <DialogHeader title={t("date_overrides_dialog_title")} />
         <BookerStoreProvider>
           <DatePicker
@@ -184,7 +184,7 @@ const DateOverrideForm = ({
             </div>
             <div className="mt-4 flex flex-row-reverse sm:mt-0">
               <Button
-                className="ml-2"
+                className="ms-2"
                 color="primary"
                 type="submit"
                 onClick={() => {
@@ -198,7 +198,7 @@ const DateOverrideForm = ({
             </div>
           </>
         ) : (
-          <div className="bottom-7 right-8 flex flex-row-reverse sm:absolute">
+          <div className="bottom-7 end-8 flex flex-row-reverse sm:absolute">
             <DialogClose />
           </div>
         )}

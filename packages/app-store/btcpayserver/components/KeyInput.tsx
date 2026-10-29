@@ -21,7 +21,7 @@ type AddonProps = {
 const Addon = ({ children, className, error }: AddonProps) => (
   <div
     className={classNames(
-      "addon-wrapper border-default [input:hover_+_&]:border-emphasis [input:hover_+_&]:border-l-default [&:has(+_input:hover)]:border-emphasis [&:has(+_input:hover)]:border-r-default h-9 border px-3 transition disabled:hover:cursor-not-allowed",
+      "addon-wrapper border-default [input:hover_+_&]:border-emphasis [input:hover_+_&]:border-s-default [&:has(+_input:hover)]:border-emphasis [&:has(+_input:hover)]:border-e-default h-9 border px-3 transition disabled:hover:cursor-not-allowed",
       className
     )}>
     <div
@@ -120,7 +120,7 @@ export const KeyField: React.FC<InputFieldProps & { defaultValue: string }> = fo
           className={classNames(labelClassName, labelSrOnly && "sr-only", props.error && "text-error")}>
           {label}
           {showAsteriskIndicator && !readOnly && passThrough.required ? (
-            <span className="text-default ml-1 font-medium">*</span>
+            <span className="text-default ms-1 font-medium">*</span>
           ) : null}
           {LockedIcon}
         </Skeleton>
@@ -130,7 +130,7 @@ export const KeyField: React.FC<InputFieldProps & { defaultValue: string }> = fo
         dir="ltr"
         className="focus-within:ring-brand-default group relative mb-1 flex items-center rounded-md transition focus-within:outline-none focus-within:ring-2">
         {addOnLeading && (
-          <Addon className={classNames("ltr:rounded-l-md rtl:rounded-r-md", addOnClassname)}>
+          <Addon className={classNames("rounded-s-md", addOnClassname)}>
             {addOnLeading}
           </Addon>
         )}
@@ -141,8 +141,8 @@ export const KeyField: React.FC<InputFieldProps & { defaultValue: string }> = fo
           isFullWidth={inputIsFullWidth}
           className={classNames(
             className,
-            "disabled:bg-subtle disabled:hover:border-subtle mb-0 rounded-r-none border-r-0 disabled:cursor-not-allowed",
-            addOnLeading && "rounded-l-none border-l-0",
+            "disabled:bg-subtle disabled:hover:border-subtle mb-0 rounded-e-none border-e-0 disabled:cursor-not-allowed",
+            addOnLeading && "rounded-s-none border-s-0",
             isPasswordVisible && "inline-block",
             !isPasswordVisible && "hidden",
             "my-0! ring-0!"
@@ -156,8 +156,8 @@ export const KeyField: React.FC<InputFieldProps & { defaultValue: string }> = fo
           isFullWidth={inputIsFullWidth}
           className={classNames(
             className,
-            "disabled:bg-subtle disabled:hover:border-subtle mb-0 rounded-r-none border-r-0 disabled:cursor-not-allowed",
-            addOnLeading && "rounded-l-none border-l-0",
+            "disabled:bg-subtle disabled:hover:border-subtle mb-0 rounded-e-none border-e-0 disabled:cursor-not-allowed",
+            addOnLeading && "rounded-s-none border-s-0",
             !isPasswordVisible && "inline-block",
             isPasswordVisible && "hidden",
             "my-0! ring-0!"
@@ -165,7 +165,7 @@ export const KeyField: React.FC<InputFieldProps & { defaultValue: string }> = fo
           disabled
           value={getHiddenKey()}
         />
-        <Addon className={classNames("ltr:rounded-r-md rtl:rounded-l-md", addOnClassname)}>
+        <Addon className={classNames("rounded-e-md", addOnClassname)}>
           <button
             className="text-emphasis h-9"
             tabIndex={-1}

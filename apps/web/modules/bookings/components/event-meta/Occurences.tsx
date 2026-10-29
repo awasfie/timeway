@@ -113,7 +113,7 @@ export const EventOccurences = ({ event }: { event: Pick<BookerEvent, "recurring
       {getRecurringFreq({ t, recurringEvent: event.recurringEvent })}
       <br />
       <Input
-        className="my-1 mr-3 inline-flex h-[26px] w-[46px] px-1 py-0"
+        className="my-1 me-3 inline-flex h-[26px] w-[46px] px-1 py-0"
         type="number"
         min="1"
         max={event.recurringEvent.count}
@@ -130,7 +130,7 @@ export const EventOccurences = ({ event }: { event: Pick<BookerEvent, "recurring
         count: recurringEventCount || event.recurringEvent.count,
       })}
       {warning && (
-        <div className="-ml-4 mr-4 mt-2 flex">
+        <div className="-ms-4 me-4 mt-2 flex">
           <Alert severity="warning" title={t("enter_number_between_range", { maxOccurences })} />
         </div>
       )}

@@ -343,7 +343,7 @@ export const CreateOrEditOutOfOfficeEntryModal = ({
                     <label
                       htmlFor="show-note-publicly"
                       className={classNames(
-                        "ml-2 text-sm",
+                        "ms-2 text-sm",
                         hasValidNotes ? "text-emphasis cursor-pointer" : "text-muted cursor-not-allowed"
                       )}>
                       {t("show_note_publicly_description")}
@@ -416,7 +416,7 @@ export const CreateOrEditOutOfOfficeEntryModal = ({
                 onClick={() => {
                   closeModal();
                 }}
-                className="mr-1">
+                className="me-1">
                 {t("cancel")}
               </Button>
               <Button

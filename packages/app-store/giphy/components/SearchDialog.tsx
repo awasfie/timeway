@@ -100,7 +100,7 @@ export const SearchDialog = (props: ISearchDialog) => {
         setGifImage("");
         setSelectedMode(mode);
       }}>
-      <Icon name={iconName} className="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+      <Icon name={iconName} className="h-4 w-4 me-2" />
       {text}
     </div>
   );
@@ -127,7 +127,7 @@ export const SearchDialog = (props: ISearchDialog) => {
           {renderTab("link", t("add_link_from_giphy"), MODE_URL)}
         </div>
         <form
-          className="flex w-full justify-center space-x-2 stack-y-2 rtl:space-x-reverse"
+          className="flex w-full justify-center space-x-2 stack-y-2"
           onSubmit={handleFormSubmit}>
           <div className="relative block w-full pt-2">
             <Input
@@ -148,7 +148,7 @@ export const SearchDialog = (props: ISearchDialog) => {
           </Button>
         </form>
         {gifImage && (
-          <div className="flex flex-col items-center space-x-2 stack-y-2 pt-3 rtl:space-x-reverse">
+          <div className="flex flex-col items-center space-x-2 stack-y-2 pt-3">
             <div className="bg-subtle flex w-full items-center justify-center">
               {isPending ? (
                 <div className="flex h-[200px] w-full items-center justify-center bg-gray-400 pb-3 pt-3">
@@ -180,7 +180,7 @@ export const SearchDialog = (props: ISearchDialog) => {
         )}
         {errorMessage && <Alert severity="error" title={errorMessage} className="my-4" />}
         {gifImage && selectedMode === MODE_SEARCH && (
-          <div className="mt-4 flex items-center justify-between space-x-2 rtl:space-x-reverse">
+          <div className="mt-4 flex items-center justify-between space-x-2">
             <div className="text-subtle text-sm font-light">Not the perfect GIF?</div>
             <Button
               size="sm"

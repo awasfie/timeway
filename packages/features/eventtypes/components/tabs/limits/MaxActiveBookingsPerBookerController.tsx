@@ -47,7 +47,7 @@ export default function MaxActiveBookingsPerBookerController({
               "border-subtle mt-6 rounded-lg border py-6 px-4 sm:px-6",
               isChecked && "rounded-b-none"
             )}
-            childrenClassName={classNames("lg:ml-0")}
+            childrenClassName={classNames("lg:ms-0")}
             title={t("booker_upcoming_limit")}
             description={
               <LearnMoreLink

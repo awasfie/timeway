@@ -114,7 +114,7 @@ export function SettingsToggle({
             </div>
           )}
           {children && (
-            <div className={classNames(noIndentation ? "" : "lg:ml-14", childrenClassName)} ref={animateRef}>
+            <div className={classNames(noIndentation ? "" : "lg:ms-14", childrenClassName)} ref={animateRef}>
               {checked && <div className={classNames(!toggleSwitchAtTheEnd && "mt-4")}>{children}</div>}
             </div>
           )}

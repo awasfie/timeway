@@ -207,8 +207,8 @@ export function FilterSegmentSelect({ shortLabel }: Props = {}) {
                       }}>
                       {selectedSegment &&
                         selectedSegment.type === segment.type &&
-                        selectedSegment.id === segment.id && <Icon name="check" className="ml-3 h-4 w-4" />}
-                      <span className="ml-3">{segment.name}</span>
+                        selectedSegment.id === segment.id && <Icon name="check" className="ms-3 h-4 w-4" />}
+                      <span className="ms-3">{segment.name}</span>
                     </DropdownItemWithSubmenu>
                   );
                 })}

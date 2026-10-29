@@ -23,7 +23,7 @@ import { formatEventTypeDuration } from "../lib/formatEventTypeDuration";
 const EventTypeContent = ({ eventType }: { eventType: AtomEventTypeListItem }) => {
   return (
     <div>
-      <div className="space-x-2 rtl:space-x-reverse">
+      <div className="space-x-2">
         <span className="text-emphasis truncate font-medium">{eventType.title}</span>
       </div>
       <div className="text-subtle mt-1">

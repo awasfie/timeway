@@ -45,12 +45,12 @@ export function TroubleshooterHeader({ extraDays, isMobile }: { extraDays: numbe
   };
 
   return (
-    <div className="border-default relative z-10 flex border-b px-5 py-4 ltr:border-l rtl:border-r">
+    <div className="border-default relative z-10 flex border-b px-5 py-4 border-s">
       <div className="flex items-center gap-5 rtl:grow">
         <FormattedSelectedDateRange />
         <ButtonGroup>
           <Button
-            className="group rtl:ml-1 rtl:rotate-180"
+            className="group rtl:me-1 rtl:rotate-180"
             variant="icon"
             color="minimal"
             StartIcon="chevron-left"
@@ -58,7 +58,7 @@ export function TroubleshooterHeader({ extraDays, isMobile }: { extraDays: numbe
             onClick={() => addToSelectedDate(-extraDays)}
           />
           <Button
-            className="group rtl:mr-1 rtl:rotate-180"
+            className="group rtl:ms-1 rtl:rotate-180"
             variant="icon"
             color="minimal"
             StartIcon="chevron-right"
@@ -67,7 +67,7 @@ export function TroubleshooterHeader({ extraDays, isMobile }: { extraDays: numbe
           />
           {selectedDateMin3DaysDifference && (
             <Button
-              className="capitalize ltr:ml-2 rtl:mr-2"
+              className="capitalize ms-2"
               color="secondary"
               onClick={() => setSelectedDate(today.format("YYYY-MM-DD"))}>
               {t("today")}

@@ -114,7 +114,7 @@ function RoutingInfoSection(props: RoutingInfoSectionProps): JSX.Element {
         <Label className="text-emphasis mb-1 block text-sm font-medium">{whoBookedItLabel}</Label>
         <div className="text-default bg-muted flex items-center justify-between rounded-md px-3 py-2 text-sm">
           <span>{guestEmail}</span>
-          <button type="button" className="text-subtle hover:text-emphasis ml-2" onClick={handleCopyClick}>
+          <button type="button" className="text-subtle hover:text-emphasis ms-2" onClick={handleCopyClick}>
             <Icon name={copyIconName} className="h-4 w-4" />
           </button>
         </div>

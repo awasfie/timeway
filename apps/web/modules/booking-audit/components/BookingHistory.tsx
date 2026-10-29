@@ -188,7 +188,7 @@ function JsonViewer({ data }: JsonViewerProps) {
       {lines.map((line, idx) => (
         <div key={idx} className="flex gap-2">
           <span
-            className="text-subtle select-none text-right shrink-0"
+            className="text-subtle select-none text-end shrink-0"
             style={{ minWidth: `${lineNumberWidth}ch` }}>
             {idx + 1}
           </span>
@@ -377,7 +377,7 @@ function BookingLogsTimeline({ logs }: BookingLogsTimelineProps) {
                               size="sm"
                               onClick={() => toggleJson(log.id)}
                               StartIcon={showJson ? "chevron-down" : "chevron-right"}
-                              className="-ml-3 h-6 px-2 font-medium text-xs">
+                              className="-ms-3 h-6 px-2 font-medium text-xs">
                               {t("json")}
                             </Button>
                           </div>

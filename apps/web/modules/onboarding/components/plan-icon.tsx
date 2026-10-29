@@ -29,7 +29,7 @@ export function PlanIcon({
   const renderIconContainer = () => {
     return (
       <div
-        className="bg-default absolute left-1/2 top-1/2 flex h-[80px] w-[80px] -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-clip rounded-full"
+        className="bg-default absolute start-1/2 top-1/2 flex h-[80px] w-[80px] -translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-clip rounded-full"
         style={{
           background: "linear-gradient(to bottom, var(--cal-bg, #ffffff), var(--cal-bg-muted, #f7f7f7))",
           boxShadow:
@@ -116,7 +116,7 @@ export function PlanIcon({
         return (
           <div
             key={index}
-            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            className="pointer-events-none absolute start-1/2 top-1/2 -translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{
               width: `${size}px`,
               height: `${size}px`,

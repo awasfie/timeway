@@ -104,7 +104,7 @@ export function EventList({ day }: Props) {
           <div
             key={`${event.id}-${eventStart.toISOString()}`}
             className={classNames(
-              "absolute transition-all duration-100 ease-out",
+              "absolute transition-[top,left,height,width,opacity] duration-100 ease-out",
               event.options?.borderOnly && "pointer-events-none"
             )}
             data-testid={event.options?.["data-test-id"]}

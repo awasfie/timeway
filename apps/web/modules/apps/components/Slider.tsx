@@ -62,7 +62,7 @@ export const Slider = <T extends string | unknown>({
           ) : (
             <SkeletonText className="h-4 w-24" />
           )}
-          <div className="glide__arrows ml-auto flex items-center gap-x-1" data-glide-el="controls">
+          <div className="glide__arrows ms-auto flex items-center gap-x-1" data-glide-el="controls">
             <SliderButton data-glide-dir="<">
               <ArrowLeftIcon className="h-5 w-5" />
             </SliderButton>
@@ -76,7 +76,7 @@ export const Slider = <T extends string | unknown>({
             {items.map((item) => {
               if (typeof renderItem !== "function") return null;
               return (
-                <li key={itemKey(item)} className="glide__slide h-auto pl-0">
+                <li key={itemKey(item)} className="glide__slide h-auto ps-0">
                   {renderItem(item)}
                 </li>
               );

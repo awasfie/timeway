@@ -18,7 +18,7 @@ function SkeletonItem() {
   return (
     <li className="group flex w-full items-center justify-between p-3">
       <div className="grow truncate text-sm">
-        <div className="flex justify-start space-x-2 rtl:space-x-reverse">
+        <div className="flex justify-start space-x-2">
           <SkeletonText className="h-10 w-10" />
           <div className="stack-y-1">
             <div>
@@ -30,8 +30,8 @@ function SkeletonItem() {
           </div>
         </div>
       </div>
-      <div className="mt-4 hidden shrink-0 sm:ml-5 sm:mt-0 lg:flex">
-        <div className="flex justify-between space-x-2 rtl:space-x-reverse">
+      <div className="mt-4 hidden shrink-0 sm:ms-5 sm:mt-0 lg:flex">
+        <div className="flex justify-between space-x-2">
           <SkeletonText className="h-11 w-32" />
         </div>
       </div>

@@ -76,7 +76,7 @@ const EventTypeAppCard: EventTypeAppCardComponent = function EventTypeAppCard({ 
                   min="0.5"
                   type="number"
                   required
-                  className="block w-full rounded-sm pl-2 text-sm"
+                  className="block w-full rounded-sm ps-2 text-sm"
                   placeholder="Price"
                   onChange={(e) => {
                     setAppData("price", Number(e.target.value) * 100);
