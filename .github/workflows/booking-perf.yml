@@ -86,7 +86,8 @@ jobs:
           # WC-TW-6c-8: literals only framer-motion / the full app catalog ship. getNormalizedAppMetadata
           # stays on purpose: bookerAppsMetaData (booker-apps subset, used by locations.ts) needs it.
           # WC-TW-6c-8b: kMaxLength is a literal only the buffer polyfill (next/compiled/buffer) ships.
-          FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar;buffer-polyfill=kMaxLength"
+          # WC-TW-6c-8d: this literal is only in next's polyfill-module (cut to URL.canParse by .yarn/patches/next-npm-16.4.1-polyfill-module.patch).
+          FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar;buffer-polyfill=kMaxLength;next-polyfill-module=String.prototype.trimStart=String.prototype.trimLeft"
       - name: (b) Lighthouse CI, 5 runs median
         id: lhci
         continue-on-error: true
