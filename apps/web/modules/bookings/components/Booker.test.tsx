@@ -40,7 +40,7 @@ import type { WrappedBookerProps } from "../types";
 import { Booker } from "./Booker";
 
 // Mock components that we don't want to test
-vi.mock("./BookEventForm", () => ({
+vi.mock("./BookEventForm/BookEventForm", () => ({
   BookEventForm: ({
     isTimeslotUnavailable,
     onCancel,
@@ -214,7 +214,7 @@ describe("Booker", () => {
     expect(screen.getByTestId("dry-run-message")).toBeInTheDocument();
   });
 
-  it("should invalidate schedule when cancelling booking form", () => {
+  it("should invalidate schedule when cancelling booking form", async () => {
     const mockInvalidate = vi.fn();
     constantsScenarios.set({
       PUBLIC_INVALIDATE_AVAILABLE_SLOTS_ON_BOOKING_FORM: "true",
@@ -232,7 +232,7 @@ describe("Booker", () => {
     });
     screen.logTestingPlaygroundURL();
     // Trigger form cancel
-    const cancelButton = screen.getByRole("button", { name: /cancel/i });
+    const cancelButton = await screen.findByRole("button", { name: /cancel/i });
     cancelButton.click();
 
     expect(mockInvalidate).toHaveBeenCalled();
@@ -252,7 +252,7 @@ describe("Booker", () => {
       render(<Booker {...(propsWithQuickChecks as unknown as BookerProps & WrappedBookerProps)} />, {
         mockStore: { state: "booking" },
       });
-      const bookEventForm = screen.getByTestId("book-event-form");
+      const bookEventForm = await screen.findByTestId("book-event-form");
       await expect(bookEventForm).toHaveAttribute("data-unavailable", "true");
     });
   });
