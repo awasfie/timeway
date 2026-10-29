@@ -4,7 +4,9 @@
 // number is what a browser actually downloads and stays valid across webpack/Turbopack builds.
 // Usage: node scripts/perf/booking-js-budget.mjs --url http://localhost:3000/pro/30min \
 //          [--static-dir apps/web/.next/static] [--budget-kb 200] [--baseline perf/js-baseline.json] \
-//          [--out perf/js-budget.json]
+//          [--out perf/js-budget.json] [--forbid "label=marker;label=marker"]
+// --forbid: modules that must stay off the first load, each identified by a string literal only
+// that module ships (chunk names are hashes, so the bytes are the only stable evidence).
 // Two verdicts: RATCHET (enforced) — total must not exceed the committed baseline + tolerance;
 // BUDGET (absolute) — always reported, enforced only once the baseline itself is within budget.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -29,6 +31,13 @@ const budgetKb = Number(args["budget-kb"] ?? process.env.BOOKING_JS_BUDGET_KB ??
 const out = args.out ?? "perf/js-budget.json";
 const region = args.region ?? "gh-runner";
 const baselinePath = args.baseline ?? "perf/js-baseline.json";
+const forbidden = (args.forbid ?? "")
+  .split(";")
+  .filter(Boolean)
+  .map((pair) => {
+    const at = pair.indexOf("=");
+    return { label: pair.slice(0, at), marker: pair.slice(at + 1) };
+  });
 if (!existsSync(baselinePath)) {
   console.error(`::error::JS baseline ${baselinePath} missing; the ratchet cannot run`);
   process.exit(1);
@@ -73,10 +82,14 @@ async function main() {
   if (srcs.length === 0) throw new Error(`No <script src> found on ${url}; refusing to report 0 KB`);
 
   const files = [];
+  const forbidHits = forbidden.map((f) => ({ ...f, found_in: [] }));
   for (const src of srcs) {
     const { bytes, from } = await loadBytes(src);
     files.push({ src, raw: bytes.length, gz: gzipSync(bytes, { level: 9 }).length, from });
+    const text = bytes.toString("utf8");
+    for (const hit of forbidHits) if (text.includes(hit.marker)) hit.found_in.push(src.split("?")[0]);
   }
+  const forbidOk = forbidHits.every((h) => h.found_in.length === 0);
   files.sort((a, b) => b.gz - a.gz);
   const totalGz = files.reduce((s, f) => s + f.gz, 0);
   const totalRaw = files.reduce((s, f) => s + f.raw, 0);
@@ -85,7 +98,7 @@ async function main() {
   const ratchetMaxKb = baselineKb + toleranceKb;
   const ratchetOk = totalKb <= ratchetMaxKb;
   const budgetEnforced = baselineKb <= budgetKb;
-  const pass = ratchetOk && (budgetOk || !budgetEnforced);
+  const pass = ratchetOk && (budgetOk || !budgetEnforced) && forbidOk;
 
   const result = {
     gate: "booking-js-budget",
@@ -105,6 +118,7 @@ async function main() {
     budget: { budget_kb_gz: budgetKb, status: budgetOk ? "ok" : "breach", enforced: budgetEnforced },
     total_kb_raw: Number((totalRaw / 1024).toFixed(1)),
     scripts: files.length,
+    forbidden: forbidHits,
     pass,
     files,
   };
@@ -121,6 +135,10 @@ async function main() {
     "| --- | ---: | --- | --- |",
     `| ratchet (baseline ${baselineKb} + ${toleranceKb} KB) | ${ratchetMaxKb.toFixed(1)} KB | ${ratchetOk ? "ok" : "breach"} (${totalKb - baselineKb >= 0 ? "+" : ""}${(totalKb - baselineKb).toFixed(1)} KB) | yes |`,
     `| budget | ${budgetKb} KB | ${budgetOk ? "ok" : "breach"} | ${budgetEnforced ? "yes" : "no, until baseline <= budget"} |`,
+    ...forbidHits.map((h) => {
+      const status = h.found_in.length === 0 ? "ok" : `breach (${h.found_in.join(", ")})`;
+      return `| off first load: ${h.label} | 0 chunks | ${status} | yes |`;
+    }),
     "",
     "| script | gz KB | raw KB |",
     "| --- | ---: | ---: |",
@@ -142,6 +160,8 @@ async function main() {
       `::error::Booking route JS grew to ${totalKb.toFixed(1)} KB gz, over the ratchet ${ratchetMaxKb.toFixed(1)} KB (baseline ${baselineKb} + ${toleranceKb}) in ${baselinePath}`
     );
   }
+  for (const h of forbidHits.filter((x) => x.found_in.length))
+    console.error(`::error::${h.label} is back on the booking first load: ${h.found_in.join(", ")}`);
   if (!pass) process.exit(1);
 }
 

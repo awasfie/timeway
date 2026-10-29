@@ -2,11 +2,10 @@
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import classNames from "classnames";
-import { useSession } from "next-auth/react";
+import { useBookingSession } from "@lib/booking-session";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
-import { Toaster } from "sonner";
 import { z } from "zod";
 
 import BookingPageTagManager from "@calcom/app-store/BookingPageTagManager";
@@ -61,7 +60,7 @@ import {
   ExternalLinkIcon,
   XIcon,
 } from "@coss/ui/icons";
-import { showToast } from "@calcom/ui/components/toast";
+import { LazyToaster, showToastLazy as showToast } from "@calcom/ui/components/toast/lazy";
 import { useCalcomTheme } from "@calcom/ui/styles";
 import CancelBooking from "@calcom/web/components/booking/CancelBooking";
 import EventReservationSchema from "@calcom/web/components/schemas/EventReservationSchema";
@@ -171,7 +170,7 @@ export default function Success(props: PageProps) {
   const [is24h, setIs24h] = useState(
     props?.userTimeFormat ? props.userTimeFormat === 24 : isBrowserLocale24h()
   );
-  const { data: session } = useSession();
+  const { data: session } = useBookingSession();
   const isHost = props.isLoggedInUserHost;
 
   const [showUtmParams, setShowUtmParams] = useState(false);
@@ -1158,7 +1157,7 @@ export default function Success(props: PageProps) {
           </div>
         </div>
       </main>
-      <Toaster position="bottom-right" />
+      <LazyToaster position="bottom-right" />
     </div>
   );
 }
