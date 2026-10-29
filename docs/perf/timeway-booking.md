@@ -205,3 +205,13 @@ is small (BookingPageTagManager `sdkActionManager.on("*")` listener 5.7 ms, dayj
 
 Slice in this PR: `Booker.tsx` gates the first full render on `useDeferredValue(bookerState)` so the mount renders at
 transition priority and yields, splitting the 249 ms task. After-numbers: pending deploy (x5, same host).
+
+## WC-TW-6k: lazy BookingPageTagManager + sonner Toaster (card t_4e55324f, 2026-10-29)
+
+Independent of timeway#220 (6j); rebased onto main a2a4be43c8 (6c-9). Long tasks on the 819bf85549 trace after the
+249 ms booker mount: 68 ms `1jqzwlrakf1on.js`, 68 ms `1rjb0jhn20356.js` (sonner / react-query). Slice: `Booker.tsx`
+loads `BookingPageTagManager` (analytics `<Script>` tags, app-store metadata) and the sonner `Toaster` (empty portal
+until a toast fires) through `next/dynamic` with `ssr: false`, so both leave the first booker mount and its chunk.
+`showToast` callers still import `sonner`'s `toast` directly; booker toasts fire only on visitor actions (booking
+errors, copy link), which come after the Toaster chunk has loaded.
+After-numbers: pending deploy (Lighthouse mobile x5 x2 batches, Dubai host, same command as the 6j baseline).
