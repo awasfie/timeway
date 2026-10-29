@@ -11,6 +11,7 @@ import {
   useBookerResizeAnimation,
 } from "@calcom/features/bookings/Booker/config";
 import type { BookerProps } from "@calcom/features/bookings/Booker/types";
+import { trackBookerPageView } from "@calcom/features/bookings/Booker/utils/bookerAnalytics";
 import { isBookingDryRun } from "@calcom/features/bookings/Booker/utils/isBookingDryRun";
 import { isTimeSlotAvailable } from "@calcom/features/bookings/Booker/utils/isTimeslotAvailable";
 import { getQueryParam } from "@calcom/features/bookings/Booker/utils/query-param";
@@ -235,6 +236,17 @@ const BookerComponent = ({
         });
       })
     : [];
+
+  const trackedEventTypeId = event.data?.id ?? null;
+  const trackedOrgId = event.data?.twOrgId ?? null;
+  useEffect(() => {
+    if (isPlatform || trackedEventTypeId === null) return;
+    trackBookerPageView({
+      org: trackedOrgId,
+      eventType: trackedEventTypeId,
+      source: isEmbed ? "embed" : "direct",
+    });
+  }, [isPlatform, isEmbed, trackedEventTypeId, trackedOrgId]);
 
   const slot = getQueryParam("slot");
 

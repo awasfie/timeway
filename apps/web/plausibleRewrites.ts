@@ -3,7 +3,7 @@
 // from dropping funnel events.
 export const PLAUSIBLE_SCRIPT_PATH = "/js/pa.js";
 export const PLAUSIBLE_EVENT_PATH = "/api/pa/event";
-const PLAUSIBLE_SCRIPT_VARIANT = "script.tagged-events.pageview-props.js";
+const PLAUSIBLE_SCRIPT_VARIANT = "script.manual.tagged-events.pageview-props.js";
 
 export type PlausibleRewrite = { source: string; destination: string };
 
