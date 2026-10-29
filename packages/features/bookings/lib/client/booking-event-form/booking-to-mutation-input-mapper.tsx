@@ -2,7 +2,6 @@ import dayjs from "@calcom/dayjs";
 import { getSlotReservationId } from "@calcom/features/bookings/Booker/useSlotReservationId";
 import { isBookingDryRun } from "@calcom/features/bookings/Booker/utils/isBookingDryRun";
 import { getRoutedTeamMemberIdsFromSearchParams } from "@calcom/lib/bookings/getRoutedTeamMemberIdsFromSearchParams";
-import { parseRecurringDates } from "@calcom/lib/parse-dates";
 import { v4 as uuidv4 } from "uuid";
 import type { BookerEvent, BookingCreateBody, RecurringBookingCreateBody } from "../../../types";
 import type { Tracking } from "../../handleNewBooking/types";
@@ -100,11 +99,13 @@ export const mapBookingToMutationInput = ({
 // as well as generate a unique ID for the recurring bookings and turn one single booking
 // into an array of multiple bookings based on the recurring count.
 // Other than that it forwards the mapping to mapBookingToMutationInput.
-export const mapRecurringBookingToMutationInput = (
+export const mapRecurringBookingToMutationInput = async (
   booking: BookingOptions,
   recurringCount: number,
   tracking?: Tracking
-): RecurringBookingCreateBody[] => {
+): Promise<RecurringBookingCreateBody[]> => {
+  // rrule (~13 KB gz) loads only when a recurring booking is submitted, not with the booking page.
+  const { parseRecurringDates } = await import("@calcom/lib/parse-dates");
   const recurringEventId = uuidv4();
   const [, recurringDates] = parseRecurringDates(
     {

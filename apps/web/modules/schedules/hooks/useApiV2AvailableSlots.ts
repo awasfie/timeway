@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 
 import type {
   GetAvailableSlotsInput_2024_04_15,
@@ -29,17 +28,20 @@ export const useApiV2AvailableSlots = ({
       rest.teamMemberEmail,
       rest.embedConnectVersion ?? false,
     ],
-    queryFn: () => {
-      return axios
-        .get<ApiResponse<GetAvailableSlotsResponse>>("/api/v2/slots/available", {
-          params: rest,
-        })
-        .then((res) => {
-          if (res.data.status === "success") {
-            return (res.data as ApiSuccessResponse<GetAvailableSlotsResponse>).data;
-          }
-          throw new Error(res.data.error.message);
-        });
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(rest)) {
+        if (value === undefined || value === null) continue;
+        // Same wire format axios used: arrays as repeated `key[]=` entries.
+        if (Array.isArray(value)) value.forEach((v) => params.append(`${key}[]`, String(v)));
+        else params.append(key, String(value));
+      }
+      const res = await fetch(`/api/v2/slots/available?${params.toString()}`);
+      const body = (await res.json()) as ApiResponse<GetAvailableSlotsResponse>;
+      if (body.status === "success") {
+        return (body as ApiSuccessResponse<GetAvailableSlotsResponse>).data;
+      }
+      throw new Error(body.error.message);
     },
     enabled: enabled,
   });

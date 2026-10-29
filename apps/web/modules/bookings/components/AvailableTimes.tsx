@@ -1,6 +1,5 @@
-// We do not need to worry about importing framer-motion here as it is lazy imported in Booker.
 
-import { getPaymentAppData } from "@calcom/app-store/_utils/payments/getPaymentAppData";
+import { getPaymentAppDataFromParsedMetadata } from "@calcom/app-store/_utils/payments/getPaymentAppDataFromParsedMetadata";
 import { useIsPlatform } from "@calcom/atoms/hooks/useIsPlatform";
 import dayjs from "@calcom/dayjs";
 import type { IOutOfOfficeData } from "@calcom/features/availability/lib/getUserAvailability";
@@ -16,7 +15,6 @@ import { Button } from "@calcom/ui/components/button";
 import { SkeletonText } from "@calcom/ui/components/skeleton";
 import { CalendarX2Icon } from "@coss/ui/icons";
 import * as HoverCard from "@radix-ui/react-hover-card";
-import { AnimatePresence, m } from "framer-motion";
 import { useMemo } from "react";
 import type { Slot } from "~/schedules/lib/types";
 import type { IUseBookingLoadingStates } from "../hooks/useBookings";
@@ -102,7 +100,7 @@ const SlotItem = ({
 
   const isPaidEvent = useMemo(() => {
     if (!eventData?.price) return false;
-    const paymentAppData = getPaymentAppData(eventData);
+    const paymentAppData = getPaymentAppDataFromParsedMetadata(eventData);
     return eventData?.price > 0 && !Number.isNaN(paymentAppData.price) && paymentAppData.price > 0;
   }, [eventData]);
 
@@ -148,8 +146,7 @@ const SlotItem = ({
 
   const isTimeslotUnavailable = unavailableTimeSlots.includes(slot.time);
   return (
-    <AnimatePresence>
-      <div className="flex gap-2">
+    <div className="flex gap-2">
         <Button
           key={slot.time}
           disabled={
@@ -200,7 +197,7 @@ const SlotItem = ({
         {!!slot.showConfirmButton && (
           <HoverCard.Root>
             <HoverCard.Trigger asChild>
-              <m.div key={slot.time} initial={{ width: 0 }} animate={{ width: "auto" }} exit={{ width: 0 }}>
+              <div key={slot.time} className="animate-in fade-in slide-in-from-end-2 duration-200 motion-reduce:animate-none">
                 <Button
                   variant={layout === "column_view" ? "icon" : "button"}
                   StartIcon={layout === "column_view" ? "chevron-right" : undefined}
@@ -232,7 +229,7 @@ const SlotItem = ({
                     return isPaidEvent ? t("pay_and_book") : t("confirm");
                   })()}
                 </Button>
-              </m.div>
+              </div>
             </HoverCard.Trigger>
             {isOverlapping && (
               <HoverCard.Portal>
@@ -250,8 +247,7 @@ const SlotItem = ({
             )}
           </HoverCard.Root>
         )}
-      </div>
-    </AnimatePresence>
+    </div>
   );
 };
 

@@ -114,10 +114,12 @@ export const useHandleBookEvent = ({
       const tracking = getUtmTrackingParameters(searchParams);
 
       if (event.data?.recurringEvent?.freq != null && recurringEventCount && !rescheduleUid) {
-        handleRecBooking(
-          mapRecurringBookingToMutationInput(bookingInput, recurringEventCount, tracking),
-          callbacks
-        );
+        mapRecurringBookingToMutationInput(bookingInput, recurringEventCount, tracking)
+          .then((input) => handleRecBooking(input, callbacks))
+          .catch((err) => {
+            bookingForm.setError("globalError", { message: t("error_booking_event") });
+            callbacks?.onError?.(err);
+          });
       } else {
         handleBooking({ ...mapBookingToMutationInput(bookingInput), locationUrl, tracking }, callbacks);
       }
