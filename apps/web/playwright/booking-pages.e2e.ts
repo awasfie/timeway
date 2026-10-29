@@ -407,6 +407,8 @@ test.describe("lazy booking form", () => {
     const sendCode = page.waitForResponse((r) => r.url().includes("sendVerifyEmailCode"));
     await page.locator('[data-testid="confirm-book-button"]').click();
     expect((await sendCode).status()).toBe(200);
+    // WC-TW-6k: the booker's sonner Toaster is a next/dynamic chunk; the "email sent" toast must still render.
+    await expect(page.getByTestId("toast-success").first()).toBeVisible();
     await expect(page.locator('input[name="2fa1"]')).toBeVisible();
     await expect(page.locator('input[name="2fa6"]')).toBeVisible();
   });

@@ -1,5 +1,4 @@
 import process from "node:process";
-import BookingPageTagManager from "@calcom/app-store/BookingPageTagManager";
 import { useIsPlatformBookerEmbed } from "@calcom/atoms/hooks/useIsPlatformBookerEmbed";
 import dayjs from "@calcom/dayjs";
 import { useEmbedUiConfig } from "@calcom/embed-core/embed-iframe";
@@ -32,9 +31,9 @@ import { UnpublishedEntity } from "@calcom/ui/components/unpublished-entity";
 import { startBookerWebVitals } from "@calcom/web/lib/telemetry/booker-vitals";
 import { useSkipConfirmStep } from "@calcom/web/modules/bookings/hooks/useSkipConfirmStep";
 import { useNonEmptyScheduleDays } from "@calcom/web/modules/schedules/hooks/useNonEmptyScheduleDays";
+import dynamic from "next/dynamic";
 import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
 import StickyBox from "react-sticky-box";
-import { Toaster } from "sonner";
 import { shallow } from "zustand/shallow";
 import { useIsQuickAvailabilityCheckFeatureEnabled } from "../hooks/useIsQuickAvailabilityCheckFeatureEnabled";
 import type { WrappedBookerProps } from "../types";
@@ -59,6 +58,14 @@ const VerifyCodeDialog = lazy(() =>
   import("./VerifyCodeDialog").then((m) => ({ default: m.VerifyCodeDialog }))
 );
 const TurnstileCaptcha = lazy(() => import("@calcom/web/modules/auth/components/Turnstile"));
+
+// WC-TW-6k: neither renders anything the visitor sees on first paint (analytics <Script> tags and
+// an empty toast portal), so load them client-only in their own chunks, out of the first booker
+// mount and the sonner/app-store metadata bundle.
+const BookingPageTagManager = dynamic(() => import("@calcom/app-store/BookingPageTagManager"), {
+  ssr: false,
+});
+const Toaster = dynamic(() => import("sonner").then((mod) => mod.Toaster), { ssr: false });
 
 const BookerComponent = ({
   username,
