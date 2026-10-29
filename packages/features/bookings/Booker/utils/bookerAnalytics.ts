@@ -19,6 +19,7 @@ const NO_CONTEXT: BookerAnalyticsContext = { org: null, eventType: null, source:
 
 let context: BookerAnalyticsContext = NO_CONTEXT;
 let lastSlot: string | null = null;
+let lastPageViewKey: string | null = null;
 
 function getPlausible(): PlausibleFn | null {
   if (typeof window === "undefined") return null;
@@ -48,12 +49,18 @@ function send(name: string) {
 }
 
 // Call once per Booker mount. Sends the manual pageview (sanitised URL) and the custom event.
+// Guarded per (pathname, eventType): the Booker effect re-runs when event data resolves and the page wrapper
+// can mount it twice, which doubled event counts.
 export function trackBookerPageView(next: BookerAnalyticsContext) {
+  const u0 = sanitizedUrl();
+  const key = u0 === null ? null : `${new URL(u0).pathname}|${next.eventType}`;
+  if (key !== null && key === lastPageViewKey) return;
   context = next;
   lastSlot = null;
   const plausible = getPlausible();
   const u = sanitizedUrl();
   if (!plausible || !u) return;
+  lastPageViewKey = key;
   plausible("pageview", { u, props: props() });
   send("booking_page_view");
 }
@@ -66,5 +73,6 @@ export function trackSlotSelected(slot: string | null) {
 
 export function resetBookerAnalytics() {
   context = NO_CONTEXT;
+  lastPageViewKey = null;
   lastSlot = null;
 }
