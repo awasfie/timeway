@@ -186,3 +186,13 @@ shows no changes and the page is served from the edge again).
 3. Prod Lighthouse: `lighthouse https://timeway.co/ahmedwasfie/30min --only-categories=performance --form-factor=mobile --throttling-method=simulate --output=json` x 5, median.
 4. Slot API: `node scripts/perf/slot-api.mjs --month <YYYY-MM> --samples 30`.
 5. Record the new row set here with its deploy SHA; a row passes only on a measured number.
+
+## WC-TW-6k: lazy BookingPageTagManager + sonner Toaster (card t_4e55324f, 2026-10-29)
+
+Independent of timeway#220 (6j); rebased onto main a2a4be43c8 (6c-9). Long tasks on the 819bf85549 trace after the
+249 ms booker mount: 68 ms `1jqzwlrakf1on.js`, 68 ms `1rjb0jhn20356.js` (sonner / react-query). Slice: `Booker.tsx`
+loads `BookingPageTagManager` (analytics `<Script>` tags, app-store metadata) and the sonner `Toaster` (empty portal
+until a toast fires) through `next/dynamic` with `ssr: false`, so both leave the first booker mount and its chunk.
+`showToast` callers still import `sonner`'s `toast` directly; booker toasts fire only on visitor actions (booking
+errors, copy link), which come after the Toaster chunk has loaded.
+After-numbers: pending deploy (Lighthouse mobile x5 x2 batches, Dubai host, same command as the 6j baseline).
