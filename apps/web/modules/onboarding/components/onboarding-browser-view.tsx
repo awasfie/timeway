@@ -99,7 +99,7 @@ export const OnboardingBrowserView = ({
     },
   ];
   return (
-    <div className="hidden h-full w-full flex-col overflow-hidden rounded-l-2xl border-subtle border-y border-s bg-default xl:flex">
+    <div className="hidden h-full w-full flex-col overflow-hidden rounded-s-2xl border-subtle border-y border-s bg-default xl:flex">
       {/* Browser header */}
       <div className="flex min-w-0 shrink-0 items-center gap-3 rounded-t-2xl border-subtle border-b bg-default p-3">
         {/* Navigation buttons */}
@@ -115,11 +115,11 @@ export const OnboardingBrowserView = ({
         <Icon name="ellipsis-vertical" className="h-4 w-4 text-subtle" />
       </div>
       {/* Content */}
-      <div className="h-full bg-cal-muted pt-11 pl-11">
+      <div className="h-full bg-cal-muted pt-11 ps-11">
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}
-            className="flex h-full w-full flex-col overflow-hidden rounded-l-xl border-muted border-y border-s bg-default"
+            className="flex h-full w-full flex-col overflow-hidden rounded-s-xl border-muted border-y border-s bg-default"
             variants={containerVariants}
             initial="initial"
             animate="animate"

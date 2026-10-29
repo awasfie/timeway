@@ -31,7 +31,7 @@ function SkeletonItem() {
   return (
     <li className="group flex w-full items-start justify-between px-4 py-4 sm:px-6">
       {/* Left side - Date and time info */}
-      <div className="flex min-w-0 shrink-0 flex-col gap-2 pr-4">
+      <div className="flex min-w-0 shrink-0 flex-col gap-2 pe-4">
         <SkeletonText className="h-4 w-24" />
         <SkeletonText className="h-4 w-28" />
         <div className="mt-1 flex items-center gap-2">
@@ -55,7 +55,7 @@ function SkeletonItem() {
       </div>
 
       {/* Action buttons - only visible on larger screens */}
-      <div className="ml-4 hidden shrink-0 gap-2 sm:flex">
+      <div className="ms-4 hidden shrink-0 gap-2 sm:flex">
         <SkeletonText className="h-9 w-20 rounded-md" />
         <SkeletonText className="h-9 w-20 rounded-md" />
         <SkeletonText className="h-9 w-9 rounded-md" />

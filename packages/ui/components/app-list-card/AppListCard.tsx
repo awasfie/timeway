@@ -101,7 +101,7 @@ export const AppListCard = (props: AppListCardProps & { highlight?: boolean }) =
             <Badge variant="gray">
               <div className="flex items-center">
                 <Avatar
-                  className="mr-2"
+                  className="me-2"
                   alt={credentialOwner.name || "Nameless"}
                   size="xs"
                   imageSrc={getPlaceholderAvatar(credentialOwner.avatar, credentialOwner?.name as string)}

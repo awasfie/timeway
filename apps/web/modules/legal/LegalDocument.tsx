@@ -30,7 +30,7 @@ export function LegalDocument({
               </p>
             ))}
             {s.bullets && (
-              <ul className="mt-3 list-disc space-y-2 pl-6 leading-relaxed">
+              <ul className="mt-3 list-disc space-y-2 ps-6 leading-relaxed">
                 {s.bullets.map((b) => (
                   <li key={b}>{b}</li>
                 ))}

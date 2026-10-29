@@ -63,7 +63,7 @@ export function OAuthClientPreviewDialog({
               <div className="flex">
                 <code
                   data-testid="oauth-client-submitted-client-id"
-                  className="bg-subtle text-default w-full truncate rounded-md rounded-r-none px-2 py-1 align-middle font-mono text-sm">
+                  className="bg-subtle text-default w-full truncate rounded-md rounded-e-none px-2 py-1 align-middle font-mono text-sm">
                   {client.clientId}
                 </code>
                 <Tooltip side="top" content={t("copy_to_clipboard")}>
@@ -76,7 +76,7 @@ export function OAuthClientPreviewDialog({
                     }}
                     type="button"
                     size="sm"
-                    className="rounded-l-none"
+                    className="rounded-s-none"
                     StartIcon="clipboard">
                     {t("copy")}
                   </Button>
@@ -90,7 +90,7 @@ export function OAuthClientPreviewDialog({
                 <div className="flex">
                   <code
                     data-testid="oauth-client-submitted-client-secret"
-                    className="bg-subtle text-default w-full truncate rounded-md rounded-r-none px-2 py-1 align-middle font-mono text-sm">
+                    className="bg-subtle text-default w-full truncate rounded-md rounded-e-none px-2 py-1 align-middle font-mono text-sm">
                     {client.clientSecret}
                   </code>
                   <Tooltip side="top" content={t("copy_to_clipboard")}>
@@ -103,7 +103,7 @@ export function OAuthClientPreviewDialog({
                       }}
                       type="button"
                       size="sm"
-                      className="rounded-l-none"
+                      className="rounded-s-none"
                       StartIcon="clipboard">
                       {t("copy")}
                     </Button>

@@ -65,7 +65,7 @@ const MeetingTimeInTimezones = ({
     <Popover.Root>
       <Popover.Trigger
         onClick={preventBubbling}
-        className="popover-button text-emphasis hover:bg-emphasis focus:bg-emphasis invisible ml-2 inline-flex h-5 w-5 items-center justify-center rounded-sm transition-colors group-hover:visible">
+        className="popover-button text-emphasis hover:bg-emphasis focus:bg-emphasis invisible ms-2 inline-flex h-5 w-5 items-center justify-center rounded-sm transition-colors group-hover:visible">
         <GlobeIcon className="h-3.5 w-3.5" />
       </Popover.Trigger>
       <Popover.Portal>
@@ -78,7 +78,7 @@ const MeetingTimeInTimezones = ({
               <span className="inline-flex align-baseline">
                 {time.startTime} - {time.endTime}
                 {(time.isNextDay || time.isPreviousDay) && (
-                  <span className="text-medium bg-cal-muted text-emphasis ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px]">
+                  <span className="text-medium bg-cal-muted text-emphasis ms-2 inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px]">
                     {time.isNextDay ? "+1" : "-1"}
                   </span>
                 )}

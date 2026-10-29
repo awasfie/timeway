@@ -123,38 +123,38 @@ export function Event({
           (isHovered || selected) && "ring-brand-default shadow-lg ring-2 ring-offset-0"
         )}
         style={{
-          transition: "all 100ms ease-out",
+          transition: "box-shadow 100ms ease-out, opacity 100ms ease-out",
         }}>
         {(options?.color || colorClass) && (
           <div
-            className={classNames("-ml-1.5 mr-1.5 h-full w-[3px] shrink-0", colorClass)}
+            className={classNames("-ms-1.5 me-1.5 h-full w-[3px] shrink-0", colorClass)}
             style={options?.color ? { backgroundColor: options.color } : undefined}></div>
         )}
         <div className={classNames("flex w-full", displayType !== "single-line" && "flex-col py-1")}>
           {displayType === "single-line" && (
             <div
               className={classNames(
-                "flex w-full shrink-0 gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-left leading-4",
+                "flex w-full shrink-0 gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-start leading-4",
                 "items-center"
               )}>
               <span>{event.title}</span>
               {!event.options?.hideTime && (
-                <p className="text-subtle mt-1 w-full whitespace-nowrap text-left text-[10px] leading-none">
+                <p className="text-subtle mt-1 w-full whitespace-nowrap text-start text-[10px] leading-none">
                   {dayjs(event.start).format("HH:mm")} - {dayjs(event.end).format("HH:mm")}
                 </p>
               )}
             </div>
           )}
           {displayType !== "single-line" && (
-            <p className={classNames("shrink-0 whitespace-nowrap text-left leading-4")}>{event.title}</p>
+            <p className={classNames("shrink-0 whitespace-nowrap text-start leading-4")}>{event.title}</p>
           )}
           {displayType !== "single-line" && !event.options?.hideTime && (
-            <p className="text-subtle mt-1 whitespace-nowrap text-left text-[10px] leading-none">
+            <p className="text-subtle mt-1 whitespace-nowrap text-start text-[10px] leading-none">
               {dayjs(event.start).format("HH:mm")} - {dayjs(event.end).format("HH:mm")}
             </p>
           )}
           {displayType === "full" && event.description && (
-            <p className="text-subtle mt-1 text-left text-[10px] leading-none">{event.description}</p>
+            <p className="text-subtle mt-1 text-start text-[10px] leading-none">{event.description}</p>
           )}
         </div>
       </Component>

@@ -76,7 +76,7 @@ export const DropdownActions = ({
 export const TableActions: FC<Props> = ({ actions }) => {
   return (
     <>
-      <div className="flex space-x-2 rtl:space-x-reverse">
+      <div className="flex space-x-2">
         {actions.map((action) => {
           const button = (
             <Button

@@ -27,7 +27,7 @@ export function HintsOrErrors<T extends FieldValues = FieldValues>({
     // no hints passed, field errors exist and they are custom ones
     return (
       <div className="text-gray text-default mt-2 flex items-center text-sm">
-        <ul className="ml-2">
+        <ul className="ms-2">
           {Object.keys(fieldErrors).map((key: string) => {
             return (
               <li key={key} className="text-blue-700">
@@ -44,7 +44,7 @@ export function HintsOrErrors<T extends FieldValues = FieldValues>({
     // hints passed, field errors exist
     return (
       <div className="text-gray text-default mt-2 flex items-center text-sm">
-        <ul className="ml-2">
+        <ul className="ms-2">
           {hintErrors.map((key: string) => {
             const submitted = formState.isSubmitted;
             const error = fieldErrors[key] || fieldErrors.message;
@@ -59,14 +59,14 @@ export function HintsOrErrors<T extends FieldValues = FieldValues>({
                       name="x"
                       size="12"
                       strokeWidth="3"
-                      className="-ml-1 inline-block ltr:mr-2 rtl:ml-2"
+                      className="-ms-1 inline-block me-2"
                     />
                   ) : (
                     <Icon
                       name="circle"
                       fill="currentColor"
                       size="5"
-                      className="inline-block ltr:mr-2 rtl:ml-2"
+                      className="inline-block me-2"
                     />
                   )
                 ) : (
@@ -74,7 +74,7 @@ export function HintsOrErrors<T extends FieldValues = FieldValues>({
                     name="check"
                     size="12"
                     strokeWidth="3"
-                    className="-ml-1 inline-block ltr:mr-2 rtl:ml-2"
+                    className="-ms-1 inline-block me-2"
                   />
                 )}
                 {t(`${fieldName}_hint_${key}`)}
@@ -96,7 +96,7 @@ export function HintsOrErrors<T extends FieldValues = FieldValues>({
   // hints passed, no errors exist, proceed to just show hints
   return (
     <div className="text-gray text-default mt-2 flex items-center text-sm">
-      <ul className="ml-2">
+      <ul className="ms-2">
         {hintErrors.map((key: string) => {
           // if field was changed, as no error exist, show checked status and color
           const dirty = formState.dirtyFields[fieldName];
@@ -107,10 +107,10 @@ export function HintsOrErrors<T extends FieldValues = FieldValues>({
                   name="check"
                   size="12"
                   strokeWidth="3"
-                  className="-ml-1 inline-block ltr:mr-2 rtl:ml-2"
+                  className="-ms-1 inline-block me-2"
                 />
               ) : (
-                <Icon name="circle" fill="currentColor" size="5" className="inline-block ltr:mr-2 rtl:ml-2" />
+                <Icon name="circle" fill="currentColor" size="5" className="inline-block me-2" />
               )}
               {t(`${fieldName}_hint_${key}`)}
             </li>

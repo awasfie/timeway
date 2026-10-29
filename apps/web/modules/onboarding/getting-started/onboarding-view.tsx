@@ -181,7 +181,7 @@ export const OnboardingView = ({ userEmail }: OnboardingViewProps) => {
                       className={classNames(
                         "relative flex items-center overflow-hidden rounded-[10px] border bg-default transition",
                         isSelected ? "border-emphasis shadow-sm" : "border-subtle",
-                        "pr-12 [&>button]:right-6 [&>button]:left-auto [&>button]:mt-0 [&>button]:transform"
+                        "pe-12 [&>button]:end-6 [&>button]:start-auto [&>button]:mt-0 [&>button]:transform"
                       )}
                       classNames={{
                         container: "flex w-full items-center gap-3 p-5 pr-12",
@@ -212,7 +212,7 @@ export const OnboardingView = ({ userEmail }: OnboardingViewProps) => {
         </OnboardingCard>
 
         {/* Right column - Icon display */}
-        <div className="hidden h-full w-full rounded-l-2xl border-subtle border-t border-b border-l bg-cal-muted xl:flex xl:items-center xl:justify-center">
+        <div className="hidden h-full w-full rounded-s-2xl border-subtle border-t border-b border-s bg-cal-muted xl:flex xl:items-center xl:justify-center">
           <AnimatePresence mode="wait">
             {selectedPlanData && (
               <PlanIcon

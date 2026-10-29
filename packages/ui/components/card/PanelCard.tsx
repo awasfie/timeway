@@ -71,20 +71,20 @@ export function PanelCard({
                 />
               }
               onClick={toggleCollapse}
-              className="text-muted -ml-2"
+              className="text-muted -ms-2"
               aria-expanded={!isCollapsed}
               aria-controls={contentId}
               aria-label={isCollapsed ? t("expand_panel") : t("collapse_panel")}
             />
           )}
           {isStringTitle ? (
-            <div className="mr-4 flex shrink-0 items-center gap-1">
+            <div className="me-4 flex shrink-0 items-center gap-1">
               <h2 id={titleId} className="text-emphasis shrink-0 text-sm font-semibold">
                 {collapsible ? (
                   <button
                     type="button"
                     onClick={toggleCollapse}
-                    className="text-left transition-opacity hover:opacity-80"
+                    className="text-start transition-opacity hover:opacity-80"
                     aria-expanded={!isCollapsed}
                     aria-controls={contentId}
                     aria-label={isCollapsed ? t("expand_panel") : t("collapse_panel")}>

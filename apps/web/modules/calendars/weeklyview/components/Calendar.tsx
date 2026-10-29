@@ -86,11 +86,11 @@ function CalendarInner(props: CalendarComponentProps) {
               />
               <div
                 className={classNames(
-                  "bg-default dark:bg-cal-muted ring-muted sticky left-0 z-10 w-16 flex-none ring-1",
+                  "bg-default dark:bg-cal-muted ring-muted sticky start-0 z-10 w-16 flex-none ring-1",
                   showBorder &&
                     (borderColor === "subtle"
-                      ? "border-subtle border-l border-r"
-                      : "border-default border-l border-r")
+                      ? "border-subtle border-s border-e"
+                      : "border-default border-s border-e")
                 )}
               />
               <div

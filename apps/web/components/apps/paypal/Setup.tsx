@@ -37,7 +37,7 @@ export default function PayPalSetup() {
     <div className="bg-default flex h-screen">
       {showContent ? (
         <div className="bg-default border-subtle m-auto max-w-[43em] overflow-auto rounded border pb-10 md:p-10">
-          <div className="ml-2 ltr:mr-2 rtl:ml-2 md:ml-5">
+          <div className="ms-2 me-2 md:ms-5">
             <div className="invisible md:visible">
               <img className="h-11" src="/api/app-store/paypal/icon.svg" alt="Paypal Payment Logo" />
               <p className="text-default mt-5 text-lg">Paypal</p>
@@ -88,11 +88,11 @@ export default function PayPalSetup() {
               <p className="text-default font-semi mt-2">{t("paypal_description")}</p>
 
               <p className="text-lgf text-default mt-5 inline-flex font-bold">
-                <CircleAlertIcon className="mr-2 mt-1 h-4 w-4" />
+                <CircleAlertIcon className="me-2 mt-1 h-4 w-4" />
                 {t("important_requirements")}
               </p>
 
-              <ul className="text-default ml-1 mt-2 list-disc pl-2">
+              <ul className="text-default ms-1 mt-2 list-disc ps-2">
                 <li>{t("paypal_business_account")}</li>
                 <li>{t("paypal_developer_account")}</li>
               </ul>
@@ -114,7 +114,7 @@ export default function PayPalSetup() {
                 since Paypal offers different experiences based on your country.
               </p>
 
-              <ol className="text-default ml-1 mt-5 list-decimal pl-2">
+              <ol className="text-default ms-1 mt-5 list-decimal ps-2">
                 {/* @TODO: translate */}
                 <li>
                   Log into your PayPal Developer account and create a new app{" "}
@@ -144,7 +144,7 @@ export default function PayPalSetup() {
                 <li>You should be all setup after this.</li>
               </ol>
               <p className="text-default mt-5 inline-flex font-bold">
-                <CircleAlertIcon className="mr-2 mt-1 h-4 w-4" />
+                <CircleAlertIcon className="me-2 mt-1 h-4 w-4" />
                 Reminder:
               </p>
               <p className="text-default mt-2">

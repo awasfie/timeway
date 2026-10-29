@@ -181,7 +181,7 @@ export function DataTable<TData>({
                           onMouseDown={header.getResizeHandler()}
                           onTouchStart={header.getResizeHandler()}
                           className={classNames(
-                            "group absolute right-0 top-0 h-full w-[5px] cursor-col-resize touch-none select-none opacity-0 hover:opacity-50",
+                            "group absolute end-0 top-0 h-full w-[5px] cursor-col-resize touch-none select-none opacity-0 hover:opacity-50",
                             header.column.getIsResizing() && "opacity-75!"
                           )}>
                           <div className="bg-inverted mx-auto h-full w-px" />
@@ -468,7 +468,7 @@ const TableHeadLabel = <TData,>({ header }: { header: Header<TData, unknown> }) 
         <button
           type="button"
           className={classNames(
-            "group mr-1 flex w-full items-center gap-2 rounded-md px-2 py-1",
+            "group me-1 flex w-full items-center gap-2 rounded-md px-2 py-1",
             open && "bg-cal-muted"
           )}>
           <div

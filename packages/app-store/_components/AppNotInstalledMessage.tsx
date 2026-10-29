@@ -17,7 +17,7 @@ export default function AppNotInstalledMessage({ appName }: { appName: string })
         <div className="mt-5">
           <Button href={`/apps/${appName}`} type="button" color="secondary">
             {t("go_to_app_store")}
-            <Icon name="arrow-up-right" className="ml-1" size={20} />
+            <Icon name="arrow-up-right" className="ms-1" size={20} />
           </Button>
         </div>
       </div>

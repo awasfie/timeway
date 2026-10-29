@@ -14,7 +14,7 @@ import type { IconName } from "../icon";
 import { Icon } from "../icon";
 
 const dialogClasses = cva(
-  "fadeIn bg-default scroll-bar fixed left-1/2 top-1/2 z-50 w-[95vw] m-auto -translate-x-1/2 -translate-y-1/2 rounded-2xl text-left shadow-xl focus-visible:outline-none sm:align-middle",
+  "fadeIn bg-default scroll-bar fixed start-1/2 top-1/2 z-50 w-[95vw] m-auto -translate-x-1/2 rtl:translate-x-1/2 -translate-y-1/2 rounded-2xl text-start shadow-xl focus-visible:outline-none sm:align-middle",
   {
     variants: {
       size: {
@@ -162,7 +162,7 @@ export function DialogFooter(props: DialogFooterProps) {
         props.className
       )}>
       {props.showDivider && <div data-testid="divider" className="border-subtle border-t" />}
-      <div className={classNames("flex justify-end space-x-2 px-8 py-4 font-sans rtl:space-x-reverse")}>
+      <div className={classNames("flex justify-end space-x-2 px-8 py-4 font-sans")}>
         {props.children}
       </div>
     </div>

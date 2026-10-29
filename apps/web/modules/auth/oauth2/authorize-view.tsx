@@ -152,7 +152,7 @@ export function Authorize() {
             imageSrc={client.logo}
             size="lg"
           />
-          <div className="relative -ml-6 w-24 h-24">
+          <div className="relative -ms-6 w-24 h-24">
             <div className="flex absolute inset-0 justify-center items-center">
               <div className="bg-default flex h-[70px] w-[70px] items-center  justify-center rounded-full">
                 <img src="/cal-com-icon.svg" alt="Logo" className="w-16 h-16 rounded-full" />
@@ -201,39 +201,39 @@ export function Authorize() {
           {t("allow_client_to", { clientName: client.name })}
         </div>
         <ul className="text-sm stack-y-3">
-          <li className="relative pl-5">
-            <span className="absolute left-0">&#10003;</span>{" "}
+          <li className="relative ps-5">
+            <span className="absolute start-0">&#10003;</span>{" "}
             {t("associate_with_cal_account", { clientName: client.name })}
           </li>
-          <li className="relative pl-5">
-            <span className="absolute left-0">&#10003;</span>
+          <li className="relative ps-5">
+            <span className="absolute start-0">&#10003;</span>
             {t("see_personal_info")}
           </li>
-          <li className="relative pl-5">
-            <span className="absolute left-0">&#10003;</span>
+          <li className="relative ps-5">
+            <span className="absolute start-0">&#10003;</span>
             {t("see_primary_email_address")}
           </li>
-          <li className="relative pl-5">
-            <span className="absolute left-0">&#10003;</span>
+          <li className="relative ps-5">
+            <span className="absolute start-0">&#10003;</span>
           </li>
-          <li className="relative pl-5">
-            <span className="absolute left-0">&#10003;</span>
+          <li className="relative ps-5">
+            <span className="absolute start-0">&#10003;</span>
             {t("access_event_type")}
           </li>
-          <li className="relative pl-5">
-            <span className="absolute left-0">&#10003;</span>
+          <li className="relative ps-5">
+            <span className="absolute start-0">&#10003;</span>
             {t("access_availability")}
           </li>
-          <li className="relative pl-5">
-            <span className="absolute left-0">&#10003;</span>
+          <li className="relative ps-5">
+            <span className="absolute start-0">&#10003;</span>
             {t("access_bookings")}
           </li>
         </ul>
         <div className="flex p-3 mt-8 mb-8 rounded-md bg-subtle">
           <div>
-            <InfoIcon className="mr-1 mt-0.5 h-4 w-4" />
+            <InfoIcon className="me-1 mt-0.5 h-4 w-4" />
           </div>
-          <div className="ml-1">
+          <div className="ms-1">
             <div className="mb-1 text-sm font-medium">
               {t("allow_client_to_do", { clientName: client.name })}
             </div>
@@ -243,7 +243,7 @@ export function Authorize() {
         <div className="-mx-9 mb-4 border-b border-subtle border-" />
         <div className="flex justify-end">
           <Button
-            className="mr-2"
+            className="me-2"
             color="minimal"
             onClick={() => {
               const separator = client.redirectUri.includes("?") ? "&" : "?";

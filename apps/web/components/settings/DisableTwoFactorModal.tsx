@@ -115,7 +115,7 @@ const DisableTwoFactorAuthModal = ({
           <DialogFooter showDivider className="relative mt-5">
             <Button
               color="minimal"
-              className="mr-auto"
+              className="me-auto"
               onClick={() => {
                 setTwoFactorLostAccess(!twoFactorLostAccess);
                 resetForm(false);

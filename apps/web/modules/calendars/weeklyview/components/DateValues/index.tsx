@@ -54,7 +54,7 @@ export function DateValues({ showBorder, borderColor, days, containerNavRef }: P
       className={classNames(
         "bg-default dark:bg-cal-muted top-(--calendar-dates-sticky-offset,0px) z-80 sticky flex-none border-b",
         borderColor === "subtle" ? "border-b-subtle" : "border-b-default",
-        showBorder && (borderColor === "subtle" ? "border-r-subtle border-r" : "border-r-default border-r")
+        showBorder && (borderColor === "subtle" ? "border-e-subtle border-e" : "border-e-default border-e")
       )}>
       <div className="text-subtle flex leading-6 sm:hidden" data-dayslength={days.length}>
         {days.map((day) => {
@@ -76,12 +76,12 @@ export function DateValues({ showBorder, borderColor, days, containerNavRef }: P
           );
         })}
       </div>
-      <div className="text-subtle -mr-px hidden auto-cols-fr leading-6 sm:flex">
+      <div className="text-subtle -me-px hidden auto-cols-fr leading-6 sm:flex">
         <div
           className={classNames(
             "col-end-1 flex w-16 items-center justify-center",
             showBorder &&
-              (borderColor === "subtle" ? "border-l-subtle border-l" : "border-l-default border-l")
+              (borderColor === "subtle" ? "border-s-subtle border-s" : "border-s-default border-s")
           )}>
           {showTimezone && timezone && (
             <span className="text-muted text-xs font-medium">{getTimezoneDisplay()}</span>
@@ -101,7 +101,7 @@ export function DateValues({ showBorder, borderColor, days, containerNavRef }: P
                 <span
                   className={classNames(
                     "items-center justify-center p-1",
-                    isToday && "bg-brand-default text-brand ml-1 rounded-md"
+                    isToday && "bg-brand-default text-brand ms-1 rounded-md"
                   )}>
                   {day.format("DD")}
                 </span>

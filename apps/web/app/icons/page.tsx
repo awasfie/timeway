@@ -31,7 +31,7 @@ export default function IconsPage() {
     <div className={`${interFont.variable} ${calFont.variable}`}>
       <div className="bg-subtle flex h-screen">
         <IconSprites />
-        <div className="bg-default m-auto min-w-full rounded-md p-10 text-right ltr:text-left">
+        <div className="bg-default m-auto min-w-full rounded-md p-10 text-start">
           <h1 className="text-emphasis font-cal text-2xl font-medium">Icons Showcase</h1>
           <IconGrid title="Regular Icons" icons={icons} />
           <IconGrid

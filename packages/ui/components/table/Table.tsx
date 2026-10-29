@@ -18,7 +18,7 @@ const ColumnTitle = ({ children, widthClassNames }: TableProps & DynamicWidth) =
   <th
     scope="col"
     className={classNames(
-      "text-default p-3 text-left text-xs font-medium uppercase",
+      "text-default p-3 text-start text-xs font-medium uppercase",
       !widthClassNames ? "w-auto" : widthClassNames
     )}>
     {children}

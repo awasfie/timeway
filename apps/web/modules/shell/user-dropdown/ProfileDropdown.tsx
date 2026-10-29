@@ -46,7 +46,7 @@ export function ProfileDropdown() {
         <button
           data-testid="user-dropdown-trigger-button"
           className={classNames(
-            "hover:bg-emphasis todesktop:!bg-transparent group mx-0 flex w-full cursor-pointer appearance-none items-center rounded-full px-2 py-1.5 text-left outline-none transition focus:outline-none focus:ring-0 md:rounded-none lg:rounded"
+            "hover:bg-emphasis todesktop:!bg-transparent group mx-0 flex w-full cursor-pointer appearance-none items-center rounded-full px-2 py-1.5 text-start outline-none transition focus:outline-none focus:ring-0 md:rounded-none lg:rounded"
           )}>
           <span className="flex w-full grow items-center justify-around gap-2 text-sm font-medium leading-none">
             <Avatar alt={currentOption.label || ""} size="xsm" />
@@ -54,9 +54,9 @@ export function ProfileDropdown() {
               {currentOption.label}
             </span>
             {menuOpen ? (
-              <ChevronUpIcon className="group-hover:text-subtle text-muted h-4 w-4 shrink-0 transition rtl:mr-4" />
+              <ChevronUpIcon className="group-hover:text-subtle text-muted h-4 w-4 shrink-0 transition rtl:ms-4" />
             ) : (
-              <ChevronDownIcon className="group-hover:text-subtle text-muted h-4 w-4 shrink-0 transition rtl:mr-4" />
+              <ChevronDownIcon className="group-hover:text-subtle text-muted h-4 w-4 shrink-0 transition rtl:ms-4" />
             )}
           </span>
         </button>
@@ -92,9 +92,9 @@ export function ProfileDropdown() {
                   childrenClassName={classNames("flex w-full justify-between items-center")}>
                   <span>
                     <Avatar alt={option.label || ""} size="xsm" />
-                    <span className="ml-2">{option.label}</span>
+                    <span className="ms-2">{option.label}</span>
                   </span>
-                  {isSelected ? <CheckIcon className="ml-2 inline h-4 w-4" /> : null}
+                  {isSelected ? <CheckIcon className="ms-2 inline h-4 w-4" /> : null}
                 </DropdownItem>
               </DropdownMenuItem>
             );

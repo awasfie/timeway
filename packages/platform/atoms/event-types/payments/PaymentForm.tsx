@@ -60,7 +60,7 @@ export const PaymentForm = ({
                   </span>
                   <div
                     className={cn(
-                      "main inline-block transform overflow-hidden rounded-lg border border-subtle bg-default px-8 pt-5 pb-4 text-left align-bottom transition-all sm:my-8 sm:w-full sm:max-w-lg sm:py-6 sm:align-middle"
+                      "main inline-block transform overflow-hidden rounded-lg border border-subtle bg-default px-8 pt-5 pb-4 text-start align-bottom transition-[opacity,transform] sm:my-8 sm:w-full sm:max-w-lg sm:py-6 sm:align-middle"
                     )}
                     role="dialog"
                     aria-modal="true"
@@ -75,7 +75,7 @@ export const PaymentForm = ({
                             ? t("complete_your_booking")
                             : t("payment")}
                         </h3>
-                        <div className="mt-4 grid grid-cols-3 border-t border-b py-4 text-left text-default dark:border-gray-900 dark:text-gray-300">
+                        <div className="mt-4 grid grid-cols-3 border-t border-b py-4 text-start text-default dark:border-gray-900 dark:text-gray-300">
                           <div className="font-medium">{t("what")}</div>
                           <div className="col-span-2 mb-6">{eventName}</div>
                           <div className="font-medium">{t("when")}</div>

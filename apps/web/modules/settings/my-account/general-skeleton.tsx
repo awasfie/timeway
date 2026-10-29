@@ -14,7 +14,7 @@ export const SkeletonLoader = () => {
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
-          <Skeleton className="ml-auto h-8 w-20 rounded-md p-5" />
+          <Skeleton className="ms-auto h-8 w-20 rounded-md p-5" />
         </div>
       </div>
     </SettingsHeader>

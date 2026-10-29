@@ -54,7 +54,7 @@ const FormCardActions = ({ deleteField, duplicateField }: FormCardActionsProps) 
         type="button"
         variant="icon"
         color={action.color || "minimal"}
-        className="ml-2"
+        className="ms-2"
         onClick={action.onClick}
         StartIcon={action.icon}
         title={action.label}
@@ -67,7 +67,7 @@ const FormCardActions = ({ deleteField, duplicateField }: FormCardActionsProps) 
   return (
     <Dropdown>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="icon" color="minimal" className="ml-2">
+        <Button type="button" variant="icon" color="minimal" className="ms-2">
           <Icon name="ellipsis" className="text-default h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -133,11 +133,11 @@ export default function FormCard({
 
   return (
     <div className={className} {...restProps}>
-      <div className="absolute left-0 top-1/2 -translate-y-1/2">
+      <div className="absolute start-0 top-1/2 -translate-y-1/2">
         {moveUp?.check() ? (
           <button
             type="button"
-            className="bg-default text-muted hover:text-emphasis invisible -ml-2 mb-1 flex h-6 w-6 scale-0 items-center justify-center rounded-md border p-1 transition-all hover:border-transparent hover:shadow group-hover:visible group-hover:scale-100"
+            className="bg-default text-muted hover:text-emphasis invisible -ms-2 mb-1 flex h-6 w-6 scale-0 items-center justify-center rounded-md border p-1 transition-[transform,box-shadow,border-color] hover:border-transparent hover:shadow group-hover:visible group-hover:scale-100"
             onClick={() => moveUp?.fn()}>
             <Icon name="arrow-up" />
           </button>
@@ -145,7 +145,7 @@ export default function FormCard({
         {moveDown?.check() ? (
           <button
             type="button"
-            className="bg-default text-muted hover:text-emphasis invisible -ml-2 flex h-6 w-6 scale-0 items-center justify-center rounded-md border p-1 transition-all hover:border-transparent hover:shadow group-hover:visible group-hover:scale-100"
+            className="bg-default text-muted hover:text-emphasis invisible -ms-2 flex h-6 w-6 scale-0 items-center justify-center rounded-md border p-1 transition-[transform,box-shadow,border-color] hover:border-transparent hover:shadow group-hover:visible group-hover:scale-100"
             onClick={() => moveDown?.fn()}>
             <Icon name="arrow-down" />
           </button>
@@ -189,7 +189,7 @@ export default function FormCard({
               label
             )}
             {badge && (
-              <Badge className="ml-2" variant={badge.variant}>
+              <Badge className="ms-2" variant={badge.variant}>
                 {badge.href ? <Link href={badge.href}>{badge.text}</Link> : badge.text}
               </Badge>
             )}

@@ -27,7 +27,7 @@ export const OnboardingLayout = ({ userEmail, currentStep, children }: Onboardin
         <Logo className="h-5 w-auto" />
 
         {/* Progress dots - centered */}
-        <div className="absolute left-1/2 flex -translate-x-1/2 items-center justify-center gap-1">
+        <div className="absolute start-1/2 flex -translate-x-1/2 rtl:translate-x-1/2 items-center justify-center gap-1">
           {[1, 2, 3, 4].map((step) => (
             <div
               key={step}

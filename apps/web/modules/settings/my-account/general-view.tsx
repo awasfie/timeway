@@ -248,7 +248,7 @@ const GeneralView = ({ user, travelSchedules }: GeneralViewProps) => {
                         </div>
                         <Button
                           color="destructive"
-                          className="ml-auto"
+                          className="ms-auto"
                           variant="icon"
                           StartIcon="trash-2"
                           onClick={() => {
@@ -291,7 +291,7 @@ const GeneralView = ({ user, travelSchedules }: GeneralViewProps) => {
               )}
             />
             <div className="text-gray text-subtle mt-2 flex items-start text-xs">
-              <Icon name="info" className="mr-2 mt-0.25" />
+              <Icon name="info" className="me-2 mt-0.25" />
               {t("timeformat_profile_hint")}
             </div>
             <Controller

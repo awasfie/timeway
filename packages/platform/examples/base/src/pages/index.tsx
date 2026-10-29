@@ -16,7 +16,7 @@ export default function Home(props: { calUsername: string; calEmail: string }) {
       <Navbar username={props.calUsername} />
       <div
         className={` h-screen w-full items-center justify-center gap-y-3  font-mono lg:flex ${inter.className} gap-16 `}>
-        <div className="ml-32">
+        <div className="ms-32">
           <h1 className={`${poppins.className} w-full pb-3 text-7xl font-bold`}>
             The all in one Scheduling marketplace
           </h1>

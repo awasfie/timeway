@@ -135,7 +135,7 @@ export function BaseSelectFilterOptions<T extends Extract<FilterType, "ms" | "ss
                 onSelect={() => onOptionSelect(column, filterValue, optionValue)}>
                 <div
                   className={classNames(
-                    "border-subtle mr-2 flex h-4 w-4 items-center justify-center rounded-sm",
+                    "border-subtle me-2 flex h-4 w-4 items-center justify-center rounded-sm",
                     isOptionSelected(filterValue, optionValue) ? "bg-primary-default" : "border opacity-50"
                   )}>
                   {isOptionSelected(filterValue, optionValue) && (

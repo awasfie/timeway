@@ -69,7 +69,7 @@ export function EditUserSheet({
               <SheetHeader showCloseButton={false} className="w-full">
                 <div className="w-full rounded-xl border border-subtle bg-default p-4">
                   <OrganizationBanner />
-                  <div className="ml-3 w-fit translate-y-[-50%] rounded-full bg-default p-1 ring-1 ring-[#0000000F]">
+                  <div className="ms-3 w-fit translate-y-[-50%] rounded-full bg-default p-1 ring-1 ring-[#0000000F]">
                     <Avatar asChild size="lg" alt={`${loadedUser?.name} avatar`} imageSrc={avatarURL} />
                   </div>
                   <h2 className="-mt-8 font-sans font-semibold text-2xl text-emphasis">

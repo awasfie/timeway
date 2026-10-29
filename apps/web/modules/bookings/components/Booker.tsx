@@ -361,7 +361,7 @@ const BookerComponent = ({
             <BookerSection
               area="header"
               className={classNames(
-                layout === BookerLayouts.MONTH_VIEW && "fixed top-4 z-10 ltr:right-4 rtl:left-4",
+                layout === BookerLayouts.MONTH_VIEW && "fixed top-4 z-10 end-4",
                 (layout === BookerLayouts.COLUMN_VIEW || layout === BookerLayouts.WEEK_VIEW) &&
                   "bg-default dark:bg-cal-muted sticky top-0 z-10"
               )}>
@@ -402,7 +402,7 @@ const BookerComponent = ({
                 {!hideEventTypeDetails && orgBannerUrl && (
                   <img
                     loading="eager"
-                    className="-mb-9 h-auto w-full object-contain object-top ltr:rounded-tl-md rtl:rounded-tr-md sm:h-16 sm:object-cover"
+                    className="-mb-9 h-auto w-full object-contain object-top rounded-ss-md sm:h-16 sm:object-cover"
                     alt="org banner"
                     src={orgBannerUrl}
                   />
@@ -452,7 +452,7 @@ const BookerComponent = ({
             <BookerSection
               key="book-event-form"
               area="main"
-              className="sticky top-0 -ml-px h-full p-6 md:w-(--booker-main-width) md:border-l"
+              className="sticky top-0 -ms-px h-full p-6 md:w-(--booker-main-width) md:border-s"
               {...fadeInLeft}
               visible={bookerState === "booking" && !shouldShowFormInDialog}>
               {EventBooker}
@@ -465,8 +465,8 @@ const BookerComponent = ({
               {...fadeInLeft}
               initial="visible"
               className={classNames(
-                "md:border-subtle -ml-px h-full shrink px-5 py-3  lg:w-(--booker-main-width)",
-                hideEventTypeDetails ? "" : "md:border-l"
+                "md:border-subtle -ms-px h-full shrink px-5 py-3  lg:w-(--booker-main-width)",
+                hideEventTypeDetails ? "" : "md:border-s"
               )}>
               <DatePicker
                 classNames={customClassNames?.datePickerCustomClassNames}
@@ -482,7 +482,7 @@ const BookerComponent = ({
               key="enable-calendar"
               area="main"
               visible={layout === BookerLayouts.WEEK_VIEW}
-              className="border-subtle sticky top-0 -ml-px h-full md:border-l"
+              className="border-subtle sticky top-0 -ms-px h-full md:border-s"
               {...fadeInLeft}>
               <LargeCalendar
                 extraDays={extraDays}
@@ -501,7 +501,7 @@ const BookerComponent = ({
                   layout === BookerLayouts.COLUMN_VIEW)
               }
               className={classNames(
-                "border-subtle rtl:border-default flex h-full w-full flex-col overflow-x-auto px-5 py-3 pb-0 rtl:border-r ltr:md:border-l",
+                "border-subtle flex h-full w-full flex-col overflow-x-auto px-5 py-3 pb-0 md:border-s",
                 layout === BookerLayouts.MONTH_VIEW &&
                   "h-full overflow-hidden md:w-(--booker-timeslots-width)",
                 layout !== BookerLayouts.MONTH_VIEW && "sticky top-0"
@@ -591,7 +591,7 @@ const BookerComponent = ({
         <DialogContent
           type={undefined}
           enableOverflow
-          className="fixed! inset-0! top-0! left-0! h-screen! max-h-screen! w-screen! max-w-none! translate-x-0! translate-y-0! rounded-none! m-0! px-8 pt-0 pb-8">
+          className="fixed! inset-0! top-0! start-0! h-screen! max-h-screen! w-screen! max-w-none! translate-x-0! translate-y-0! rounded-none! m-0! px-8 pt-0 pb-8">
           <SlotSelectionModalHeader
             onClick={() => setIsSlotSelectionModalVisible(false)}
             event={event.data}

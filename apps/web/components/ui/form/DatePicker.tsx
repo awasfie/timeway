@@ -18,7 +18,7 @@ export const DatePicker = ({ minDate, disabled, date, onDatesChange, className }
   return (
     <PrimitiveDatePicker
       className={classNames(
-        "focus:ring-primary-500 focus:border-primary-500 border-default rounded-sm border p-1 pl-2 text-sm",
+        "focus:ring-primary-500 focus:border-primary-500 border-default rounded-sm border p-1 ps-2 text-sm",
         className
       )}
       clearIcon={null}

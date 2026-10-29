@@ -71,7 +71,7 @@ const VerticalTabItem = ({
               props.textClassNames || "text-default text-sm font-medium leading-none",
               "hover:bg-subtle [&[aria-current='page']]:bg-subtle [&[aria-current='page']]:text-emphasis group-hover:text-default group flex w-full flex-row items-center rounded-md p-2 transition ",
               props.disabled && "pointer-events-none opacity-30!",
-              (isChild || !props.icon) && "ml-7",
+              (isChild || !props.icon) && "ms-7",
               props.className
             )}
             data-testid={`vertical-tab-${props["data-testid"]}`}
@@ -96,7 +96,7 @@ const VerticalTabItem = ({
               )}
             </div>
             {!disableChevron && isCurrent && (
-              <div className="ml-auto self-center">
+              <div className="ms-auto self-center">
                 <Icon
                   name="chevron-right"
                   width={20}

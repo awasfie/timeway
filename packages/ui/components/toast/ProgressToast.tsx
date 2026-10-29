@@ -20,18 +20,18 @@ export const ProgressToast = ({ message, progress, onClose, toastId }: ProgressT
         <span className="mt-0.5">
           <FileDownIcon className="h-4 w-4" />
         </span>
-        <p className="m-0 w-full text-left">{message || defaultMessage}</p>
+        <p className="m-0 w-full text-start">{message || defaultMessage}</p>
         <button onClick={() => onClose(toastId)} aria-label={t("close")}>
           <XIcon className="h-4 w-4 hover:cursor-pointer" />
         </button>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full">
         <div
-          className="bg-inverted h-2 rounded-full opacity-50 transition-all duration-300 ease-in-out"
+          className="bg-inverted h-2 rounded-full opacity-50 transition-[width] duration-300 ease-in-out"
           style={{ width: `${progress}%` }}
         />
       </div>
-      <div className="text-right text-xs font-normal">{Math.floor(progress)}%</div>
+      <div className="text-end text-xs font-normal">{Math.floor(progress)}%</div>
     </div>
   );
 };

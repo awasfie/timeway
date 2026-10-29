@@ -213,7 +213,7 @@ function HitPaySetupPage(props: IHitPaySetupProps) {
               <div className="bg-default border-subtle overflow-auto rounded border">
                 <div className="border-subtle flex items-center justify-between border-b p-4 md:p-5">
                   <h2 className="text-2xl font-semibold">Account Information</h2>
-                  <div className="ml-auto flex items-center">
+                  <div className="ms-auto flex items-center">
                     <Switch
                       onCheckedChange={(value) => SetIsSandbox(value as boolean)}
                       checked={isSandbox}
@@ -270,14 +270,14 @@ function HitPaySetupPage(props: IHitPaySetupProps) {
                     Cancel
                   </Button>
                   <button
-                    className="font-body flex h-10 w-56 items-center justify-center gap-2 rounded-md font-bold text-black shadow transition-all hover:brightness-90 active:scale-95"
+                    className="font-body flex h-10 w-56 items-center justify-center gap-2 rounded-md font-bold text-black shadow transition-[filter,transform,box-shadow] hover:brightness-90 active:scale-95"
                     style={{
                       background: "linear-gradient(180deg, #FFDE6E 63.72%, #F8C455 95.24%)",
                     }}
                     type="submit"
                     disabled={loading}>
                     {hitpayIcon}
-                    <span className="mr-2">Connect with HitPay</span>
+                    <span className="me-2">Connect with HitPay</span>
                   </button>
                 </div>
               ) : (

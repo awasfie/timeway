@@ -12,7 +12,7 @@ export const DryRunMessage = ({ isEmbed }: { isEmbed?: boolean }) => {
   return (
     <div
       onClick={() => setIsVisible(false)}
-      className={`bg-default border-subtle fixed left-1/2 ${
+      className={`bg-default border-subtle fixed start-1/2 ${
         !isEmbed ? "top-4" : "top-0"
       } z-50 -translate-x-1/2 transform cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm shadow-md`}>
       <div className="flex items-center gap-3">

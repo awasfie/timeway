@@ -16,7 +16,7 @@ const SkeletonLoader = () => {
     <SkeletonContainer>
       <div className="mb-8 mt-6 stack-y-6">
         <div className="flex items-center">
-          <SkeletonButton className="mr-6 h-8 w-20 rounded-md p-5" />
+          <SkeletonButton className="me-6 h-8 w-20 rounded-md p-5" />
           <SkeletonText className="h-8 w-full" />
         </div>
       </div>

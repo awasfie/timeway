@@ -114,12 +114,12 @@ export function Header({
   };
 
   return (
-    <div className="border-default relative z-10 flex border-b px-5 py-4 ltr:border-l rtl:border-r">
+    <div className="border-default relative z-10 flex border-b px-5 py-4 border-s">
       <div className="flex items-center gap-5 rtl:grow">
         <FormattedSelectedDateRange />
         <ButtonGroup>
           <Button
-            className="group rtl:ml-1 rtl:rotate-180"
+            className="group rtl:me-1 rtl:rotate-180"
             variant="icon"
             color="minimal"
             StartIcon="chevron-left"
@@ -127,7 +127,7 @@ export function Header({
             onClick={() => addToSelectedDate(layout === BookerLayouts.COLUMN_VIEW ? -nextSlots : -extraDays)}
           />
           <Button
-            className="group rtl:mr-1 rtl:rotate-180"
+            className="group rtl:ms-1 rtl:rotate-180"
             variant="icon"
             color="minimal"
             StartIcon="chevron-right"
@@ -136,7 +136,7 @@ export function Header({
           />
           {selectedDateMin3DaysDifference && (
             <Button
-              className="capitalize ltr:ml-2 rtl:mr-2"
+              className="capitalize ms-2"
               color="secondary"
               onClick={() => {
                 const selectedDate = (isCalendarView ? today.startOf("week") : today).format("YYYY-MM-DD");
@@ -147,10 +147,10 @@ export function Header({
           )}
         </ButtonGroup>
       </div>
-      <div className="ml-auto flex gap-2">
+      <div className="ms-auto flex gap-2">
         {renderOverlay?.()}
         <TimeFormatToggle />
-        <div className="fixed top-4 ltr:right-4 rtl:left-4">
+        <div className="fixed top-4 end-4">
           <LayoutToggleWithData
             layout={layout}
             enabledLayouts={enabledLayouts}

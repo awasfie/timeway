@@ -93,7 +93,7 @@ export const SlotSelectionModalHeader = ({
             <Button
               color="minimal"
               StartIcon="arrow-left"
-              className="mb-2 ml-[-42px] w-[40px]"
+              className="mb-2 ms-[-42px] w-[40px]"
               onClick={onClick}
             />{" "}
             {formattedDate.dayOfWeek}

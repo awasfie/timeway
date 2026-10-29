@@ -89,7 +89,7 @@ export const DropdownMenuCheckboxItem = forwardRef<HTMLDivElement, DropdownMenuC
             aria-readonly
             checked={false}
             type="checkbox"
-            className="text-emphasis dark:text-muted focus:ring-emphasis border-default bg-default ml-auto h-4 w-4 rounded transition hover:cursor-pointer"
+            className="text-emphasis dark:text-muted focus:ring-emphasis border-default bg-default ms-auto h-4 w-4 rounded transition hover:cursor-pointer"
           />
         )}
         <DropdownMenuPrimitive.ItemIndicator asChild>
@@ -123,7 +123,7 @@ export const DropdownMenuSubTrigger = forwardRef<HTMLDivElement, DropdownMenuSub
       {...props}
       ref={forwardedRef}>
       {children}
-      <Icon name="chevron-right" className="ml-auto h-4 w-4" />
+      <Icon name="chevron-right" className="ms-auto h-4 w-4" />
     </DropdownMenuPrimitive.SubTrigger>
   )
 );
@@ -202,8 +202,8 @@ export const DropdownItem = (props: DropdownItemProps) => {
         props.className
       )}>
       <>
-        {CustomStartIcon || (StartIcon && <Icon name={StartIcon} className="mr-1 h-4 w-4 shrink-0" />)}
-        <div className={classNames("w-full text-left text-sm font-medium leading-none", childrenClassName)}>
+        {CustomStartIcon || (StartIcon && <Icon name={StartIcon} className="me-1 h-4 w-4 shrink-0" />)}
+        <div className={classNames("w-full text-start text-sm font-medium leading-none", childrenClassName)}>
           {children}
         </div>
         {EndIcon && <Icon name={EndIcon} className="h-4 w-4" />}

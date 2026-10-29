@@ -17,7 +17,7 @@ function AddressInput({ value, onChange, ...rest }: AddressInputProps) {
     <div className="relative flex items-center">
       <Icon
         name="map-pin"
-        className="text-muted absolute left-0.5 ml-3 h-4 w-4 -translate-y-1/2"
+        className="text-muted absolute start-0.5 ms-3 h-4 w-4 -translate-y-1/2"
         style={{ top: "44%" }}
       />
       <Input
@@ -27,7 +27,7 @@ function AddressInput({ value, onChange, ...rest }: AddressInputProps) {
         onChange={(e) => {
           onChange(e.target.value);
         }}
-        className={cx("pl-10", rest?.className)}
+        className={cx("ps-10", rest?.className)}
       />
     </div>
   );

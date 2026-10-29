@@ -81,7 +81,7 @@ export function AvailableEventLocations({ locations }: { locations: LocationObje
       return (
         <div key={`${location.type}-${index}`} className="flex flex-row items-center text-sm font-medium">
           {eventLocationType.iconUrl === "/link.svg" ? (
-            <LinkIcon className="text-default h-4 w-4 ltr:mr-[10px] rtl:ml-[10px]" />
+            <LinkIcon className="text-default h-4 w-4 me-[10px]" />
           ) : (
             <RenderIcon eventLocationType={eventLocationType} isTooltip={false} />
           )}
@@ -115,7 +115,7 @@ export function AvailableEventLocations({ locations }: { locations: LocationObje
       </Tooltip>
     </div>
   ) : filteredLocations.length === 1 ? (
-    <div className="text-default mr-6 flex w-full flex-col stack-y-4 wrap-break-word text-sm rtl:mr-2">
+    <div className="text-default me-6 flex w-full flex-col stack-y-4 wrap-break-word text-sm rtl:ms-2">
       {filteredLocations}
     </div>
   ) : null;

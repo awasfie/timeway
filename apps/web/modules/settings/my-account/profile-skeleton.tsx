@@ -27,7 +27,7 @@ export const SkeletonLoader = () => {
           <SkeletonText className="h-8 w-full" />
           <SkeletonText className="h-8 w-full" />
 
-          <SkeletonButton className="mr-6 h-8 w-20 rounded-md p-5" />
+          <SkeletonButton className="me-6 h-8 w-20 rounded-md p-5" />
         </div>
       </SkeletonContainer>
     </SettingsHeader>

@@ -47,7 +47,7 @@ export function TopBanner(props: TopBannerProps) {
         variantClassName[variant]
       )}>
       <div className="flex flex-1 flex-col items-start justify-center gap-2 px-1 py-0.5 lg:flex-row lg:items-center">
-        <p className="text-emphasis flex flex-col items-start justify-center gap-2 text-left font-sans text-sm font-medium leading-4 lg:flex-row lg:items-center">
+        <p className="text-emphasis flex flex-col items-start justify-center gap-2 text-start font-sans text-sm font-medium leading-4 lg:flex-row lg:items-center">
           {icon ? <Icon {...defaultIconProps} name={icon} data-testid="variant-default" /> : defaultIcon}
           {text}
         </p>

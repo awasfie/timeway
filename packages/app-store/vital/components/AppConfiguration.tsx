@@ -139,9 +139,9 @@ const AppConfiguration = (props: IAppConfigurationProps) => {
               setSleepValue(Number(e.currentTarget.value));
               setTouchedForm(true);
             }}
-            className="pr-12shadow-sm border-default mt-1 block w-full rounded-sm border py-2 pl-6 focus:border-neutral-500 focus:outline-none focus:ring-neutral-500 sm:text-sm"
+            className="pe-12shadow-sm border-default mt-1 block w-full rounded-sm border py-2 ps-6 focus:border-neutral-500 focus:outline-none focus:ring-neutral-500 sm:text-sm"
           />
-          <p className="ml-2">
+          <p className="ms-2">
             <strong>hours</strong>
           </p>
         </div>

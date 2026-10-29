@@ -34,19 +34,19 @@ export const EventLocations = ({ event }: { event: BookerEvent }) => {
       {locations.length > 1 && (
         <div
           key={locations[0].type}
-          className="before:bg-subtle relative before:pointer-events-none before:absolute before:inset-0 before:bottom-[-5px] before:left-[-30px] before:top-[-5px] before:w-[calc(100%+35px)] before:rounded-md before:py-3 before:opacity-0 before:transition-opacity hover:before:opacity-100">
+          className="before:bg-subtle relative before:pointer-events-none before:absolute before:inset-0 before:bottom-[-5px] before:start-[-30px] before:top-[-5px] before:w-[calc(100%+35px)] before:rounded-md before:py-3 before:opacity-0 before:transition-opacity hover:before:opacity-100">
           <Tooltip
             content={
               <>
                 <p className="mb-2">{t("select_on_next_step")}</p>
-                <ul className="pl-1">
+                <ul className="ps-1">
                   {locations.map((location, index) => (
                     <li key={`${location.type}-${index}`} className="mt-1">
                       <div className="flex flex-row items-center">
                         <img
                           src={getLocationByType(location.type)?.iconUrl}
                           className={classNames(
-                            "h-3 w-3 opacity-70 ltr:mr-[10px] rtl:ml-[10px] dark:opacity-100 ",
+                            "h-3 w-3 opacity-70 me-[10px] dark:opacity-100 ",
                             !getLocationByType(location.type)?.iconUrl?.startsWith("/app-store")
                               ? "dark:invert-[.65]"
                               : ""

@@ -21,10 +21,10 @@ export function ShellMainAppDir(props: LayoutProps) {
                 props.large && "py-8",
                 "flex w-full max-w-full items-center flex-wrap md:flex-nowrap gap-2 md:gap-0"
               )}>
-              {props.HeadingLeftIcon && <div className="ltr:mr-4">{props.HeadingLeftIcon}</div>}
+              {props.HeadingLeftIcon && <div className="me-4">{props.HeadingLeftIcon}</div>}
               <div
                 className={classNames(
-                  "hidden min-w-0 flex-1 ltr:mr-4 rtl:ml-4 md:block",
+                  "hidden min-w-0 flex-1 me-4 md:block",
                   props.headerClassName
                 )}>
                 {props.heading && (
@@ -48,8 +48,8 @@ export function ShellMainAppDir(props: LayoutProps) {
                   className={classNames(
                     props.backPath
                       ? "relative"
-                      : "pwa:bottom-[max(7rem,_calc(5rem_+_env(safe-area-inset-bottom)))] fixed bottom-20 z-40 ltr:right-4 rtl:left-4 md:z-auto md:ltr:right-0 md:rtl:left-0",
-                    "shrink-0 [-webkit-app-region:no-drag] md:relative md:bottom-auto md:right-auto"
+                      : "pwa:bottom-[max(7rem,_calc(5rem_+_env(safe-area-inset-bottom)))] fixed bottom-20 z-40 end-4 md:z-auto md:end-0",
+                    "shrink-0 [-webkit-app-region:no-drag] md:relative md:bottom-auto md:end-auto"
                   )}>
                   {props.CTA}
                 </div>

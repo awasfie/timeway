@@ -104,7 +104,7 @@ function EventTypeSingleLayout({
         <div className="flex min-w-0 items-center">
           <span className="min-w-0 truncate">{eventType.title}</span>
           {eventType.team && (
-            <Badge className="ml-2 text-xs" variant="gray" startIcon="users">
+            <Badge className="ms-2 text-xs" variant="gray" startIcon="users">
               {eventType.team.name}
             </Badge>
           )}
@@ -117,14 +117,14 @@ function EventTypeSingleLayout({
               <div
                 className={classNames(
                   "hidden cursor-pointer items-center rounded-md transition sm:hover:bg-cal-muted",
-                  formMethods.watch("hidden") ? "pl-2" : "",
+                  formMethods.watch("hidden") ? "ps-2" : "",
                   "lg:flex"
                 )}>
                 {formMethods.watch("hidden") && (
                   <Skeleton
                     as={Label}
                     htmlFor="hiddenSwitch"
-                    className="mt-2 hidden cursor-pointer self-center whitespace-nowrap pr-2 sm:inline">
+                    className="mt-2 hidden cursor-pointer self-center whitespace-nowrap pe-2 sm:inline">
                     {t("hidden")}
                   </Skeleton>
                 )}
@@ -257,7 +257,7 @@ function EventTypeSingleLayout({
                 <Skeleton
                   as={Label}
                   htmlFor="hiddenSwitch"
-                  className="mt-2 inline cursor-pointer self-center pr-2">
+                  className="mt-2 inline cursor-pointer self-center pe-2">
                   {formMethods.watch("hidden") ? t("show_eventtype_on_profile") : t("hide_from_profile")}
                 </Skeleton>
                 <Switch
@@ -270,10 +270,10 @@ function EventTypeSingleLayout({
               </div>
             </DropdownMenuContent>
           </Dropdown>
-          <div className="border-default border-l-2" />
+          <div className="border-default border-s-2" />
           <Button
             ref={saveButtonRef}
-            className="ml-4 lg:ml-0"
+            className="ms-4 lg:ms-0"
             type="submit"
             loading={isUpdateMutationLoading}
             disabled={!formMethods.formState.isDirty}
@@ -303,7 +303,7 @@ function EventTypeSingleLayout({
           <div className="p-2 md:mx-0 md:p-0 xl:hidden">
             <HorizontalTabs tabs={EventTypeTabs} linkShallow />
           </div>
-          <div className="w-full ltr:mr-2 rtl:ml-2">
+          <div className="w-full me-2">
             <div
               className={classNames(
                 "mt-4 rounded-md border-subtle bg-default sm:mx-0 xl:mt-0",

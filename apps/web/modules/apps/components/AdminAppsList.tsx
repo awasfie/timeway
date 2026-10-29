@@ -88,7 +88,7 @@ const IntegrationContainer = ({
         actions={
           <div className="flex items-center justify-self-end">
             {app.keys && (
-              <Button color="secondary" className="mr-2" onClick={() => showKeyModal()}>
+              <Button color="secondary" className="me-2" onClick={() => showKeyModal()}>
                 <PencilIcon />
               </Button>
             )}
@@ -345,14 +345,14 @@ export default AdminAppsList;
 
 const SkeletonLoader = () => {
   return (
-    <SkeletonContainer className="w-120 pr-10">
+    <SkeletonContainer className="w-120 pe-10">
       <div className="mb-8 mt-6 stack-y-6">
         <SkeletonText className="h-8 w-full" />
         <SkeletonText className="h-8 w-full" />
         <SkeletonText className="h-8 w-full" />
         <SkeletonText className="h-8 w-full" />
 
-        <SkeletonButton className="mr-6 h-8 w-20 rounded-md p-5" />
+        <SkeletonButton className="me-6 h-8 w-20 rounded-md p-5" />
       </div>
     </SkeletonContainer>
   );

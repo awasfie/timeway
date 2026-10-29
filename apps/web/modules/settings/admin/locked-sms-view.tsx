@@ -38,7 +38,7 @@ export default function LockedSMSView() {
 
   return (
     <div>
-      <div className="mb-4 flex w-full items-center justify-between space-x-2 rtl:space-x-reverse">
+      <div className="mb-4 flex w-full items-center justify-between space-x-2">
         <div className="flex">
           <TextField
             name="Lock User"
@@ -49,7 +49,7 @@ export default function LockedSMSView() {
           />
           <Button
             type="submit"
-            className="ml-2 mt-5"
+            className="ms-2 mt-5"
             onClick={() => {
               mutation.mutate({ username, lock: true });
               utils.viewer.admin.getSMSLockStateTeamsUsers.invalidate();
@@ -69,7 +69,7 @@ export default function LockedSMSView() {
           />
           <Button
             type="submit"
-            className="ml-2 mt-5"
+            className="ms-2 mt-5"
             onClick={() => {
               mutation.mutate({ teamSlug, lock: true });
               utils.viewer.admin.getSMSLockStateTeamsUsers.invalidate();

@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @family/ui/no-physical-direction -- slide-in: toast viewport position prop is physical left/right/center by API */
 
 import { Toast } from "@base-ui/react/toast";
 import {
@@ -78,13 +79,13 @@ function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
               className={cn(
                 "absolute z-[calc(9999-var(--toast-index))] h-(--toast-calc-height) w-full select-none rounded-lg border bg-popover not-dark:bg-clip-padding text-popover-foreground shadow-lg/5 [transition:transform_.5s_cubic-bezier(.22,1,.36,1),opacity_.5s,height_.15s] before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
                 // Base positioning using data-position
-                "data-[position*=right]:right-0 data-[position*=right]:left-auto",
-                "data-[position*=left]:right-auto data-[position*=left]:left-0",
-                "data-[position*=center]:right-0 data-[position*=center]:left-0",
+                "data-[position*=right]:end-0 data-[position*=right]:start-auto",
+                "data-[position*=left]:end-auto data-[position*=left]:start-0",
+                "data-[position*=center]:end-0 data-[position*=center]:start-0",
                 "data-[position*=top]:top-0 data-[position*=top]:bottom-auto data-[position*=top]:origin-top",
                 "data-[position*=bottom]:top-auto data-[position*=bottom]:bottom-0 data-[position*=bottom]:origin-bottom",
                 // Gap fill for hover
-                "after:absolute after:left-0 after:h-[calc(var(--toast-gap)+1px)] after:w-full",
+                "after:absolute after:start-0 after:h-[calc(var(--toast-gap)+1px)] after:w-full",
                 "data-[position*=top]:after:top-full",
                 "data-[position*=bottom]:after:bottom-full",
                 // Define some variables

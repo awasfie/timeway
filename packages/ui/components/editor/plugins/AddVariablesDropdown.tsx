@@ -108,13 +108,13 @@ export const AddVariablesDropdown = (props: IAddVariablesDropdown) => {
             <>
               <div className="hidden sm:flex">
                 {t("add_variable")}
-                <ChevronDownIcon className="ml-1 mt-[2px] h-4 w-4" />
+                <ChevronDownIcon className="ms-1 mt-[2px] h-4 w-4" />
               </div>
               <div className="block sm:hidden">
                 {props.addVariableButtonTop ? (
                   <div className="flex">
                     {t("add_variable")}
-                    <ChevronDownIcon className="ml-1 mt-[2px] h-4 w-4" />
+                    <ChevronDownIcon className="ms-1 mt-[2px] h-4 w-4" />
                   </div>
                 ) : (
                   "+"
@@ -125,8 +125,8 @@ export const AddVariablesDropdown = (props: IAddVariablesDropdown) => {
             <div className="flex">
               {t("add_variable")}
               {
-                isOpen ? ( <ChevronUpIcon className="ml-1 mt-[2px] h-4 w-4" />) : (
-                  <ChevronDownIcon className="ml-1 mt-[2px] h-4 w-4" />
+                isOpen ? ( <ChevronUpIcon className="ms-1 mt-[2px] h-4 w-4" />) : (
+                  <ChevronDownIcon className="ms-1 mt-[2px] h-4 w-4" />
                 )
               }
             </div>
@@ -135,7 +135,7 @@ export const AddVariablesDropdown = (props: IAddVariablesDropdown) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-52" onKeyDown={handleKeyDown}>
         <div className="stack-y-2 p-1">
-          <div className="text-muted ml-1 text-left text-xs font-medium tracking-wide">
+          <div className="text-muted ms-1 text-start text-xs font-medium tracking-wide">
             {t("add_dynamic_variables")}
           </div>
           <div>
@@ -159,7 +159,7 @@ export const AddVariablesDropdown = (props: IAddVariablesDropdown) => {
                     ref={(el) => (itemRefs.current[index] = el)}
                     key={variable}
                     type="button"
-                    className={`w-full rounded-md px-3 py-2 text-left transition-colors focus:outline-none ${
+                    className={`w-full rounded-md px-3 py-2 text-start transition-colors focus:outline-none ${
                       selectedIndex === index ? "bg-muted" : ""
                     }`}
                     onMouseEnter={() => setSelectedIndex(index)}

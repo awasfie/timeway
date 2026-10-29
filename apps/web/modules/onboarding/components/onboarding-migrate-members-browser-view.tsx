@@ -60,7 +60,7 @@ export const OnboardingMigrateMembersBrowserView = ({
   const hasMembers = members.length > 0;
 
   return (
-    <div className="hidden h-full w-full flex-col overflow-hidden rounded-l-2xl border-subtle border-y border-s bg-default xl:flex">
+    <div className="hidden h-full w-full flex-col overflow-hidden rounded-s-2xl border-subtle border-y border-s bg-default xl:flex">
       {/* Browser header */}
       <div className="flex min-w-0 shrink-0 items-center gap-3 rounded-t-2xl border-subtle border-b bg-default p-3">
         {/* Navigation buttons */}
@@ -77,11 +77,11 @@ export const OnboardingMigrateMembersBrowserView = ({
       </div>
 
       {/* Content */}
-      <div className="h-full bg-cal-muted pt-11 pl-11">
+      <div className="h-full bg-cal-muted pt-11 ps-11">
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}
-            className="flex h-full w-full flex-col overflow-hidden rounded-tl-xl border border-muted bg-default"
+            className="flex h-full w-full flex-col overflow-hidden rounded-ss-xl border border-muted bg-default"
             variants={containerVariants}
             initial="initial"
             animate="animate"
@@ -109,7 +109,7 @@ export const OnboardingMigrateMembersBrowserView = ({
 
                 {/* Organization Logo - Overlaying the banner */}
                 {organizationLogo && (
-                  <div className="absolute -bottom-8 left-4">
+                  <div className="absolute -bottom-8 start-4">
                     <Avatar
                       size="lg"
                       imageSrc={organizationLogo}

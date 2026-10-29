@@ -121,7 +121,7 @@ export const DestinationCalendarSelector = ({
         }}
         isSearchable={false}
         className={classNames(
-          "my-2 block w-full min-w-0 flex-1 rounded-none rounded-r-sm border-default text-sm"
+          "my-2 block w-full min-w-0 flex-1 rounded-none rounded-e-sm border-default text-sm"
         )}
         onChange={(newValue) => {
           setSelectedOption(newValue);

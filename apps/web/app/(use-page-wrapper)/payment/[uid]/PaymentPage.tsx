@@ -106,7 +106,7 @@ const PaymentPage: FC<PaymentPageProps> = (props) => {
               </span>
               <div
                 className={classNames(
-                  "main inline-block transform overflow-hidden rounded-lg border border-subtle bg-default px-8 pt-5 pb-4 text-start align-bottom transition-all sm:w-full sm:max-w-lg sm:py-6 sm:align-middle",
+                  "main inline-block transform overflow-hidden rounded-lg border border-subtle bg-default px-8 pt-5 pb-4 text-start align-bottom transition-[opacity,transform] sm:w-full sm:max-w-lg sm:py-6 sm:align-middle",
                   isEmbed ? "" : "sm:my-8"
                 )}
                 role="dialog"

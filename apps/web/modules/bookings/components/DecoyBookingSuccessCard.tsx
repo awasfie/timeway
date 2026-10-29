@@ -36,7 +36,7 @@ export function DecoyBookingSuccessCard({
           <div className="flex items-end justify-center px-4 pb-20 pt-4 text-center sm:flex sm:p-0">
             <div className="main inset-0 my-4 flex flex-col transition-opacity sm:my-0" aria-hidden="true">
               <div
-                className="bg-default dark:bg-cal-muted border-booker border-booker-width inline-block transform overflow-hidden rounded-lg px-8 pb-4 pt-5 text-left align-bottom transition-all sm:my-8 sm:w-full sm:max-w-xl sm:py-8 sm:align-middle"
+                className="bg-default dark:bg-cal-muted border-booker border-booker-width inline-block transform overflow-hidden rounded-lg px-8 pb-4 pt-5 text-start align-bottom transition-[opacity,transform] sm:my-8 sm:w-full sm:max-w-xl sm:py-8 sm:align-middle"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="modal-headline">
@@ -54,7 +54,7 @@ export function DecoyBookingSuccessCard({
                     <p className="text-default">{t("emailed_you_and_any_other_attendees")}</p>
                   </div>
 
-                  <div className="border-subtle text-default mt-8 grid grid-cols-3 gap-x-4 border-t pt-8 text-left rtl:text-right sm:gap-x-0">
+                  <div className="border-subtle text-default mt-8 grid grid-cols-3 gap-x-4 border-t pt-8 text-start sm:gap-x-0">
                     <div className="font-medium">{t("what")}</div>
                     <div className="col-span-2 mb-6 last:mb-0">{title}</div>
 
@@ -82,7 +82,7 @@ export function DecoyBookingSuccessCard({
                       {hostName && (
                         <div className="mb-3">
                           <div>
-                            <span className="mr-2">{hostName}</span>
+                            <span className="me-2">{hostName}</span>
                             <Badge variant="blue">{t("Host")}</Badge>
                           </div>
                           {hostEmail && <p className="text-default">{hostEmail}</p>}

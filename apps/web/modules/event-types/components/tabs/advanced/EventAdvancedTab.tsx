@@ -216,7 +216,7 @@ const destinationCalendarComponents = {
                   color="minimal"
                   size="sm"
                   aria-label="edit custom name"
-                  className="-mr-1.5 min-w-fit px-1.5 py-0! hover:bg-transparent hover:stroke-3 hover:text-emphasis"
+                  className="-me-1.5 min-w-fit px-1.5 py-0! hover:bg-transparent hover:stroke-3 hover:text-emphasis"
                   onClick={() => setShowEventNameTip((old) => !old)}>
                   <PencilIcon className="h-4 w-4" />
                 </Button>
@@ -256,7 +256,7 @@ const destinationCalendarComponents = {
           {!useEventTypeDestinationCalendarEmail &&
             verifiedSecondaryEmails.length > 0 &&
             !isTeamEventType && (
-              <div className={classNames("flex w-full flex-col", showConnectedCalendarSettings && "pl-11")}>
+              <div className={classNames("flex w-full flex-col", showConnectedCalendarSettings && "ps-11")}>
                 <SelectField
                   placeholder={
                     selectedSecondaryEmailId === -1 && (
@@ -629,7 +629,7 @@ export const EventAdvancedTab = ({
 
       <div className="rounded-lg border border-subtle bg-cal-muted p-1">
         <div className="p-5">
-          <div className="font-semibold text-default text-sm leading-none ltr:mr-1 rtl:ml-1">
+          <div className="font-semibold text-default text-sm leading-none me-1">
             {t("booking_questions_title")}
           </div>
           <p className="wrap-break-word mt-1 max-w-[280px] text-sm text-subtle sm:max-w-[500px]">
@@ -913,7 +913,7 @@ export const EventAdvancedTab = ({
                 redirectUrlVisible && "rounded-b-none",
                 customClassNames?.bookingRedirect?.container
               )}
-              childrenClassName={classNames("lg:ml-0", customClassNames?.bookingRedirect?.children)}
+              childrenClassName={classNames("lg:ms-0", customClassNames?.bookingRedirect?.children)}
               descriptionClassName={customClassNames?.bookingRedirect?.description}
               title={t("redirect_success_booking")}
               data-testid="redirect-success-booking"
@@ -1041,7 +1041,7 @@ export const EventAdvancedTab = ({
                 value && "rounded-b-none",
                 customClassNames?.seatsOptions?.container
               )}
-              childrenClassName={classNames("lg:ml-0", customClassNames?.seatsOptions?.children)}
+              childrenClassName={classNames("lg:ms-0", customClassNames?.seatsOptions?.children)}
               descriptionClassName={customClassNames?.seatsOptions?.description}
               data-testid="offer-seats-toggle"
               title={t("offer_seats")}
@@ -1312,7 +1312,7 @@ export const EventAdvancedTab = ({
                 customClassNames?.customReplyToEmail?.container
               )}
               descriptionClassName={customClassNames?.customReplyToEmail?.description}
-              childrenClassName={classNames("lg:ml-0", customClassNames?.customReplyToEmail?.children)}
+              childrenClassName={classNames("lg:ms-0", customClassNames?.customReplyToEmail?.children)}
               title={t("custom_reply_to_email_title")}
               {...customReplyToEmailLocked}
               data-testid="custom-reply-to-email"
@@ -1365,7 +1365,7 @@ export const EventAdvancedTab = ({
               });
               setIsEventTypeColorChecked(e);
             }}
-            childrenClassName={classNames("lg:ml-0", customClassNames?.eventTypeColors?.children)}>
+            childrenClassName={classNames("lg:ms-0", customClassNames?.eventTypeColors?.children)}>
             <div className="flex flex-col gap-6 rounded-b-lg border border-subtle border-t-0 p-6">
               <div>
                 <p className="mb-2 block font-medium text-default text-sm">{t("light_event_type_color")}</p>

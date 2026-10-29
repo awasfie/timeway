@@ -259,7 +259,7 @@ export const ReassignDialog = ({
                             />
                             <span className="text-emphasis w-full text-sm">{member.label}</span>
                             {watchedTeamMemberId === member.value && (
-                              <div className="place-self-end pr-2">
+                              <div className="place-self-end pe-2">
                                 <CheckIcon className="text-emphasis h-4 w-4" />
                               </div>
                             )}

@@ -22,7 +22,7 @@ export const FormSkeleton = () => (
     <SkeletonText className="mt-2 h-7 w-full" />
 
     <div className="mt-6 flex flex-row gap-3">
-      <SkeletonText className="ml-auto h-8 w-20" />
+      <SkeletonText className="ms-auto h-8 w-20" />
       <SkeletonText className="h-8 w-20" />
     </div>
   </div>

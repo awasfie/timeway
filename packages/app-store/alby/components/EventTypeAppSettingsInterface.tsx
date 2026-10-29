@@ -56,7 +56,7 @@ const EventTypeAppSettingsInterface: EventTypeAppSettingsComponent = ({
                 addOnSuffix={selectedCurrency.unit || selectedCurrency.value}
                 type="number"
                 required
-                className="block w-full rounded-sm border-gray-300 pl-2 pr-12 text-sm"
+                className="block w-full rounded-sm border-gray-300 ps-2 pe-12 text-sm"
                 placeholder="Price"
                 onChange={(e) => {
                   setAppData("price", Number(e.target.value));

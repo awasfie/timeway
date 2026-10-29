@@ -102,9 +102,9 @@ export const EventDuration = ({
   }
 
   return selectedDuration ? (
-    <div className="border-default relative mr-5 flex flex-row items-center justify-between rounded-md border">
+    <div className="border-default relative me-5 flex flex-row items-center justify-between rounded-md border">
       {leftVisible && (
-        <button onClick={handleLeft} className="absolute bottom-0 left-0 flex">
+        <button onClick={handleLeft} className="absolute bottom-0 start-0 flex">
           <div className="bg-default flex h-9 w-5 items-center justify-end rounded-md">
             <ChevronLeftIcon className="text-subtle h-4 w-4" />
           </div>
@@ -133,7 +133,7 @@ export const EventDuration = ({
           ))}
       </ul>
       {rightVisible && (
-        <button onClick={handleRight} className="absolute bottom-0 right-0 flex">
+        <button onClick={handleRight} className="absolute bottom-0 end-0 flex">
           <div className="to-default flex h-9 w-5 bg-linear-to-r from-transparent" />
           <div className="bg-default flex h-9 w-5 items-center justify-end rounded-md">
             <ChevronRightIcon className="text-subtle h-4 w-4" />

@@ -61,11 +61,11 @@ const HorizontalTabItem = function ({
       {props.icon && (
         <Icon
           name={props.icon}
-          className={classNames("-ml-0.5 me-2 hidden h-4 w-4 text-inherit sm:inline-block")}
+          className={classNames("-ms-0.5 me-2 hidden h-4 w-4 text-inherit sm:inline-block")}
           aria-hidden="true"
         />
       )}
-      {avatar && <Avatar size="xs" imageSrc={avatar} alt="avatar" className="-ml-0.5 me-1" />} {t(name)}
+      {avatar && <Avatar size="xs" imageSrc={avatar} alt="avatar" className="-ms-0.5 me-1" />} {t(name)}
     </Link>
   );
 };

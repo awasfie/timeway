@@ -284,8 +284,8 @@ const SmallScreenSideBar = ({ open, children }: { open: boolean; children: JSX.E
       )}>
       <div
         className={classNames(
-          "bg-default stack-y-2 fixed right-0 z-20 flex h-screen w-80 flex-col overflow-x-hidden rounded-md px-2 pb-3 transition-transform",
-          open ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+          "bg-default stack-y-2 fixed end-0 z-20 flex h-screen w-80 flex-col overflow-x-hidden rounded-md px-2 pb-3 transition-transform",
+          open ? "translate-x-0 opacity-100" : "translate-x-full rtl:-translate-x-full opacity-0"
         )}>
         {open ? children : null}
       </div>
@@ -515,15 +515,15 @@ export const AvailabilitySettings = forwardRef<AvailabilitySettingsFormRef, Avai
                   )}>
                   <div
                     className={classNames(
-                      "bg-default stack-y-2 fixed right-0 z-20 flex h-screen w-80 flex-col overflow-x-hidden rounded-md px-2 pb-3 transition-transform",
-                      openSidebar ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+                      "bg-default stack-y-2 fixed end-0 z-20 flex h-screen w-80 flex-col overflow-x-hidden rounded-md px-2 pb-3 transition-transform",
+                      openSidebar ? "translate-x-0 opacity-100" : "translate-x-full rtl:-translate-x-full opacity-0"
                     )}>
                     <div className="flex flex-row items-center pt-16">
                       <Button StartIcon="arrow-left" color="minimal" onClick={() => setOpenSidebar(false)} />
-                      <p className="-ml-2">{t("availability_settings")}</p>
+                      <p className="-ms-2">{t("availability_settings")}</p>
                       {allowDelete && (
                         <DeleteDialogButton
-                          buttonClassName={cn("ml-16 inline", customClassNames?.deleteButtonClassname)}
+                          buttonClassName={cn("ms-16 inline", customClassNames?.deleteButtonClassname)}
                           disabled={schedule.isLastSchedule}
                           isPending={isDeleting}
                           handleDelete={handleDelete}
@@ -554,7 +554,7 @@ export const AvailabilitySettings = forwardRef<AvailabilitySettingsFormRef, Avai
                           <Skeleton
                             as={Label}
                             htmlFor="hiddenSwitch"
-                            className="mt-2 cursor-pointer self-center pr-2 sm:inline"
+                            className="mt-2 cursor-pointer self-center pe-2 sm:inline"
                             waitForTranslation={!isPlatform}>
                             {t("set_to_default")}
                           </Skeleton>
@@ -579,7 +579,7 @@ export const AvailabilitySettings = forwardRef<AvailabilitySettingsFormRef, Avai
                     </div>
 
                     <div className="min-w-40 stack-y-2 col-span-3 px-2 py-4 lg:col-span-1">
-                      <div className="xl:max-w-80 w-full pr-4 sm:ml-0 sm:mr-36 sm:p-0">
+                      <div className="xl:max-w-80 w-full pe-4 sm:ms-0 sm:me-36 sm:p-0">
                         <div>
                           <Skeleton
                             as={Label}
@@ -636,10 +636,10 @@ export const AvailabilitySettings = forwardRef<AvailabilitySettingsFormRef, Avai
                 </div>
               </>
             </SmallScreenSideBar>
-            <div className="border-default border-l-2" />
+            <div className="border-default border-s-2" />
             <Button
               ref={saveButtonRef}
-              className="ml-4 lg:ml-0"
+              className="ms-4 lg:ms-0"
               type="submit"
               form="availability-form"
               loading={isSaving}
@@ -648,7 +648,7 @@ export const AvailabilitySettings = forwardRef<AvailabilitySettingsFormRef, Avai
               {t("save")}
             </Button>
             <Button
-              className="ml-3 sm:hidden"
+              className="ms-3 sm:hidden"
               StartIcon="ellipsis-vertical"
               variant="icon"
               color="secondary"
@@ -727,7 +727,7 @@ export const AvailabilitySettings = forwardRef<AvailabilitySettingsFormRef, Avai
               )}
             </div>
             <div className="min-w-40 stack-y-2 col-span-3 hidden md:block lg:col-span-1">
-              <div className="xl:max-w-80 w-full pr-4 sm:ml-0 sm:mr-36 sm:p-0">
+              <div className="xl:max-w-80 w-full pe-4 sm:ms-0 sm:me-36 sm:p-0">
                 <div>
                   <Skeleton
                     as={Label}
@@ -756,7 +756,7 @@ export const AvailabilitySettings = forwardRef<AvailabilitySettingsFormRef, Avai
                   <></>
                 ) : (
                   <>
-                    <hr className="border-subtle my-8 mr-8" />
+                    <hr className="border-subtle my-8 me-8" />
                     <div className="border-subtle rounded-md border p-4">
                       <Skeleton
                         as="h3"

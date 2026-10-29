@@ -202,7 +202,7 @@ const EnableTwoFactorModal = ({ onEnable, onCancel, open, onOpenChange }: Enable
         </WithStep>
         <WithStep step={SetupStep.DisplayBackupCodes} current={step}>
           <>
-            <div className="mt-5 grid grid-cols-2 gap-1 text-center font-mono md:pl-10 md:pr-10">
+            <div className="mt-5 grid grid-cols-2 gap-1 text-center font-mono md:ps-10 md:pe-10">
               {backupCodes.map((code) => (
                 <div key={code}>{formatBackupCode(code)}</div>
               ))}

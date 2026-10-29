@@ -65,7 +65,7 @@ export function MultiDisconnectIntegration({ credentials, onSuccess }: Props) {
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuLabel>
-            <div className="w-48 text-left text-xs">{t("disconnect_app_from")}</div>
+            <div className="w-48 text-start text-xs">{t("disconnect_app_from")}</div>
           </DropdownMenuLabel>
           {credentials.map((cred) => (
             <DropdownMenuItem key={cred.id}>
@@ -82,7 +82,7 @@ export function MultiDisconnectIntegration({ credentials, onSuccess }: Props) {
                   });
                   setConfirmationDialogOpen(true);
                 }}>
-                <div className="flex flex-col text-left">
+                <div className="flex flex-col text-start">
                   <span>{getUserDisplayName(cred.user) || t("unnamed")}</span>
                 </div>
               </DropdownItem>

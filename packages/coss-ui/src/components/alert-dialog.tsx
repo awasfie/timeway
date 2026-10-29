@@ -23,7 +23,7 @@ function AlertDialogBackdrop({
   return (
     <AlertDialogPrimitive.Backdrop
       className={cn(
-        "fixed inset-0 z-50 bg-black/32 backdrop-blur-sm transition-all duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0",
+        "fixed inset-0 z-50 bg-black/32 backdrop-blur-sm transition-[opacity,backdrop-filter] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0",
         className,
       )}
       data-slot="alert-dialog-backdrop"
@@ -86,7 +86,7 @@ function AlertDialogHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 p-6 text-center max-sm:pb-4 sm:text-left",
+        "flex flex-col gap-2 p-6 text-center max-sm:pb-4 sm:text-start",
         className,
       )}
       data-slot="alert-dialog-header"

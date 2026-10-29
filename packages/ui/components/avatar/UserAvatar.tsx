@@ -43,7 +43,7 @@ function OrganizationIndicator({
 }: Pick<UserAvatarProps, "size" | "user"> & { organization: Organization }) {
   const indicatorSize = size && indicatorBySize[size];
   return (
-    <div className={classNames("absolute bottom-0 right-0 z-10", indicatorSize)}>
+    <div className={classNames("absolute bottom-0 end-0 z-10", indicatorSize)}>
       <img
         data-testid="organization-logo"
         src={getPlaceholderAvatar(organization.logoUrl, organization.slug)}

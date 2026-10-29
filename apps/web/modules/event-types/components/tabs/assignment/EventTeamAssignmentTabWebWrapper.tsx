@@ -68,7 +68,7 @@ export default function EventTeamAssignmentTab({ teamMembers, eventType }: Props
                     <span className="text-emphasis text-sm font-medium">{m.name ?? m.email}</span>
                     <span className="text-subtle text-sm">{m.email}</span>
                     {host ? (
-                      <span className="text-subtle ml-auto text-xs">
+                      <span className="text-subtle ms-auto text-xs">
                         {host.isFixed ? "Fixed host" : "Round-robin host"} · priority {host.priority}
                       </span>
                     ) : null}

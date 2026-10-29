@@ -36,7 +36,7 @@ const CalVideoSettings = ({ calVideoSettings }: { calVideoSettings?: CalVideoSet
           <span className="hidden w-full justify-between truncate text-ellipsis lg:flex">
             {!isExpanded ? t("show_advanced_settings") : t("hide_advanced_settings")}
           </span>
-          <Icon name={isExpanded ? "chevron-up" : "chevron-down"} className="ml-auto h-4 w-4" />
+          <Icon name={isExpanded ? "chevron-up" : "chevron-down"} className="ms-auto h-4 w-4" />
         </button>
       </Tooltip>
       <div ref={parent}>

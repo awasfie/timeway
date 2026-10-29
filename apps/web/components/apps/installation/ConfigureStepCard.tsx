@@ -95,7 +95,7 @@ const EventTypeAppSettingsForm = forwardRef<HTMLButtonElement, EventTypeAppSetti
         <div>
           <div className="sm:border-subtle bg-default relative border p-4 dark:bg-black sm:rounded-md">
             <div>
-              <span className="text-default font-semibold ltr:mr-1 rtl:ml-1">{eventType.title}</span>{" "}
+              <span className="text-default font-semibold me-1">{eventType.title}</span>{" "}
               <small className="text-subtle hidden font-normal sm:inline">
                 /{eventType.team ? eventType.team.slug : props.userName}/{eventType.slug}
               </small>
@@ -108,7 +108,7 @@ const EventTypeAppSettingsForm = forwardRef<HTMLButtonElement, EventTypeAppSetti
             <Icon
               name="x"
               data-testid={`remove-event-type-${eventType.id}`}
-              className="absolute right-4 top-4 h-4 w-4 cursor-pointer"
+              className="absolute end-4 top-4 h-4 w-4 cursor-pointer"
               onClick={() => !loading && handleDelete()}
             />
             <button type="submit" className="hidden" form={`eventtype-${eventType.id}`} ref={ref}>
@@ -139,7 +139,7 @@ const EventTypeGroup = ({
     keyName: "fieldId",
   });
   return (
-    <div className="ml-2 flex flex-col stack-y-6">
+    <div className="ms-2 flex flex-col stack-y-6">
       {fields.map(
         (field, index) =>
           field.selected && (
@@ -238,7 +238,7 @@ const ConfigureStepCardContent: FC<ConfigureStepCardProps> = (props) => {
                 size="md"
                 className="inline-flex justify-center"
               />
-              <p className="text-subtle block pl-2">{group.slug}</p>
+              <p className="text-subtle block ps-2">{group.slug}</p>
             </div>
           )}
           <EventTypeGroup

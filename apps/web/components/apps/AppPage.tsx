@@ -311,13 +311,13 @@ export const AppPage = ({
   return (
     <div className="relative mt-4 flex-1 flex-col items-start justify-start px-4 md:mt-0 md:flex md:px-8 lg:flex-row lg:px-0">
       {hasDescriptionItems && (
-        <div className="align-center bg-subtle -ml-4 -mr-4 mb-4 flex min-h-[450px] w-auto basis-3/5 snap-x snap-mandatory flex-row overflow-auto whitespace-nowrap p-4  md:-ml-8 md:-mr-8 md:mb-8 md:p-8 lg:mx-0 lg:mb-0 lg:max-w-2xl lg:flex-col lg:justify-center lg:rounded-md">
+        <div className="align-center bg-subtle -ms-4 -me-4 mb-4 flex min-h-[450px] w-auto basis-3/5 snap-x snap-mandatory flex-row overflow-auto whitespace-nowrap p-4  md:-ms-8 md:-me-8 md:mb-8 md:p-8 lg:mx-0 lg:mb-0 lg:max-w-2xl lg:flex-col lg:justify-center lg:rounded-md">
           {descriptionItems ? (
             descriptionItems.map((descriptionItem, index) =>
               typeof descriptionItem === "object" ? (
                 <div
                   key={`iframe-${index}`}
-                  className="mr-4 max-h-full min-h-[315px] min-w-[90%] max-w-full snap-center overflow-hidden rounded-md last:mb-0 lg:mb-4 lg:mr-0 [&_iframe]:h-full [&_iframe]:min-h-[315px] [&_iframe]:w-full">
+                  className="me-4 max-h-full min-h-[315px] min-w-[90%] max-w-full snap-center overflow-hidden rounded-md last:mb-0 lg:mb-4 lg:me-0 [&_iframe]:h-full [&_iframe]:min-h-[315px] [&_iframe]:w-full">
                   <iframe allowFullScreen {...descriptionItem.iframe} />
                 </div>
               ) : (
@@ -326,7 +326,7 @@ export const AppPage = ({
                   key={descriptionItem}
                   src={descriptionItem}
                   alt={`Screenshot of app ${name}`}
-                  className="mr-4 h-auto max-h-80 max-w-[90%] snap-center rounded-md object-contain last:mb-0 md:max-h-min lg:mb-4 lg:mr-0  lg:max-w-full"
+                  className="me-4 h-auto max-h-80 max-w-[90%] snap-center rounded-md object-contain last:mb-0 md:max-h-min lg:mb-4 lg:me-0  lg:max-w-full"
                 />
               )
             )
@@ -338,7 +338,7 @@ export const AppPage = ({
       <div
         className={classNames(
           "sticky top-0 -mt-4 max-w-xl basis-2/5 pb-12 text-sm lg:pb-0",
-          hasDescriptionItems && "lg:ml-8"
+          hasDescriptionItems && "lg:ms-8"
         )}>
         <div className="mb-8 flex pt-4">
           <header>
@@ -349,7 +349,7 @@ export const AppPage = ({
                 src={logo}
                 alt={name}
               />
-              <h1 className="font-cal text-emphasis ml-4 text-3xl">{name}</h1>
+              <h1 className="font-cal text-emphasis ms-4 text-3xl">{name}</h1>
             </div>
             <h2 className="text-default text-sm font-medium">
               <Link
@@ -359,7 +359,7 @@ export const AppPage = ({
               </Link>{" "}
               {paid && (
                 <>
-                  <Badge className="mr-1">
+                  <Badge className="me-1">
                     {Intl.NumberFormat(i18n.language, {
                       style: "currency",
                       currency: "USD",
@@ -389,7 +389,7 @@ export const AppPage = ({
             <div className="items-start space-x-2.5">
               <div className="text-info flex items-start">
                 <div>
-                  <CircleAlertIcon className="mr-2 mt-1 font-semibold" />
+                  <CircleAlertIcon className="me-2 mt-1 font-semibold" />
                 </div>
                 <div>
                   <span className="font-semibold">{t("msteams_calendar_warning_body")}</span>
@@ -409,7 +409,7 @@ export const AppPage = ({
           ))}
 
         {price !== 0 && !paid && (
-          <span className="block text-right">
+          <span className="block text-end">
             {feeType === "usage-based" ? `${commission}% + ${priceInDollar}/booking` : priceInDollar}
             {feeType === "monthly" && `/${t("month")}`}
           </span>
@@ -439,7 +439,7 @@ export const AppPage = ({
         )}
 
         <h4 className="text-emphasis mb-2 mt-8 font-semibold ">{t("contact")}</h4>
-        <ul className="prose-sm -ml-1 -mr-1 leading-5">
+        <ul className="prose-sm -ms-1 -me-1 leading-5">
           {docs && (
             <li>
               <a
@@ -447,7 +447,7 @@ export const AppPage = ({
                 rel="noreferrer"
                 className="text-emphasis text-sm font-normal no-underline hover:underline"
                 href={docs}>
-                <BookOpenIcon className="text-subtle -mt-1 mr-1 inline h-4 w-4" />
+                <BookOpenIcon className="text-subtle -mt-1 me-1 inline h-4 w-4" />
                 {t("documentation")}
               </a>
             </li>
@@ -459,7 +459,7 @@ export const AppPage = ({
                 rel="noreferrer"
                 className="text-emphasis font-normal no-underline hover:underline"
                 href={website}>
-                <ExternalLinkIcon className="text-subtle -mt-px mr-1 inline h-4 w-4" />
+                <ExternalLinkIcon className="text-subtle -mt-px me-1 inline h-4 w-4" />
                 {website.replace("https://", "")}
               </a>
             </li>
@@ -471,7 +471,7 @@ export const AppPage = ({
                 rel="noreferrer"
                 className="text-emphasis font-normal no-underline hover:underline"
                 href={`mailto:${email}`}>
-                <MailIcon className="text-subtle -mt-px mr-1 inline h-4 w-4" />
+                <MailIcon className="text-subtle -mt-px me-1 inline h-4 w-4" />
 
                 {email}
               </a>
@@ -484,7 +484,7 @@ export const AppPage = ({
                 rel="noreferrer"
                 className="text-emphasis font-normal no-underline hover:underline"
                 href={tos}>
-                <FileIcon className="text-subtle -mt-px mr-1 inline h-4 w-4" />
+                <FileIcon className="text-subtle -mt-px me-1 inline h-4 w-4" />
                 {t("terms_of_service")}
               </a>
             </li>
@@ -496,7 +496,7 @@ export const AppPage = ({
                 rel="noreferrer"
                 className="text-emphasis font-normal no-underline hover:underline"
                 href={privacy}>
-                <ShieldIcon className="text-subtle -mt-px mr-1 inline h-4 w-4" />
+                <ShieldIcon className="text-subtle -mt-px me-1 inline h-4 w-4" />
                 {t("privacy_policy")}
               </a>
             </li>

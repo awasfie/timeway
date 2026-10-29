@@ -49,7 +49,7 @@ export const OptionComponent = <
       <div className="flex items-center justify-between">
         <span className="w-full" data-testid={`select-option-${(props as unknown as ExtendedOption).value}`}>
           {(props.data as unknown as ExtendedOption).isCalAi ? (
-            <Badge startIcon="sparkles" variant="purple" className="mr-1 hidden md:inline-flex">
+            <Badge startIcon="sparkles" variant="purple" className="me-1 hidden md:inline-flex">
               Cal.ai
             </Badge>
           ) : (
@@ -65,7 +65,7 @@ export const OptionComponent = <
         ) : (
           <></>
         )}
-        {props.isSelected && <CheckIcon className="ml-2 h-4 w-4" />}
+        {props.isSelected && <CheckIcon className="ms-2 h-4 w-4" />}
       </div>
     </reactSelectComponents.Option>
   );

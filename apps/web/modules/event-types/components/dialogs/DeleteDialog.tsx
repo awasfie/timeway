@@ -32,7 +32,7 @@ export function DeleteDialog({
         }}>
         <p className="mt-5">
           {isManagedEvent ? (
-            <ul className="ml-4 list-disc">
+            <ul className="ms-4 list-disc">
               <li>{t("delete_managed_event_type_description_1")}</li>
               <li>{t("delete_managed_event_type_description_2")}</li>
             </ul>

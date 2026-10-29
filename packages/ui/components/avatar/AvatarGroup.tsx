@@ -30,7 +30,7 @@ export const AvatarGroup = function AvatarGroup(props: AvatarGroupProps) {
   return (
     <ul className={classNames("flex items-center", props.className)}>
       {displayedAvatars.map((item, idx) => (
-        <li key={idx} className="-mr-1 inline-block">
+        <li key={idx} className="-me-1 inline-block">
           <Avatar
             data-testid="avatar"
             className="border-subtle"
@@ -45,7 +45,7 @@ export const AvatarGroup = function AvatarGroup(props: AvatarGroupProps) {
       {numTruncatedAvatars > 0 && (
         <li
           className={classNames(
-            "bg-inverted relative -mr-1 inline-flex justify-center  overflow-hidden rounded-full",
+            "bg-inverted relative -me-1 inline-flex justify-center  overflow-hidden rounded-full",
             props.size === "sm" ? "min-w-6 h-6" : "min-w-16 h-16"
           )}>
           <span

@@ -186,7 +186,7 @@ const SlotItem = ({
           {hasTimeSlots && !bookingFull && (
             <p className="flex items-center text-sm">
               <span
-                className={classNames(colorClass, "mr-1 inline-block h-2 w-2 rounded-full")}
+                className={classNames(colorClass, "me-1 inline-block h-2 w-2 rounded-full")}
                 aria-hidden
               />
               <SeatsAvailabilityText

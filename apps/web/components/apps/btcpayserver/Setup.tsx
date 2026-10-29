@@ -324,7 +324,7 @@ function BTCPaySetupPage(props: IBTCPaySetupProps) {
                       disabled={loading || validating || !updatable}>
                       {loading ? (
                         <>
-                          <LoaderIcon className="mr-2 animate-spin" />
+                          <LoaderIcon className="me-2 animate-spin" />
                           {t("connecting")}
                         </>
                       ) : (

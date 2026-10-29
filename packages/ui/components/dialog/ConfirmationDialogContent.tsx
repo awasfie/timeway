@@ -44,7 +44,7 @@ export const ConfirmationContent = (props: PropsWithChildren<ConfirmationDialogC
     <>
       <div className="flex">
         {variety && (
-          <div className="mt-0.5 ltr:mr-3">
+          <div className="mt-0.5 me-3">
             {variety === "danger" && (
               <div className="bg-error mx-auto rounded-full p-2 text-center">
                 <CircleAlertIcon className="h-5 w-5 text-red-600 dark:text-red-100" />

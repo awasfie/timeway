@@ -66,7 +66,7 @@ export function OverlayCalendarSettingsModal({
         {item.error && !item.calendars && <Alert severity="error" title={item.error.message} />}
         {item?.error === undefined && item.calendars && (
           <ListItem className="flex-col rounded-md">
-            <div className="flex w-full flex-1 items-center space-x-3 pb-4 rtl:space-x-reverse">
+            <div className="flex w-full flex-1 items-center space-x-3 pb-4">
               {item.integration.logo && (
                 <Image
                   className={classNames(
@@ -79,8 +79,8 @@ export function OverlayCalendarSettingsModal({
                   alt={`${item.integration.title} logo`}
                 />
               )}
-              <div className="grow truncate pl-2">
-                <ListItemTitle component="h3" className="space-x-2 rtl:space-x-reverse">
+              <div className="grow truncate ps-2">
+                <ListItemTitle component="h3" className="space-x-2">
                   <Link href={`/apps/${item.integration.slug}`}>
                     {item.integration.name || item.integration.title}
                   </Link>

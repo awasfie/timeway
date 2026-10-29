@@ -338,12 +338,12 @@ const KBarContent = (): JSX.Element => {
           <RenderResults />
           <div className="hidden items-center space-x-1 border-subtle border-t px-2 py-1.5 text-subtle text-xs sm:flex">
             <ArrowUpIcon className="h-4 w-4" />
-            <ArrowDownIcon className="h-4 w-4" /> <span className="pr-2">{t("navigate")}</span>
+            <ArrowDownIcon className="h-4 w-4" /> <span className="pe-2">{t("navigate")}</span>
             <CornerDownLeftIcon className="h-4 w-4" />
-            <span className="pr-2">{t("open")}</span>
+            <span className="pe-2">{t("open")}</span>
             <CommandKey />
-            <span className="pr-1">+ K </span>
-            <span className="pr-2">{t("close")}</span>
+            <span className="pe-1">+ K </span>
+            <span className="pe-2">{t("close")}</span>
           </div>
         </KBarAnimator>
         <div className="fixed inset-0 z-1 bg-neutral-800/70" />

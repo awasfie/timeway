@@ -89,7 +89,7 @@ export function NotFound({ host }: { host: string }) {
                 <a
                   href={url}
                   target="_blank"
-                  className="relative flex items-start space-x-4 py-6 rtl:space-x-reverse"
+                  className="relative flex items-start space-x-4 py-6"
                   rel="noreferrer">
                   <div className="shrink-0">
                     <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-50">
@@ -118,7 +118,7 @@ export function NotFound({ host }: { host: string }) {
           <ul role="list" className="divide-y divide-subtle border-subtle">
             {links.map((link, linkIdx) => (
               <li key={linkIdx} className="px-4 py-2">
-                <a href={link.href} className="relative flex items-start space-x-4 py-6 rtl:space-x-reverse">
+                <a href={link.href} className="relative flex items-start space-x-4 py-6">
                   <div className="shrink-0">
                     <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-cal-muted">
                       <Icon name={link.icon} className="h-6 w-6 text-default" aria-hidden="true" />

@@ -107,7 +107,7 @@ export function DatePickerWithRange({
             data-testid="date-range"
             color="secondary"
             EndIcon="calendar"
-            className={classNames("justify-between text-left font-normal", !dates && "text-subtle")}>
+            className={classNames("justify-between text-start font-normal", !dates && "text-subtle")}>
             {dates?.startDate ? (
               dates?.endDate ? (
                 <>

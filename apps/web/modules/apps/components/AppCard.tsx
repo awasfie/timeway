@@ -218,7 +218,7 @@ export function AppCard({ app, credentials, searchText, userAdminTeams }: AppCar
               />
             )}
       </div>
-      <div className="max-w-44 absolute right-0 mr-4 flex flex-wrap justify-end gap-1">
+      <div className="max-w-44 absolute end-0 me-4 flex flex-wrap justify-end gap-1">
         {appAdded > 0 && !isRedirectApp(app.slug) ? (
           <Badge variant="green">{t("installed", { count: appAdded })}</Badge>
         ) : null}

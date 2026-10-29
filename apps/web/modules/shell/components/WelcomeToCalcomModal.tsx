@@ -57,7 +57,7 @@ export function WelcomeToCalcomModal() {
               WebkitMaskImage: "radial-gradient(ellipse 100% 60% at center, black 30%, transparent 85%)",
             }}>
             {/* Center origin */}
-            <div className="absolute left-1/2 top-1/2" style={{ transform: "translate(-50%, -50%)" }}>
+            <div className="absolute start-1/2 top-1/2" style={{ transform: "translate(-50%, -50%)" }}>
               {/* Rings */}
               {RINGS.map((r, i) => (
                 <div

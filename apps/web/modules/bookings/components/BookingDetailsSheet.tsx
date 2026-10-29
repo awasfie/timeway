@@ -1035,7 +1035,7 @@ function BookingHeaderBadges({
       ) : null}
       {recurringInfo && (
         <Badge variant="gray">
-          <RepeatIcon className="mr-1 h-3 w-3" />
+          <RepeatIcon className="me-1 h-3 w-3" />
           {recurringInfo.count}
         </Badge>
       )}

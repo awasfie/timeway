@@ -179,7 +179,7 @@ export const EventMeta = ({
           {(event.description || translatedDescription) && (
             <EventMetaBlock data-testid="event-meta-description" contentClassName="mb-8">
               <ScrollableWithGradients
-                className="wrap-break-word scroll-bar max-h-[180px] max-w-full overflow-y-auto pr-4"
+                className="wrap-break-word scroll-bar max-h-[180px] max-w-full overflow-y-auto pe-4"
                 ariaLabel={t("description")}>
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: rendered by markdownToSafeHTML in getPublicEvent, re-sanitized with DOMPurify */}
                 <div
@@ -190,7 +190,7 @@ export const EventMeta = ({
               </ScrollableWithGradients>
             </EventMetaBlock>
           )}
-          <div className="stack-y-4 font-medium rtl:-mr-2">
+          <div className="stack-y-4 font-medium rtl:-ms-2">
             {rescheduleUid && bookingData && (
               <EventMetaBlock icon="calendar">
                 {t("former_time")}
@@ -226,7 +226,7 @@ export const EventMeta = ({
                 <>{timezone}</>
               ) : (
                 <span
-                  className={`current-timezone before:bg-subtle min-w-32 -mt-[2px] flex h-6 max-w-full items-center justify-start before:absolute before:inset-0 before:bottom-[-3px] before:left-[-30px] before:top-[-3px] before:w-[calc(100%+35px)] before:rounded-md before:py-3 before:opacity-0 before:transition-opacity ${
+                  className={`current-timezone before:bg-subtle min-w-32 -mt-[2px] flex h-6 max-w-full items-center justify-start before:absolute before:inset-0 before:bottom-[-3px] before:start-[-30px] before:top-[-3px] before:w-[calc(100%+35px)] before:rounded-md before:py-3 before:opacity-0 before:transition-opacity ${
                     event.lockTimeZoneToggleOnBookingPage ? "cursor-not-allowed" : ""
                   }`}
                   data-testid="event-meta-current-timezone">

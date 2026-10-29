@@ -58,7 +58,7 @@ export function AppHomePageSkeleton() {
                 .map((_, i) => (
                   <div key={`app-${i}`} className="border-subtle flex flex-col rounded-md border p-4">
                     <div className="flex items-center">
-                      <div className="mr-3 h-10 w-10 rounded-md bg-gray-200" /> {/* App icon */}
+                      <div className="me-3 h-10 w-10 rounded-md bg-gray-200" /> {/* App icon */}
                       <div className="flex-1">
                         <SkeletonText className="h-5 w-32" /> {/* App name */}
                         <SkeletonText className="mt-1 h-4 w-24" /> {/* Developer name */}
@@ -84,7 +84,7 @@ export function AppHomePageSkeleton() {
                 .map((_, i) => (
                   <div key={`all-app-${i}`} className="border-subtle flex flex-col rounded-md border p-4">
                     <div className="flex items-center">
-                      <div className="mr-3 h-10 w-10 rounded-md bg-gray-200" /> {/* App icon */}
+                      <div className="me-3 h-10 w-10 rounded-md bg-gray-200" /> {/* App icon */}
                       <div className="flex-1">
                         <SkeletonText className="h-5 w-32" /> {/* App name */}
                         <SkeletonText className="mt-1 h-4 w-24" /> {/* Developer name */}

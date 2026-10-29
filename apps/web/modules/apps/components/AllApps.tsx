@@ -59,7 +59,7 @@ function CategoryTab({ selectedCategory, categories, searchText, onCategoryChang
             })}
       </h2>
       {leftVisible && (
-        <button onClick={handleLeft} className="absolute bottom-0 flex  lg:left-1/2">
+        <button onClick={handleLeft} className="absolute bottom-0 flex  lg:start-1/2">
           <div className="bg-default flex h-10 w-5 items-center justify-end">
             <ChevronLeftIcon className="text-subtle h-4 w-4" />
           </div>
@@ -99,7 +99,7 @@ function CategoryTab({ selectedCategory, categories, searchText, onCategoryChang
         ))}
       </ul>
       {rightVisible && (
-        <button onClick={handleRight} className="absolute bottom-0 right-0 flex ">
+        <button onClick={handleRight} className="absolute bottom-0 end-0 flex ">
           <div className="to-default flex h-10 w-5 bg-linear-to-r from-transparent" />
           <div className="bg-default flex h-10 w-5 items-center justify-end">
             <ChevronRightIcon className="text-subtle h-4 w-4" />

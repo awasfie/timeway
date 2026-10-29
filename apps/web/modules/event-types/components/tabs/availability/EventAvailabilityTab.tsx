@@ -141,12 +141,12 @@ const Option = ({ ...props }: OptionProps<AvailabilityOption>) => {
     <components.Option {...props}>
       <span>{label}</span>
       {isDefault && (
-        <Badge variant="blue" className="ml-2">
+        <Badge variant="blue" className="ms-2">
           {t("default")}
         </Badge>
       )}
       {isManaged && (
-        <Badge variant="gray" className="ml-2">
+        <Badge variant="gray" className="ms-2">
           {t("managed")}
         </Badge>
       )}
@@ -161,12 +161,12 @@ const SingleValue = ({ ...props }: SingleValueProps<AvailabilityOption>) => {
     <components.SingleValue {...props}>
       <span>{label}</span>
       {isDefault && (
-        <Badge variant="blue" className="ml-2">
+        <Badge variant="blue" className="ms-2">
           {t("default")}
         </Badge>
       )}
       {isManaged && (
-        <Badge variant="gray" className="ml-2">
+        <Badge variant="gray" className="ms-2">
           {t("managed")}
         </Badge>
       )}
@@ -221,7 +221,7 @@ const EventTypeScheduleDetails = memo(
                   {isSchedulePending ? (
                     <SkeletonText className="block h-5 w-60" />
                   ) : isAvailable ? (
-                    <div className="stack-y-3 text-right">
+                    <div className="stack-y-3 text-end">
                       {filterDays(index).map((dayRange, i) => (
                         <div
                           key={i}
@@ -231,7 +231,7 @@ const EventTypeScheduleDetails = memo(
                           )}>
                           <span
                             className={classNames(
-                              "w-16 sm:w-28 sm:text-left",
+                              "w-16 sm:w-28 sm:text-start",
                               customClassNames?.dayAvailabilityFrom
                             )}>
                             {format(dayRange.startTime, timeFormat === 12)}
@@ -239,7 +239,7 @@ const EventTypeScheduleDetails = memo(
                           <span className={classNames("ms-4", customClassNames?.dayAvailabilitySeperator)}>
                             -
                           </span>
-                          <div className={classNames("ml-6 sm:w-28", customClassNames?.dayAvailabilityTo)}>
+                          <div className={classNames("ms-6 sm:w-28", customClassNames?.dayAvailabilityTo)}>
                             {format(dayRange.endTime, timeFormat === 12)}
                           </div>
                         </div>
@@ -247,7 +247,7 @@ const EventTypeScheduleDetails = memo(
                     </div>
                   ) : (
                     <span
-                      className={classNames("ml-6 text-subtle sm:ml-0", customClassNames?.dayUnavailable)}>
+                      className={classNames("ms-6 text-subtle sm:ms-0", customClassNames?.dayUnavailable)}>
                       {t("unavailable")}
                     </span>
                   )}
@@ -259,7 +259,7 @@ const EventTypeScheduleDetails = memo(
         <div className="flex flex-col items-center gap-2 rounded-b-md border border-subtle bg-cal-muted p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
             <span className="flex items-center justify-center text-center text-default text-sm sm:justify-start">
-              <GlobeIcon className="h-3.5 w-3.5 ltr:mr-2 rtl:ml-2" />
+              <GlobeIcon className="h-3.5 w-3.5 me-2" />
               {scheduleQueryData?.timeZone || <SkeletonText className="block h-5 w-32" />}
             </span>
           </div>
@@ -347,7 +347,7 @@ const EventTypeRestrictionScheduleDetails = memo(
                   {isSchedulePending ? (
                     <SkeletonText className="block h-5 w-60" />
                   ) : isAvailable ? (
-                    <div className="stack-y-3 text-right">
+                    <div className="stack-y-3 text-end">
                       {filterDays(index).map((dayRange, i) => (
                         <div
                           key={i}
@@ -357,7 +357,7 @@ const EventTypeRestrictionScheduleDetails = memo(
                           )}>
                           <span
                             className={classNames(
-                              "w-16 sm:w-28 sm:text-left",
+                              "w-16 sm:w-28 sm:text-start",
                               customClassNames?.dayAvailabilityFrom
                             )}>
                             {format(dayRange.startTime, timeFormat === 12)}
@@ -365,7 +365,7 @@ const EventTypeRestrictionScheduleDetails = memo(
                           <span className={classNames("ms-4", customClassNames?.dayAvailabilitySeperator)}>
                             -
                           </span>
-                          <div className={classNames("ml-6 sm:w-28", customClassNames?.dayAvailabilityTo)}>
+                          <div className={classNames("ms-6 sm:w-28", customClassNames?.dayAvailabilityTo)}>
                             {format(dayRange.endTime, timeFormat === 12)}
                           </div>
                         </div>
@@ -373,7 +373,7 @@ const EventTypeRestrictionScheduleDetails = memo(
                     </div>
                   ) : (
                     <span
-                      className={classNames("ml-6 text-subtle sm:ml-0", customClassNames?.dayUnavailable)}>
+                      className={classNames("ms-6 text-subtle sm:ms-0", customClassNames?.dayUnavailable)}>
                       {t("unavailable")}
                     </span>
                   )}
@@ -390,11 +390,11 @@ const EventTypeRestrictionScheduleDetails = memo(
                 useBookerTimezone && "text-muted line-through"
               )}>
               <GlobeIcon
-                className={classNames("h-3.5 w-3.5 ltr:mr-2 rtl:ml-2", useBookerTimezone && "text-muted")}
+                className={classNames("h-3.5 w-3.5 me-2", useBookerTimezone && "text-muted")}
               />
               {scheduleQueryData?.timeZone || <SkeletonText className="block h-5 w-32" />}
             </span>
-            <div className="ltr:mr-2 rtl:ml-2">
+            <div className="me-2">
               <CheckboxField
                 checked={useBookerTimezone}
                 disabled={isSchedulePending}
@@ -631,7 +631,7 @@ const EventTypeSchedule = ({
       ) : (
         isManagedEventType &&
         fieldName === "schedule" && (
-          <p className="mt-2! ml-1 text-gray-600 text-sm">{t("members_default_schedule_description")}</p>
+          <p className="mt-2! ms-1 text-gray-600 text-sm">{t("members_default_schedule_description")}</p>
         )
       )}
     </div>
@@ -856,7 +856,7 @@ const UseTeamEventScheduleSettingsToggle = ({
           />
         </SettingsToggle>
         {useHostSchedulesForTeamEvent && (
-          <div className="lg:ml-14">
+          <div className="lg:ms-14">
             <TeamAvailability
               teamMembers={rest.teamMembers}
               hostSchedulesQuery={rest.hostSchedulesQuery}

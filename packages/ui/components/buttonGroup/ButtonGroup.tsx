@@ -26,8 +26,8 @@ export function ButtonGroup({ children, combined = false, containerProps }: Prop
       className={classNames(
         "flex",
         !combined
-          ? "space-x-2 rtl:space-x-reverse"
-          : "[&>*:first-child]:rounded-l-(--btn-group-radius) rtl:[&>*:first-child]:rounded-l-none rtl:[&>*:first-child]:rounded-r-(--btn-group-radius) [&>*:last-child]:rounded-r-(--btn-group-radius) rtl:[&>*:last-child]:rounded-l-(--btn-group-radius) rtl:[&>*:last-child]:rounded-r-none [&>*:not(:first-child)]:-ml-px *:rounded-none *:border hover:*:z-1",
+          ? "space-x-2"
+          : "[&>*:first-child]:rounded-s-(--btn-group-radius) [&>*:last-child]:rounded-e-(--btn-group-radius) [&>*:not(:first-child)]:-ms-px *:rounded-none *:border hover:*:z-1",
         containerProps?.className
       )}>
       {children}

@@ -73,7 +73,7 @@ export default function CreateEventTypeForm({
                 ) : undefined
               }
               containerClassName="[&>div]:gap-0"
-              className="pl-0"
+              className="ps-0"
               {...register("slug")}
               onChange={(e) => {
                 form.setValue("slug", slugify(e?.target.value), { shouldTouch: true });
@@ -100,7 +100,7 @@ export default function CreateEventTypeForm({
                 ) : undefined
               }
               containerClassName="[&>div]:gap-0"
-              className="pl-0"
+              className="ps-0"
               {...register("slug")}
               onChange={(e) => {
                 form.setValue("slug", slugify(e?.target.value), { shouldTouch: true });
@@ -135,7 +135,7 @@ export default function CreateEventTypeForm({
               max={MAX_EVENT_DURATION_MINUTES}
               placeholder="15"
               label={t("duration")}
-              className="pr-4"
+              className="pe-4"
               {...register("length", {
                 valueAsNumber: true,
                 min: {

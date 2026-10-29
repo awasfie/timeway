@@ -384,7 +384,7 @@ const BackButtonInSidebar = ({ name }: { name: string }) => {
       href="/event-types"
       className="group my-6 todesktop:mt-10 flex h-6 max-h-6 w-full flex-row items-center rounded-md px-3 py-2 font-medium text-emphasis text-sm leading-4 transition hover:bg-subtle group-hover:text-default [&[aria-current='page']]:bg-emphasis [&[aria-current='page']]:text-emphasis"
       data-testid={`vertical-tab-${name}`}>
-      <ArrowLeftIcon className="h-4 w-4 stroke-[2px] md:mt-0 ltr:mr-[10px] rtl:ml-[10px] rtl:rotate-180" />
+      <ArrowLeftIcon className="h-4 w-4 stroke-[2px] md:mt-0 me-[10px] rtl:rotate-180" />
       <Skeleton title={name} as="p" className="min-h-4 max-w-36 truncate" loadingClassName="ms-3">
         {name}
       </Skeleton>
@@ -419,7 +419,7 @@ const SettingsSidebarContainer = ({
     <nav
       style={{ maxHeight: `calc(100vh - ${bannersHeight}px)`, top: `${bannersHeight}px` }}
       className={classNames(
-        "no-scrollbar stack-y-1 fixed top-0 bottom-0 left-0 z-20 flex max-h-screen w-56 flex-col overflow-x-hidden overflow-y-scroll bg-cal-muted px-2 pb-3 transition-transform max-lg:z-10 lg:sticky lg:flex",
+        "no-scrollbar stack-y-1 fixed top-0 bottom-0 start-0 z-20 flex max-h-screen w-56 flex-col overflow-x-hidden overflow-y-scroll bg-cal-muted px-2 pb-3 transition-transform max-lg:z-10 lg:sticky lg:flex",
         className,
         navigationIsOpenedOnMobile
           ? "translate-x-0 opacity-100"
@@ -435,7 +435,7 @@ const SettingsSidebarContainer = ({
                 {tab?.icon && (
                   <Icon
                     name={tab.icon}
-                    className="h-[16px] w-[16px] stroke-[2px] text-subtle md:mt-0 ltr:mr-3 rtl:ml-3"
+                    className="h-[16px] w-[16px] stroke-[2px] text-subtle md:mt-0 me-3"
                   />
                 )}
                 {}
@@ -443,7 +443,7 @@ const SettingsSidebarContainer = ({
                   <Image
                     width={16}
                     height={16}
-                    className="rounded-full ltr:mr-3 rtl:ml-3"
+                    className="rounded-full me-3"
                     src={tab?.avatar}
                     alt="Organization Logo"
                   />
@@ -501,7 +501,7 @@ const MobileSettingsContainer = (props: { onSideContainerOpen?: () => void }) =>
         </Button>
 
         <button
-          className="flex items-center space-x-2 rounded-md px-3 py-1 hover:bg-emphasis rtl:space-x-reverse"
+          className="flex items-center space-x-2 rounded-md px-3 py-1 hover:bg-emphasis"
           onClick={() => router.back()}>
           <ArrowLeftIcon className="h-4 w-4 text-default" />
           <p className="font-semibold text-emphasis">{t("settings")}</p>
@@ -589,7 +589,7 @@ const SidebarContainerElement = ({
       {sideContainerOpen && (
         <button
           onClick={() => setSideContainerOpen(false)}
-          className="fixed top-0 left-0 z-10 h-full w-full bg-black/50">
+          className="fixed top-0 start-0 z-10 h-full w-full bg-black/50">
           <span className="sr-only">{t("hide_navigation")}</span>
         </button>
       )}

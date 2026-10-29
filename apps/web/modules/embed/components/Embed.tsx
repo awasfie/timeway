@@ -190,7 +190,7 @@ const ThemeSelectControl = ({
 }: ControlProps<{ value: EmbedTheme; label: string }, false>) => {
   return (
     <components.Control {...props}>
-      <SunIcon className="text-subtle mr-2 h-4 w-4" />
+      <SunIcon className="text-subtle me-2 h-4 w-4" />
       {children}
     </components.Control>
   );
@@ -218,7 +218,7 @@ const ChooseEmbedTypesDialogContent = ({
       <div className="items-start stack-y-2 md:flex md:stack-y-0">
         {types.map((embed, index) => (
           <button
-            className="hover:bg-subtle bg-cal-muted	w-full self-stretch rounded-md border border-transparent p-6 text-left transition hover:rounded-md ltr:mr-4 ltr:last:mr-0 rtl:ml-4 rtl:last:ml-0 lg:w-1/3"
+            className="hover:bg-subtle bg-cal-muted	w-full self-stretch rounded-md border border-transparent p-6 text-start transition hover:rounded-md me-4 last:me-0 lg:w-1/3"
             key={index}
             data-testid={embed.type}
             onClick={() => {
@@ -678,7 +678,7 @@ const EmailEmbedPreview = ({
             </>
           </b>
           <div
-            className="w-full text-right"
+            className="w-full text-end"
             style={{
               borderTop: "1px solid #CCCCCC",
               marginTop: "8px",
@@ -954,7 +954,7 @@ const EmbedTypeCodeAndPreviewDialogContent = ({
             className="text-emphasis mb-2.5 flex items-center text-xl font-semibold leading-5"
             id="modal-title">
             <button className="h-6 w-6" onClick={gotoEmbedTypeSelectionState}>
-              <ArrowLeftIcon className="mr-4 w-4" />
+              <ArrowLeftIcon className="me-4 w-4" />
             </button>
             {embed.title}
           </h3>
@@ -982,7 +982,7 @@ const EmbedTypeCodeAndPreviewDialogContent = ({
                         {/*TODO: Add Auto/Fixed toggle from Figma */}
                         <div className="text-default mb-[9px] text-sm">Window sizing</div>
                         <div className="justify-left mb-6 flex items-center font-normal! ">
-                          <div className="mr-[9px]">
+                          <div className="me-[9px]">
                             <TextField
                               labelProps={{ className: "hidden" }}
                               className="focus:ring-offset-0"
@@ -1056,7 +1056,7 @@ const EmbedTypeCodeAndPreviewDialogContent = ({
                       className={classNames(
                         "mt-4 flex items-center justify-start",
                         embedType === "floating-popup"
-                          ? "text-emphasis space-x-2 rtl:space-x-reverse"
+                          ? "text-emphasis space-x-2"
                           : "hidden"
                       )}>
                       <Switch
@@ -1199,7 +1199,7 @@ const EmbedTypeCodeAndPreviewDialogContent = ({
                       {/* Conditionally render Hide Details Switch only if NOT Atom embed AND not disabled by prop */}
                       {!eventTypeHideOptionDisabled &&
                       embedParams.embedTabName !== EmbedTabName.ATOM_REACT ? (
-                        <div className="mb-6 flex items-center justify-start space-x-2 rtl:space-x-reverse">
+                        <div className="mb-6 flex items-center justify-start space-x-2">
                           <Switch
                             checked={previewState.hideEventTypeDetails}
                             onCheckedChange={(checked) => {

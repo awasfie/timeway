@@ -84,7 +84,7 @@ export const ScheduleDay = <TFieldValues extends FieldValues>({
           classNames?.labelAndSwitchContainer
         )}>
         <div>
-          <label className="text-default flex flex-row items-center space-x-2 rtl:space-x-reverse">
+          <label className="text-default flex flex-row items-center space-x-2">
             <div>
               <Switch
                 disabled={!watchDayRange || disabled}
@@ -113,7 +113,7 @@ export const ScheduleDay = <TFieldValues extends FieldValues>({
         </div>
       </div>
       <>
-        {!watchDayRange && <SkeletonText className="ml-1 mt-2.5 h-6 w-48" />}
+        {!watchDayRange && <SkeletonText className="ms-1 mt-2.5 h-6 w-48" />}
         {watchDayRange.length > 0 && (
           <div className="flex sm:gap-2">
             <DayRanges
@@ -707,7 +707,7 @@ const CopyTimes = ({
   return (
     <div className="stack-y-2 py-2">
       <div className="p-2">
-        <p className="h6 text-emphasis pb-3 pl-1 text-xs font-medium uppercase">{t("copy_times_to")}</p>
+        <p className="h6 text-emphasis pb-3 ps-1 text-xs font-medium uppercase">{t("copy_times_to")}</p>
         <ol className="stack-y-2">
           <li key="select all">
             <CheckboxField
@@ -758,7 +758,7 @@ const CopyTimes = ({
         </ol>
       </div>
       <hr className="border-subtle" />
-      <div className="flex justify-end space-x-2 px-2 rtl:space-x-reverse">
+      <div className="flex justify-end space-x-2 px-2">
         <Button
           color="minimal"
           onClick={() => onCancel()}

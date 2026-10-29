@@ -467,7 +467,7 @@ export default function ToolbarPlugin(props: TextEditorProps) {
                     {blockTypeToBlockName[blockType as keyof BlockType]}
                   </span>
                   {
-                    isOpen ? (<ChevronUpIcon className="text-default ml-2 h-4 w-4" />) : (<ChevronDownIcon className="text-default ml-2 h-4 w-4" />)
+                    isOpen ? (<ChevronUpIcon className="text-default ms-2 h-4 w-4" />) : (<ChevronDownIcon className="text-default ms-2 h-4 w-4" />)
                   }
                 </>
               </DropdownMenuTrigger>
@@ -541,7 +541,7 @@ export default function ToolbarPlugin(props: TextEditorProps) {
           )}
         </div>
         {props.variables && (
-          <div className={`${props.addVariableButtonTop ? "-mt-10" : ""} ml-auto`}>
+          <div className={`${props.addVariableButtonTop ? "-mt-10" : ""} ms-auto`}>
             <AddVariablesDropdown
               addVariable={addVariable}
               isTextEditor={true}

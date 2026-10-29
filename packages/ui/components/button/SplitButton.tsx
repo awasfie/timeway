@@ -36,7 +36,7 @@ export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(funct
     <div className="inline-flex">
       <Button
         {...mainButtonProps}
-        className="rounded-r-none border-r-0"
+        className="rounded-e-none border-e-0"
         StartIcon={StartIcon}
         color={color}
         ref={forwardedRef}>

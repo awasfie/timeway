@@ -43,7 +43,7 @@ const DatePicker = ({ minDate, disabled, date, onDatesChange, className, label }
             data-testid="pick-date"
             color="secondary"
             EndIcon="calendar"
-            className={classNames("justify-between text-left font-normal", !date && "text-subtle")}>
+            className={classNames("justify-between text-start font-normal", !date && "text-subtle")}>
             {label ?? (date ? <>{format(date, "LLL dd, y")}</> : <span>Pick a date</span>)}
           </Button>
         </Popover.Trigger>

@@ -106,7 +106,7 @@ export default function ApiKeyDialogForm({
           </div>
           <div>
             <div className="flex">
-              <code className="bg-subtle inline-flex items-center text-default w-full truncate rounded-md rounded-r-none pl-2 pr-2 font-mono">
+              <code className="bg-subtle inline-flex items-center text-default w-full truncate rounded-md rounded-e-none ps-2 pe-2 font-mono">
                 {" "}
                 {apiKey}
               </code>
@@ -117,7 +117,7 @@ export default function ApiKeyDialogForm({
                     showToast(t("api_key_copied"), "success");
                   }}
                   type="button"
-                  className="rounded-l-none text-base"
+                  className="rounded-s-none text-base"
                   StartIcon="clipboard">
                   {t("copy")}
                 </Button>

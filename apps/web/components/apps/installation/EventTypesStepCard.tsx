@@ -59,7 +59,7 @@ const EventTypeCard: FC<EventTypeCardProps> = ({
       <label htmlFor={`${id}`} className="cursor-pointer text-sm">
         <li>
           <div>
-            <span className="text-default font-semibold ltr:mr-1 rtl:ml-1">{title}</span>{" "}
+            <span className="text-default font-semibold me-1">{title}</span>{" "}
             <small className="text-subtle hidden font-normal sm:inline">
               /{team ? team.slug : userName}/{slug}
             </small>
@@ -104,7 +104,7 @@ const EventTypeGroup: FC<EventTypeGroupProps> = ({ groupIndex, userName, ...prop
           size="md"
           className="mt-1 inline-flex justify-center"
         />
-        <p className="block pl-2 text-sm">{props.slug}</p>
+        <p className="block ps-2 text-sm">{props.slug}</p>
       </div>
 
       <div className="sm:border-subtle bg-default  border dark:bg-black sm:rounded-md">

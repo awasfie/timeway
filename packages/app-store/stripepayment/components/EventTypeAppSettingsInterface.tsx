@@ -183,7 +183,7 @@ const EventTypeAppSettingsInterface: EventTypeAppSettingsComponent = ({
                 <RadioField className="w-fit" value={RefundPolicy.NEVER} label={t("never")} id="never" />
                 <div className={classNames("text-default mb-2 flex flex-wrap items-center text-sm")}>
                   <RadioGroup.Item
-                    className="min-w-4 bg-default border-default flex h-4 w-4 cursor-pointer items-center rounded-full border focus:border-2 focus:outline-none ltr:mr-2 rtl:ml-2"
+                    className="min-w-4 bg-default border-default flex h-4 w-4 cursor-pointer items-center rounded-full border focus:border-2 focus:outline-none me-2"
                     value="days"
                     id="days">
                     <RadioGroup.Indicator className="after:bg-inverted relative flex h-4 w-4 items-center justify-center after:block after:h-2 after:w-2 after:rounded-full" />
@@ -194,7 +194,7 @@ const EventTypeAppSettingsInterface: EventTypeAppSettingsComponent = ({
                       labelSrOnly
                       type="number"
                       className={classNames(
-                        "border-default my-0 block w-16 text-sm [appearance:textfield] ltr:mr-2 rtl:ml-2"
+                        "border-default my-0 block w-16 text-sm [appearance:textfield] me-2"
                       )}
                       placeholder="2"
                       disabled={disabled}
@@ -234,7 +234,7 @@ const EventTypeAppSettingsInterface: EventTypeAppSettingsComponent = ({
                       labelSrOnly
                       type="number"
                       className={classNames(
-                        "border-default my-0 block w-16 text-sm [appearance:textfield] ltr:mr-2 rtl:ml-2"
+                        "border-default my-0 block w-16 text-sm [appearance:textfield] me-2"
                       )}
                       placeholder="2"
                       disabled={disabled}

@@ -62,7 +62,7 @@ export function TableActions({
             target="_blank"
             href={usersProfileUrl}
             color="secondary"
-            className={classNames(!permissionsForUser.canEdit ? "rounded-r-md" : "")}
+            className={classNames(!permissionsForUser.canEdit ? "rounded-e-md" : "")}
             variant="icon"
             StartIcon="external-link"
           />
@@ -71,7 +71,7 @@ export function TableActions({
           <Dropdown>
             <DropdownMenuTrigger asChild>
               <Button
-                className="ltr:radix-state-open:rounded-r-(--btn-group-radius) rtl:radix-state-open:rounded-l-(--btn-group-radius)"
+                className="radix-state-open:rounded-e-(--btn-group-radius)"
                 color="secondary"
                 variant="icon"
                 StartIcon="ellipsis"

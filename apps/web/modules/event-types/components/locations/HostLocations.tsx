@@ -328,7 +328,7 @@ const HostLocationRow = ({
         <div className="flex items-center gap-2">
           {currentLocation && !hasAppInstalled && (
             <Badge variant="orange" className="whitespace-nowrap">
-              <TriangleAlertIcon className="mr-1 h-3 w-3" />
+              <TriangleAlertIcon className="me-1 h-3 w-3" />
               {t("app_not_installed")}
             </Badge>
           )}

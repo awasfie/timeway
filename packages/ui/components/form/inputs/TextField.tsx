@@ -38,7 +38,7 @@ export const inputStyles = cva(
     "shadow-outline-gray-rested",
 
     // Transitions
-    "transition-all",
+    "transition-[color,background-color,border-color,box-shadow]",
   ],
   {
     variants: {
@@ -148,7 +148,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
           className={classNames(labelClassName, labelSrOnly && "sr-only", props.error && "text-error")}>
           {label}
           {showAsteriskIndicator && !readOnly && passThrough.required ? (
-            <span className="text-default ml-1 font-medium">*</span>
+            <span className="text-default ms-1 font-medium">*</span>
           ) : null}
           {LockedIcon}
         </Label>
@@ -181,8 +181,8 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
               "w-full min-w-0 truncate border-0 bg-transparent focus:outline-none focus:ring-0",
               "text-default rounded-lg text-sm font-medium leading-none",
               "placeholder:text-muted disabled:cursor-not-allowed disabled:bg-transparent",
-              addOnLeading && "rounded-none pl-0.5 pr-0",
-              addOnSuffix && "pl-0",
+              addOnLeading && "rounded-none ps-0.5 pe-0",
+              addOnSuffix && "ps-0",
               className
             )}
             {...passThrough}
@@ -211,7 +211,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
           {type === "search" && inputValue?.toString().length > 0 && (
             <Icon
               name="x"
-              className="text-subtle absolute top-1.75 h-4 w-4 cursor-pointer ltr:right-2 rtl:left-2"
+              className="text-subtle absolute top-1.75 h-4 w-4 cursor-pointer end-2"
               onClick={(e) => {
                 setInputValue("");
                 props.onChange?.(e as unknown as React.ChangeEvent<HTMLInputElement>);
@@ -229,8 +229,8 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
             "w-full min-w-0 truncate focus:outline-none focus:ring-0",
             "text-default rounded-lg text-sm font-medium leading-none",
             "placeholder:text-muted disabled:cursor-not-allowed",
-            addOnLeading && "rounded-none pl-0.5 pr-0",
-            addOnSuffix && !addOnLeading && "pl-0.5",
+            addOnLeading && "rounded-none ps-0.5 pe-0",
+            addOnSuffix && !addOnLeading && "ps-0.5",
             className
           )}
           {...passThrough}
@@ -243,7 +243,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
       <HintsOrErrors hintErrors={hintErrors} fieldName={name} t={t} />
       {hint && (
         <div className="text-muted mt-2 flex items-center text-sm">
-          <InfoIcon className="text-muted h-4 w-4 mr-1" />
+          <InfoIcon className="text-muted h-4 w-4 me-1" />
           {hint}
         </div>
       )}

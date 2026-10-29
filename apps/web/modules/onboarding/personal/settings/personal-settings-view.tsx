@@ -146,7 +146,7 @@ export const PersonalSettingsView = ({
               {/* Profile Picture */}
               <div className="flex w-full flex-col gap-2">
                 <Label className="text-emphasis text-sm font-medium leading-4">{t("profile_picture")}</Label>
-                <div className="flex flex-row items-center justify-start gap-2 rtl:justify-end">
+                <div className="flex flex-row items-center justify-start gap-2">
                   {user && (
                     <div className="relative shrink-0">
                       <UserAvatar size="lg" user={user} previewSrc={imageSrc} />
