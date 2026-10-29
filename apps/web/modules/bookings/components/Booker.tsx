@@ -39,6 +39,7 @@ import { shallow } from "zustand/shallow";
 import { useIsQuickAvailabilityCheckFeatureEnabled } from "../hooks/useIsQuickAvailabilityCheckFeatureEnabled";
 import type { WrappedBookerProps } from "../types";
 import { AvailableTimeSlots } from "./AvailableTimeSlots";
+import { BookerSsrShell } from "./BookerSsrShell";
 import { BookEventForm } from "./BookEventForm";
 import { BookFormAsModal } from "./BookEventForm/BookFormAsModal";
 import { DatePicker } from "./DatePicker";
@@ -338,7 +339,15 @@ const BookerComponent = ({
   }
 
   if (bookerState === "loading") {
-    return null;
+    if (isPlatform || isEmbed || hideEventTypeDetails || !event.data) return null;
+    return (
+      <BookerSsrShell
+        event={event.data}
+        isPrivateLink={!!hashedLink}
+        roundRobinHideOrgAndTeam={roundRobinHideOrgAndTeam}
+        hideOrgTeamAvatar={hideOrgTeamAvatar}
+      />
+    );
   }
 
   return (

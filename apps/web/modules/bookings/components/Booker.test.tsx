@@ -180,9 +180,21 @@ describe("Booker", () => {
     vi.clearAllMocks();
   });
 
-  it("should render null when in loading state", () => {
+  it("should render the server-renderable title shell when in loading state", () => {
+    render(<Booker {...(defaultProps as unknown as BookerProps & WrappedBookerProps)} />, {
+      mockStore: { state: "loading" },
+    });
+    expect(screen.getByTestId("booker-ssr-shell")).toBeInTheDocument();
+    expect(screen.getByTestId("event-title")).toHaveTextContent("Test Event");
+  });
+
+  it("should render null when in loading state inside an embed", () => {
+    const embedProps = {
+      ...defaultProps,
+      bookerLayout: { ...defaultProps.bookerLayout, isEmbed: true },
+    };
     const { container } = render(
-      <Booker {...(defaultProps as unknown as BookerProps & WrappedBookerProps)} />,
+      <Booker {...(embedProps as unknown as BookerProps & WrappedBookerProps)} />,
       {
         mockStore: { state: "loading" },
       }
