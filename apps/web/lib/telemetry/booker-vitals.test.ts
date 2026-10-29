@@ -4,6 +4,18 @@ import { resetBookerWebVitals, startBookerWebVitals } from "./booker-vitals";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
+function deps() {
+  const onINP = vi.fn();
+  const onLCP = vi.fn();
+  const loadINP = vi.fn(async () => ({ onINP }));
+  return {
+    onINP,
+    onLCP,
+    loadINP,
+    d: { onLCP, loadINP } as unknown as Parameters<typeof startBookerWebVitals>[0],
+  };
+}
+
 describe("startBookerWebVitals", () => {
   beforeEach(() => {
     resetBookerAnalytics();
@@ -14,22 +26,21 @@ describe("startBookerWebVitals", () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it("does not load web-vitals when Plausible is not on the page", () => {
-    const load = vi.fn();
-    expect(startBookerWebVitals(load)).toBe(false);
-    expect(load).not.toHaveBeenCalled();
+  it("does nothing when Plausible is not on the page", () => {
+    const { onLCP, loadINP, d } = deps();
+    expect(startBookerWebVitals(d)).toBe(false);
+    expect(onLCP).not.toHaveBeenCalled();
+    expect(loadINP).not.toHaveBeenCalled();
   });
 
-  it("loads web-vitals once and wires onINP + onLCP to web_vital events", async () => {
+  it("wires onLCP + lazy onINP once, to web_vital events", async () => {
     const plausible = vi.fn();
     (window as unknown as { plausible: typeof plausible }).plausible = plausible;
-    const onINP = vi.fn();
-    const onLCP = vi.fn();
-    const load = vi.fn(async () => ({ onINP, onLCP }));
-    expect(startBookerWebVitals(load as never)).toBe(true);
-    expect(startBookerWebVitals(load as never)).toBe(false);
+    const { onINP, onLCP, loadINP, d } = deps();
+    expect(startBookerWebVitals(d)).toBe(true);
+    expect(startBookerWebVitals(d)).toBe(false);
     await flush();
-    expect(load).toHaveBeenCalledTimes(1);
+    expect(loadINP).toHaveBeenCalledTimes(1);
     onINP.mock.calls[0][0]({ name: "INP", value: 120.4, rating: "good" });
     onLCP.mock.calls[0][0]({ name: "LCP", value: 1800, rating: "good" });
     expect(plausible.mock.calls.map((c) => [c[0], c[1].props.name, c[1].props.value])).toEqual([
@@ -38,10 +49,14 @@ describe("startBookerWebVitals", () => {
     ]);
   });
 
-  it("allows a retry when the chunk fails to load", async () => {
+  it("swallows a failed INP chunk load", async () => {
     (window as unknown as { plausible: () => void }).plausible = vi.fn();
-    expect(startBookerWebVitals(() => Promise.reject(new Error("chunk")))).toBe(true);
+    const onLCP = vi.fn();
+    const d = { onLCP, loadINP: () => Promise.reject(new Error("chunk")) } as unknown as Parameters<
+      typeof startBookerWebVitals
+    >[0];
+    expect(startBookerWebVitals(d)).toBe(true);
     await flush();
-    expect(startBookerWebVitals(async () => ({ onINP: vi.fn(), onLCP: vi.fn() }) as never)).toBe(true);
+    expect(onLCP).toHaveBeenCalledTimes(1);
   });
 });

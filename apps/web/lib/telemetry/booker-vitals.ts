@@ -2,28 +2,29 @@ import {
   isBookerAnalyticsEnabled,
   trackWebVital,
 } from "@calcom/features/bookings/Booker/utils/bookerAnalytics";
+import { onLCP } from "web-vitals";
 
-// WC-TW-6i: field INP + LCP from the public booking page to first-party Plausible. web-vitals is
-// imported lazily so the booking route's first-load JS does not grow (6c ratchet), and only when the
-// Plausible queue stub is on the page (PLAUSIBLE_DOMAIN/HOST set), so nothing loads where it cannot send.
+// WC-TW-6i: field INP + LCP from the public booking page to first-party Plausible.
+// onLCP reuses the "web-vitals" module the root layout already ships (RumBeacon), so it adds nothing to
+// the first load. onINP is the deep module imported lazily: a dynamic import of the package root would
+// stop tree-shaking of that shared module and grow the booking route's first-load JS (6c ratchet).
+// Nothing starts unless the Plausible queue stub is on the page (PLAUSIBLE_DOMAIN/HOST set).
 
-type VitalsModule = Pick<typeof import("web-vitals"), "onINP" | "onLCP">;
+type OnINP = typeof import("web-vitals/onINP.js").onINP;
+type Deps = { onLCP: typeof onLCP; loadINP: () => Promise<{ onINP: OnINP }> };
+
+const defaultDeps: Deps = { onLCP, loadINP: () => import("web-vitals/onINP.js") };
 
 let started = false;
 
-export function startBookerWebVitals(
-  load: () => Promise<VitalsModule> = () => import("web-vitals")
-): boolean {
+export function startBookerWebVitals(deps: Deps = defaultDeps): boolean {
   if (started || typeof window === "undefined" || !isBookerAnalyticsEnabled()) return false;
   started = true;
-  load()
-    .then(({ onINP, onLCP }) => {
-      onINP(trackWebVital);
-      onLCP(trackWebVital);
-    })
-    .catch(() => {
-      started = false;
-    });
+  deps.onLCP(trackWebVital);
+  deps
+    .loadINP()
+    .then(({ onINP }) => onINP(trackWebVital))
+    .catch(() => undefined);
   return true;
 }
 
