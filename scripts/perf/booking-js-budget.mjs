@@ -50,12 +50,25 @@ if (!Number.isFinite(baselineKb) || baselineKb <= 0) {
   process.exit(1);
 }
 
+// <script nomodule> (Next's legacy polyfills chunk) is never fetched by a module-capable browser,
+// so counting it overstates the first load; it is reported separately instead.
+export function noModuleSrcs(html) {
+  const srcs = new Set();
+  for (const m of html.matchAll(/<script\b[^>]*>/gi)) {
+    if (!/\snomodule\b/i.test(m[0])) continue;
+    const src = m[0].match(/\bsrc="([^"]+\.js[^"]*)"/);
+    if (src) srcs.add(src[1]);
+  }
+  return [...srcs];
+}
+
 export function scriptSrcs(html) {
   const srcs = new Set();
   for (const m of html.matchAll(/<script\b[^>]*\bsrc="([^"]+\.js[^"]*)"/g)) srcs.add(m[1]);
   // Turbopack/app-router preloads chunks with <link rel="preload" as="script"> before the tags.
   for (const m of html.matchAll(/<link\b[^>]*\bas="script"[^>]*\bhref="([^"]+\.js[^"]*)"/g)) srcs.add(m[1]);
   for (const m of html.matchAll(/<link\b[^>]*\bhref="([^"]+\.js[^"]*)"[^>]*\bas="script"/g)) srcs.add(m[1]);
+  for (const src of noModuleSrcs(html)) srcs.delete(src);
   return [...srcs];
 }
 
@@ -121,6 +134,7 @@ async function main() {
     forbidden: forbidHits,
     pass,
     files,
+    excluded_nomodule: noModuleSrcs(html),
   };
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(result, null, 2)}\n`);
@@ -144,6 +158,10 @@ async function main() {
     "| --- | ---: | ---: |",
     ...files.map((f) => `| \`${f.src.split("?")[0]}\` | ${kb(f.gz)} | ${kb(f.raw)} |`),
     `| **total (${files.length})** | **${kb(totalGz)}** | ${kb(totalRaw)} |`,
+    "",
+    ...result.excluded_nomodule.map(
+      (s) => `Excluded (noModule, not fetched by modern browsers): \`${s.split("?")[0]}\``
+    ),
     "",
   ];
   console.log(lines.join("\n"));
