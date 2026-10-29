@@ -38,6 +38,17 @@ describe("bookerAnalytics", () => {
     expect(JSON.stringify(plausible.mock.calls)).not.toMatch(/email|a@b\.c|Jo/);
   });
 
+  it("fires pageview + booking_page_view once per (pathname, eventType)", () => {
+    const plausible = vi.fn();
+    (window as unknown as { plausible: typeof plausible }).plausible = plausible;
+    trackBookerPageView(ctx);
+    trackBookerPageView(ctx);
+    trackBookerPageView({ ...ctx, org: null });
+    expect(plausible.mock.calls.map((c) => c[0])).toEqual(["pageview", "booking_page_view"]);
+    trackBookerPageView({ ...ctx, eventType: 43 });
+    expect(plausible).toHaveBeenCalledTimes(4);
+  });
+
   it("fires slot_selected once per distinct slot and ignores null", () => {
     const plausible = vi.fn();
     (window as unknown as { plausible: typeof plausible }).plausible = plausible;
