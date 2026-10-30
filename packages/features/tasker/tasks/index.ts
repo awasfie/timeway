@@ -23,7 +23,11 @@ const tasks: Record<TaskTypes, () => Promise<TaskHandler>> = {
   bookingAudit: () => import("./bookingAudit").then((module) => module.bookingAudit),
   webhookDelivery: () => import("./webhookDelivery").then((module) => module.webhookDelivery),
   whatsappReminderUsage: () =>
-    import("../../tw-whatsapp/metering").then((module) => module.sendWhatsappReminderUsage),
+    import("../../tw-whatsapp/metering").then(
+      (module): TaskHandler =>
+        (payload: string) =>
+          module.sendWhatsappReminderUsage(payload)
+    ),
 };
 
 export const tasksConfig = {

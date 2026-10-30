@@ -158,7 +158,7 @@ export type RecordDeps = {
 
 const defaultRecordDeps: RecordDeps = {
   createTask: async (payload, referenceUid) => {
-    const { default: tasker } = await import("@calcom/features/tasker");
+    const { default: tasker } = await import("../tasker");
     return tasker.create(WA_USAGE_TASK, JSON.stringify(payload), { referenceUid, maxAttempts: WA_USAGE_MAX_ATTEMPTS });
   },
 };
