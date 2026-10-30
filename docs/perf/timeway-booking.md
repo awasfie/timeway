@@ -178,6 +178,27 @@ Operate: `CLOUDFLARE_API_TOKEN=... python3 ops/cloudflare/worker.py plan|apply -
 goes straight to the origin at once (exercised 06:40Z: rollback -> page `DYNAMIC`, no `x-tw-edge`; re-apply -> `plan`
 shows no changes and the page is served from the edge again).
 
+## WC-TW-6h: booking page LCP (card t_2f74da73)
+
+Before, measured 2026-10-29 ~07:00Z on deploy `11ebad82ee` (Coolify `timeway-web` deployment `yr5zcntadk39dogzvwplpjya`,
+JS stack #125/#126/#127/#130/#154 + 6c-9c/9d on main), edge Worker in front (`x-tw-edge`), Lighthouse 13.5.0 mobile
+simulated slow 4G, 5 runs from the Dubai host (benchmarkIndex 3006-3379), 65 requests:
+
+| run | LCP | TBT | FCP | SI | server response |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1-5 | 5658-6016 ms, median **5982** | 191-219, median 200 | 1573-2364, median 2056 | 3666-5933 | 164-179 |
+
+Still **not met** (gate 2500 ms, target 1500). LCP element: the event title `h1[data-testid=event-title]`
+(lcp-breakdown run 3: TTFB 504 ms simulated, element render delay 1319 ms of observed time).
+
+Cause: the server HTML has an empty `<main>`. The Booker store starts in state `loading`, and `Booker` returns `null`
+while `loading`; the state only leaves `loading` in a client `useEffect`, so nothing of the booker (title included)
+paints until every first-load chunk has downloaded, executed and hydrated.
+
+Cut: while `loading`, `Booker` renders a server-renderable shell of the event meta (members line, title, duration)
+from the SSR event data, in the same grid position. It depends only on props, so server and first client render
+match; the full booker replaces it after hydration.
+
 ## Re-run
 
 1. Region TTFB: `GLOBALPING_TOKEN=... node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false --out perf/out/region-ttfb.json`
@@ -186,3 +207,32 @@ shows no changes and the page is served from the edge again).
 3. Prod Lighthouse: `lighthouse https://timeway.co/ahmedwasfie/30min --only-categories=performance --form-factor=mobile --throttling-method=simulate --output=json` x 5, median.
 4. Slot API: `node scripts/perf/slot-api.mjs --month <YYYY-MM> --samples 30`.
 5. Record the new row set here with its deploy SHA; a row passes only on a measured number.
+
+## WC-TW-6j: TBT on 819bf85549 (card t_84384338, 2026-10-29 09:45-09:52Z)
+
+Lighthouse 13.5.0 mobile simulated, Dubai host, `https://timeway.co/ahmedwasfie/30min`, deploy 819bf85549
+(container `poyzdsncp9jsvc3gr4hkitaf:819bf855498a…`, healthy). timeway#218 (6h SSR shell) not yet merged.
+
+| batch | TBT runs (ms) | median |
+|---|---|---|
+| A | 238, 184.5, 202, 191, 193 | 193 |
+| B | 298, 208, 177, 190, 212 | 208 |
+| all 10 | | 197.5 |
+
+Gate < 200 ms sits inside run-to-run noise. Long tasks (trace run, TBT 260): 249 ms in `25sq9vkyrxchr.js`
+(react-dom) at ~5.06 s, then 68/68/65/65/56/54 ms. CPU profile of the 249 ms task: one synchronous React commit
+(the store flip `loading -> selecting_date` mounts the full booker), not a single heavy library; non-React self time
+is small (BookingPageTagManager `sdkActionManager.on("*")` listener 5.7 ms, dayjs ~2 ms).
+
+Slice in this PR: `Booker.tsx` gates the first full render on `useDeferredValue(bookerState)` so the mount renders at
+transition priority and yields, splitting the 249 ms task. After-numbers: pending deploy (x5, same host).
+
+## WC-TW-6k: lazy BookingPageTagManager + sonner Toaster (card t_4e55324f, 2026-10-29)
+
+Independent of timeway#220 (6j); rebased onto main a2a4be43c8 (6c-9). Long tasks on the 819bf85549 trace after the
+249 ms booker mount: 68 ms `1jqzwlrakf1on.js`, 68 ms `1rjb0jhn20356.js` (sonner / react-query). Slice: `Booker.tsx`
+loads `BookingPageTagManager` (analytics `<Script>` tags, app-store metadata) and the sonner `Toaster` (empty portal
+until a toast fires) through `next/dynamic` with `ssr: false`, so both leave the first booker mount and its chunk.
+`showToast` callers still import `sonner`'s `toast` directly; booker toasts fire only on visitor actions (booking
+errors, copy link), which come after the Toaster chunk has loaded.
+After-numbers: pending deploy (Lighthouse mobile x5 x2 batches, Dubai host, same command as the 6j baseline).
