@@ -1,12 +1,11 @@
 import { createHmac } from "node:crypto";
-import { readFileSync } from "node:fs";
-
 import { describe, expect, it, vi } from "vitest";
 
 import { handleButtonEvent, verifyWebhookSignature, type BookingForAction, type ButtonDeps } from "./buttons";
 import { signButtonPayload, verifyButtonPayload } from "./payload";
 import { buildReminderSend, normalizePhone, sendWhatsappReminder, whatsaffConfigFromEnv } from "./sender";
 import { ALL_REMINDER_TEMPLATES, BUTTON_ORDER, pickLang, reminderSendComponents } from "./templates";
+import committedMetaTemplates from "./templates.meta.json";
 
 const SECRET = "test-secret-not-real";
 const NOW = new Date("2026-11-01T08:00:00Z");
@@ -185,7 +184,6 @@ describe("webhook signature", () => {
 
 describe("Meta submission payloads", () => {
   it("templates.meta.json matches the template definitions", () => {
-    const committed = JSON.parse(readFileSync(new URL("./templates.meta.json", import.meta.url), "utf8"));
-    expect(committed).toEqual(ALL_REMINDER_TEMPLATES);
+    expect(committedMetaTemplates).toEqual(ALL_REMINDER_TEMPLATES);
   });
 });
