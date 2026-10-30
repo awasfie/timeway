@@ -22,6 +22,12 @@ const tasks: Record<TaskTypes, () => Promise<TaskHandler>> = {
     import("./sendAwaitingPaymentEmail").then((module) => module.sendAwaitingPaymentEmail),
   bookingAudit: () => import("./bookingAudit").then((module) => module.bookingAudit),
   webhookDelivery: () => import("./webhookDelivery").then((module) => module.webhookDelivery),
+  whatsappReminderUsage: () =>
+    import("../../tw-whatsapp/metering").then(
+      (module): TaskHandler =>
+        (payload: string) =>
+          module.sendWhatsappReminderUsage(payload)
+    ),
 };
 
 export const tasksConfig = {
@@ -32,6 +38,10 @@ export const tasksConfig = {
   webhookDelivery: {
     minRetryIntervalMins: IS_PRODUCTION ? 5 : 1,
     maxAttempts: 3,
+  },
+  whatsappReminderUsage: {
+    minRetryIntervalMins: IS_PRODUCTION ? 10 : 1,
+    maxAttempts: 12,
   },
 };
 export default tasks;

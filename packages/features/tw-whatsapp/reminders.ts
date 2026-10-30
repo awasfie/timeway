@@ -2,7 +2,8 @@ import dayjs from "@calcom/dayjs";
 import prisma from "@calcom/prisma";
 import { BookingStatus, ReminderType } from "@calcom/prisma/enums";
 
-import { reminderWindowsFromEnv, sendWhatsappReminder, whatsaffConfigFromEnv } from "./sender";
+import { buildUsagePayload, gateWhatsappReminder, recordWhatsappReminder } from "./metering";
+import { reminderWindowsFromEnv, sendWhatsappReminderWithId, whatsaffConfigFromEnv } from "./sender";
 
 // WC-TW-10a: WhatsApp leg of the TW-WF-1 reminder cron. Same claim table as the email leg; the WhatsApp
 // claim uses elapsedMinutes = -window so the two channels never block each other (no schema change).
@@ -22,6 +23,7 @@ export async function runWhatsappReminders(now = new Date()): Promise<{ sent: nu
       select: {
         id: true,
         uid: true,
+        twOrgId: true,
         title: true,
         startTime: true,
         createdAt: true,
@@ -49,13 +51,22 @@ export async function runWhatsappReminders(now = new Date()): Promise<{ sent: nu
       const responses = (b.responses ?? {}) as Record<string, unknown>;
       const phone = a.phoneNumber ?? (typeof responses.attendeePhoneNumber === "string" ? responses.attendeePhoneNumber : null);
       try {
+        // WC-TW-10c: CM.3 gate (plan must include WhatsApp) before the claim; off unless TW_WA_METERING_ENABLED.
+        const gate = await gateWhatsappReminder({ twOrgId: b.twOrgId, now });
+        if (!gate.send) {
+          out.skipped++;
+          continue;
+        }
         await prisma.reminderMail.create({
           data: { referenceId: b.id, reminderType: ReminderType.BOOKING_REMINDER, elapsedMinutes: waClaimMinutes(windowMin) },
         });
-        const r = await sendWhatsappReminder(
+        const { result: r, messageId } = await sendWhatsappReminderWithId(
           { uid: b.uid, title: b.title, startTime: b.startTime, attendee: { name: a.name, phone, locale: a.locale, timeZone: a.timeZone } },
           cfg
         );
+        if (r === "sent" && gate.metered) {
+          await recordWhatsappReminder(buildUsagePayload(gate, { bookingUid: b.uid, windowMin, messageId, at: now }));
+        }
         if (r === "sent") out.sent++;
         else if (r === "skipped") out.skipped++;
         else out.failures.push(`${b.uid}:wa:${windowMin}`);
