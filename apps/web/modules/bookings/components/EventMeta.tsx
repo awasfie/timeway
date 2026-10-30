@@ -1,6 +1,5 @@
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import { useBookerTime } from "@calcom/features/bookings/Booker/hooks/useBookerTime";
-import { fadeInUpClassName } from "@calcom/features/bookings/Booker/config";
 import type { Timezone } from "@calcom/features/bookings/Booker/types";
 import { FromToTime } from "@calcom/features/bookings/Booker/utils/dates";
 import { useTimePreferences } from "@calcom/features/bookings/lib";
@@ -164,7 +163,9 @@ export const EventMeta = ({
         </div>
       )}
       {!isPending && !!event && (
-        <div className={fadeInUpClassName}>
+        <div>
+          {/* No enter animation (WC-TW-6l-2): the title is the page's LCP element, and the delayed
+              fade kept it at opacity 0 after the booker mounted, pushing LCP ~600 ms past first paint. */}
           <EventMembers
             schedulingType={event.schedulingType}
             users={event.subsetOfUsers}
