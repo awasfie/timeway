@@ -2,7 +2,7 @@
   "zone": "timeway.co",
   "script": "timeway-booking-edge",
   "compatibility_date": "2026-10-01",
-  "modules": ["booking-edge.mjs", "locales.mjs"],
+  "modules": ["booking-edge.mjs", "locales.mjs", "defer-js.mjs"],
   "_why": "WC-TW-6g. Route patterns cannot express /<user>/<type>, so the Worker takes timeway.co/* and passes every non-booking path through untouched (no header added). The excluded routes (no worker) keep the app's busiest non-page paths off the Worker entirely, so they never count against the Workers request quota or depend on it. The most specific pattern wins on Cloudflare.",
   "routes": ["timeway.co/*"],
   "excluded_routes": [

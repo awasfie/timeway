@@ -240,3 +240,16 @@ test("BYPASS (logged-in) HTML is not rewritten", async () => {
   const r = await h.run("/ahmedwasfie/30min", { headers: { cookie: "next-auth.session-token=abc" } });
   assert.equal(await r.text(), NEXT_HEAD);
 });
+
+test("timeway-worker.json uploads every module the Worker imports", () => {
+  const spec = JSON.parse(readFileSync(new URL("../timeway-worker.json", import.meta.url)));
+  const seen = new Set();
+  const walk = (name) => {
+    if (seen.has(name)) return;
+    seen.add(name);
+    const src = readFileSync(new URL(`./${name}`, import.meta.url), "utf8");
+    for (const [, dep] of src.matchAll(/from "\.\/([^"]+)"/g)) walk(dep);
+  };
+  walk(spec.modules[0]);
+  assert.deepEqual([...seen].sort(), [...spec.modules].sort());
+});

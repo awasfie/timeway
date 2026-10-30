@@ -236,3 +236,35 @@ until a toast fires) through `next/dynamic` with `ssr: false`, so both leave the
 `showToast` callers still import `sonner`'s `toast` directly; booker toasts fire only on visitor actions (booking
 errors, copy link), which come after the Toaster chunk has loaded.
 After-numbers: pending deploy (Lighthouse mobile x5 x2 batches, Dubai host, same command as the 6j baseline).
+
+## WC-TW-6l-3: booking JS requested after first paint (card t_3ca67500, 2026-10-31)
+
+Simulated LCP gate **met before deploy** (emulated): Lighthouse 13.5.0 mobile simulated, 10 runs per variant, interleaved,
+same Dubai host, prod `bab281bb77` behind the live edge (HIT 8 / STALE 2 in each variant). Raw rows:
+`evidence/2026-10-31-wc-tw-6l-3.json`.
+
+| variant | LCP median | LCP p75 | scripts before observed LCP | TBT median | perf median |
+|---------|-----------:|--------:|-----------------------------|-----------:|------------:|
+| base (prod) | 5795.5 ms | 5986 ms | 41-49 (518-629 KB) | 392.5 ms | 63.5 |
+| fix (defer-js) | 1970 ms | 1972 ms | 0 | 309.5 ms | 80 |
+
+Why: the shell h1 already paints early in a real browser (observed LCP well under 1.5 s), but Lantern puts every request
+started before observed LCP into the LCP graph, and the App Router head starts ~40 async chunk scripts plus a script
+preload before the h1 (WC-TW-6l-2 finding).
+
+Change (`ops/cloudflare/worker/defer-js.mjs`, called from `toStored` in `booking-edge.mjs`, so it runs once per origin
+fetch and HIT/STALE serve the stored result): async `/_next/static/chunks/*.js` scripts become inert
+`<script type="text/tw-deferred" data-tw-src>` placeholders, `<link rel=preload as=script>` is dropped, and a loader at
+the end of the body re-adds them as async scripts in the task after `first-contentful-paint` (PerformanceObserver;
+immediately for a hidden tab; 3 s cap). The `noModule` polyfill and inline flight data stay where they were. Logged-in
+(BYPASS) HTML is not touched. `timeway-worker.json` gains the module; a unit test checks every imported module is uploaded.
+
+Method: Chrome resolves timeway.co to a local HTTP/2 proxy that forwards everything to the real edge; for the fix
+variant only the document goes through `deferChunkScripts` (the committed code) and is re-encoded brotli q5.
+Functional check on the fix variant: FCP 748 ms, first JS request 749 ms, all 49 scripts loaded, 0 placeholders left,
+21 enabled days, 16 slots after a day click, 0 page errors. CLS is about the same in both variants (median 0.229 /
+0.239) and above 0.1 in both; that is a pre-existing hydration shift for a separate card.
+
+Next: Gosi deploys with `python3 ops/cloudflare/worker.py plan|apply`. Stored copies made by the old bundle age out
+within MAX_STALE_S (300 s; `purge` does not reach the Worker's internal Cache API keys), so measure at least 5 min after
+apply. To back out: set `DEFER_JS = false` and apply, or `rollback`. Proof card t_762bea7b re-measures on the deployed edge.
