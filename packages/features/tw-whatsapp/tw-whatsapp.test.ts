@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { readFileSync } from "node:fs";
 
 import { describe, expect, it, vi } from "vitest";
 
@@ -179,5 +180,12 @@ describe("webhook signature", () => {
     expect(verifyWebhookSignature(body, sig, undefined)).toBe(false);
     expect(verifyWebhookSignature(body, null, "whs")).toBe(false);
     expect(verifyWebhookSignature(body, "sha256=00", "whs")).toBe(false);
+  });
+});
+
+describe("Meta submission payloads", () => {
+  it("templates.meta.json matches the template definitions", () => {
+    const committed = JSON.parse(readFileSync(new URL("./templates.meta.json", import.meta.url), "utf8"));
+    expect(committed).toEqual(ALL_REMINDER_TEMPLATES);
   });
 });
