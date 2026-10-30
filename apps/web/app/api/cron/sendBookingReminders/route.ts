@@ -9,6 +9,7 @@ import {
   type ReminderWindow,
 } from "@calcom/emails/templates/booking-reminder-email";
 import { getCalEventResponses } from "@calcom/features/bookings/lib/getCalEventResponses";
+import { runWhatsappReminders } from "@calcom/features/tw-whatsapp/reminders";
 import { getTranslation } from "@calcom/i18n/server";
 import prisma from "@calcom/prisma";
 import { BookingStatus, ReminderType } from "@calcom/prisma/enums";
@@ -136,7 +137,13 @@ async function postHandler(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ sent, failures });
+  // WC-TW-10a: WhatsApp leg; a no-op until the WHATSAFF_* / TW_WA_* env is set.
+  const whatsapp = await runWhatsappReminders(now.toDate()).catch((e: unknown) => {
+    console.error("whatsapp reminders failed", e instanceof Error ? e.message : "error");
+    return { sent: 0, skipped: 0, failures: ["whatsapp:run"] };
+  });
+
+  return NextResponse.json({ sent, failures, whatsapp });
 }
 
 export const POST = defaultResponderForAppDir(postHandler);
