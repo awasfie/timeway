@@ -6,6 +6,7 @@ import process from "node:process";
 import handleCancelBooking from "@calcom/features/bookings/lib/handleCancelBooking";
 import { handleButtonEvent, verifyWebhookSignature } from "@calcom/features/tw-whatsapp/buttons";
 import { whatsaffConfigFromEnv, whatsaffSend } from "@calcom/features/tw-whatsapp/sender";
+import { configForOrg, loadOrgSender, type OrgWaSender } from "@calcom/features/tw-whatsapp/senderResolver";
 import { WEBAPP_URL } from "@calcom/lib/constants";
 import prisma from "@calcom/prisma";
 
@@ -15,7 +16,13 @@ import prisma from "@calcom/prisma";
 
 async function postHandler(request: NextRequest) {
   const raw = await request.text();
-  if (!verifyWebhookSignature(raw, request.headers.get("x-webhook-signature-256"), process.env.TW_WA_WEBHOOK_SECRET)) {
+  if (
+    !verifyWebhookSignature(
+      raw,
+      request.headers.get("x-webhook-signature-256"),
+      process.env.TW_WA_WEBHOOK_SECRET
+    )
+  ) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
   const payloadSecret = process.env.TW_WA_PAYLOAD_SECRET;
@@ -29,6 +36,9 @@ async function postHandler(request: NextRequest) {
   }
 
   const cfg = whatsaffConfigFromEnv();
+  // WC-TW-10b: replies go out from the number that sent the reminder (the org's own number when active),
+  // so the attendee's tap opens the service window on that same number.
+  let orgSender: OrgWaSender | null = null;
   const outcome = await handleButtonEvent(event, payloadSecret, {
     now: () => new Date(),
     findBooking: async (uid) => {
@@ -36,6 +46,7 @@ async function postHandler(request: NextRequest) {
         where: { uid },
         select: {
           uid: true,
+          twOrgId: true,
           status: true,
           endTime: true,
           metadata: true,
@@ -44,6 +55,7 @@ async function postHandler(request: NextRequest) {
         },
       });
       if (!b) return null;
+      orgSender = await loadOrgSender(prisma as unknown as Parameters<typeof loadOrgSender>[0], b.twOrgId);
       const responses = (b.responses ?? {}) as Record<string, unknown>;
       const phones = [
         ...b.attendees.map((a) => a.phoneNumber),
@@ -86,7 +98,11 @@ async function postHandler(request: NextRequest) {
     rescheduleUrl: (uid) => `${WEBAPP_URL}/reschedule/${uid}`,
     reply: async (to, text) => {
       if (!cfg) return;
-      await whatsaffSend(cfg, { contact_no: to, messageType: "text", messageText: text });
+      await whatsaffSend(configForOrg(cfg, orgSender), {
+        contact_no: to,
+        messageType: "text",
+        messageText: text,
+      });
     },
   });
 
