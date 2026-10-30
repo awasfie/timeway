@@ -18,6 +18,8 @@ type TaskPayloads = {
   createCRMEvent: z.infer<typeof import("./tasks/crm/schema").createCRMEventSchema>;
   sendAnalyticsEvent: z.infer<typeof import("./tasks/analytics/schema").sendAnalyticsEventSchema>;
   bookingAudit: BookingAuditTaskConsumerPayload;
+  /** WC-TW-10c: JSON of tw-whatsapp/metering WaUsagePayload. */
+  whatsappReminderUsage: string;
   sendAwaitingPaymentEmail: z.infer<
     typeof import("./tasks/sendAwaitingPaymentEmail").sendAwaitingPaymentEmailPayloadSchema
   >;

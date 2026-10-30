@@ -105,14 +105,25 @@ export function buildReminderSend(b: ReminderBooking, payloadSecret: string): Re
   };
 }
 
+export type ReminderSendResult = { result: "sent" | "skipped" | "failed"; messageId: string | null };
+
+/** WC-TW-10c: same as sendWhatsappReminder, plus the Whatsaff message id for the usage Idempotency-Key. */
+export async function sendWhatsappReminderWithId(
+  b: ReminderBooking,
+  cfg: WhatsaffConfig | null = whatsaffConfigFromEnv(),
+  fetchImpl?: FetchLike
+): Promise<ReminderSendResult> {
+  if (!cfg) return { result: "skipped", messageId: null };
+  const body = buildReminderSend(b, cfg.payloadSecret);
+  if (!body) return { result: "skipped", messageId: null };
+  const res = await whatsaffSend(cfg, body, fetchImpl);
+  return { result: res.ok ? "sent" : "failed", messageId: res.ok ? res.messageId ?? null : null };
+}
+
 export async function sendWhatsappReminder(
   b: ReminderBooking,
   cfg: WhatsaffConfig | null = whatsaffConfigFromEnv(),
   fetchImpl?: FetchLike
 ): Promise<"sent" | "skipped" | "failed"> {
-  if (!cfg) return "skipped";
-  const body = buildReminderSend(b, cfg.payloadSecret);
-  if (!body) return "skipped";
-  const res = await whatsaffSend(cfg, body, fetchImpl);
-  return res.ok ? "sent" : "failed";
+  return (await sendWhatsappReminderWithId(b, cfg, fetchImpl)).result;
 }
