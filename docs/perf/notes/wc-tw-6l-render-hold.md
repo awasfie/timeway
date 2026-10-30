@@ -67,6 +67,19 @@ DCL / first paint (ms): runs 1-10 and 28-30 (slower network window) DCL
 the 1500 ms font cap with an idle main thread. Edge state cycled through
 HIT/STALE/MISS and did not track the hold.
 
+## Lead for 6l-2 (outside this card's question)
+
+The same 30 runs give simulated LCP median 4678 ms, p75 4730 ms (range
+2236-6094), while simulated FCP has median 1586 ms. Late LCP is the main
+problem, and first paint is not what delays it. Run 10's LCP element is the
+client booker title `h1[data-testid=event-title]`
+(`div.[grid-area:meta] … h1.text-text`), not the SSR shell h1. Its LCP
+breakdown is TTFB 929 ms + element render delay 1478 ms. That element is
+revealed through the streamed `B:1` boundary, which goes through React's `$RC`
+reveal throttle (`$RT + 300 ms`, or wait until 2300 ms when the reveal lands
+between 2000 and 2300 ms). Then it renders inside an `animate-in` wrapper.
+6l-2 should check those two delays first.
+
 ## Named fix (for 6l-2)
 
 There is no proven app-side holder, so the fix below is **conditional**. It
