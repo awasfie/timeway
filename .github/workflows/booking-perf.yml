@@ -98,7 +98,6 @@ jobs:
         env:
           PROOF_OUT: perf/out/proof
       - name: (b) Lighthouse CI, 5 runs median
-        if: false
         id: lhci
         continue-on-error: true
         env:
@@ -113,7 +112,6 @@ jobs:
       # measured from that city by Globalping each run and added to the slow-4G RTT; a city with no
       # answering probe fails the step (never a skip). Ratchet per region in perf/lhci-baseline.json.
       - name: (c) Lighthouse region-tagged (cairo, riyadh, dubai)
-        if: false
         id: lhci_regions
         continue-on-error: true
         env:
