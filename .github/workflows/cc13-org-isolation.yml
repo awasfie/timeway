@@ -5,6 +5,7 @@ name: CC-13 org isolation
 on:
   workflow_call:
   push:
+    paths-ignore: ['docs/**', '**.md']  # CI-COST-3: docs-only pushes (ledger, group-log) skip CI; PR runs are unchanged
     branches: [main]
   workflow_dispatch:
 
@@ -14,7 +15,7 @@ permissions:
 jobs:
   cc13:
     name: CC-13 (DB layer)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       postgres:

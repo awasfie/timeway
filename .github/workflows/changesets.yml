@@ -2,6 +2,7 @@ name: Create PR containing updated CHANGELOG.md and release packages to NPM once
 
 on:
   push:
+    paths-ignore: ['docs/**', '**.md']  # CI-COST-3: docs-only pushes (ledger, group-log) skip CI; PR runs are unchanged
     branches:
       - main
 
@@ -15,7 +16,7 @@ jobs:
   release:
     if: github.repository == 'calcom/cal.diy' # prevent this action from running on forks
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4

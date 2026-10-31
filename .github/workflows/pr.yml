@@ -26,7 +26,7 @@ jobs:
   # This MUST run before any job that checks out PR code and executes it with secrets
   trust-check:
     name: Trust Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       pull-requests: read
       actions: read
@@ -176,7 +176,10 @@ jobs:
     name: Prepare
     needs: [trust-check]
     if: needs.trust-check.outputs.is-trusted == 'true'
-    runs-on: ubuntu-latest
+    # ADDRESS-timeway-201 (t_bdd3a944): ubuntu-latest moved to ubuntu 26.04 on 2026-10-28; Playwright has no
+    # chromium build for it, so `playwright install --with-deps` fails (run 40653000675 job 122698047008).
+    # Pin the Prepare runner to 24.04 until Playwright supports 26.04.
+    runs-on: ubuntu-24.04
     permissions:
       pull-requests: read
     outputs:
@@ -470,7 +473,7 @@ jobs:
         cc13,
       ]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # CI-COST-2 (t_9b638c09): on a draft this gate covers the light suite only (lint, types, unit, api-v2 unit).
       # ready_for_review re-runs this workflow on the same head SHA, and every later push runs the full suite, so the
