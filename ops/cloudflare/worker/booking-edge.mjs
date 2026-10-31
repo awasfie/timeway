@@ -4,6 +4,7 @@
 // the language bucket the root layout would pick from Accept-Language.
 // Deployed by ops/cloudflare/worker.py (plan/apply/rollback). Response header x-tw-edge: HIT|STALE|MISS|BYPASS.
 
+import { deferChunkScripts } from "./defer-js.mjs";
 import { LOCALES } from "./locales.mjs";
 
 // Fresh for FRESH_S; served stale (and refreshed in the background) until MAX_STALE_S, then a plain miss.
@@ -131,13 +132,22 @@ function storable(res) {
   return (res.headers.get("content-type") || "").startsWith("text/html");
 }
 
+// WC-TW-6l-3: stored copies request their Next.js chunks after first paint (see defer-js.mjs). The body
+// is rewritten once per origin fetch, so HIT and STALE serve the transformed HTML with no per-hit work.
+export const DEFER_JS = true;
+
 function toStored(res, now) {
   const headers = new Headers(res.headers);
+  const body = DEFER_JS && res.body ? deferChunkScripts(res.body) : res.body;
+  if (body !== res.body) {
+    headers.delete("content-length");
+    headers.set("x-tw-defer", "1");
+  }
   headers.set("cache-control", `public, s-maxage=${MAX_STALE_S}`);
   headers.set("vary", "Accept-Encoding");
   headers.set(STORED_AT, String(now));
   headers.delete("x-tw-edge");
-  return new Response(res.body, { status: res.status, headers });
+  return new Response(body, { status: res.status, headers });
 }
 
 function toClient(res, state, method) {

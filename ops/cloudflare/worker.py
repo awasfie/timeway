@@ -2,7 +2,7 @@
 """Booking-page edge cache Worker for timeway.co as code (WC-TW-6g).
 
   plan      show what apply would change: script content hash and Worker routes (default, read-only)
-  apply     upload worker/booking-edge.mjs (+ locales.mjs) and set the routes in timeway-worker.json;
+  apply     upload worker/booking-edge.mjs (+ locales.mjs, defer-js.mjs) and set the routes in timeway-worker.json;
             the pre-apply routes are saved for rollback
   rollback  remove the managed routes (traffic goes straight to the origin again) and restore any routes
             saved by the last apply; the script itself is deleted with --delete-script
