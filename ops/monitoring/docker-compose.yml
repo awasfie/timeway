@@ -1,0 +1,16 @@
+# R1-TW-MONITORING (t_1ee20514): blackbox exporter next to g3-prometheus on 62.171.141.202.
+# Own compose project (tw-monitoring) in /opt/g3-observability/timeway so the tracked g3-observability stack is untouched.
+services:
+  blackbox:
+    image: prom/blackbox-exporter:v0.29.0@sha256:9613f2884689b6fad9f1939f6a3b0388c93a022cfaededb19545b329b5c83dea
+    container_name: g3-blackbox-timeway
+    restart: unless-stopped
+    command: ['--config.file=/etc/blackbox/blackbox.yml']
+    volumes:
+      - ./blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    networks:
+      - coolify
+
+networks:
+  coolify:
+    external: true
