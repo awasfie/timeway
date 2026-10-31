@@ -91,7 +91,7 @@ Raw numbers: `evidence/2026-10-31-wc-tw-6d-r7.json`.
 | riyadh | TTFB (after TLS) | p75 < 500 ms | 129.5 ms (p50 121, max 174) | 27 | same | c1d7d6cd8e + Worker | PASS |
 | dubai | TTFB (after TLS) | p75 < 500 ms | 191.5 ms all probes (p50 169, max 1180; AS9009, AS136258, AS154177; AS207847 not drawn) | 27 | same | c1d7d6cd8e + Worker | PASS (no exclusion) |
 | dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | p75 2001.5 ms, median 1996.5 (1988-2009); CLI check x5 median 2004 | 10 + 5 | r7 evidence | c1d7d6cd8e + Worker | PASS (target 1500 missed) |
-| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 258.5 ms median (149-526); CLI check x5 338 | 10 + 5 | r7 evidence | c1d7d6cd8e + Worker | FAIL, fix card t_7dfd2cc6 |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 258.5 ms median (149-526); CLI check x5 338 | 10 + 5 | r7 evidence | c1d7d6cd8e + Worker | FAIL, fix card t_7022411d (WC-TW-6m) |
 | all | INP (RUM, Plausible) | < 200 ms | 48 ms (no new field rows since 2026-10-29 09:42Z) | 1 | ClickHouse `events_v2` site 1, `name='web_vital'` | 819bf85549 | PASS (n=1) |
 | prod | booking-route first-load JS | <= 200 KB gz | 49 scripts, 629.9 KB transfer (0 before LCP) | 10 | r7 evidence | c1d7d6cd8e | FAIL (reported only; ratchet is the enforced gate, t_3eb9a771) |
 | dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 455 ms (p50 373, max 457) | 30 | `scripts/perf/slot-api.mjs --month 2026-11`, r7 evidence | c1d7d6cd8e | PASS |
@@ -105,8 +105,8 @@ LCP, HIT or STALE alike (r6 p75 5986). The TBT row is back over the gate (r6 103
   run is chunk `3p6ke44unhizm.js` (139-389 ms), then `25sq9vkyrxchr.js` (~120 ms).
 - The r6 Lighthouse reports are no longer on disk, so a host-versus-code split cannot be redone; the row is recorded
   as measured. Host load average was 4.3-4.5 during r7.
-Next: fix card t_7dfd2cc6 (WC-TW-6j) cuts the top long tasks; INP RUM row needs more field rows (t_56a3e17b). JS stays
-reported only. Next re-run after t_7dfd2cc6 deploys.
+Next: fix card t_7022411d (WC-TW-6m) re-measures at low host load, then cuts the top long task if still over; the INP RUM row needs more field rows. JS stays
+reported only. Next re-run (r8) after t_7022411d lands.
 
 ## Re-run r6 (card t_762bea7b run 5815, 2026-10-29 17:28Z), on a27b36f7d7
 
