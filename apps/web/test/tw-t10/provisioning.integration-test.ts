@@ -62,6 +62,7 @@ afterAll(async () => {
     await tx.eventType.deleteMany({ where: { userId: { in: ids } } });
     await tx.schedule.deleteMany({ where: { userId: { in: ids } } });
     await tx.organizationMember.deleteMany({ where: { orgId: { in: orgIds } } });
+    await tx.orgEntitlementOverride.deleteMany({ where: { orgId: { in: orgIds } } });
     await tx.orgApiKey.deleteMany({ where: { orgId: { in: orgIds } } });
     await tx.user.deleteMany({ where: { id: { in: ids } } });
     await tx.organization.deleteMany({ where: { id: { in: orgIds } } });
@@ -346,5 +347,44 @@ describe("CC-14 provisioning (TW-T10)", () => {
       expect((await go()).status).toBe(200);
       expect((await go()).status).toBe(429);
     });
+  });
+});
+
+describe("TW-T12 plan enforcement (integration DB)", () => {
+  it("Free (via Spenai cancelled) blocks the 2nd member; Starter package allows 3, blocks the 4th; override rows are RLS-scoped", async () => {
+    const o = await create("plan");
+    expect(o.status).toBe(201);
+    orgIds.push(o.body.org.id);
+    const key = `Bearer ${o.body.api_key.raw}`;
+    const id = o.body.org.id as string;
+    const addMember = (n: number) => {
+      const email = `tw-t10-${run}-plan-m${n}@t10.test`;
+      emails.push(email);
+      return call("POST", [id, "members"], key, { email, name: `M${n}` });
+    };
+    // org-key may not change plans; only the platform key
+    expect((await call("PUT", [id, "plan"], key, { plan_code: "pro" })).status).toBe(403);
+    expect(
+      (await call("PUT", [id, "plan"], `Bearer ${MASTER}`, { spenai_package: "enterprise" })).status
+    ).toBe(400);
+    expect((await call("PUT", [id, "plan"], `Bearer ${MASTER}`, { spenai_cancelled: true })).status).toBe(
+      200
+    );
+    const m1 = await addMember(1);
+    expect(m1.status).toBe(402);
+    expect(m1.body.error.code).toBe("plan_limit_members");
+    // Starter = Teams x 3 seats: owner + 2 more
+    const set = await call("PUT", [id, "plan"], `Bearer ${MASTER}`, { spenai_package: "starter" });
+    expect(set.body.plan).toEqual({ plan_code: "teams", seats: 3 });
+    expect((await addMember(2)).status).toBe(201);
+    expect((await addMember(3)).status).toBe(201);
+    expect((await addMember(4)).status).toBe(402);
+    // replay is idempotent
+    expect((await call("PUT", [id, "plan"], `Bearer ${MASTER}`, { spenai_package: "starter" })).status).toBe(
+      200
+    );
+    const got = await call("GET", [id, "plan"], key);
+    expect(got.body.plan.plan_code).toBe("teams");
+    expect(got.body.plan.entitlements.maxMembers).toBe(3);
   });
 });
