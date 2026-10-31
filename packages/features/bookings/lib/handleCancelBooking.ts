@@ -29,6 +29,7 @@ import { safeStringify } from "@calcom/lib/safeStringify";
 import { getTranslation } from "@calcom/i18n/server";
 import { getTimeFormatStringFromUserTimeFormat } from "@calcom/lib/timeFormat";
 // TODO: Prisma import would be used from DI in a followup PR when we remove `handler` export
+import { isEventTypeBrandingHidden } from "@calcom/features/tw-branding/branding";
 import prisma from "@calcom/prisma";
 import type { WebhookTriggerEvents } from "@calcom/prisma/enums";
 import { BookingStatus } from "@calcom/prisma/enums";
@@ -301,6 +302,8 @@ async function handler(input: CancelBookingInput, dependencies?: Dependencies) {
             : null,
         } satisfies EventTypeBrandingData)
       : false,
+    // WC-TW-14b: a Timeway org entitled to hideBranding overrides the cal.com result
+    ...((await isEventTypeBrandingHidden(prisma, bookingToDelete.eventTypeId)) ? { hideBranding: true } : {}),
   };
 
   const dataForWebhooks = { evt, webhooks, eventTypeInfo };

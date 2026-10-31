@@ -60,6 +60,7 @@ import { shouldIgnoreContactOwner } from "@calcom/lib/bookings/routing/utils";
 import { getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
 import { DEFAULT_GROUP_ID, ENABLE_ASYNC_TASKER } from "@calcom/lib/constants";
 import { onBookingCreated } from "@calcom/features/tw-activation/activation";
+import { isOrgBrandingHidden } from "../../../tw-branding/branding";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
 import { extractBaseEmail } from "@calcom/lib/extract-base-email";
@@ -1463,7 +1464,8 @@ async function handler(
         : undefined
     )
     .withHideBranding(
-      await getEventTypeService().shouldHideBrandingForEventType(eventType.id, {
+      (await isOrgBrandingHidden(deps.prismaClient, eventType.twOrgId)) ||
+      (await getEventTypeService().shouldHideBrandingForEventType(eventType.id, {
         team: eventType.team
           ? { hideBranding: eventType.team.hideBranding, parent: eventType.team.parent }
           : null,
@@ -1474,7 +1476,7 @@ async function handler(
             ? [{ organization: organizerOrganizationProfile.organization }]
             : [],
         },
-      } satisfies EventTypeBrandingData)
+      } satisfies EventTypeBrandingData))
     )
     .build();
 

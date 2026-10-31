@@ -24,7 +24,7 @@ import {
   userMetadata as userMetadataSchema,
 } from "@calcom/prisma/zod-utils";
 import type { UserProfile } from "@calcom/types/UserProfile";
-import { getOrgBranding, overlayBranding } from "../../tw-branding/branding";
+import { getOrgBranding, isOrgBrandingHidden, overlayBranding } from "../../tw-branding/branding";
 
 class PermissionCheckService {
   constructor(_prisma?: unknown) {}
@@ -568,6 +568,8 @@ export const getPublicEvent = async (
   // TW-T13: org from the event row itself (never the request); a failure keeps the default look.
   const orgBranding = event.twOrgId ? await getOrgBranding(prisma, event.twOrgId).catch(() => null) : null;
 
+  const twHideBranding = await isOrgBrandingHidden(prisma, event.twOrgId);
+
   const result = {
     ...eventWithUserProfiles,
     bookerLayouts: bookerLayoutsSchema.parse(eventMetaData?.bookerLayouts || null),
@@ -618,7 +620,7 @@ export const getPublicEvent = async (
   };
 
   const branded = overlayBranding(result.profile, result.entity, orgBranding);
-  return { ...result, profile: branded.profile, entity: branded.entity };
+  return { ...result, profile: branded.profile, entity: branded.entity, twHideBranding };
 };
 
 const eventData = getPublicEventSelect(true);
