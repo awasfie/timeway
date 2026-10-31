@@ -36,6 +36,8 @@ import type { TrackingData } from "@calcom/lib/tracking";
 import prisma from "@calcom/prisma";
 import type { Membership, Team } from "@calcom/prisma/client";
 import { CreationSource, IdentityProvider, MembershipRole, UserPermissionRole } from "@calcom/prisma/enums";
+import { resolveIdentityMode } from "@calcom/features/tw-identity/mode";
+import { authorizePassportGrant } from "@calcom/features/tw-identity/passportAuth";
 import { teamMetadataSchema, userMetadata } from "@calcom/prisma/zod-utils";
 import type { UserProfile } from "@calcom/types/UserProfile";
 import { calendar_v3 } from "@googleapis/calendar";
@@ -327,7 +329,44 @@ export const CalComCredentialsProvider = CredentialsProvider({
   authorize: authorizeCredentials,
 });
 
-const providers: Provider[] = [CalComCredentialsProvider];
+// TW-T14: identity mode. `local` = unchanged local accounts; `passport` = sign-in only via a Passport
+// session grant (provider id "passport"); local password, Google and magic-link logins are not offered.
+const IDENTITY_MODE = resolveIdentityMode();
+/** TW-T14: Passport handoff sign-in. Credentials field `grant` = Passport session grant (aud=timeway). */
+export async function authorizePassport(credentials: Record<"grant", string> | undefined): Promise<User | null> {
+  const userRepo = new UserRepository(prisma);
+  const signIn = await authorizePassportGrant(credentials?.grant, {
+    baseUrl: process.env.PASSPORT_BASE_URL,
+    findUserByEmail: async (email) => {
+      const u = await prisma.user.findFirst({
+        where: { email },
+        select: { id: true, email: true, username: true, locked: true },
+      });
+      return u;
+    },
+    findOrgByExternalRef: async (ref) => {
+      const rows = await prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`select set_config('app.tw_platform', 'on', true)`;
+        return tx.$queryRaw<{ id: string; status: "active" | "suspended" | "closed"; identityMode: "local" | "passport" }[]>`
+          select id, status::text as status, "identityMode"::text as "identityMode" from tw_organization where "externalRef" = ${ref} limit 1`;
+      });
+      return rows[0] ?? null;
+    },
+  });
+  const user = await userRepo.findByEmailAndIncludeProfilesAndPassword({ email: signIn.email });
+  if (!user) return null;
+  return AdapterUserPresenter.fromCalUser(user, user.role, checkIfUserBelongsToActiveTeam(user));
+}
+
+export const PassportCredentialsProvider = CredentialsProvider({
+  id: "passport",
+  name: "Passport",
+  type: "credentials",
+  credentials: { grant: { label: "Passport grant", type: "text" } },
+  authorize: authorizePassport,
+});
+
+const providers: Provider[] = IDENTITY_MODE === "passport" ? [PassportCredentialsProvider] : [CalComCredentialsProvider];
 type SamlIdpUser = {
   id: number;
   userId: number;
@@ -340,7 +379,7 @@ type SamlIdpUser = {
   samlTenant?: string;
 };
 
-if (IS_GOOGLE_LOGIN_ENABLED) {
+if (IS_GOOGLE_LOGIN_ENABLED && IDENTITY_MODE === "local") {
   providers.push(
     GoogleProvider({
       clientId: GOOGLE_CLIENT_ID,
@@ -383,6 +422,7 @@ if (OUTLOOK_LOGIN_ENABLED && OUTLOOK_CLIENT_ID && OUTLOOK_CLIENT_SECRET) {
   );
 }
 
+if (IDENTITY_MODE === "local") {
 providers.push(
   EmailProvider({
     type: "email",
@@ -391,6 +431,7 @@ providers.push(
     sendVerificationRequest: async (props) => (await import("./sendVerificationRequest")).default(props),
   })
 );
+}
 
 function isNumber(n: string) {
   return !Number.isNaN(parseFloat(n)) && !Number.isNaN(+n);
