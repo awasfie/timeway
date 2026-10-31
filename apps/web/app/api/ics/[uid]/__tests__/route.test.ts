@@ -2,10 +2,16 @@ import { describe, expect, test, vi } from "vitest";
 import { GET } from "../route";
 
 const findUnique = vi.fn();
-vi.mock("@calcom/prisma", () => ({
-  default: { booking: { findUnique: (...a: unknown[]) => findUnique(...a) } },
-  prisma: { booking: { findUnique: (...a: unknown[]) => findUnique(...a) } },
-}));
+// TW-T9.2b4: the route resolves the booking's org through the definer fn before reading it.
+const ORG = "0b5f6a52-8d0e-4c4a-9f3e-6a1d2c3b4e5f";
+const queryRaw = vi.fn(async () => [{ id: 1, twOrgId: ORG }]);
+vi.mock("@calcom/prisma", () => {
+  const client = {
+    booking: { findUnique: (...a: unknown[]) => findUnique(...a) },
+    $queryRaw: (...a: unknown[]) => queryRaw(...(a as [])),
+  };
+  return { default: client, prisma: client };
+});
 
 const UID = "u9FvTSuB2d4No3kc2nAeX9";
 const CAMV_URL = `https://camv.co/rooms/tw-${UID}?hq=true`;
@@ -64,5 +70,16 @@ describe("GET /api/ics/[uid] LOCATION (TW-ICS-1a)", () => {
     findUnique.mockResolvedValueOnce(booking({ location: "integrations:zoom", references: [] }));
     const { body } = await call();
     expect(unfold(body)).not.toContain("integrations:");
+  });
+});
+
+describe("GET /api/ics/[uid] org scope (TW-T9.2b4)", () => {
+  test("a uid that resolves to no org is 404 and the booking is never read", async () => {
+    queryRaw.mockResolvedValue([]);
+    findUnique.mockClear();
+    const res = await GET({} as never, { params: Promise.resolve({ uid: UID }) });
+    expect(res.status).toBe(404);
+    expect(findUnique).not.toHaveBeenCalled();
+    queryRaw.mockResolvedValue([{ id: 1, twOrgId: ORG }]);
   });
 });

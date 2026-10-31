@@ -156,7 +156,7 @@ enum CancellationReasonRequirement {
 model EventType {
   id                Int     @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId           String? @db.Uuid
+  twOrgId           String? @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   /// @zod.string.min(1)
   title             String
   /// @zod.import(["import { eventTypeSlug } from '../../zod-utils'"]).custom.use(eventTypeSlug)
@@ -311,7 +311,7 @@ model EventType {
 model Credential {
   id           Int     @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId      String? @db.Uuid
+  twOrgId      String? @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   // @@type is deprecated
   type         String
   key          Json
@@ -407,7 +407,7 @@ model TravelSchedule {
 model User {
   id                  Int                  @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Distinct from upstream Int `organizationId` (Team). Nullable until the contract slice.
-  twOrgId             String?              @db.Uuid
+  twOrgId             String?              @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   uuid                String               @unique @default(uuid()) @db.Uuid
   username            String?
   name                String?
@@ -867,7 +867,7 @@ enum BookingStatus {
 model Booking {
   id                     Int                        @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId                String?                    @db.Uuid
+  twOrgId                String?                    @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   uid                    String                     @unique
   // (optional) UID based on slot start/end time & email against duplicates
   idempotencyKey         String?                    @unique
@@ -964,7 +964,7 @@ model Tracking {
 model Schedule {
   id                   Int            @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId              String?        @db.Uuid
+  twOrgId              String?        @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId               Int
   eventType            EventType[]

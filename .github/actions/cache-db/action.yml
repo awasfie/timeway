@@ -29,12 +29,27 @@ runs:
         key: ${{ steps.cache-key.outputs.key }}
     # node_modules cache hits skip the root postinstall, so the Prisma client
     # (packages/prisma/generated, not cached) must be generated before seeding.
+    # TW-T9.2d: the CI database is one Timeway org (scripts/tw-t9/ci-single-org.sql). The
+    # database-level setting is not in the dump, so it is applied on both cache paths.
+    - name: CI org setting (TW-T9.2d)
+      run: |
+        docker run --rm --network host \
+          -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} \
+          postgres:18 psql "${{ inputs.DATABASE_URL }}" -v ON_ERROR_STOP=1 -v phase=guc -f scripts/tw-t9/ci-single-org.sql
+      shell: bash
     - name: Generate Prisma client
       if: steps.cache-db.outputs.cache-hit != 'true'
       run: yarn prisma generate
       shell: bash
     - run: yarn db-seed
       if: steps.cache-db.outputs.cache-hit != 'true'
+      shell: bash
+    - name: CI org rows (TW-T9.2d)
+      if: steps.cache-db.outputs.cache-hit != 'true'
+      run: |
+        docker run --rm --network host \
+          -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} \
+          postgres:18 psql "${{ inputs.DATABASE_URL }}" -v ON_ERROR_STOP=1 -v phase=org -f scripts/tw-t9/ci-single-org.sql
       shell: bash
     - name: Postgres Dump Backup
       if: steps.cache-db.outputs.cache-hit != 'true'

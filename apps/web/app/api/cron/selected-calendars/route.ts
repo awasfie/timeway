@@ -6,6 +6,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import { findUniqueDelegationCalendarCredential } from "@calcom/app-store/delegationCredential";
 import {
   createGoogleCalendarServiceWithGoogleType,
@@ -300,4 +301,5 @@ const handler = async (request: NextRequest) => {
   return NextResponse.json(await handleCreateSelectedCalendars());
 };
 
-export const GET = defaultResponderForAppDir(handler);
+// TW-T9.2b3: cross-org job, platform scope "selected-calendars".
+export const GET = defaultResponderForAppDir(withTwPlatformJob("selected-calendars", handler));

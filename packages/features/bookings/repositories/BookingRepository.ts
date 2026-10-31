@@ -1946,7 +1946,8 @@ export class BookingRepository implements IBookingRepository {
     return client.booking.create({
       data: {
         uid,
-        twOrgId: targetEventType?.twOrgId ?? null,
+        // undefined, not null: an explicit NULL would override the column default (scope org).
+        twOrgId: targetEventType?.twOrgId ?? undefined,
         userPrimaryEmail,
         title,
         description,

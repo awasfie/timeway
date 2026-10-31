@@ -8,6 +8,7 @@ import { shouldHideBrandingForEvent } from "@calcom/features/profile/lib/hideBra
 import { parseRecurringEvent } from "@calcom/lib/isRecurringEvent";
 import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 import { maybeGetBookingUidFromSeat } from "@calcom/lib/server/maybeGetBookingUidFromSeat";
+import { publicLookupsForBookingUid, runSsrWithPublicTwOrg } from "@calcom/lib/server/tw-org-scope/public";
 import prisma from "@calcom/prisma";
 import { customInputSchema } from "@calcom/prisma/zod-utils";
 import { meRouter } from "@calcom/trpc/server/routers/viewer/me/_router";
@@ -36,7 +37,15 @@ const querySchema = z.object({
 
 export type PageProps = inferSSRProps<typeof getServerSideProps>;
 
+// TW-T9.2b2: the booking uid (or seat reference) resolves the org.
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const parsed = querySchema.safeParse(context.query);
+  if (!parsed.success) return { notFound: true } as const;
+  const lookups = publicLookupsForBookingUid(parsed.data.uid);
+  return runSsrWithPublicTwOrg(prisma, lookups, () => getBookingPageProps(context));
+}
+
+async function getBookingPageProps(context: GetServerSidePropsContext) {
   // this is needed to prevent bundling of lib/booking to the client bundle
   // usually functions that are used in getServerSideProps are tree shaken from client bundle
   // but not in case when they are exported. So we have to dynamically load them, or to copy paste them to the /future/page.

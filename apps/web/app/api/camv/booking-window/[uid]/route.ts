@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
-
+import process from "node:process";
+import { resolvePublicTwOrg } from "@calcom/lib/server/tw-org-scope/public";
 import prisma from "@calcom/prisma";
+import { runWithTwOrg } from "@calcom/prisma/tw-org-context";
+import { NextResponse } from "next/server";
 
 /**
  * Internal-only endpoint for Camv (TW-T7) to validate a booking before
@@ -27,22 +29,31 @@ export async function GET(request: Request, { params }: { params: Promise<{ uid:
     return NextResponse.json({ error: "missing uid" }, { status: 400 });
   }
 
-  const booking = await prisma.booking.findUnique({
-    where: { uid },
-    select: {
-      uid: true,
-      title: true,
-      startTime: true,
-      endTime: true,
-      status: true,
-      user: {
-        select: { name: true, email: true },
+  // TW-T9.2b4: the org is the booking's, resolved from its uid by the SECURITY DEFINER
+  // fn (exactly one non-NULL org, else 404). Never from a header or query param.
+  const twOrgId = await resolvePublicTwOrg(prisma, { resolver: "booking_uid", keys: [uid] });
+  if (!twOrgId) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
+  const booking = await runWithTwOrg(twOrgId, () =>
+    prisma.booking.findUnique({
+      where: { uid },
+      select: {
+        uid: true,
+        title: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        user: {
+          select: { name: true, email: true },
+        },
+        attendees: {
+          select: { name: true, email: true },
+        },
       },
-      attendees: {
-        select: { name: true, email: true },
-      },
-    },
-  });
+    })
+  );
 
   if (!booking) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
