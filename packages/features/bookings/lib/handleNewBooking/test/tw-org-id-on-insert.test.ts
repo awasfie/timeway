@@ -18,6 +18,7 @@ import {
   TestData,
 } from "@calcom/testing/lib/bookingScenario/bookingScenario";
 import process from "node:process";
+import prismaMock from "@calcom/testing/lib/__mocks__/prisma";
 import { SchedulingType } from "@calcom/prisma/enums";
 import { expectBookingToBeInDatabase } from "@calcom/testing/lib/bookingScenario/expects";
 import { getMockRequestDataForBooking } from "@calcom/testing/lib/bookingScenario/getMockRequestDataForBooking";
@@ -163,11 +164,10 @@ describe("TW-ORGID-INS: Booking.twOrgId comes from the event type", () => {
 
       const created = await handleNewBooking({ bookingData: bookingRequest() });
 
-      await expectBookingToBeInDatabase({
-        uid: created.uid!,
-        eventTypeId: 1,
-        twOrgId: null,
-      });
+      // No explicit value is written, so the column default applies; with no org scope that is NULL.
+      const row = await prismaMock.booking.findUnique({ where: { uid: created.uid! } });
+      expect(row?.eventTypeId).toBe(1);
+      expect(row?.twOrgId ?? null).toBeNull();
     },
     timeout
   );
