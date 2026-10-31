@@ -29,6 +29,168 @@ this card stays open until every row passes on a later deploy.
 | dubai | slot API `slots/getSchedule` (the booker's own call, 2-month range) | p95 < 800 ms | 458 ms warm (p50 386, max 471); cold 1034 | 30 + 30 | `node scripts/perf/slot-api.mjs` from the Dubai host; `evidence/2026-10-28-slot-api-wc-tw-6f.json` (WC-TW-6f) | bfebbeca82 (= d43cce3dda code) | PASS |
 | any org | per-tenant RUM in Plausible | visible for >= 1 org | not visible: not deployed | 0 | see INP RUM row | d43cce3dda | MISSING |
 
+## Re-run r2 (card t_762bea7b run 5301, 2026-10-28 06:50Z), after 6f and 6g
+
+App code under test is still `d43cce3dda` (every later main commit is docs-only: `git diff --stat d43cce3dda origin/main`
+touches only `docs/perf/**`), plus the live Cloudflare Worker `timeway-booking-edge` from WC-TW-6g (timeway#202;
+response header `x-tw-edge: HIT`). Raw numbers: `evidence/2026-10-28-wc-tw-6d-r2.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB | p75 < 500 ms | 77 ms | 42 | Globalping, WC-TW-6g pooled; `evidence/2026-10-28-wc-tw-6g-edge-worker-r2.json` (timeway#202) | d43cce3dda + Worker | PASS |
+| riyadh | TTFB | p75 < 500 ms | 96 ms | 42 | same | d43cce3dda + Worker | PASS |
+| dubai | TTFB | p75 < 500 ms | 166 ms Globalping excl. AS207847 (n=34; raw incl. that probe 595); local Dubai host AS15802 243 ms (p50 223, p95 259) | 34 + 30 | same; local curl in r2 evidence | d43cce3dda + Worker | PASS (Globalping AS207847 probe exclusion is Gosi's call, see 6g) |
+| dubai (prod, real network) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | 7016 ms median (6981-7086) | 5 | r2 evidence | d43cce3dda + Worker | FAIL |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 220 ms median (205-303) | 5 | r2 evidence | d43cce3dda + Worker | FAIL |
+| all | INP (RUM, Plausible) | < 200 ms | no data: page HTML has no Plausible script | 0 | timeway#89, #101 still open drafts | d43cce3dda | MISSING |
+| prod | booking-route first-load JS | <= 200 KB gz | 49 scripts, 837 KB transfer (unchanged; JS stack #125/#126/#127/#130/#154 still open) | 1 | r2 evidence | d43cce3dda | FAIL |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 458 ms | 30 | WC-TW-6f, `evidence/2026-10-28-slot-api-wc-tw-6f.json` (timeway#201) | bfebbeca82 (docs-only over d43cce3dda) | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | not deployed | 0 | see RUM row | d43cce3dda | MISSING |
+
+r2 verdict: **not met**, 4 of 9 rows pass (TTFB x3, slot API). TTFB rows rest on the 6g pooled Globalping run: a fresh
+Globalping run this pass returned `429 rate_limit_exceeded` (anonymous IP hourly quota spent by 6g), so the local Dubai
+host series is the independent cross-check. LCP sits at ~7.0 s with server response ~225 ms, so LCP is JS-bound, not
+network-bound: it moves only when the JS stack merges and deploys (t_25e79885, t_3eb9a771, t_bf71ff0c). RUM rows move
+when #89/#101 merge and deploy (t_75e3ae48).
+
+## Re-run r3 (card t_762bea7b run 5697, 2026-10-29 07:53Z), on 11ebad82ee
+
+App under test: `11ebad82ee883b04916eeab577d2d890bd64d9f6` (main tip, Coolify container
+`poyzdsncp9jsvc3gr4hkitaf-20261029T062633`, healthy), which carries the merged JS stack (#126, #127, #154, #160) and
+WC-TW-9c Plausible (#101), plus the `timeway-booking-edge` Worker (`x-tw-edge: HIT`). WC-TW-6h (timeway#218, SSR event
+title) is a draft and is **not** in this deploy. Raw numbers: `evidence/2026-10-29-wc-tw-6d-r3.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 92 ms (p50 83, max 222) | 27 | Globalping 2026-10-29T07:54Z, 9 x 3 probes, 0 failures; r3 evidence | 11ebad82ee + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 109.5 ms (max 148) | 27 | same | 11ebad82ee + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 178 ms, all probes incl. AS207847 (max 281); local Dubai host AS15802 183 ms (p50 171, p95 202, n=30) | 27 + 30 | same; local curl in r3 evidence | 11ebad82ee + Worker | PASS (no probe exclusion needed) |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | 6110 ms median (6075-6256) | 5 | r3 evidence | 11ebad82ee + Worker | FAIL |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 298 ms median (210-374) | 5 | r3 evidence | 11ebad82ee + Worker | FAIL |
+| all | INP (RUM) | < 200 ms | no data: the booking page sends no INP / web-vitals event to Plausible | 0 | Plausible ClickHouse, site 1, 7 days | 11ebad82ee | MISSING |
+| gh-runner | booking-route first-load JS | <= 200 KB gz | 516.7 KB gz excl. noModule (555.3 incl., 42 scripts); prod transfer 628 KB in 45 scripts | 1 build + 5 | booking-perf run 40827805041 (t_48672c49, timeway#217); r3 evidence | 11ebad82ee | FAIL |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 478 ms (p50 339, max 901) | 30 | `scripts/perf/slot-api.mjs`, r3 evidence | 11ebad82ee | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb` (spenai-pilot): booking_page_view 4, slot_selected 1, booking_confirmed 1 | 1 org | ClickHouse `events_v2` site_id 1, 7 days, `meta.org` | 11ebad82ee | PASS |
+
+r3 verdict: **not met**, 5 of 9 rows pass (TTFB x3, slot API, per-tenant RUM). LCP fell 7016 -> 6110 ms with the JS
+stack; its next cut, the SSR title shell, is timeway#218 (draft, not deployed). TBT went 220 -> 298 ms on this
+host (its benchmarkIndex range 2423-3270 is wider than r2's). INP RUM has no emitter. The JS 200 KB row stays a fail:
+t_3eb9a771 recorded the ratchet as the enforced gate and 200 KB as reported only, and the floor on main is 516.7.
+
+## Re-run r7 (card t_762bea7b run 6036, 2026-10-31 14:37Z), on c1d7d6cd8e + #230 Worker
+
+App under test: image `poyzdsncp9jsvc3gr4hkitaf:c1d7d6cd8e4f8fbda2b8841c055559a2ad7aca97` (container
+`poyzdsncp9jsvc3gr4hkitaf-20261031T125934`, healthy), plus the `timeway-booking-edge` Worker with the WC-TW-6l-3 chunk
+defer (timeway#230, main 1a3cb0bbb2; `x-tw-defer: 1`, `x-tw-edge: HIT`). Since r6 the app image gained #223/#224
+(WhatsApp) and #156 (auth); 0 `.tsx` files changed a27b36f7d7..c1d7d6cd8e. Dubai host AS15802, direct to prod.
+Raw numbers: `evidence/2026-10-31-wc-tw-6d-r7.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 108 ms (p50 92, max 434) | 27 | Globalping 2026-10-31T14:39Z, 9 x 3 probes; r7 evidence | c1d7d6cd8e + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 129.5 ms (p50 121, max 174) | 27 | same | c1d7d6cd8e + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 191.5 ms all probes (p50 169, max 1180; AS9009, AS136258, AS154177; AS207847 not drawn) | 27 | same | c1d7d6cd8e + Worker | PASS (no exclusion) |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | p75 2001.5 ms, median 1996.5 (1988-2009); CLI check x5 median 2004 | 10 + 5 | r7 evidence | c1d7d6cd8e + Worker | PASS (target 1500 missed) |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 258.5 ms median (149-526); CLI check x5 338 | 10 + 5 | r7 evidence | c1d7d6cd8e + Worker | FAIL, fix card t_7022411d (WC-TW-6m) |
+| all | INP (RUM, Plausible) | < 200 ms | 48 ms (no new field rows since 2026-10-29 09:42Z) | 1 | ClickHouse `events_v2` site 1, `name='web_vital'` | 819bf85549 | PASS (n=1) |
+| prod | booking-route first-load JS | <= 200 KB gz | 49 scripts, 629.9 KB transfer (0 before LCP) | 10 | r7 evidence | c1d7d6cd8e | FAIL (reported only; ratchet is the enforced gate, t_3eb9a771) |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 455 ms (p50 373, max 457) | 30 | `scripts/perf/slot-api.mjs --month 2026-11`, r7 evidence | c1d7d6cd8e | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb`: booking_page_view 6, web_vital LCP/INP | 1 org | ClickHouse `events_v2` site 1, 7 days | c1d7d6cd8e | PASS |
+
+r7 verdict: **not met**, 7 of 9 rows pass. #230 closed the LCP row: every run 1988-2009 ms with 0 scripts before
+LCP, HIT or STALE alike (r6 p75 5986). The TBT row is back over the gate (r6 103.5 ms):
+- Not caused by #230: with a dummy session cookie the Worker answers BYPASS (origin HTML, no defer) and TBT is
+  median 342 ms (n=5), the same as the deferred page.
+- No booker code shipped since r6 and script transfer is unchanged (629.6 -> 629.9 KB). The top long task in every
+  run is chunk `3p6ke44unhizm.js` (139-389 ms), then `25sq9vkyrxchr.js` (~120 ms).
+- The r6 Lighthouse reports are no longer on disk, so a host-versus-code split cannot be redone; the row is recorded
+  as measured. Host load average was 4.3-4.5 during r7.
+Next: fix card t_7022411d (WC-TW-6m) re-measures at low host load, then cuts the top long task if still over; the INP RUM row needs more field rows. JS stays
+reported only. Next re-run (r8) after t_7022411d lands.
+
+## Re-run r6 (card t_762bea7b run 5815, 2026-10-29 17:28Z), on a27b36f7d7
+
+App under test: `a27b36f7d70e82c8d04056d656d1d812f23d8586` (main tip, #218 WC-TW-6h SSR title shell; Coolify deployment
+`rfetl6bwh89kxetvmmup9okw`, container `poyzdsncp9jsvc3gr4hkitaf-20261029T172537`, healthy), plus the `timeway-booking-edge`
+Worker (`x-tw-edge: HIT`). The served HTML now carries `booker-ssr-shell` and the event-title h1.
+Raw numbers: `evidence/2026-10-29-wc-tw-6d-r6.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 97 ms (p50 88, max 353) | 27 | Globalping 2026-10-29T17:31Z, 9 x 3 probes, 0 failures; r6 evidence | a27b36f7d7 + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 135.5 ms (p50 127, max 556) | 27 | same | a27b36f7d7 + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 236 ms all probes (p50 202, max 786; AS9009, AS136258, AS154177, AS207847 not drawn); local Dubai host AS15802 212 ms (n=30) | 27 + 30 | same; local curl in r6 evidence | a27b36f7d7 + Worker | PASS (no exclusion) |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | p75 5986 ms, median 4015.5 (2235-6017) | 10 | r6 evidence, 2 batches of 5 | a27b36f7d7 + Worker | FAIL, fix card t_063d46b1 |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 103.5 ms median (75-179) | 10 | r6 evidence | a27b36f7d7 + Worker | PASS |
+| all | INP (RUM, Plausible) | < 200 ms | 48 ms, rating good (no new field rows since 09:42Z) | 1 | ClickHouse `events_v2` site 1, `name='web_vital'`, re-queried 17:35Z | 819bf85549 | PASS (n=1) |
+| prod | booking-route first-load JS | <= 200 KB gz | 49 scripts, 629.6 KB transfer | 10 | r6 evidence | a27b36f7d7 | FAIL (reported only; ratchet is the enforced gate, t_3eb9a771) |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 445 ms (p50 381, max 455) | 30 | `scripts/perf/slot-api.mjs --month 2026-11`, r6 evidence | a27b36f7d7 | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb`: booking events plus web_vital LCP/INP rows | 1 org | ClickHouse `events_v2` site 1 | a27b36f7d7 | PASS |
+
+r6 verdict: **not met**, 7 of 9 rows pass. #218 moved LCP but not past the gate, and the runs split in two:
+- 6 of 10 runs paint early (observed FCP 894-1072 ms). The SSR shell h1 is the LCP; simulated LCP 2235-4293 ms, 4 of
+  them at or under 2537.
+- 4 of 10 runs paint late (observed FCP 1758-2803 ms, while DOMContentLoaded is ~930 ms). The LCP element is the
+  hydrated booker h1 (`div.[grid-area:meta] > div.relative > div.animate-in > h1`), element render delay 1.9-2.9 s,
+  simulated LCP 5976-6017 ms. In batch B (edge status read before each run) the one late run (#9) followed an
+  `x-tw-edge: STALE` response and the four HIT runs painted early; batch A's edge status was not recorded. So the
+  STALE/revalidate path is a suspect, not a proven cause.
+The cause of the held first paint is the work of fix card t_063d46b1 (WC-TW-6l). JS stays reported only. Next re-run
+after t_063d46b1 deploys.
+
+## Re-run r5 (card t_762bea7b run 5802, 2026-10-29 16:09Z), on 9f2dfb867d
+
+App under test: `9f2dfb867dffc9ba3651d99f60fdb3a558d1611c` (main tip; Coolify deployment `1qbfxfjgret7xz5f3vpqdvrh`,
+container `poyzdsncp9jsvc3gr4hkitaf-20261029T155908`, healthy), plus the `timeway-booking-edge` Worker. New since r4:
+#128 (6c-9 lazy booking form), #221 (6k lazy TagManager + Toaster), #220 (6j deferred first booker mount). Still not
+deployed: #218 (6h SSR title shell, the LCP cut; head 8fa2d1265f, CI green, awaiting Gosi re-review).
+Raw numbers: `evidence/2026-10-29-wc-tw-6d-r5.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 95 ms (p50 86, max 629) | 27 | Globalping 2026-10-29T16:12Z, 9 x 3 probes, 0 failures; r5 evidence | 9f2dfb867d + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 128 ms (p50 121, max 495) | 27 | same | 9f2dfb867d + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 559 ms all probes (p50 172); without CloudBlast AS207847 (6 samples 614-775, routes via LHR) 182 ms (n=21); local Dubai host AS15802 227 ms (p50 203, p95 271, n=30) | 27 + 30 | same; local curl in r5 evidence | 9f2dfb867d + Worker | PASS under the probe rule below (182 ms); 559 ms raw recorded |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | 5597 ms median (4939-6025) | 5 | r5 evidence | 9f2dfb867d + Worker | FAIL (#218 not deployed) |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 103 ms median (67-114) | 5 | r5 evidence | 9f2dfb867d + Worker | PASS (was 215 on r4; #220/#221) |
+| all | INP (RUM, Plausible) | < 200 ms | 48 ms, rating good (no new field rows since 09:42Z) | 1 | ClickHouse `events_v2` site 1, `name='web_vital'` | 819bf85549 | PASS (n=1) |
+| prod | booking-route first-load JS | <= 200 KB gz | 49 scripts, 629.6 KB transfer | 5 | r5 evidence | 9f2dfb867d | FAIL (reported only; ratchet is the enforced gate, t_3eb9a771) |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 652 ms (p50 476, max 670) | 30 | `scripts/perf/slot-api.mjs --month 2026-11`, r5 evidence | 9f2dfb867d | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb`: booking events plus web_vital LCP/INP rows | 1 org | ClickHouse `events_v2` site 1 | 9f2dfb867d | PASS |
+
+r5 verdict: **not met**, 7 of 9 rows pass (TTFB x3, TBT, INP RUM, slot API, per-tenant RUM). TBT is fixed by
+#220/#221. Left: LCP 5597 ms (moves with the #218 deploy) and JS (reported only, ratchet enforced). The Dubai
+row flips with the sample mix: CloudBlast AS207847 is 6 of 27 samples and lands on LHR every time (614-775 ms), so the
+inclusive p75 sits on its boundary (r3 178, r4 450, r5 559). Every other Dubai network is under 232 ms except single
+outliers. That probe goes via LHR for Cloudflare's own pages too (6g control, `evidence/2026-10-28-wc-tw-6g-edge-worker-r2.json`).
+Probe rule (decided on this card, run 5802): a Globalping probe network is left out of the TTFB gate when its control
+TTFB to Cloudflare's own `www.cloudflare.com/cdn-cgi/trace` is already over the 500 ms budget, because no origin or edge
+change can move it. AS207847 meets that rule (659 ms control vs 12 ms from M247 Dubai). The raw all-probe p75 stays in
+every table so a verifier can read the gate either way.
+
+## Re-run r4 (card t_762bea7b run 5729, 2026-10-29 10:16Z), on 819bf85549
+
+App under test: `819bf855498a9e5b2316c917857ae26bf3e6fe0d` (main tip, WC-TW-6i web-vitals emitter, Coolify deployment
+`xifccx3merpmslnwgw7wd3gw`), plus the `timeway-booking-edge` Worker. Neither the LCP cut (WC-TW-6h, timeway#218) nor the
+TBT cut (WC-TW-6j, timeway#220) is deployed: both are open, ready, CI green, awaiting Gosi (REVIEW t_ed4bc646, t_7976cf21).
+Raw numbers: `evidence/2026-10-29-wc-tw-6d-r4.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 96.5 ms (p50 86, max 663) | 27 | Globalping 2026-10-29T10:19Z, 9 x 3 probes, 0 failures; r4 evidence | 819bf85549 + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 121 ms (p50 114, max 131) | 27 | same | 819bf85549 + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 450 ms all probes (p50 181; CloudBlast AS207847 routes via LHR, 6 samples 510-828); local Dubai host AS15802 188 ms (p50 176, p95 230, n=30) | 27 + 30 | same; local curl in r4 evidence | 819bf85549 + Worker | PASS (no exclusion; thin margin, carried by the LHR probe) |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | 6015 ms median (5888-6041) | 5 | r4 evidence | 819bf85549 + Worker | FAIL (#218 not deployed) |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 215 ms median (187-269) | 5 | r4 evidence | 819bf85549 + Worker | FAIL (#220 not deployed) |
+| all | INP (RUM, Plausible) | < 200 ms | 48 ms, rating good (one field visit; LCP field 1900 ms) | 1 | ClickHouse `events_v2` site 1, `name='web_vital'`, 2026-10-29 09:42:41Z (WC-TW-6i proof, t_b14501d1) | 819bf85549 | PASS (n=1; p75 needs more traffic) |
+| prod | booking-route first-load JS | <= 200 KB gz | 46 scripts, 630 KB transfer (CI floor 516.7 KB gz on 11ebad82ee) | 5 | r4 evidence | 819bf85549 | FAIL (ratchet is the enforced gate, t_3eb9a771) |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 457 ms (p50 387, max 532) | 30 | `scripts/perf/slot-api.mjs --month 2026-11`, r4 evidence | 819bf85549 | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb`: booking events (r3) plus web_vital LCP/INP rows | 1 org | ClickHouse `events_v2` site 1 | 819bf85549 | PASS |
+
+r4 verdict: **not met**, 6 of 9 rows pass (TTFB x3, INP RUM, slot API, per-tenant RUM). Left: LCP 6015 ms (moves with
+#218 deploy), TBT 215 ms (moves with #220 deploy; its measured floor was 197.5 ms, so a further slice t_4e55324f is
+open), JS 200 KB (reported only; ratchet enforced). Next re-run after Gosi merges and deploys #218 and #220.
+
 ## How each number was taken
 
 - **TTFB by city.** `node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false`.
