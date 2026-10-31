@@ -1,5 +1,5 @@
 import checkForMultiplePaymentApps from "@calcom/app-store/_utils/payments/checkForMultiplePaymentApps";
-import { locationsResolver } from "@calcom/app-store/locations";
+import { locationsResolver } from "@calcom/app-store/locationsResolver";
 import { stripChildrenForPayload } from "@calcom/features/eventtypes/lib/childrenEventType";
 import { validateCustomEventName } from "@calcom/features/eventtypes/lib/eventNaming";
 import type {

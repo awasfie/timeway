@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@calcom/lib/hooks/useLocale";
 import Link from "next/link";
 import z from "zod";
 
@@ -29,11 +30,12 @@ const PaymentPaypalDataSchema = z.object({
 });
 
 export const PaypalPaymentComponent = (props: IPaypalPaymentComponentProps) => {
+  const { t } = useLocale();
   const { payment } = props;
   const { data } = payment;
   const wrongUrl = (
     <>
-      <p className="mt-3 text-center">Couldn&apos;t obtain payment URL</p>
+      <p className="mt-3 text-center">{t("payment_url_unavailable")}</p>
     </>
   );
 
@@ -53,7 +55,7 @@ export const PaypalPaymentComponent = (props: IPaypalPaymentComponentProps) => {
         href={`${paymentUrl}`}
         className="inline-flex items-center justify-center rounded-2xl rounded-md border border-transparent bg-[#ffc439] px-12 py-2 text-base
         font-medium text-black shadow-sm hover:brightness-95 focus:outline-none focus:ring-offset-2">
-        Pay with
+        {t("pay_with")}
         <img src="/app-store/paypal/paypal-logo.svg" alt="Paypal" className="mx-2 mb-1 mt-2 w-16" />
         <span />
       </Link>

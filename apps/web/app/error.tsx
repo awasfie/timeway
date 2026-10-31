@@ -1,6 +1,5 @@
 "use client";
 
-import { captureException } from "@sentry/nextjs";
 import React from "react";
 
 import { getErrorFromUnknown } from "@calcom/lib/errors";
@@ -22,7 +21,9 @@ export default function Error({ error, reset }: ErrorProps) {
     log.error(error);
 
     // Log the error to Sentry
-    captureException(error);
+    void import("@sentry/nextjs")
+      .then(({ captureException }) => captureException(error))
+      .catch(() => undefined);
   }, [error]);
 
   const processedError = React.useMemo(() => {

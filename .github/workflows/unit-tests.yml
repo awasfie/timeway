@@ -9,7 +9,7 @@ jobs:
   test:
     name: Unit
     timeout-minutes: 20
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,3 +20,8 @@ jobs:
       - run: yarn test -- --no-isolate
       # We could add different timezones here that we need to run our tests in
       - run: TZ=America/Los_Angeles VITEST_MODE=timezone yarn test -- --no-isolate
+      # WC-TW-5b: host zones of the Timeway launch markets (Egypt observes DST, Saudi does not)
+      - run: TZ=Africa/Cairo VITEST_MODE=timezone yarn test -- --no-isolate
+      - run: TZ=Asia/Riyadh VITEST_MODE=timezone yarn test -- --no-isolate
+      # WC-TW-6g: booking edge Worker unit tests (node:test, not vitest)
+      - run: node --test ops/cloudflare/worker/booking-edge.test.mjs

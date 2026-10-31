@@ -7,6 +7,7 @@ docker-compose.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810
 docker-compose.yml|redis:latest@sha256:2c2dff791878316e3b083188be0d578423b24813cdda5de0e80ea4f7b3e6bfd6   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
 docker-compose.yml|calcom.docker.scarf.sh/calcom/cal.diy   # WC-PE-7e t_c58f451a: tag of the image this compose file builds (build: .), not a pull; upstream compose kept -> t_969dbe7f
 .github/workflows/api-v2-production-build.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
+.github/workflows/booking-perf.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
 .github/workflows/cc13-org-isolation.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
 .github/workflows/check-prisma-migrations.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
 .github/workflows/e2e-api-v2.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
@@ -27,4 +28,8 @@ apps/web/test/docker-compose.yml|postgres:18@sha256:74935e72241653ca55e0414067e6
 packages/emails/docker-compose.yml|mailhog/mailhog:v1.0.1@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
 packages/prisma/docker-compose.yml|postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336   # WC-PE-7e t_c58f451a: docker.io by digest; ghcr mirror swap after host pull access -> t_969dbe7f
 packages/conformance/Dockerfile|node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0   # WC-TW-4b t_49f8c4ff: same digest as the timeway runner; ghcr mirror swap -> t_969dbe7f
+<<<<<<< HEAD
 ops/monitoring/docker-compose.yml|prom/blackbox-exporter:v0.29.0@sha256:9613f2884689b6fad9f1939f6a3b0388c93a022cfaededb19545b329b5c83dea   # R1-TW-MONITORING t_1ee20514: docker.io by digest, deployed by hand next to g3-prometheus; ghcr mirror swap -> t_969dbe7f
+=======
+.github/workflows/tzdata-pin.yml|pgvector/pgvector:pg16@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b   # WC-TW-5a t_7cd4f5fa: same digest as the live shared Postgres; ghcr mirror swap -> t_969dbe7f
+>>>>>>> origin/main

@@ -1,0 +1,84 @@
+[
+  {
+    "name": "tw_booking_reminder_v1",
+    "language": "en",
+    "category": "UTILITY",
+    "components": [
+      {
+        "type": "BODY",
+        "text": "Hi {{1}}, this is a reminder of your booking: {{2}} on {{3}}. Please confirm, reschedule or cancel below.",
+        "example": {
+          "body_text": [
+            [
+              "Sara",
+              "Consultation",
+              "Tue 4 Nov, 10:00 (Asia/Riyadh)"
+            ]
+          ]
+        }
+      },
+      {
+        "type": "FOOTER",
+        "text": "Timeway"
+      },
+      {
+        "type": "BUTTONS",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "Confirm"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "Reschedule"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "Cancel"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "tw_booking_reminder_v1",
+    "language": "ar",
+    "category": "UTILITY",
+    "components": [
+      {
+        "type": "BODY",
+        "text": "مرحباً {{1}}، نذكّرك بموعدك: {{2}} بتاريخ {{3}}. يرجى التأكيد أو إعادة الجدولة أو الإلغاء من الأزرار أدناه.",
+        "example": {
+          "body_text": [
+            [
+              "Sara",
+              "Consultation",
+              "Tue 4 Nov, 10:00 (Asia/Riyadh)"
+            ]
+          ]
+        }
+      },
+      {
+        "type": "FOOTER",
+        "text": "Timeway"
+      },
+      {
+        "type": "BUTTONS",
+        "buttons": [
+          {
+            "type": "QUICK_REPLY",
+            "text": "تأكيد"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "إعادة جدولة"
+          },
+          {
+            "type": "QUICK_REPLY",
+            "text": "إلغاء"
+          }
+        ]
+      }
+    ]
+  }
+]
