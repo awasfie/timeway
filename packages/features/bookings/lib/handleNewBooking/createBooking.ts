@@ -147,9 +147,12 @@ async function saveBooking(
   });
 }
 
-export function getEventTypeTwOrgId(eventTypeData: NewBookingEventType | undefined): string | null {
-  if (!eventTypeData || !("twOrgId" in eventTypeData)) return null;
-  return eventTypeData.twOrgId ?? null;
+// An explicit NULL would override the column default (the request's app.tw_org_id), and a
+// NULL row is invisible under RLS: dynamic bookings 404'd on their own success page (#58).
+// Returning undefined leaves the default in charge; with no org scope that is still NULL.
+export function getEventTypeTwOrgId(eventTypeData: NewBookingEventType | undefined): string | undefined {
+  if (!eventTypeData || !("twOrgId" in eventTypeData)) return undefined;
+  return eventTypeData.twOrgId ?? undefined;
 }
 
 function getEventTypeRel(eventTypeId: EventTypeId) {
@@ -222,8 +225,8 @@ function buildNewBookingData(params: CreateBookingParams) {
         : undefined,
     creationSource,
     tracking: tracking ? { create: tracking } : undefined,
-    // TW-ORGID-INS: always the booked event type's org, never the request's org context;
-    // the public booking path has none. Dynamic (no event type) bookings stay NULL.
+    // TW-ORGID-INS: the booked event type's org wins over the request's org context.
+    // With none (dynamic bookings), the column default takes the public scope's org.
     twOrgId: getEventTypeTwOrgId(eventType.eventTypeData),
   };
 
