@@ -5,6 +5,9 @@
  *   GET    /orgs/{orgId}                      org key (scope orgs:read)
  *   GET    /orgs/{orgId}/branding             orgs:read          (TW-T13)
  *   PUT    /orgs/{orgId}/branding             orgs:write  {logo_url?, brand_color?, dark_brand_color?}
+ *   POST   /orgs/{orgId}/sub-orgs             orgs:write  idempotent on client_ref (WC-TW-14b)
+ *   GET    /orgs/{orgId}/sub-orgs[/{subId}]   orgs:read   (another parent's sub-org -> 404)
+ *   PATCH  /orgs/{orgId}/sub-orgs/{subId}     orgs:write  {hide_branding?, billing_attribution?}
  *   GET    /orgs/{orgId}/members              members:read | members:write
  *   POST   /orgs/{orgId}/members              members:write   (user created managed = true)
  *   GET    /orgs/{orgId}/event-types          event-types:write | orgs:read
@@ -28,6 +31,15 @@ import { applyPlan, parsePlanBody } from "../tw-plans/setPlan";
 import type { AuthClient, AuthResult } from "./auth";
 import { authenticate, requireScope } from "./auth";
 import type { ProvisionClient } from "./provision";
+import {
+  createSubOrg,
+  getSubOrg,
+  listSubOrgs,
+  parseSubOrgBody,
+  parseSubOrgPatch,
+  patchSubOrg,
+  type SubOrgClient,
+} from "./subOrgs";
 import { ProvisionError, parseProvisionBody, provisionOrg, slugify } from "./provision";
 
 export interface ApiRequest {
@@ -170,6 +182,8 @@ async function route(req: ApiRequest, auth: AuthResult, deps: OrgApiDeps): Promi
       return branding(req, m, orgId, deps, need);
     case "plan":
       return plan(req, m, orgId, deps, need);
+    case "sub-orgs":
+      return subOrgs(req, m, orgId, subId, deps, need);
     case "members":
       return members(req, m, orgId, deps, need);
     case "event-types":
@@ -202,6 +216,48 @@ async function plan(
       plan: { plan_code: org?.planCode ?? null, entitlements: await loadEntitlements(tx, orgId) },
     });
   });
+}
+
+async function subOrgs(
+  req: ApiRequest,
+  m: string,
+  orgId: string,
+  subId: string | undefined,
+  deps: OrgApiDeps,
+  need: Need
+): Promise<ApiResponse> {
+  const client = deps.client as unknown as SubOrgClient;
+  const notFound = () => err(404, "not_found", "sub-organization not found");
+  if (!subId) {
+    if (m === "GET") {
+      if (!need("orgs:read"))
+        return err(403, "forbidden", "scope orgs:read required");
+      return json(200, { sub_orgs: await listSubOrgs(client, orgId) });
+    }
+    if (m !== "POST") return err(405, "method_not_allowed", "use GET or POST");
+    if (!need("orgs:write"))
+      return err(403, "forbidden", "scope orgs:write required");
+    const r = await createSubOrg(client, orgId, parseSubOrgBody(req.body));
+    return json(r.created ? 201 : 200, { sub_org: r.org });
+  }
+  if (m === "GET") {
+    if (!need("orgs:read"))
+      return err(403, "forbidden", "scope orgs:read required");
+    const o = await getSubOrg(client, orgId, subId);
+    return o ? json(200, { sub_org: o }) : notFound();
+  }
+  if (m === "PATCH") {
+    if (!need("orgs:write"))
+      return err(403, "forbidden", "scope orgs:write required");
+    const o = await patchSubOrg(
+      client,
+      orgId,
+      subId,
+      parseSubOrgPatch(req.body)
+    );
+    return o ? json(200, { sub_org: o }) : notFound();
+  }
+  return err(405, "method_not_allowed", "use GET or PATCH");
 }
 
 async function branding(

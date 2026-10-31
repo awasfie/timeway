@@ -6,7 +6,8 @@
  */
 
 import process from "node:process";
-import { withTwOrg } from "@calcom/prisma/tw-org-context";
+import { withTwOrg, withTwPlatform } from "@calcom/prisma/tw-org-context";
+import { canHideBranding } from "@calcom/prisma/tw-sub-org";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
@@ -149,4 +150,48 @@ export function overlayBranding<
       name: branding.name ?? entity.name,
     },
   };
+}
+
+/**
+ * WC-TW-14b (E4): should public pages and booking emails drop the Timeway mark for this org?
+ * True only when the flag is on AND the org's own or its parent's plan is still entitled, so a
+ * plan change takes effect at once. Any failure keeps the mark (fail closed to branded).
+ */
+export async function isOrgBrandingHidden(client: Any, orgId: string | null | undefined): Promise<boolean> {
+  if (!orgId) return false;
+  try {
+    return await withTwPlatform(client, "WC-TW-14b hideBranding read", async (tx: Any) => {
+      const org = await tx.organization.findUnique({
+        where: { id: orgId },
+        select: { id: true, parentOrgId: true, planCode: true, hideBranding: true },
+      });
+      if (!org || !org.hideBranding) return false;
+      const parent = org.parentOrgId
+        ? await tx.organization.findUnique({
+            where: { id: org.parentOrgId },
+            select: { id: true, planCode: true },
+          })
+        : null;
+      return canHideBranding(org, parent);
+    });
+  } catch {
+    return false;
+  }
+}
+
+/** Same check for call sites that only hold an event type id (cancel, payment, confirm emails). */
+export async function isEventTypeBrandingHidden(
+  client: Any,
+  eventTypeId: number | null | undefined
+): Promise<boolean> {
+  if (!eventTypeId) return false;
+  try {
+    const et = await client.eventType.findUnique({
+      where: { id: eventTypeId },
+      select: { twOrgId: true },
+    });
+    return await isOrgBrandingHidden(client, et?.twOrgId);
+  } catch {
+    return false;
+  }
 }
