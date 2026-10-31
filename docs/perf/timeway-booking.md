@@ -296,4 +296,22 @@ Slice (t_68154bec):
    `animate-pulse opacity-60`, `aria-busy`) instead of swapping in a skeleton button per cell, so the commit updates the
    ~42 cells in place instead of deleting and recreating them.
 
-After-numbers: pending deploy; same harness (`lhp.mjs`, x10, host load < 2.1), recorded here by the proof run.
+After-numbers (t_9fd48d6e, 2026-10-31 ~17:45Z): prod on efcebac374 (#234 squash, container
+`poyzdsncp9jsvc3gr4hkitaf:efcebac3748b`, deployed 17:24Z, runs started > 5 min later). Same harness (`lhp.mjs`,
+Lighthouse 13.5.0 mobile simulated, Chrome 156), x10 kept with host 1-min load 1.67-2.03 (3 runs at 2.24-2.85 dropped
+and re-run), benchmarkIndex 3597-3858 (median 3821), edge HIT 8 / STALE 2.
+
+| batch | TBT median | TBT range | LCP median | perf median |
+|---|---:|---|---:|---:|
+| 6m step 1 (1a3cb0bbb2) | 261.5 ms | 186-565 ms | ~2000 ms | |
+| 6m-3 after (efcebac374) | **186.5 ms** | 102-226 ms | 1994.5 ms | 80 |
+
+An ungated x10 taken first (load 1.73-3.45) gave TBT median 177 ms (101-286); it was not used because of the load.
+
+Trace (two runs, TBT 191 / 156.5): the getSchedule commit is no longer the top long task. Its 70 ms
+`TimerFire` (step-1 trace) is now a 20 ms `TimerFire` plus a separate 25-29 ms scheduler-task commit (`commitMutationEffects`
+still the main self cost). In the Lighthouse long-tasks audit, the step-1 top task (222-354 ms simulated in 10/10 runs)
+appears in 1/10 runs, at 94 ms. The remaining TBT comes from three ~105-116 ms simulated tasks (25-30 ms observed), about 60 ms of TBT each:
+the first booker render (react-dom chunk, react-query `useBaseQuery` mount), the deferred getSchedule commit, and the
+Next runtime chunk evaluation (`41-*.js`, `ErrorBoundary`/app-router bootstrap). WC-TW-6 TBT bar (< 200 ms) is met on the
+deployed SHA; no further slice is needed for it.
