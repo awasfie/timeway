@@ -24,6 +24,7 @@ import {
   userMetadata as userMetadataSchema,
 } from "@calcom/prisma/zod-utils";
 import type { UserProfile } from "@calcom/types/UserProfile";
+import { getOrgBranding, overlayBranding } from "../../tw-branding/branding";
 
 class PermissionCheckService {
   constructor(_prisma?: unknown) {}
@@ -306,8 +307,7 @@ export const getPublicEvent = async (
     // this reason (sortUsersByDynamicList in getLocationValuesForDb.ts) — without the same sort
     // here, the booking page can advertise a different location than the one actually booked.
     const users = [...usersInOrgContext].sort(
-      (a, b) =>
-        usernameList.indexOf(a.username ?? "") - usernameList.indexOf(b.username ?? "")
+      (a, b) => usernameList.indexOf(a.username ?? "") - usernameList.indexOf(b.username ?? "")
     );
 
     const defaultEvent = getDefaultEvent(eventSlug);
@@ -565,7 +565,10 @@ export const getPublicEvent = async (
     users = [];
   }
 
-  return {
+  // TW-T13: org from the event row itself (never the request); a failure keeps the default look.
+  const orgBranding = event.twOrgId ? await getOrgBranding(prisma, event.twOrgId).catch(() => null) : null;
+
+  const result = {
     ...eventWithUserProfiles,
     bookerLayouts: bookerLayoutsSchema.parse(eventMetaData?.bookerLayouts || null),
     description: markdownToSafeHTML(eventWithUserProfiles.description),
@@ -613,6 +616,9 @@ export const getPublicEvent = async (
     allowReschedulingCancelledBookings: event.allowReschedulingCancelledBookings,
     interfaceLanguage: event.interfaceLanguage,
   };
+
+  const branded = overlayBranding(result.profile, result.entity, orgBranding);
+  return { ...result, profile: branded.profile, entity: branded.entity };
 };
 
 const eventData = getPublicEventSelect(true);

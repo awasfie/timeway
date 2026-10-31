@@ -3,6 +3,8 @@
  *
  *   POST   /orgs                              platform master key; idempotent on external_ref
  *   GET    /orgs/{orgId}                      org key (scope orgs:read)
+ *   GET    /orgs/{orgId}/branding             orgs:read          (TW-T13)
+ *   PUT    /orgs/{orgId}/branding             orgs:write  {logo_url?, brand_color?, dark_brand_color?}
  *   GET    /orgs/{orgId}/members              members:read | members:write
  *   POST   /orgs/{orgId}/members              members:write   (user created managed = true)
  *   GET    /orgs/{orgId}/event-types          event-types:write | orgs:read
@@ -20,6 +22,7 @@
 import { randomUUID } from "node:crypto";
 import { createFixedWindowLimiter } from "@calcom/lib/domainManager/customHostnames/rateLimit";
 import { assertTwOrgId, withTwOrg } from "@calcom/prisma/tw-org-context";
+import { applyBranding, getOrgBranding, parseBrandingBody } from "../tw-branding/branding";
 import { gateEventType, gateMember, loadEntitlements } from "../tw-plans/enforce";
 import { applyPlan, parsePlanBody } from "../tw-plans/setPlan";
 import type { AuthClient, AuthResult } from "./auth";
@@ -163,6 +166,8 @@ async function route(req: ApiRequest, auth: AuthResult, deps: OrgApiDeps): Promi
   }
 
   switch (sub) {
+    case "branding":
+      return branding(req, m, orgId, deps, need);
     case "plan":
       return plan(req, m, orgId, deps, need);
     case "members":
@@ -197,6 +202,36 @@ async function plan(
       plan: { plan_code: org?.planCode ?? null, entitlements: await loadEntitlements(tx, orgId) },
     });
   });
+}
+
+async function branding(
+  req: ApiRequest,
+  m: string,
+  orgId: string,
+  deps: OrgApiDeps,
+  need: Need
+): Promise<ApiResponse> {
+  const view = (b: Awaited<ReturnType<typeof getOrgBranding>>) =>
+    b
+      ? json(200, {
+          branding: {
+            logo_url: b.logoUrl,
+            brand_color: b.brandColor,
+            dark_brand_color: b.darkBrandColor,
+          },
+        })
+      : err(404, "not_found", "organization not found");
+  if (m === "GET") {
+    if (!need("orgs:read")) return err(403, "forbidden", "scope orgs:read required");
+    return view(await getOrgBranding(deps.client, orgId));
+  }
+  if (m === "PUT") {
+    if (!need("orgs:write")) return err(403, "forbidden", "scope orgs:write required");
+    const change = parseBrandingBody(req.body);
+    if ("error" in change) return err(400, "invalid_request", change.error);
+    return view(await applyBranding(deps.client, orgId, change));
+  }
+  return err(405, "method_not_allowed", "use GET or PUT");
 }
 
 async function members(
