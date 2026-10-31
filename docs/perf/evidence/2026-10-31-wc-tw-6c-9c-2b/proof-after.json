@@ -1,0 +1,39 @@
+{
+  "url": "http://localhost:3000/pro/30min",
+  "commit": "449d1c5a4498246a44e52cb8294f43cbdf3cd393",
+  "locales": {
+    "en": {
+      "status": 200,
+      "html_tag": "<html class=\"notranslate\" translate=\"no\" lang=\"en\" dir=\"ltr\" data-nextjs-router=\"app\">",
+      "html": {
+        "raw": 74247,
+        "gz": 19375
+      },
+      "flight": {
+        "raw": 65353,
+        "gz": 16997
+      }
+    },
+    "ar": {
+      "status": 200,
+      "html_tag": "<html class=\"notranslate\" translate=\"no\" lang=\"ar\" dir=\"rtl\" data-nextjs-router=\"app\">",
+      "html": {
+        "raw": 86137,
+        "gz": 21951
+      },
+      "flight": {
+        "raw": 77243,
+        "gz": 19506
+      }
+    }
+  },
+  "ar_dom": {
+    "dir": "rtl",
+    "lang": "ar"
+  },
+  "ar_raw_key_like": [],
+  "ar_i18n_lazy_loads": [
+    "/api/i18n/ar"
+  ],
+  "ar_console_errors": []
+}
