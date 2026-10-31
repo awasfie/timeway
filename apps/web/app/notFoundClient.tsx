@@ -55,7 +55,7 @@ export function NotFound({ host }: { host: string }) {
         <div className="text-center">
           <p className="font-semibold text-emphasis text-sm uppercase tracking-wide">{t("error_404")}</p>
           <h1 className="mt-2 font-cal font-extrabold text-4xl text-emphasis sm:text-5xl">
-            {isBookingSuccessPage ? "Booking not found" : t("page_doesnt_exist")}
+            {isBookingSuccessPage ? t("booking_not_found") : t("page_doesnt_exist")}
           </h1>
           {isSubpage ? (
             <span className="mt-2 inline-block text-lg">{t("check_spelling_mistakes_or_go_back")}</span>

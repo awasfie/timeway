@@ -1,5 +1,6 @@
 "use client";
 
+import process from "node:process";
 import getStripe from "@calcom/app-store/stripepayment/lib/client";
 import { getPremiumPlanPriceValue } from "@calcom/app-store/stripepayment/lib/utils";
 import {
@@ -511,15 +512,8 @@ export default function Signup({
                           setPremium={(value) => setPremiumUsername(value)}
                           addOnLeading={
                             orgSlug
-                              ? truncateDomain(
-                                  `${WEBAPP_URL.replace(
-                                    URL_PROTOCOL_REGEX,
-                                    ""
-                                  )}/`
-                                )
-                              : truncateDomain(
-                                  `${WEBSITE_URL.replace(URL_PROTOCOL_REGEX, "")}/`
-                                )
+                              ? truncateDomain(`${WEBAPP_URL.replace(URL_PROTOCOL_REGEX, "")}/`)
+                              : truncateDomain(`${WEBSITE_URL.replace(URL_PROTOCOL_REGEX, "")}/`)
                           }
                         />
                       ) : null}
@@ -528,7 +522,7 @@ export default function Signup({
                         id="signup-email"
                         {...register("email")}
                         label={t("email")}
-                        placeholder="john@doe.com"
+                        placeholder={t("email_placeholder")}
                         type="email"
                         autoComplete="email"
                         disabled={prepopulateFormValues?.email}
@@ -613,7 +607,7 @@ export default function Signup({
                                   premiumUsername && "opacity-50"
                                 )}
                                 src="/google-icon-colored.svg"
-                                alt="Continue with Google Icon"
+                                alt=""
                               />
                             </>
                           }
@@ -664,7 +658,7 @@ export default function Signup({
                                   premiumUsername && "opacity-50"
                                 )}
                                 src="/microsoft-logo.svg"
-                                alt="Continue with Microsoft Icon"
+                                alt=""
                               />
                             </>
                           }
@@ -828,12 +822,16 @@ export default function Signup({
               </>
             )}
             <div className="hidden rounded-tl-2xl rounded-br-none rounded-bl-2xl border border-default border-r-0 border-dashed bg-black/3 lg:block lg:py-[6px] lg:pl-[6px] dark:bg-white/5">
-              <img className="block dark:hidden" src="/mock-event-type-list.svg" alt="Cal.diy Booking Page" />
+              <img
+                className="block dark:hidden"
+                src="/mock-event-type-list.svg"
+                alt={t("booking_page_preview", { appName: APP_NAME })}
+              />
               {/* eslint-disable @next/next/no-img-element */}
               <img
                 className="hidden dark:block"
                 src="/mock-event-type-list-dark.svg"
-                alt="Cal.diy Booking Page"
+                alt={t("booking_page_preview", { appName: APP_NAME })}
               />
             </div>
             <div className="mt-8 mr-12 hidden h-full w-full grid-cols-3 gap-4 overflow-hidden lg:grid">
