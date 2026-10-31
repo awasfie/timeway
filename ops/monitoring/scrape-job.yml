@@ -1,0 +1,21 @@
+  # R1-TW-MONITORING (t_1ee20514): Timeway uptime probes via g3-blackbox-timeway (awasfie/timeway ops/monitoring)
+  - job_name: 'timeway-blackbox'
+    scrape_interval: 30s
+    metrics_path: /probe
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^|]+)\|(.+)'
+        target_label: __param_module
+        replacement: '$1'
+      - source_labels: [__address__]
+        regex: '([^|]+)\|(.+)'
+        target_label: __param_target
+        replacement: '$2'
+      - source_labels: [__param_target]
+        target_label: target
+      - target_label: __address__
+        replacement: 'g3-blackbox-timeway:9115'
+    static_configs:
+      - targets: ['tw_version|https://timeway.co/api/version', 'tw_login|https://timeway.co/auth/login']
+        labels:
+          product: 'timeway'
