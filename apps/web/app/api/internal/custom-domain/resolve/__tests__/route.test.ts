@@ -14,6 +14,7 @@ const prismaCalls = vi.hoisted(() => [] as string[]);
 vi.mock("@calcom/prisma/tw-org-context", () => ({
   withTwPlatform: async (prisma: unknown, _reason: string, fn: (tx: unknown) => Promise<unknown>) =>
     fn(prisma),
+  runWithTwPlatform: async (_reason: string, fn: () => Promise<unknown>) => fn(),
 }));
 
 vi.mock("@calcom/prisma", () => {

@@ -23,7 +23,7 @@ import { SchedulingType } from "@calcom/prisma/enums";
 import { expectBookingToBeInDatabase } from "@calcom/testing/lib/bookingScenario/expects";
 import { getMockRequestDataForBooking } from "@calcom/testing/lib/bookingScenario/getMockRequestDataForBooking";
 import { setupAndTeardown } from "@calcom/testing/lib/bookingScenario/setupAndTeardown";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { getNewBookingHandler } from "./getNewBookingHandler";
 
 const ORG_A = "5f94bad6-0000-4000-8000-000000000001";
@@ -157,17 +157,20 @@ describe("TW-ORGID-INS: Booking.twOrgId comes from the event type", () => {
   );
 
   test(
-    "an event type with no org still inserts NULL (no org invented)",
+    "an event type with no org writes no twOrgId: the column default decides, no org invented",
     async () => {
       await setupTeamEventType({ twOrgId: null });
+      const createSpy = vi.spyOn(prismaMock.booking, "create");
       const handleNewBooking = getNewBookingHandler();
 
-      const created = await handleNewBooking({ bookingData: bookingRequest() });
+      await handleNewBooking({ bookingData: bookingRequest() });
 
-      // No explicit value is written, so the column default applies; with no org scope that is NULL.
-      const row = await prismaMock.booking.findUnique({ where: { uid: created.uid! } });
-      expect(row?.eventTypeId).toBe(1);
-      expect(row?.twOrgId ?? null).toBeNull();
+      // No value is written, so the column default (the request's org scope, or NULL with none)
+      // decides; an explicit NULL would hide the row under RLS (#58). The mock fills defaults
+      // itself, so the assertion is on what the code sends, not on the stored row.
+      const data = createSpy.mock.calls[0]?.[0]?.data as { eventTypeId?: number; twOrgId?: unknown };
+      expect(createSpy).toHaveBeenCalled();
+      expect(data.twOrgId).toBeUndefined();
     },
     timeout
   );
