@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { createWithEqualityFn } from "zustand/traditional";
 import type { GetBookingType } from "../lib/get-booking";
 import type { BookerLayout, BookerState } from "./types";
+import { trackSlotSelected } from "./utils/bookerAnalytics";
 import { getQueryParam, removeQueryParam, updateQueryParam } from "./utils/query-param";
 
 const _iso_3166_1_alpha_2_codes = [
@@ -681,6 +682,7 @@ export const createBookerStore = () =>
     },
     setSelectedTimeslot: (selectedTimeslot: string | null) => {
       set({ selectedTimeslot });
+      trackSlotSelected(selectedTimeslot);
       if (!get().isPlatform || get().allowUpdatingUrlParams) {
         updateQueryParam("slot", selectedTimeslot ?? "", false);
       }

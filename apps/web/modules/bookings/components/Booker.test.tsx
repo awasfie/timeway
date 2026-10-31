@@ -13,6 +13,19 @@ import "@calcom/lib/__mocks__/logger";
 import React from "react";
 import { vi } from "vitest";
 
+// WC-TW-6j: spy on useDeferredValue so a test can hold the deferred booker state at "loading"
+// for one render; React flushes the deferred re-render inside act(), so the intermediate
+// render is otherwise unobservable.
+const deferredValueOverride = vi.hoisted(() => ({ value: undefined as unknown }));
+vi.mock("react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react")>();
+  const useDeferredValue = <T,>(value: T): T => {
+    const deferred = actual.useDeferredValue(value);
+    return deferredValueOverride.value === undefined ? deferred : (deferredValueOverride.value as T);
+  };
+  return { ...actual, default: { ...actual, useDeferredValue }, useDeferredValue };
+});
+
 vi.mock("next/navigation", async (importOriginal) => {
   const actual = await importOriginal<typeof import("next/navigation")>();
   return {
@@ -39,15 +52,8 @@ import type { BookerProps } from "@calcom/features/bookings/Booker/types";
 import type { WrappedBookerProps } from "../types";
 import { Booker } from "./Booker";
 
-vi.mock("framer-motion", async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
-  return {
-    ...actual,
-  };
-});
-
 // Mock components that we don't want to test
-vi.mock("./BookEventForm", () => ({
+vi.mock("./BookEventForm/BookEventForm", () => ({
   BookEventForm: ({
     isTimeslotUnavailable,
     onCancel,
@@ -177,6 +183,21 @@ const defaultProps = {
   hasSession: false,
 };
 
+// Prod event data always carries profile/entity/schedulingType (the SSR payload); mockEvent does not.
+const shellProps = {
+  ...defaultProps,
+  event: {
+    ...mockEvent,
+    data: {
+      ...mockEvent.data,
+      schedulingType: null,
+      subsetOfUsers: [],
+      profile: { name: "Test Org", image: "" },
+      entity: { name: "Test Org", considerUnpublished: false },
+    },
+  },
+};
+
 describe("Booker", () => {
   beforeEach(() => {
     constantsScenarios.set({
@@ -185,16 +206,60 @@ describe("Booker", () => {
       APP_NAME: "Cal.diy",
     });
     vi.clearAllMocks();
+    deferredValueOverride.value = undefined;
   });
 
-  it("should render null when in loading state", () => {
+  it("should render the server-renderable title shell when in loading state", () => {
+    render(<Booker {...(shellProps as unknown as BookerProps & WrappedBookerProps)} />, {
+      mockStore: { state: "loading" },
+    });
+    expect(screen.getByTestId("booker-ssr-shell")).toBeInTheDocument();
+    expect(screen.getByTestId("event-title")).toHaveTextContent("Test Event");
+  });
+
+  it("should render null when in loading state inside an embed", () => {
+    const embedProps = {
+      ...defaultProps,
+      bookerLayout: { ...defaultProps.bookerLayout, isEmbed: true },
+    };
     const { container } = render(
-      <Booker {...(defaultProps as unknown as BookerProps & WrappedBookerProps)} />,
+      <Booker {...(embedProps as unknown as BookerProps & WrappedBookerProps)} />,
       {
         mockStore: { state: "loading" },
       }
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("should keep the title shell while the deferred state is still loading, then mount the full tree", () => {
+    // WC-TW-6h + WC-TW-6j: the store already left "loading" but the deferred copy has not; the
+    // shell must stay up (not flash to null) until the deferred render mounts the full booker.
+    deferredValueOverride.value = "loading";
+    const props = shellProps as unknown as BookerProps & WrappedBookerProps;
+    const { rerender } = render(<Booker {...props} />, { mockStore: { state: "selecting_date" } });
+    expect(screen.getByTestId("booker-ssr-shell")).toBeInTheDocument();
+    expect(screen.getByTestId("event-title")).toHaveTextContent("Test Event");
+    expect(screen.queryByTestId("booker-container")).not.toBeInTheDocument();
+
+    // A fresh element is required: rerendering the same element object lets React bail out.
+    deferredValueOverride.value = undefined;
+    rerender(<Booker {...props} />);
+    expect(screen.queryByTestId("booker-ssr-shell")).not.toBeInTheDocument();
+    expect(screen.getByTestId("booker-container")).toBeInTheDocument();
+  });
+
+  it("should render nothing while the deferred state is still loading inside an embed, then mount the full tree", () => {
+    deferredValueOverride.value = "loading";
+    const props = {
+      ...shellProps,
+      bookerLayout: { ...shellProps.bookerLayout, isEmbed: true },
+    } as unknown as BookerProps & WrappedBookerProps;
+    const { container, rerender } = render(<Booker {...props} />, { mockStore: { state: "selecting_date" } });
+    expect(container).toBeEmptyDOMElement();
+
+    deferredValueOverride.value = undefined;
+    rerender(<Booker {...props} />);
+    expect(screen.getByTestId("booker-container")).toBeInTheDocument();
   });
 
   it("should render DryRunMessage when in dry run mode", () => {
@@ -221,7 +286,7 @@ describe("Booker", () => {
     expect(screen.getByTestId("dry-run-message")).toBeInTheDocument();
   });
 
-  it("should invalidate schedule when cancelling booking form", () => {
+  it("should invalidate schedule when cancelling booking form", async () => {
     const mockInvalidate = vi.fn();
     constantsScenarios.set({
       PUBLIC_INVALIDATE_AVAILABLE_SLOTS_ON_BOOKING_FORM: "true",
@@ -239,7 +304,7 @@ describe("Booker", () => {
     });
     screen.logTestingPlaygroundURL();
     // Trigger form cancel
-    const cancelButton = screen.getByRole("button", { name: /cancel/i });
+    const cancelButton = await screen.findByRole("button", { name: /cancel/i });
     cancelButton.click();
 
     expect(mockInvalidate).toHaveBeenCalled();
@@ -259,7 +324,7 @@ describe("Booker", () => {
       render(<Booker {...(propsWithQuickChecks as unknown as BookerProps & WrappedBookerProps)} />, {
         mockStore: { state: "booking" },
       });
-      const bookEventForm = screen.getByTestId("book-event-form");
+      const bookEventForm = await screen.findByTestId("book-event-form");
       await expect(bookEventForm).toHaveAttribute("data-unavailable", "true");
     });
   });

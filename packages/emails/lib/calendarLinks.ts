@@ -1,5 +1,6 @@
-import { getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
 import type { CalendarEvent } from "@calcom/types/Calendar";
+
+import { resolveIcsLocation } from "./generateIcsString";
 
 type LinkEvent = Pick<
   CalendarEvent,
@@ -12,7 +13,8 @@ const compact = (iso: string) =>
     .replace(/[-:]/g, "")
     .replace(/\.\d{3}/, "");
 
-const where = (e: LinkEvent) => getVideoCallUrlFromCalEvent(e) || e.location || "";
+// TW-ICS-1b: same resolver as the ICS attachment and /api/ics, so links never carry "integrations:*".
+const where = (e: LinkEvent) => resolveIcsLocation(e) || "";
 
 /** Add-to-calendar links for the confirmation email (TW-MAIL-2). Google, Outlook and a hosted .ics (Apple). */
 export function getCalendarLinks(e: LinkEvent) {

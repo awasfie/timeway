@@ -1,5 +1,6 @@
 import { useRouter } from "next/navigation";
 
+import { missingSeedEventTypes } from "@calcom/features/tw-onboarding/seed";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { sessionStorage } from "@calcom/lib/webstorage";
 import { trpc } from "@calcom/trpc/react";
@@ -8,25 +9,6 @@ import { setShowWelcomeToCalcomModalFlag } from "@calcom/web/modules/shell/hooks
 
 const ONBOARDING_REDIRECT_KEY = "onBoardingRedirect";
 const ORG_MODAL_STORAGE_KEY = "showNewOrgModal";
-
-const DEFAULT_EVENT_TYPES = [
-  {
-    title: "15min_meeting",
-    slug: "15min",
-    length: 15,
-  },
-  {
-    title: "30min_meeting",
-    slug: "30min",
-    length: 30,
-  },
-  {
-    title: "secret_meeting",
-    slug: "secret",
-    length: 15,
-    hidden: true,
-  },
-];
 
 export const useSubmitPersonalOnboarding = () => {
   const router = useRouter();
@@ -39,19 +21,10 @@ export const useSubmitPersonalOnboarding = () => {
   const mutation = trpc.viewer.me.updateProfile.useMutation({
     onSuccess: async () => {
       try {
-        // Create default event types if user has none
-        if (eventTypes?.length === 0) {
-          await Promise.all(
-            DEFAULT_EVENT_TYPES.map(async (event) => {
-              return createEventType.mutateAsync({
-                title: t(event.title),
-                slug: event.slug,
-                length: event.length,
-                hidden: event.hidden,
-              });
-            })
-          );
-        }
+        // WC-DX-10c: two public event types, only the slugs still missing.
+        await Promise.all(
+          missingSeedEventTypes(eventTypes, t).map((event) => createEventType.mutateAsync(event))
+        );
       } catch (error) {
         console.error(error);
       }

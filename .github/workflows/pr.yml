@@ -3,7 +3,7 @@ name: PR Update
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches:
       - main
       - gh-actions-test-branch
@@ -15,15 +15,18 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # CI-COST-1 (t_2d660e6e): a newer push to the same PR or non-main branch cancels the superseded run.
+  # main, tags, schedule, workflow_dispatch and merge_group get a per-run group (github.run_id): never queued
+  # behind another run, never cancelled.
+  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main')) && format('{0}-{1}', github.event_name, github.event.pull_request.number || github.ref) || github.run_id }}
+  cancel-in-progress: ${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main')) }}
 
 jobs:
   # Security gate: Check if PR is from a trusted contributor or approved via run-ci label
   # This MUST run before any job that checks out PR code and executes it with secrets
   trust-check:
     name: Trust Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       pull-requests: read
       actions: read
@@ -173,7 +176,10 @@ jobs:
     name: Prepare
     needs: [trust-check]
     if: needs.trust-check.outputs.is-trusted == 'true'
-    runs-on: ubuntu-latest
+    # ADDRESS-timeway-201 (t_bdd3a944): ubuntu-latest moved to ubuntu 26.04 on 2026-10-28; Playwright has no
+    # chromium build for it, so `playwright install --with-deps` fails (run 40653000675 job 122698047008).
+    # Pin the Prepare runner to 24.04 until Playwright supports 26.04.
+    runs-on: ubuntu-24.04
     permissions:
       pull-requests: read
     outputs:
@@ -335,21 +341,24 @@ jobs:
   security-audit:
     name: Security Audit
     needs: [prepare]
-    if: ${{ needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/security-audit.yml
     secrets: inherit
 
   check-prisma-migrations:
     name: Check Prisma Migrations
     needs: [prepare]
-    if: ${{ needs.prepare.outputs.has-prisma-changes == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.has-prisma-changes == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/check-prisma-migrations.yml
     secrets: inherit
 
   setup-db:
     name: Setup Database
     needs: [prepare]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/setup-db.yml
     with:
       DB_CACHE_HIT: ${{ needs.prepare.outputs.db-cache-hit }}
@@ -358,67 +367,78 @@ jobs:
   build-api-v2:
     name: Production builds
     needs: [prepare]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/api-v2-production-build.yml
     secrets: inherit
 
   build-atoms:
     name: Production builds
     needs: [prepare]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/atoms-production-build.yml
     secrets: inherit
 
   build:
     name: Production builds
     needs: [prepare]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/production-build-without-database.yml
     secrets: inherit
 
   integration-test:
     name: Tests
     needs: [prepare, build, setup-db]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/integration-tests.yml
     secrets: inherit
 
   e2e:
     name: Tests
     needs: [prepare, build, setup-db]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/e2e.yml
     secrets: inherit
 
   e2e-api-v2:
     name: Tests
     needs: [prepare, setup-db]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/e2e-api-v2.yml
     secrets: inherit
 
   e2e-app-store:
     name: Tests
     needs: [prepare, build, setup-db]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/e2e-app-store.yml
     secrets: inherit
 
   e2e-embed:
     name: Tests
     needs: [prepare, build, setup-db]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/e2e-embed.yml
     secrets: inherit
 
   e2e-embed-react:
     name: Tests
     needs: [prepare, build, setup-db]
-    if: ${{ needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true' }}
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ (needs.prepare.outputs.run-e2e == 'true' && needs.prepare.outputs.has-files-requiring-all-checks == 'true') && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     uses: ./.github/workflows/e2e-embed-react.yml
     secrets: inherit
 
   cc13:
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     name: CC-13
     needs: [prepare]
     uses: ./.github/workflows/cc13-org-isolation.yml
@@ -453,8 +473,14 @@ jobs:
         cc13,
       ]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
+      # CI-COST-2 (t_9b638c09): on a draft this gate covers the light suite only (lint, types, unit, api-v2 unit).
+      # ready_for_review re-runs this workflow on the same head SHA, and every later push runs the full suite, so the
+      # check a merge sees is always a full-suite verdict. Full jobs skipped on a non-draft run fail this gate below.
+      - name: Draft — light suite only (full suite runs at ready_for_review)
+        if: github.event.pull_request.draft == true
+        run: echo "::notice::draft PR — full suite (security audit, prisma migrations, CC-13, builds, e2e) deferred to ready_for_review"
       - name: Fail if trust-check did not succeed
         run: |
           echo "::error::Trust check did not complete successfully (result: ${{ needs.trust-check.result }}). Please re-run the workflow."
@@ -470,9 +496,11 @@ jobs:
         run: |
           echo "::error::CC-13 result: ${{ needs.cc13.result }}"
           exit 1
-        if: needs.trust-check.outputs.is-trusted == 'true' && needs.cc13.result != 'success'
+        if: needs.trust-check.outputs.is-trusted == 'true' && github.event.pull_request.draft != true && needs.cc13.result != 'success'
       - name: Fail if conditional jobs failed
         run: exit 1
+        # e2e/build/integration jobs only run when the PR carries 'ready-for-e2e' (prepare.run-e2e).
+        # When they are skipped by design, their result is 'skipped' and must not fail the gate.
         if: |
           (
             needs.prepare.outputs.has-files-requiring-all-checks == 'true' &&
@@ -481,8 +509,9 @@ jobs:
             needs.type-check.result != 'success' ||
             needs.unit-test.result != 'success' ||
             needs.api-v2-unit-test.result != 'success' ||
-            needs.security-audit.result != 'success' ||
-            (needs.prepare.outputs.has-prisma-changes == 'true' && needs.check-prisma-migrations.result != 'success') ||
+            (github.event.pull_request.draft != true && needs.security-audit.result != 'success') ||
+            (github.event.pull_request.draft != true && needs.prepare.outputs.has-prisma-changes == 'true' && needs.check-prisma-migrations.result != 'success') ||
+            (github.event.pull_request.draft != true && needs.prepare.outputs.run-e2e == 'true' && (
               needs.build.result != 'success' ||
               needs.build-api-v2.result != 'success' ||
               needs.build-atoms.result != 'success' ||
@@ -493,5 +522,6 @@ jobs:
               needs.e2e-embed.result != 'success' ||
               needs.e2e-embed-react.result != 'success' ||
               needs.e2e-app-store.result != 'success'
+            ))
             )
           )
