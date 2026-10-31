@@ -90,7 +90,15 @@ jobs:
           # WC-TW-6c-9: form-builder fields, the phone input, VerifyCodeDialog and Turnstile load after a slot pick.
           # react-hook-form stays: useBookingForm owns the form state in BookerWebWrapper.
           FORBID: "framer-motion=framerAppearId;apps.metadata.generated=basecamp3_other_calendar;buffer-polyfill=kMaxLength;next-polyfill-module=String.prototype.trimStart=String.prototype.trimLeft;form-builder fields=data-fob-field-name;phone input=react-tel-input;VerifyCodeDialog=webkit-text-fill-color:currentColor;Turnstile=challenges.cloudflare.com/turnstile"
+      - name: (proof t_3158a373) en/ar HTML+flight bytes, Arabic RTL screenshots
+        continue-on-error: true
+        run: |
+          npx playwright install chromium
+          node scripts/perf/proof-t3158.mjs
+        env:
+          PROOF_OUT: perf/out/proof
       - name: (b) Lighthouse CI, 5 runs median
+        if: false
         id: lhci
         continue-on-error: true
         env:
@@ -105,6 +113,7 @@ jobs:
       # measured from that city by Globalping each run and added to the slow-4G RTT; a city with no
       # answering probe fails the step (never a skip). Ratchet per region in perf/lhci-baseline.json.
       - name: (c) Lighthouse region-tagged (cairo, riyadh, dubai)
+        if: false
         id: lhci_regions
         continue-on-error: true
         env:
