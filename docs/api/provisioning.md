@@ -66,3 +66,19 @@ A later contract slice may add one.
 `apps/web/test/tw-t10/provisioning.integration-test.ts` (CC-14): same `external_ref` twice -> one org;
 concurrent double-create; crash-resume; full default resources; org-A key on org-B -> 404 on all resources;
 scopes; revoked key; rate limit. Runs green as a non-superuser DB role, so RLS is in force.
+
+## Plans (TW-T12)
+
+Catalog = Bible CM.3 (`free`, `pro`, `teams`, `business`); Spenai bundle = CM.7.
+
+`PUT /api/v2/orgs/{orgId}/plan` (platform key only) — body is one of:
+
+    { "spenai_package": "starter" | "growth" | "scale" }   # starter -> teams x3, growth -> business x10, scale -> business x30
+    { "spenai_cancelled": true }                             # -> free (never deletes anything)
+    { "plan_code": "free|pro|teams|business", "seats": 5 }   # seats optional
+
+200 `{ "plan": { "plan_code": "teams", "seats": 3 } }`; replay with the same body is a no-op. Enterprise is custom: set it with `plan_code` + `seats` by hand.
+
+`GET /api/v2/orgs/{orgId}/plan` (org key, `orgs:read`) returns the plan code and effective entitlements.
+
+Gates: `POST /members` and `POST /event-types` answer `402` with `plan_limit_members` / `plan_limit_event_types` when the plan's limit is reached. Only the four catalog codes are metered; an org with no plan code (spenai-pilot, pre-T12 orgs) stays unmetered until a plan is assigned.

@@ -16,9 +16,12 @@
  * The org for every non-create call is the key's org; a path orgId that is not the key's org is
  * 404 (never 403: no existence oracle). Org ids never come from body/query.
  */
+
 import { randomUUID } from "node:crypto";
 import { createFixedWindowLimiter } from "@calcom/lib/domainManager/customHostnames/rateLimit";
 import { assertTwOrgId, withTwOrg } from "@calcom/prisma/tw-org-context";
+import { gateEventType, gateMember, loadEntitlements } from "../tw-plans/enforce";
+import { applyPlan, parsePlanBody } from "../tw-plans/setPlan";
 import type { AuthClient, AuthResult } from "./auth";
 import { authenticate, requireScope } from "./auth";
 import type { ProvisionClient } from "./provision";
@@ -113,6 +116,21 @@ async function route(req: ApiRequest, auth: AuthResult, deps: OrgApiDeps): Promi
     return json(r.created ? 201 : 200, { org: r.org, ...(r.apiKey ? { api_key: r.apiKey } : {}) });
   }
 
+  // TW-T12: plan assignment is the platform key's call (Spenai package -> plan), nothing else.
+  if (sub === "plan" && m === "PUT") {
+    if (auth.kind !== "platform") return err(403, "forbidden", "plan changes need the platform key");
+    try {
+      assertTwOrgId(orgId);
+    } catch {
+      return err(404, "not_found", "organization not found");
+    }
+    const change = parsePlanBody(req.body);
+    if ("error" in change) return err(400, "invalid_request", change.error);
+    return (await applyPlan(deps.client, orgId, change))
+      ? json(200, { plan: { plan_code: change.planCode, seats: change.seats } })
+      : err(404, "not_found", "organization not found");
+  }
+
   // Everything below is org-scoped and never available to the platform key.
   if (auth.kind !== "org") return err(403, "forbidden", "use the organization API key");
   try {
@@ -145,6 +163,8 @@ async function route(req: ApiRequest, auth: AuthResult, deps: OrgApiDeps): Promi
   }
 
   switch (sub) {
+    case "plan":
+      return plan(req, m, orgId, deps, need);
     case "members":
       return members(req, m, orgId, deps, need);
     case "event-types":
@@ -161,6 +181,23 @@ async function route(req: ApiRequest, auth: AuthResult, deps: OrgApiDeps): Promi
 }
 
 type Need = (scope: string, alt?: string) => boolean;
+
+async function plan(
+  req: ApiRequest,
+  m: string,
+  orgId: string,
+  deps: OrgApiDeps,
+  need: Need
+): Promise<ApiResponse> {
+  if (m !== "GET") return err(405, "method_not_allowed", "use GET");
+  if (!need("orgs:read")) return err(403, "forbidden", "scope orgs:read required");
+  return withTwOrg(deps.client, orgId, async (tx: Any) => {
+    const org = await tx.organization.findUnique({ where: { id: orgId }, select: { planCode: true } });
+    return json(200, {
+      plan: { plan_code: org?.planCode ?? null, entitlements: await loadEntitlements(tx, orgId) },
+    });
+  });
+}
 
 async function members(
   req: ApiRequest,
@@ -207,6 +244,14 @@ async function members(
     });
     if (existing && existing.twOrgId !== orgId)
       return err(409, "email_in_use", "email already belongs to another account");
+    // Gate before any write: an early err() return does not roll the transaction back.
+    const already = existing
+      ? await tx.organizationMember.findFirst({ where: { orgId, userId: existing.id }, select: { id: true } })
+      : null;
+    if (!already) {
+      const gate = await gateMember(tx, orgId);
+      if (!gate.ok) return err(402, gate.code, gate.message);
+    }
     let user = existing;
     let created = false;
     if (!user) {
@@ -288,6 +333,8 @@ async function eventTypes(
     if (!user) return err(404, "not_found", "member not found in this organization");
     const dup = await tx.eventType.findFirst({ where: { userId: user.id, slug }, select: { id: true } });
     if (dup) return err(409, "slug_taken", "event type slug already exists for this member");
+    const gate = await gateEventType(tx, orgId);
+    if (!gate.ok) return err(402, gate.code, gate.message);
     const et = await tx.eventType.create({
       data: {
         title,
