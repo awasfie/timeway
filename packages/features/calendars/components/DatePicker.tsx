@@ -316,17 +316,19 @@ const Days = ({
   return (
     <>
       {daysToRenderForTheMonth.map(({ day, disabled, away, emoji, isFirstDayOfNextMonth }, idx) => (
-        <div key={day === null ? `e-${idx}` : `day-${day.format()}`} className="relative w-full pt-[100%]">
+        <div
+          key={day === null ? `e-${idx}` : `day-${day.format()}`}
+          className={classNames(
+            "relative w-full pt-[100%]",
+            props.isLoading && day && "animate-pulse opacity-60"
+          )}
+          aria-busy={props.isLoading && day ? true : undefined}>
           {day === null ? (
             <div key={`e-${idx}`} />
-          ) : props.isLoading ? (
-            <button
-              className="bg-cal-muted text-muted absolute bottom-0 left-0 right-0 top-0 mx-auto flex w-full items-center justify-center rounded-sm border-transparent text-center font-medium opacity-90 transition"
-              key={`e-${idx}`}
-              disabled>
-              <SkeletonText className="h-8 w-9" />
-            </button>
           ) : (
+            // WC-TW-6m-2: the loading grid renders the same Day buttons (disabled) instead of a
+            // skeleton, so the getSchedule commit updates ~42 cells in place rather than deleting
+            // and recreating them in one long task.
             <DayComponent
               customClassName={{
                 dayContainer: customClassName?.datePickerDate,
@@ -337,11 +339,13 @@ const Days = ({
                 props.onChange(day);
                 props?.scrollToTimeSlots?.();
               }}
-              disabled={disabled}
-              active={isActive(day)}
-              away={away}
+              disabled={props.isLoading || disabled}
+              active={!props.isLoading && isActive(day)}
+              away={!props.isLoading && away}
               emoji={emoji}
-              showMonthTooltip={showNextMonthDays && !disabled && day.month() !== browsingDate.month()}
+              showMonthTooltip={
+                !props.isLoading && showNextMonthDays && !disabled && day.month() !== browsingDate.month()
+              }
               isFirstDayOfNextMonth={isFirstDayOfNextMonth}
             />
           )}

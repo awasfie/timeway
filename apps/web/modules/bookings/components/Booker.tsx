@@ -115,6 +115,18 @@ const BookerComponent = ({
   // synchronously, so gate the first full render on a deferred copy of the state: React
   // renders the tree at transition priority and yields to the main thread every few ms.
   const deferredBookerState = useDeferredValue(bookerState);
+  // WC-TW-6m-2: when getSchedule resolves, react-query flips isPending and data in one notify
+  // batch and the date grid + slot columns re-render in a single long task. Defer the pair as
+  // one object so the calendar re-renders at transition priority and never sees isPending=false
+  // with the slots still missing (that would trigger the no-availability month skip).
+  const scheduleView = useMemo(
+    () => ({ isPending: schedule.isPending, slots: schedule?.data?.slots }),
+    [schedule.isPending, schedule?.data?.slots]
+  );
+  const deferredSchedule = useDeferredValue(scheduleView);
+  // Entering the loading state stays urgent (month change shows the dimmed grid at once); only
+  // the loading -> data flip waits for the deferred render.
+  const isScheduleLoading = schedule.isPending || deferredSchedule.isPending;
 
   const selectedDate = useBookerStoreContext((state) => state.selectedDate);
 
@@ -481,8 +493,8 @@ const BookerComponent = ({
                       <DatePicker
                         classNames={customClassNames?.datePickerCustomClassNames}
                         event={event}
-                        slots={schedule?.data?.slots}
-                        isLoading={schedule.isPending}
+                        slots={deferredSchedule.slots}
+                        isLoading={isScheduleLoading}
                         scrollToTimeSlots={scrollToTimeSlots}
                         showNoAvailabilityDialog={showNoAvailabilityDialog}
                         onDateChange={() => {
@@ -518,8 +530,8 @@ const BookerComponent = ({
               <DatePicker
                 classNames={customClassNames?.datePickerCustomClassNames}
                 event={event}
-                slots={schedule?.data?.slots}
-                isLoading={schedule.isPending}
+                slots={deferredSchedule.slots}
+                isLoading={isScheduleLoading}
                 scrollToTimeSlots={scrollToTimeSlots}
                 showNoAvailabilityDialog={showNoAvailabilityDialog}
               />
@@ -536,7 +548,7 @@ const BookerComponent = ({
               <LargeCalendar
                 extraDays={extraDays}
                 schedule={schedule.data}
-                isLoading={schedule.isPending}
+                isLoading={isScheduleLoading}
                 event={event}
               />
             </BookerSection>
@@ -563,7 +575,7 @@ const BookerComponent = ({
                 extraDays={extraDays}
                 limitHeight={layout === BookerLayouts.MONTH_VIEW}
                 schedule={schedule}
-                isLoading={schedule.isPending}
+                isLoading={isScheduleLoading}
                 seatsPerTimeSlot={event.data?.seatsPerTimeSlot}
                 unavailableTimeSlots={unavailableTimeSlots}
                 showAvailableSeatsCount={event.data?.seatsShowAvailabilityCount}
@@ -658,7 +670,7 @@ const BookerComponent = ({
             extraDays={extraDays}
             limitHeight={layout === BookerLayouts.MONTH_VIEW}
             schedule={schedule}
-            isLoading={schedule.isPending}
+            isLoading={isScheduleLoading}
             seatsPerTimeSlot={event.data?.seatsPerTimeSlot}
             unavailableTimeSlots={unavailableTimeSlots}
             showAvailableSeatsCount={event.data?.seatsShowAvailabilityCount}

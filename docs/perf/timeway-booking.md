@@ -268,3 +268,32 @@ Functional check on the fix variant: FCP 748 ms, first JS request 749 ms, all 49
 Next: Gosi deploys with `python3 ops/cloudflare/worker.py plan|apply`. Stored copies made by the old bundle age out
 within MAX_STALE_S (300 s; `purge` does not reach the Worker's internal Cache API keys), so measure at least 5 min after
 apply. To back out: set `DEFER_JS = false` and apply, or `rollback`. Proof card t_762bea7b re-measures on the deployed edge.
+
+## WC-TW-6m: TBT from the getSchedule commit (cards t_7022411d, t_68154bec, 2026-10-31)
+
+Step 1 (t_7022411d), host noise ruled out: prod x10, Lighthouse 13.5.0 mobile simulated, `https://timeway.co/ahmedwasfie/30min`,
+host load 1.74-2.09, benchmarkIndex 3640-3733 (median 3714, ~30% faster than r7's ~2800), edge HIT 8 / STALE 1 / MISS 1.
+
+| batch | TBT median | TBT range | LCP median |
+|---|---:|---|---:|
+| 6m step 1 (main 1a3cb0bbb2 era deploy) | 261.5 ms | 186-565 ms | ~2000 ms |
+| r7 | 258.25 ms | | |
+| tw6l2 base | 261.75 ms | | |
+| tw6l1b | 253.5 ms | | |
+
+The page sits at ~255-260 ms on its own code. Top long task (70-389 ms): a `TimerFire` from react-query's
+`notifyManager.batch` (setTimeout 0) 1 ms after `/api/trpc/slots/getSchedule` resolves; 87% of its samples are one
+react-dom commit, and deletions (`commitMutationEffects`) take 148 of 328 self samples. That commit removes the
+`SkeletonText` day grid (calendars `DatePicker.tsx`) and `AvailableTimesSkeleton` columns and mounts the real calendar
+and slots. `useDeferredValue(bookerState)` from 6j does not cover this flip.
+
+Slice (t_68154bec):
+1. `Booker.tsx` defers `{isPending, slots}` of the schedule query as one value (`useDeferredValue`), so the
+   loading -> data re-render of DatePicker / AvailableTimeSlots / LargeCalendar runs at transition priority and yields.
+   Going into loading stays urgent (`schedule.isPending || deferred.isPending`); DatePicker never sees loaded=true with
+   the old slots, so the no-availability month skip cannot fire early.
+2. calendars `DatePicker.tsx` keeps the real `Day` buttons mounted while loading (disabled, dimmed with
+   `animate-pulse opacity-60`, `aria-busy`) instead of swapping in a skeleton button per cell, so the commit updates the
+   ~42 cells in place instead of deleting and recreating them.
+
+After-numbers: pending deploy; same harness (`lhp.mjs`, x10, host load < 2.1), recorded here by the proof run.
