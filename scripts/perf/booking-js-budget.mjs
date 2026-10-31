@@ -59,21 +59,6 @@ export function scriptSrcs(html) {
   return [...srcs];
 }
 
-// Inline payload of the HTML document itself: the RSC flight data (self.__next_f.push) carries every server
-// prop a client component gets, e.g. the i18n dictionary. Reported, not enforced (WC-TW-6c-9c-2b).
-export function htmlPayload(html) {
-  let flight = "";
-  for (const m of html.matchAll(/<script\b[^>]*>(self\.__next_f\.push\([\s\S]*?)<\/script>/g)) flight += m[1];
-  const size = (s) => {
-    const buf = Buffer.from(s, "utf8");
-    return {
-      raw_kb: Number((buf.length / 1024).toFixed(1)),
-      gz_kb: Number((gzipSync(buf, { level: 9 }).length / 1024).toFixed(1)),
-    };
-  };
-  return { html: size(html), flight: size(flight) };
-}
-
 async function loadBytes(src) {
   const path = new URL(src, url).pathname;
   const prefix = "/_next/static/";
@@ -93,7 +78,6 @@ async function main() {
   if (res.status !== 200)
     throw new Error(`Booking route ${url} returned ${res.status}; the gate needs a real page`);
   const html = await res.text();
-  const payload = htmlPayload(html);
   const srcs = scriptSrcs(html);
   if (srcs.length === 0) throw new Error(`No <script src> found on ${url}; refusing to report 0 KB`);
 
@@ -133,7 +117,6 @@ async function main() {
     },
     budget: { budget_kb_gz: budgetKb, status: budgetOk ? "ok" : "breach", enforced: budgetEnforced },
     total_kb_raw: Number((totalRaw / 1024).toFixed(1)),
-    html_payload: payload,
     scripts: files.length,
     forbidden: forbidHits,
     pass,
@@ -156,8 +139,6 @@ async function main() {
       const status = h.found_in.length === 0 ? "ok" : `breach (${h.found_in.join(", ")})`;
       return `| off first load: ${h.label} | 0 chunks | ${status} | yes |`;
     }),
-    "",
-    `HTML document: **${payload.html.gz_kb} KB gz** (${payload.html.raw_kb} KB raw), of which inline RSC flight data ${payload.flight.gz_kb} KB gz (${payload.flight.raw_kb} KB raw); reported, not in the JS total.`,
     "",
     "| script | gz KB | raw KB |",
     "| --- | ---: | ---: |",
