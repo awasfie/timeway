@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import worker, { bypassReason, cacheKey, isBookingPath, languageBucket } from "./booking-edge.mjs";
+import { deferChunkScripts, deferSegment, LOADER } from "./defer-js.mjs";
 import { LOCALES } from "./locales.mjs";
 
 const req = (path, init = {}) => {
@@ -178,4 +179,77 @@ test("entry older than max stale is a plain miss", async () => {
   h.store.set(k, new Response(old.body, { status: 200, headers: hd }));
   const r = await h.run("/a/b");
   assert.equal(r.headers.get("x-tw-edge"), "MISS");
+});
+
+// WC-TW-6l-3: chunk scripts are requested after first paint.
+const NEXT_HEAD =
+  '<head><link rel="stylesheet" href="/_next/static/chunks/a.css" data-precedence="next"/>' +
+  '<link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/41-x.js"/>' +
+  '<link rel="preload" href="/_next/static/media/f.woff2" as="font" crossorigin=""/>' +
+  '<script src="/_next/static/chunks/turbopack-1.js" async=""></script>' +
+  '<script src="/_next/static/chunks/abc_-1.js" async=""></script>' +
+  '<script src="/_next/static/chunks/poly.js" noModule=""></script></head>' +
+  '<body><h1>30 min</h1><script>self.__next_f.push([0])</script></body></html>';
+
+test("deferSegment: async chunk scripts go inert, script preloads drop, rest untouched", () => {
+  const out = deferSegment(NEXT_HEAD);
+  assert.equal((out.match(/type="text\/tw-deferred"/g) || []).length, 2);
+  assert.match(out, /data-tw-src="\/_next\/static\/chunks\/turbopack-1.js"/);
+  assert.doesNotMatch(out, /as="script"/);
+  assert.match(out, /as="font"/);
+  assert.match(out, /a\.css/);
+  assert.match(out, /poly\.js" noModule/);
+  assert.match(out, /self\.__next_f\.push/);
+  assert.match(out, /<h1>30 min<\/h1>/);
+});
+
+test("deferChunkScripts: same result for any stream split; loader appended once", async () => {
+  const enc = new TextEncoder().encode(NEXT_HEAD);
+  const whole = deferSegment(NEXT_HEAD) + LOADER;
+  for (const size of [1, 7, 64, enc.length]) {
+    const rs = new ReadableStream({
+      start(c) {
+        for (let i = 0; i < enc.length; i += size) c.enqueue(enc.subarray(i, i + size));
+        c.close();
+      },
+    });
+    assert.equal(await new Response(deferChunkScripts(rs)).text(), whole, `split ${size}`);
+  }
+});
+
+test("deferChunkScripts: HTML without chunk scripts passes through unchanged", async () => {
+  const src = "<html><body>plain <b>page</b></body></html>";
+  assert.equal(await new Response(deferChunkScripts(new Response(src).body)).text(), src);
+});
+
+test("stored booking HTML is deferred: MISS and HIT both carry the loader, no script preload", async () => {
+  const h = harness(() => html(NEXT_HEAD, { "content-length": String(NEXT_HEAD.length) }));
+  const a = await h.run("/ahmedwasfie/30min");
+  const at = await a.text();
+  assert.equal(a.headers.get("x-tw-defer"), "1");
+  assert.equal(a.headers.get("content-length"), null);
+  assert.ok(at.endsWith(LOADER));
+  assert.doesNotMatch(at, /<script src="\/_next[^>]*async/);
+  const b = await h.run("/ahmedwasfie/30min");
+  assert.equal(b.headers.get("x-tw-edge"), "HIT");
+  assert.equal(await b.text(), at);
+});
+
+test("BYPASS (logged-in) HTML is not rewritten", async () => {
+  const h = harness(() => html(NEXT_HEAD));
+  const r = await h.run("/ahmedwasfie/30min", { headers: { cookie: "next-auth.session-token=abc" } });
+  assert.equal(await r.text(), NEXT_HEAD);
+});
+
+test("timeway-worker.json uploads every module the Worker imports", () => {
+  const spec = JSON.parse(readFileSync(new URL("../timeway-worker.json", import.meta.url)));
+  const seen = new Set();
+  const walk = (name) => {
+    if (seen.has(name)) return;
+    seen.add(name);
+    const src = readFileSync(new URL(`./${name}`, import.meta.url), "utf8");
+    for (const [, dep] of src.matchAll(/from "\.\/([^"]+)"/g)) walk(dep);
+  };
+  walk(spec.modules[0]);
+  assert.deepEqual([...seen].sort(), [...spec.modules].sort());
 });

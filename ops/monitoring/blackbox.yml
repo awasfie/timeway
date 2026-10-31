@@ -1,0 +1,28 @@
+# R1-TW-MONITORING (t_1ee20514): blackbox modules for the Timeway uptime SLI.
+# Probes go out through the public path (Cloudflare -> Coolify proxy -> timeway-web), the same path a booker uses.
+modules:
+  tw_version:
+    prober: http
+    timeout: 10s
+    http:
+      method: GET
+      valid_status_codes: [200]
+      fail_if_body_not_matches_regexp: ['"version"']
+      preferred_ip_protocol: ip4
+  tw_login:
+    prober: http
+    timeout: 10s
+    http:
+      method: GET
+      valid_status_codes: [200]
+      # R-73: a 200 is not proof; the rendered login form is.
+      fail_if_body_not_matches_regexp: ['data-testid="login-form"']
+      preferred_ip_protocol: ip4
+  # Drill only: same real request, a body match that can never succeed. Used by apply.sh drill.
+  tw_drill_fail:
+    prober: http
+    timeout: 10s
+    http:
+      method: GET
+      fail_if_body_not_matches_regexp: ['TW-DRILL-THIS-NEVER-MATCHES']
+      preferred_ip_protocol: ip4
