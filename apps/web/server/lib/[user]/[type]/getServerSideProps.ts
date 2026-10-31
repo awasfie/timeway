@@ -112,7 +112,6 @@ async function processSeatedEvent({
 }
 
 async function getDynamicGroupPageProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession({ req: context.req });
   const { user: usernames, type: slug } = paramsSchema.parse(context.params);
   const { rescheduleUid, bookingUid } = context.query;
   const allowRescheduleForCancelledBooking = context.query.allowRescheduleForCancelledBooking === "true";
@@ -120,23 +119,26 @@ async function getDynamicGroupPageProps(context: GetServerSidePropsContext) {
   const isValidOrgDomain = false;
   const org = isValidOrgDomain ? currentOrgDomain : null;
 
-  const redirect = await handleOrgRedirect({
-    slugs: usernames,
-    redirectType: RedirectType.User,
-    eventTypeSlug: slug,
-    context,
-    currentOrgDomain: org,
-  });
+  // Session, org redirect and user lookup are independent reads; run them together (WC-TW-6a decision 2).
+  const userRepo = new UserRepository(prisma);
+  const [session, redirect, usersInOrgContext] = await Promise.all([
+    getServerSession({ req: context.req }),
+    handleOrgRedirect({
+      slugs: usernames,
+      redirectType: RedirectType.User,
+      eventTypeSlug: slug,
+      context,
+      currentOrgDomain: org,
+    }),
+    userRepo.findUsersByUsername({
+      usernameList: usernames,
+      orgSlug: isValidOrgDomain ? currentOrgDomain : null,
+    }),
+  ]);
 
   if (redirect) {
     return redirect;
   }
-
-  const userRepo = new UserRepository(prisma);
-  const usersInOrgContext = await userRepo.findUsersByUsername({
-    usernameList: usernames,
-    orgSlug: isValidOrgDomain ? currentOrgDomain : null,
-  });
 
   const users = usersInOrgContext;
 
@@ -210,7 +212,6 @@ async function getDynamicGroupPageProps(context: GetServerSidePropsContext) {
 }
 
 async function getUserPageProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession({ req: context.req });
   const { user: usernames, type: slug } = paramsSchema.parse(context.params);
   const username = usernames[0];
   const { rescheduleUid, bookingUid } = context.query;
@@ -218,19 +219,22 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
   const currentOrgDomain = null;
   const isValidOrgDomain = false;
 
-  const redirect = await handleOrgRedirect({
-    slugs: usernames,
-    redirectType: RedirectType.User,
-    eventTypeSlug: slug,
-    context,
-    currentOrgDomain: isValidOrgDomain ? currentOrgDomain : null,
-  });
+  // Session, org redirect and user lookup are independent reads; run them together (WC-TW-6a decision 2).
+  const [session, redirect, [user]] = await Promise.all([
+    getServerSession({ req: context.req }),
+    handleOrgRedirect({
+      slugs: usernames,
+      redirectType: RedirectType.User,
+      eventTypeSlug: slug,
+      context,
+      currentOrgDomain: isValidOrgDomain ? currentOrgDomain : null,
+    }),
+    getUsersInOrgContext([username], isValidOrgDomain ? currentOrgDomain : null),
+  ]);
 
   if (redirect) {
     return redirect;
   }
-
-  const [user] = await getUsersInOrgContext([username], isValidOrgDomain ? currentOrgDomain : null);
 
   if (!user) {
     return {
