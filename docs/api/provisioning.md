@@ -82,3 +82,19 @@ Catalog = Bible CM.3 (`free`, `pro`, `teams`, `business`); Spenai bundle = CM.7.
 `GET /api/v2/orgs/{orgId}/plan` (org key, `orgs:read`) returns the plan code and effective entitlements.
 
 Gates: `POST /members` and `POST /event-types` answer `402` with `plan_limit_members` / `plan_limit_event_types` when the plan's limit is reached. Only the four catalog codes are metered; an org with no plan code (spenai-pilot, pre-T12 orgs) stays unmetered until a plan is assigned.
+
+## Branding (TW-T13)
+
+`GET /api/v2/orgs/{orgId}/branding` (scope `orgs:read`) and `PUT` (scope `orgs:write`), org key only.
+
+```
+PUT /api/v2/orgs/{orgId}/branding
+{ "logo_url": "https://<booking-assets host>/org/acme.png", "brand_color": "#1a73e8", "dark_brand_color": "#8ab4f8" }
+200 { "branding": { "logo_url": "...", "brand_color": "#1a73e8", "dark_brand_color": "#8ab4f8" } }
+```
+
+`null` clears a field. Colours must be 3 or 6 digit hex. `logo_url` must be https on a host listed in the `TW_BOOKING_ASSETS_HOSTS` env var (comma list; unset = no logo accepted). The public booking page reads the org from the event row's `twOrgId`, never from the request, and falls back to the default look for any field that is unset.
+
+## Moving the shared `spenai-pilot` data into per-tenant orgs (TW-T13)
+
+`scripts/tw-t13/migrate-pilot-bookings.sh --dry-run|--apply MAP.csv` (`username,org_slug` per tenant user). Moves the user, schedules, credentials, event types, bookings and membership row from `spenai-pilot` to the mapped org, per user in one transaction; aborts a user whose row counts drop; idempotent; prints before/after counts. Prod apply only from the deploy card after a verified backup <= 24 h.
