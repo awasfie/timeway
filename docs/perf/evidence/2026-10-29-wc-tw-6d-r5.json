@@ -1,0 +1,1770 @@
+{
+ "card": "t_762bea7b",
+ "run": "r5 (run 5802)",
+ "url": "https://timeway.co/ahmedwasfie/30min",
+ "deploy_sha": "9f2dfb867dffc9ba3651d99f60fdb3a558d1611c",
+ "deployment": "1qbfxfjgret7xz5f3vpqdvrh",
+ "container": "poyzdsncp9jsvc3gr4hkitaf-20261029T155908",
+ "edge_worker": "timeway-booking-edge",
+ "deployed_since_r4": [
+  "timeway#220 (6j deferred mount, TBT)",
+  "timeway#221 (6k lazy TagManager+Toaster)",
+  "timeway#128 (6c-9 lazy booking form)"
+ ],
+ "not_deployed": [
+  "timeway#218 (6h SSR title, LCP)"
+ ],
+ "lighthouse_mobile_simulated_dubai_host_AS15802": [
+  {
+   "run": 1,
+   "fetchTime": "2026-10-29T16:09:49.208Z",
+   "lighthouse": "13.5.0",
+   "benchmarkIndex": 2873,
+   "lcp_ms": 5597,
+   "fcp_ms": 1651,
+   "tbt_ms": 114,
+   "server_response_ms": 704,
+   "scripts": 49,
+   "script_transfer_kb": 629.2
+  },
+  {
+   "run": 2,
+   "fetchTime": "2026-10-29T16:10:03.835Z",
+   "lighthouse": "13.5.0",
+   "benchmarkIndex": 3373,
+   "lcp_ms": 5842,
+   "fcp_ms": 1943,
+   "tbt_ms": 80,
+   "server_response_ms": 226,
+   "scripts": 49,
+   "script_transfer_kb": 629.5
+  },
+  {
+   "run": 3,
+   "fetchTime": "2026-10-29T16:10:18.641Z",
+   "lighthouse": "13.5.0",
+   "benchmarkIndex": 3357.5,
+   "lcp_ms": 6025,
+   "fcp_ms": 1940,
+   "tbt_ms": 105,
+   "server_response_ms": 290,
+   "scripts": 49,
+   "script_transfer_kb": 629.7
+  },
+  {
+   "run": 4,
+   "fetchTime": "2026-10-29T16:10:32.830Z",
+   "lighthouse": "13.5.0",
+   "benchmarkIndex": 3102,
+   "lcp_ms": 4939,
+   "fcp_ms": 1643,
+   "tbt_ms": 67,
+   "server_response_ms": 222,
+   "scripts": 49,
+   "script_transfer_kb": 629.4
+  },
+  {
+   "run": 5,
+   "fetchTime": "2026-10-29T16:10:46.797Z",
+   "lighthouse": "13.5.0",
+   "benchmarkIndex": 3324.5,
+   "lcp_ms": 5538,
+   "fcp_ms": 1607,
+   "tbt_ms": 103,
+   "server_response_ms": 196,
+   "scripts": 49,
+   "script_transfer_kb": 629.6
+  }
+ ],
+ "lcp_median_ms": 5597,
+ "tbt_median_ms": 103,
+ "region_ttfb_globalping": {
+  "gate": "booking-region-ttfb",
+  "provider": "globalping",
+  "commit": null,
+  "budget_enforced": false,
+  "results": [
+   {
+    "region": "cairo",
+    "url": "https://timeway.co/ahmedwasfie/30min",
+    "ttfb_ms": 86,
+    "total_ms": 208,
+    "budget_ms": 500,
+    "pass": true,
+    "probes": [
+     {
+      "city": "Cairo",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS"
+     },
+     {
+      "city": "Cairo",
+      "asn": 154177,
+      "network": "LIGHT NODE"
+     }
+    ],
+    "samples": [
+     {
+      "measurement_id": "2I0yQW90yUOgzLA7U00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 311,
+       "dns": 114,
+       "tcp": 46,
+       "tls": 57,
+       "firstByte": 94,
+       "download": 0
+      },
+      "cf_ray": "a52376207c44e1e0-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2I0yQW90yUOgzLA7U00021PHI",
+      "city": "Cairo",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 217,
+       "dns": 63,
+       "tcp": 33,
+       "tls": 45,
+       "firstByte": 74,
+       "download": 2
+      },
+      "cf_ray": "a523761feebd11c1-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2I0yQW90yUOgzLA7U00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 858,
+       "dns": 104,
+       "tcp": 49,
+       "tls": 57,
+       "firstByte": 629,
+       "download": 19
+      },
+      "cf_ray": "a52376207f55c115-ZRH",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "21kkFFGd3oNX812Hh00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 191,
+       "dns": 0,
+       "tcp": 49,
+       "tls": 69,
+       "firstByte": 72,
+       "download": 1
+      },
+      "cf_ray": "a52376288b10bc4a-ZRH",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "21kkFFGd3oNX812Hh00021PHI",
+      "city": "Cairo",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 252,
+       "dns": 87,
+       "tcp": 33,
+       "tls": 44,
+       "firstByte": 87,
+       "download": 1
+      },
+      "cf_ray": "a5237628ae4870e7-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "21kkFFGd3oNX812Hh00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 184,
+       "dns": 1,
+       "tcp": 49,
+       "tls": 57,
+       "firstByte": 76,
+       "download": 1
+      },
+      "cf_ray": "a52376286940e68a-ZRH",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2XvFVs2wRK5DV2QdQ00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 187,
+       "dns": 0,
+       "tcp": 49,
+       "tls": 60,
+       "firstByte": 78,
+       "download": 0
+      },
+      "cf_ray": "a5237631db6f8822-ZRH",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2XvFVs2wRK5DV2QdQ00021PHI",
+      "city": "Cairo",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 208,
+       "dns": 44,
+       "tcp": 33,
+       "tls": 47,
+       "firstByte": 84,
+       "download": 0
+      },
+      "cf_ray": "a5237631ce6bdad4-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2XvFVs2wRK5DV2QdQ00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 221,
+       "dns": 1,
+       "tcp": 50,
+       "tls": 61,
+       "firstByte": 108,
+       "download": 1
+      },
+      "cf_ray": "a5237631d9051988-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2dWF8I4pIxb4TPaYQ00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 227,
+       "dns": 0,
+       "tcp": 51,
+       "tls": 68,
+       "firstByte": 107,
+       "download": 1
+      },
+      "cf_ray": "a523763acd559822-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2dWF8I4pIxb4TPaYQ00021PHI",
+      "city": "Cairo",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 206,
+       "dns": 44,
+       "tcp": 33,
+       "tls": 47,
+       "firstByte": 81,
+       "download": 1
+      },
+      "cf_ray": "a523763aafabe224-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2dWF8I4pIxb4TPaYQ00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 179,
+       "dns": 0,
+       "tcp": 49,
+       "tls": 58,
+       "firstByte": 72,
+       "download": 0
+      },
+      "cf_ray": "a523763aa9c71a65-ZRH",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "265Ny7fSvbwiNlxRz00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 192,
+       "dns": 0,
+       "tcp": 49,
+       "tls": 60,
+       "firstByte": 81,
+       "download": 2
+      },
+      "cf_ray": "a523764399051e6d-ZRH",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "265Ny7fSvbwiNlxRz00021PHI",
+      "city": "Cairo",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 209,
+       "dns": 44,
+       "tcp": 34,
+       "tls": 46,
+       "firstByte": 84,
+       "download": 1
+      },
+      "cf_ray": "a52376439c01e18d-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "265Ny7fSvbwiNlxRz00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 187,
+       "dns": 1,
+       "tcp": 49,
+       "tls": 61,
+       "firstByte": 75,
+       "download": 1
+      },
+      "cf_ray": "a52376439cff039c-ZRH",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2KOtipEeItiwstjE200021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 205,
+       "dns": 1,
+       "tcp": 51,
+       "tls": 63,
+       "firstByte": 90,
+       "download": 0
+      },
+      "cf_ray": "a523764c497fdf75-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2KOtipEeItiwstjE200021PHI",
+      "city": "Cairo",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 238,
+       "dns": 81,
+       "tcp": 33,
+       "tls": 44,
+       "firstByte": 78,
+       "download": 2
+      },
+      "cf_ray": "a523764c4c35e1c9-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2KOtipEeItiwstjE200021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 233,
+       "dns": 0,
+       "tcp": 50,
+       "tls": 61,
+       "firstByte": 118,
+       "download": 4
+      },
+      "cf_ray": "a523764c1fd56073-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2XW5wsueLPoOtpNF800021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 211,
+       "dns": 0,
+       "tcp": 51,
+       "tls": 58,
+       "firstByte": 101,
+       "download": 1
+      },
+      "cf_ray": "a5237654ce5be1e0-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2XW5wsueLPoOtpNF800021PHI",
+      "city": "Cairo",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 202,
+       "dns": 59,
+       "tcp": 33,
+       "tls": 47,
+       "firstByte": 63,
+       "download": 0
+      },
+      "cf_ray": "a5237654eac899b3-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2XW5wsueLPoOtpNF800021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 217,
+       "dns": 1,
+       "tcp": 51,
+       "tls": 74,
+       "firstByte": 91,
+       "download": 0
+      },
+      "cf_ray": "a5237654e919e280-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2WtFWMN4A6E9IJeVi00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 200,
+       "dns": 0,
+       "tcp": 50,
+       "tls": 60,
+       "firstByte": 88,
+       "download": 2
+      },
+      "cf_ray": "a523765d891e4aaf-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2WtFWMN4A6E9IJeVi00021PHI",
+      "city": "Cairo",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 235,
+       "dns": 80,
+       "tcp": 33,
+       "tls": 45,
+       "firstByte": 76,
+       "download": 1
+      },
+      "cf_ray": "a523765dba57cf28-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2WtFWMN4A6E9IJeVi00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 193,
+       "dns": 1,
+       "tcp": 45,
+       "tls": 59,
+       "firstByte": 87,
+       "download": 1
+      },
+      "cf_ray": "a523765d7d0a70ec-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2J6PuLOg9MlbbPfNE00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 200,
+       "dns": 1,
+       "tcp": 45,
+       "tls": 67,
+       "firstByte": 86,
+       "download": 1
+      },
+      "cf_ray": "a5237666dede965d-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2J6PuLOg9MlbbPfNE00021PHI",
+      "city": "Cairo",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 217,
+       "dns": 44,
+       "tcp": 33,
+       "tls": 43,
+       "firstByte": 97,
+       "download": 0
+      },
+      "cf_ray": "a5237666e845dcf9-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2J6PuLOg9MlbbPfNE00021PHI",
+      "city": "Cairo",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "EG",
+      "status_code": 200,
+      "timings": {
+       "total": 201,
+       "dns": 0,
+       "tcp": 47,
+       "tls": 58,
+       "firstByte": 96,
+       "download": 0
+      },
+      "cf_ray": "a5237666dcbee224-MRS",
+      "server_timing": []
+     }
+    ]
+   },
+   {
+    "region": "riyadh",
+    "url": "https://timeway.co/ahmedwasfie/30min",
+    "ttfb_ms": 121,
+    "total_ms": 306,
+    "budget_ms": 500,
+    "pass": true,
+    "probes": [
+     {
+      "city": "Riyadh",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS"
+     },
+     {
+      "city": "Riyadh",
+      "asn": 202105,
+      "network": "Wafai Net"
+     }
+    ],
+    "samples": [
+     {
+      "measurement_id": "2OKRtnbTGR85vuN1n00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 466,
+       "dns": 98,
+       "tcp": 76,
+       "tls": 84,
+       "firstByte": 208,
+       "download": 0
+      },
+      "cf_ray": "a52376706c07c6b7-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2OKRtnbTGR85vuN1n00021PHI",
+      "city": "Riyadh",
+      "network": "Wafai Net",
+      "asn": 202105,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 527,
+       "dns": 216,
+       "tcp": 87,
+       "tls": 98,
+       "firstByte": 124,
+       "download": 2
+      },
+      "cf_ray": "a5237671f856a26a-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2OKRtnbTGR85vuN1n00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 376,
+       "dns": 99,
+       "tcp": 73,
+       "tls": 84,
+       "firstByte": 117,
+       "download": 3
+      },
+      "cf_ray": "a52376705b553391-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2lMIVHWsTqYNHCu1i00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 659,
+       "dns": 1,
+       "tcp": 68,
+       "tls": 80,
+       "firstByte": 495,
+       "download": 15
+      },
+      "cf_ray": "a52376786d11c724-MXP",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2lMIVHWsTqYNHCu1i00021PHI",
+      "city": "Riyadh",
+      "network": "Wafai Net",
+      "asn": 202105,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 306,
+       "dns": 1,
+       "tcp": 83,
+       "tls": 103,
+       "firstByte": 117,
+       "download": 2
+      },
+      "cf_ray": "a52376795b5949f0-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2lMIVHWsTqYNHCu1i00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 670,
+       "dns": 158,
+       "tcp": 71,
+       "tls": 82,
+       "firstByte": 347,
+       "download": 12
+      },
+      "cf_ray": "a52376796d43eda4-MXP",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2YwTPxmduTrF5k3hZ00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 389,
+       "dns": 103,
+       "tcp": 70,
+       "tls": 88,
+       "firstByte": 124,
+       "download": 4
+      },
+      "cf_ray": "a52376819a6581a6-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2YwTPxmduTrF5k3hZ00021PHI",
+      "city": "Riyadh",
+      "network": "Wafai Net",
+      "asn": 202105,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 320,
+       "dns": 1,
+       "tcp": 85,
+       "tls": 108,
+       "firstByte": 125,
+       "download": 1
+      },
+      "cf_ray": "a5237681ddcfe1e9-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2YwTPxmduTrF5k3hZ00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 269,
+       "dns": 1,
+       "tcp": 72,
+       "tls": 85,
+       "firstByte": 110,
+       "download": 1
+      },
+      "cf_ray": "a5237680eecee185-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2mphLqoru6oTKLXQc00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 256,
+       "dns": 0,
+       "tcp": 72,
+       "tls": 82,
+       "firstByte": 102,
+       "download": 0
+      },
+      "cf_ray": "a5237688c895c630-MXP",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2mphLqoru6oTKLXQc00021PHI",
+      "city": "Riyadh",
+      "network": "Wafai Net",
+      "asn": 202105,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 328,
+       "dns": 3,
+       "tcp": 87,
+       "tls": 109,
+       "firstByte": 128,
+       "download": 1
+      },
+      "cf_ray": "a5237689ba5298d2-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2mphLqoru6oTKLXQc00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 322,
+       "dns": 1,
+       "tcp": 73,
+       "tls": 88,
+       "firstByte": 160,
+       "download": 0
+      },
+      "cf_ray": "a5237688db814c63-MXP",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2jalQcoHaeuVCjLzB00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 300,
+       "dns": 1,
+       "tcp": 75,
+       "tls": 94,
+       "firstByte": 130,
+       "download": 0
+      },
+      "cf_ray": "a523769168248ca3-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2jalQcoHaeuVCjLzB00021PHI",
+      "city": "Riyadh",
+      "network": "Wafai Net",
+      "asn": 202105,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 310,
+       "dns": 5,
+       "tcp": 84,
+       "tls": 96,
+       "firstByte": 122,
+       "download": 3
+      },
+      "cf_ray": "a52376924db8078b-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2jalQcoHaeuVCjLzB00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 257,
+       "dns": 1,
+       "tcp": 71,
+       "tls": 81,
+       "firstByte": 103,
+       "download": 1
+      },
+      "cf_ray": "a5237691598fed17-MXP",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2mMaHkod7G28EJcyI00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 248,
+       "dns": 1,
+       "tcp": 69,
+       "tls": 80,
+       "firstByte": 95,
+       "download": 3
+      },
+      "cf_ray": "a523769a1f14b83b-MXP",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2mMaHkod7G28EJcyI00021PHI",
+      "city": "Riyadh",
+      "network": "Wafai Net",
+      "asn": 202105,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 303,
+       "dns": 3,
+       "tcp": 83,
+       "tls": 102,
+       "firstByte": 102,
+       "download": 13
+      },
+      "cf_ray": "a523769aff20e289-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2mMaHkod7G28EJcyI00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 282,
+       "dns": 1,
+       "tcp": 74,
+       "tls": 85,
+       "firstByte": 121,
+       "download": 1
+      },
+      "cf_ray": "a523769a1b058e31-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2gBvOAGM9QkbfKQhl00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 268,
+       "dns": 0,
+       "tcp": 75,
+       "tls": 82,
+       "firstByte": 110,
+       "download": 1
+      },
+      "cf_ray": "a52376a2c8d46dcc-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2gBvOAGM9QkbfKQhl00021PHI",
+      "city": "Riyadh",
+      "network": "Wafai Net",
+      "asn": 202105,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 322,
+       "dns": 3,
+       "tcp": 82,
+       "tls": 109,
+       "firstByte": 126,
+       "download": 2
+      },
+      "cf_ray": "a52376a3a8a45dd1-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2gBvOAGM9QkbfKQhl00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 270,
+       "dns": 1,
+       "tcp": 74,
+       "tls": 85,
+       "firstByte": 110,
+       "download": 0
+      },
+      "cf_ray": "a52376a2cdd7e275-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2DfX5IzsyzDtAis3700021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 255,
+       "dns": 1,
+       "tcp": 75,
+       "tls": 87,
+       "firstByte": 92,
+       "download": 0
+      },
+      "cf_ray": "a52376abd800ed23-MXP",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2DfX5IzsyzDtAis3700021PHI",
+      "city": "Riyadh",
+      "network": "Wafai Net",
+      "asn": 202105,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 336,
+       "dns": 3,
+       "tcp": 83,
+       "tls": 100,
+       "firstByte": 150,
+       "download": 0
+      },
+      "cf_ray": "a52376aca92fdb88-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2DfX5IzsyzDtAis3700021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 269,
+       "dns": 1,
+       "tcp": 71,
+       "tls": 80,
+       "firstByte": 116,
+       "download": 1
+      },
+      "cf_ray": "a52376abbb32e1b7-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2yiBkNxhqrX3YXdMZ00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 278,
+       "dns": 1,
+       "tcp": 75,
+       "tls": 85,
+       "firstByte": 117,
+       "download": 0
+      },
+      "cf_ray": "a52376b48b8bf5c5-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2yiBkNxhqrX3YXdMZ00021PHI",
+      "city": "Riyadh",
+      "network": "Wafai Net",
+      "asn": 202105,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 319,
+       "dns": 2,
+       "tcp": 86,
+       "tls": 103,
+       "firstByte": 128,
+       "download": 0
+      },
+      "cf_ray": "a52376b56b0b9822-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2yiBkNxhqrX3YXdMZ00021PHI",
+      "city": "Riyadh",
+      "network": "HUAWEI CLOUDS",
+      "asn": 136907,
+      "country": "SA",
+      "status_code": 200,
+      "timings": {
+       "total": 278,
+       "dns": 1,
+       "tcp": 74,
+       "tls": 83,
+       "firstByte": 119,
+       "download": 1
+      },
+      "cf_ray": "a52376b47ae49a62-MRS",
+      "server_timing": []
+     }
+    ]
+   },
+   {
+    "region": "dubai",
+    "url": "https://timeway.co/ahmedwasfie/30min",
+    "ttfb_ms": 172,
+    "total_ms": 467,
+    "budget_ms": 500,
+    "pass": true,
+    "probes": [
+     {
+      "city": "Dubai",
+      "asn": 9009,
+      "network": "M247"
+     },
+     {
+      "city": "Dubai",
+      "asn": 154177,
+      "network": "LIGHT NODE"
+     },
+     {
+      "city": "Dubai",
+      "asn": 207847,
+      "network": "CloudBlast"
+     },
+     {
+      "city": "Dubai",
+      "asn": 136258,
+      "network": "BrainStorm Network"
+     }
+    ],
+    "samples": [
+     {
+      "measurement_id": "20yuynz0F1k3ZMxfM00021PHI",
+      "city": "Dubai",
+      "network": "M247",
+      "asn": 9009,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 477,
+       "dns": 118,
+       "tcp": 107,
+       "tls": 118,
+       "firstByte": 134,
+       "download": 0
+      },
+      "cf_ray": "a52376bedf52fc1f-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "20yuynz0F1k3ZMxfM00021PHI",
+      "city": "Dubai",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 896,
+       "dns": 115,
+       "tcp": 127,
+       "tls": 142,
+       "firstByte": 504,
+       "download": 8
+      },
+      "cf_ray": "a52376bf4a03f5ee-AMS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "20yuynz0F1k3ZMxfM00021PHI",
+      "city": "Dubai",
+      "network": "CloudBlast",
+      "asn": 207847,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 3860,
+       "dns": 1769,
+       "tcp": 696,
+       "tls": 711,
+       "firstByte": 682,
+       "download": 2
+      },
+      "cf_ray": "a52376d3dd30fc95-LHR",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2308e5qyUlIG7bhbA00021PHI",
+      "city": "Dubai",
+      "network": "M247",
+      "asn": 9009,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 1299,
+       "dns": 227,
+       "tcp": 10,
+       "tls": 20,
+       "firstByte": 852,
+       "download": 190
+      },
+      "cf_ray": "a52376db985bf9ef-MCT",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2308e5qyUlIG7bhbA00021PHI",
+      "city": "Dubai",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 390,
+       "dns": 7,
+       "tcp": 103,
+       "tls": 120,
+       "firstByte": 158,
+       "download": 2
+      },
+      "cf_ray": "a52376dbbecb6d07-AMS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2308e5qyUlIG7bhbA00021PHI",
+      "city": "Dubai",
+      "network": "BrainStorm Network",
+      "asn": 136258,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 550,
+       "dns": 112,
+       "tcp": 115,
+       "tls": 139,
+       "firstByte": 182,
+       "download": 2
+      },
+      "cf_ray": "a52376dd3a7bbe92-AMS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2L9gu0vO0j47e3yC300021PHI",
+      "city": "Dubai",
+      "network": "M247",
+      "asn": 9009,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 169,
+       "dns": 104,
+       "tcp": 10,
+       "tls": 20,
+       "firstByte": 32,
+       "download": 3
+      },
+      "cf_ray": "a52376eb9edbde47-MCT",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2L9gu0vO0j47e3yC300021PHI",
+      "city": "Dubai",
+      "network": "CloudBlast",
+      "asn": 207847,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 1928,
+       "dns": 1,
+       "tcp": 554,
+       "tls": 650,
+       "firstByte": 721,
+       "download": 2
+      },
+      "cf_ray": "a52376f5bcf09496-LHR",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2L9gu0vO0j47e3yC300021PHI",
+      "city": "Dubai",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 438,
+       "dns": 9,
+       "tcp": 120,
+       "tls": 135,
+       "firstByte": 172,
+       "download": 2
+      },
+      "cf_ray": "a52376ec6acf1489-AMS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "28hLArnhzxhPniRWf00021PHI",
+      "city": "Dubai",
+      "network": "M247",
+      "asn": 9009,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 401,
+       "dns": 2,
+       "tcp": 106,
+       "tls": 127,
+       "firstByte": 164,
+       "download": 2
+      },
+      "cf_ray": "a52377051958e200-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "28hLArnhzxhPniRWf00021PHI",
+      "city": "Dubai",
+      "network": "CloudBlast",
+      "asn": 207847,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 1896,
+       "dns": 2,
+       "tcp": 656,
+       "tls": 621,
+       "firstByte": 614,
+       "download": 3
+      },
+      "cf_ray": "a523770ebc56edf4-LHR",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "28hLArnhzxhPniRWf00021PHI",
+      "city": "Dubai",
+      "network": "BrainStorm Network",
+      "asn": 136258,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 489,
+       "dns": 99,
+       "tcp": 100,
+       "tls": 127,
+       "firstByte": 160,
+       "download": 3
+      },
+      "cf_ray": "a52377061eaa70e5-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2PtbFmZ5KGKqNMJUD00021PHJ",
+      "city": "Dubai",
+      "network": "M247",
+      "asn": 9009,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 258,
+       "dns": 200,
+       "tcp": 7,
+       "tls": 17,
+       "firstByte": 33,
+       "download": 1
+      },
+      "cf_ray": "a523771c5fe2fa00-MCT",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2PtbFmZ5KGKqNMJUD00021PHJ",
+      "city": "Dubai",
+      "network": "BrainStorm Network",
+      "asn": 136258,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 383,
+       "dns": 16,
+       "tcp": 97,
+       "tls": 142,
+       "firstByte": 126,
+       "download": 2
+      },
+      "cf_ray": "a523771d8ab93805-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2PtbFmZ5KGKqNMJUD00021PHJ",
+      "city": "Dubai",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 489,
+       "dns": 9,
+       "tcp": 126,
+       "tls": 142,
+       "firstByte": 209,
+       "download": 3
+      },
+      "cf_ray": "a523771d3a6a9ff5-AMS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2YkHuPVrTsd7Eq3FK00021PHJ",
+      "city": "Dubai",
+      "network": "M247",
+      "asn": 9009,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 97,
+       "dns": 3,
+       "tcp": 13,
+       "tls": 38,
+       "firstByte": 41,
+       "download": 2
+      },
+      "cf_ray": "a5237724eb19de5b-MCT",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2YkHuPVrTsd7Eq3FK00021PHJ",
+      "city": "Dubai",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 440,
+       "dns": 9,
+       "tcp": 112,
+       "tls": 131,
+       "firstByte": 187,
+       "download": 1
+      },
+      "cf_ray": "a52377268f95fe9f-AMS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2YkHuPVrTsd7Eq3FK00021PHJ",
+      "city": "Dubai",
+      "network": "CloudBlast",
+      "asn": 207847,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 4815,
+       "dns": 3,
+       "tcp": 676,
+       "tls": 3499,
+       "firstByte": 637,
+       "download": 0
+      },
+      "cf_ray": "a52377425a671674-LHR",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2RGeN7Wp82s9siS5200021PHJ",
+      "city": "Dubai",
+      "network": "M247",
+      "asn": 9009,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 165,
+       "dns": 107,
+       "tcp": 8,
+       "tls": 15,
+       "firstByte": 32,
+       "download": 3
+      },
+      "cf_ray": "a523774cfa05f9fb-MCT",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2RGeN7Wp82s9siS5200021PHJ",
+      "city": "Dubai",
+      "network": "BrainStorm Network",
+      "asn": 136258,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 463,
+       "dns": 113,
+       "tcp": 92,
+       "tls": 118,
+       "firstByte": 137,
+       "download": 3
+      },
+      "cf_ray": "a523774eaf97c1fb-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2RGeN7Wp82s9siS5200021PHJ",
+      "city": "Dubai",
+      "network": "LIGHT NODE",
+      "asn": 154177,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 385,
+       "dns": 15,
+       "tcp": 101,
+       "tls": 119,
+       "firstByte": 149,
+       "download": 1
+      },
+      "cf_ray": "a523774daf09e1a8-MRS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2cv47hko64Nml0Z8600021PHJ",
+      "city": "Dubai",
+      "network": "M247",
+      "asn": 9009,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 70,
+       "dns": 2,
+       "tcp": 10,
+       "tls": 20,
+       "firstByte": 36,
+       "download": 2
+      },
+      "cf_ray": "a52377546d7ad1e0-MCT",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2cv47hko64Nml0Z8600021PHJ",
+      "city": "Dubai",
+      "network": "CloudBlast",
+      "asn": 207847,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 2289,
+       "dns": 2,
+       "tcp": 805,
+       "tls": 704,
+       "firstByte": 775,
+       "download": 3
+      },
+      "cf_ray": "a52377621e8d7711-LHR",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "2cv47hko64Nml0Z8600021PHJ",
+      "city": "Dubai",
+      "network": "BrainStorm Network",
+      "asn": 136258,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 593,
+       "dns": 98,
+       "tcp": 117,
+       "tls": 145,
+       "firstByte": 231,
+       "download": 2
+      },
+      "cf_ray": "a5237757683aad10-AMS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "22A2IeKxZpn1gijJ900021PHJ",
+      "city": "Dubai",
+      "network": "M247",
+      "asn": 9009,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 86,
+       "dns": 22,
+       "tcp": 8,
+       "tls": 18,
+       "firstByte": 38,
+       "download": 0
+      },
+      "cf_ray": "a523776c2a15f9e9-MCT",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "22A2IeKxZpn1gijJ900021PHJ",
+      "city": "Dubai",
+      "network": "BrainStorm Network",
+      "asn": 136258,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 467,
+       "dns": 16,
+       "tcp": 121,
+       "tls": 146,
+       "firstByte": 182,
+       "download": 2
+      },
+      "cf_ray": "a523776e2b9e9fe8-AMS",
+      "server_timing": []
+     },
+     {
+      "measurement_id": "22A2IeKxZpn1gijJ900021PHJ",
+      "city": "Dubai",
+      "network": "CloudBlast",
+      "asn": 207847,
+      "country": "AE",
+      "status_code": 200,
+      "timings": {
+       "total": 2062,
+       "dns": 2,
+       "tcp": 643,
+       "tls": 719,
+       "firstByte": 696,
+       "download": 2
+      },
+      "cf_ray": "a52377770b10beba-LHR",
+      "server_timing": []
+     }
+    ]
+   }
+  ],
+  "probe_failures": [],
+  "measured_at": "2026-10-29T16:13:18.521Z"
+ },
+ "local_dubai_ttfb_after_tls_ms": {
+  "n": 30,
+  "samples": [
+   334.6,
+   205.0,
+   248.7,
+   186.4,
+   228.8,
+   224.6,
+   200.2,
+   199.4,
+   205.1,
+   283.4,
+   226.4,
+   193.9,
+   255.2,
+   227.7,
+   216.0,
+   236.1,
+   206.5,
+   196.5,
+   196.9,
+   198.2,
+   184.7,
+   191.5,
+   195.6,
+   201.0,
+   169.2,
+   216.2,
+   173.1,
+   228.9,
+   196.4,
+   166.7
+  ]
+ },
+ "slot_api": {
+  "measured_at": "2026-10-29T16:12:15.396Z",
+  "origin": "https://timeway.co",
+  "event": "ahmedwasfie/30min",
+  "tz": "Asia/Dubai",
+  "range": {
+   "startTime": "2026-10-31T20:00:00.000Z",
+   "endTime": "2026-12-31T19:59:59.999Z"
+  },
+  "budget_ms": 800,
+  "gated": "warm",
+  "warm": {
+   "n": 30,
+   "p50": 476,
+   "p95": 652,
+   "max": 670,
+   "statuses": [
+    "200"
+   ],
+   "total_ms": [
+    630,
+    577,
+    670,
+    394,
+    505,
+    448,
+    652,
+    503,
+    441,
+    425,
+    476,
+    456,
+    539,
+    486,
+    500,
+    525,
+    612,
+    506,
+    403,
+    384,
+    446,
+    442,
+    487,
+    499,
+    417,
+    480,
+    457,
+    405,
+    443,
+    403
+   ],
+   "reused_connection": true
+  },
+  "cold": {
+   "n": 30,
+   "p50": 749,
+   "p95": 988,
+   "max": 1727,
+   "statuses": [
+    "200"
+   ],
+   "total_ms": [
+    749,
+    740,
+    988,
+    757,
+    843,
+    733,
+    728,
+    684,
+    725,
+    770,
+    846,
+    891,
+    1727,
+    874,
+    770,
+    837,
+    741,
+    795,
+    813,
+    725,
+    710,
+    703,
+    747,
+    808,
+    723,
+    713,
+    789,
+    701,
+    707,
+    794
+   ],
+   "handshake_p50_ms": 306
+  },
+  "pass": true
+ },
+ "rum_web_vital_clickhouse_site1": {
+  "LCP": {
+   "n": 1,
+   "p75": 1900
+  },
+  "INP": {
+   "n": 1,
+   "p75": 48
+  },
+  "orgs": [
+   "27eb38bb-0de9-447a-809b-7edd21bbfc78"
+  ]
+ }
+}
