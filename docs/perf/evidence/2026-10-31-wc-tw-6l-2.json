@@ -1,0 +1,253 @@
+{
+ "card": "t_ff21a124 WC-TW-6l-2",
+ "date": "2026-10-31",
+ "url": "https://timeway.co/ahmedwasfie/30min",
+ "prod_sha": "bab281bb77",
+ "host": "Dubai Mac mini, same host and preset for both variants",
+ "lighthouse": "13.5.0 mobile simulated (Lantern), Chrome 156",
+ "method": "variant fix = CDP Fetch rewrite of chunk 0k-rypm5h_bdp.js dropping fadeInUpClassName (byte-equal to the EventMeta.tsx diff); base = unchanged prod. 10 runs each, x-tw-edge recorded per run.",
+ "runs": {
+  "r_base": [
+   {
+    "run": 1,
+    "lcp": 6085,
+    "fcp": 1523,
+    "obs_fcp": 714,
+    "obs_lcp": 1584,
+    "js_req_before_obs_lcp": 49,
+    "js_kb_before_obs_lcp": 629,
+    "fetch_before_obs_lcp": 9,
+    "edge": "HIT"
+   },
+   {
+    "run": 2,
+    "lcp": 4224,
+    "fcp": 1524,
+    "obs_fcp": 565,
+    "obs_lcp": 565,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 518,
+    "fetch_before_obs_lcp": 0,
+    "edge": "HIT"
+   },
+   {
+    "run": 3,
+    "lcp": 4675,
+    "fcp": 1525,
+    "obs_fcp": 632,
+    "obs_lcp": 632,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 518,
+    "fetch_before_obs_lcp": 0,
+    "edge": "HIT"
+   },
+   {
+    "run": 4,
+    "lcp": 6021,
+    "fcp": 1535,
+    "obs_fcp": 616,
+    "obs_lcp": 1310,
+    "js_req_before_obs_lcp": 49,
+    "js_kb_before_obs_lcp": 629,
+    "fetch_before_obs_lcp": 9,
+    "edge": "HIT"
+   },
+   {
+    "run": 5,
+    "lcp": 4524,
+    "fcp": 1524,
+    "obs_fcp": 635,
+    "obs_lcp": 635,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 518,
+    "fetch_before_obs_lcp": 0,
+    "edge": "STALE"
+   },
+   {
+    "run": 6,
+    "lcp": 5940,
+    "fcp": 1541,
+    "obs_fcp": 754,
+    "obs_lcp": 1488,
+    "js_req_before_obs_lcp": 49,
+    "js_kb_before_obs_lcp": 629,
+    "fetch_before_obs_lcp": 9,
+    "edge": "HIT"
+   },
+   {
+    "run": 7,
+    "lcp": 4672,
+    "fcp": 1522,
+    "obs_fcp": 659,
+    "obs_lcp": 659,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 518,
+    "fetch_before_obs_lcp": 0,
+    "edge": "HIT"
+   },
+   {
+    "run": 8,
+    "lcp": 4674,
+    "fcp": 1524,
+    "obs_fcp": 634,
+    "obs_lcp": 634,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 518,
+    "fetch_before_obs_lcp": 0,
+    "edge": "HIT"
+   },
+   {
+    "run": 9,
+    "lcp": 4670,
+    "fcp": 1520,
+    "obs_fcp": 703,
+    "obs_lcp": 703,
+    "js_req_before_obs_lcp": 45,
+    "js_kb_before_obs_lcp": 603,
+    "fetch_before_obs_lcp": 4,
+    "edge": "HIT"
+   },
+   {
+    "run": 10,
+    "lcp": 4672,
+    "fcp": 1522,
+    "obs_fcp": 660,
+    "obs_lcp": 660,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 518,
+    "fetch_before_obs_lcp": 0,
+    "edge": "HIT"
+   }
+  ],
+  "r_fix": [
+   {
+    "run": 1,
+    "lcp": 4965,
+    "fcp": 1515,
+    "obs_fcp": 732,
+    "obs_lcp": 732,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 576,
+    "fetch_before_obs_lcp": 0,
+    "edge": "HIT"
+   },
+   {
+    "run": 2,
+    "lcp": 4525,
+    "fcp": 1525,
+    "obs_fcp": 556,
+    "obs_lcp": 556,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 576,
+    "fetch_before_obs_lcp": 0,
+    "edge": "STALE"
+   },
+   {
+    "run": 3,
+    "lcp": 6625,
+    "fcp": 1525,
+    "obs_fcp": 603,
+    "obs_lcp": 603,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 576,
+    "fetch_before_obs_lcp": 0,
+    "edge": "HIT"
+   },
+   {
+    "run": 4,
+    "lcp": 4520,
+    "fcp": 1520,
+    "obs_fcp": 566,
+    "obs_lcp": 566,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 576,
+    "fetch_before_obs_lcp": 0,
+    "edge": "HIT"
+   },
+   {
+    "run": 5,
+    "lcp": 7734,
+    "fcp": 1538,
+    "obs_fcp": 636,
+    "obs_lcp": 785,
+    "js_req_before_obs_lcp": 47,
+    "js_kb_before_obs_lcp": 674,
+    "fetch_before_obs_lcp": 5,
+    "edge": "HIT"
+   },
+   {
+    "run": 6,
+    "lcp": 7400,
+    "fcp": 1542,
+    "obs_fcp": 731,
+    "obs_lcp": 876,
+    "js_req_before_obs_lcp": 47,
+    "js_kb_before_obs_lcp": 674,
+    "fetch_before_obs_lcp": 6,
+    "edge": "HIT"
+   },
+   {
+    "run": 7,
+    "lcp": 4824,
+    "fcp": 1524,
+    "obs_fcp": 626,
+    "obs_lcp": 626,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 576,
+    "fetch_before_obs_lcp": 0,
+    "edge": "HIT"
+   },
+   {
+    "run": 8,
+    "lcp": 6715,
+    "fcp": 1522,
+    "obs_fcp": 692,
+    "obs_lcp": 692,
+    "js_req_before_obs_lcp": 42,
+    "js_kb_before_obs_lcp": 577,
+    "fetch_before_obs_lcp": 2,
+    "edge": "HIT"
+   },
+   {
+    "run": 9,
+    "lcp": 4815,
+    "fcp": 1515,
+    "obs_fcp": 572,
+    "obs_lcp": 572,
+    "js_req_before_obs_lcp": 41,
+    "js_kb_before_obs_lcp": 576,
+    "fetch_before_obs_lcp": 0,
+    "edge": "STALE"
+   },
+   {
+    "run": 10,
+    "lcp": 5436,
+    "fcp": 1519,
+    "obs_fcp": 801,
+    "obs_lcp": 909,
+    "js_req_before_obs_lcp": 47,
+    "js_kb_before_obs_lcp": 674,
+    "fetch_before_obs_lcp": 6,
+    "edge": "HIT"
+   }
+  ]
+ },
+ "summary": {
+  "r_base": {
+   "lcp_median": 4673.0,
+   "lcp_p75_nearest_rank": 5940,
+   "observed_lcp_median": 659.5,
+   "observed_lcp_max": 1584
+  },
+  "r_fix": {
+   "lcp_median": 5200.5,
+   "lcp_p75_nearest_rank": 6715,
+   "observed_lcp_median": 659.0,
+   "observed_lcp_max": 909
+  }
+ },
+ "gate": {
+  "lcp_p75_lt_2500": false
+ },
+ "finding": "Dropping the delayed fade removes the observed (real paint) late LCP: base late runs observed LCP 1310-1584 ms, fix max 909 ms. Simulated LCP does not move (base p75 5940, fix p75 6715, within noise): even runs where observed LCP == FCP (~600 ms, the SSR shell h1) simulate 4.2-6.6 s, because Lantern's pessimistic LCP graph includes every request started before observed LCP: 41 scripts / 518-576 KB of JS are requested before the h1 paints. The gate needs the booker JS requested after first paint (or far less of it), not a paint fix."
+}
