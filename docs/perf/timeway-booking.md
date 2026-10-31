@@ -77,6 +77,37 @@ stack; its next cut, the SSR title shell, is timeway#218 (draft, not deployed). 
 host (its benchmarkIndex range 2423-3270 is wider than r2's). INP RUM has no emitter. The JS 200 KB row stays a fail:
 t_3eb9a771 recorded the ratchet as the enforced gate and 200 KB as reported only, and the floor on main is 516.7.
 
+## Re-run r7 (card t_762bea7b run 6036, 2026-10-31 14:37Z), on c1d7d6cd8e + #230 Worker
+
+App under test: image `poyzdsncp9jsvc3gr4hkitaf:c1d7d6cd8e4f8fbda2b8841c055559a2ad7aca97` (container
+`poyzdsncp9jsvc3gr4hkitaf-20261031T125934`, healthy), plus the `timeway-booking-edge` Worker with the WC-TW-6l-3 chunk
+defer (timeway#230, main 1a3cb0bbb2; `x-tw-defer: 1`, `x-tw-edge: HIT`). Since r6 the app image gained #223/#224
+(WhatsApp) and #156 (auth); 0 `.tsx` files changed a27b36f7d7..c1d7d6cd8e. Dubai host AS15802, direct to prod.
+Raw numbers: `evidence/2026-10-31-wc-tw-6d-r7.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 108 ms (p50 92, max 434) | 27 | Globalping 2026-10-31T14:39Z, 9 x 3 probes; r7 evidence | c1d7d6cd8e + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 129.5 ms (p50 121, max 174) | 27 | same | c1d7d6cd8e + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 191.5 ms all probes (p50 169, max 1180; AS9009, AS136258, AS154177; AS207847 not drawn) | 27 | same | c1d7d6cd8e + Worker | PASS (no exclusion) |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | p75 2001.5 ms, median 1996.5 (1988-2009); CLI check x5 median 2004 | 10 + 5 | r7 evidence | c1d7d6cd8e + Worker | PASS (target 1500 missed) |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 258.5 ms median (149-526); CLI check x5 338 | 10 + 5 | r7 evidence | c1d7d6cd8e + Worker | FAIL, fix card t_7dfd2cc6 |
+| all | INP (RUM, Plausible) | < 200 ms | 48 ms (no new field rows since 2026-10-29 09:42Z) | 1 | ClickHouse `events_v2` site 1, `name='web_vital'` | 819bf85549 | PASS (n=1) |
+| prod | booking-route first-load JS | <= 200 KB gz | 49 scripts, 629.9 KB transfer (0 before LCP) | 10 | r7 evidence | c1d7d6cd8e | FAIL (reported only; ratchet is the enforced gate, t_3eb9a771) |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 455 ms (p50 373, max 457) | 30 | `scripts/perf/slot-api.mjs --month 2026-11`, r7 evidence | c1d7d6cd8e | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb`: booking_page_view 6, web_vital LCP/INP | 1 org | ClickHouse `events_v2` site 1, 7 days | c1d7d6cd8e | PASS |
+
+r7 verdict: **not met**, 7 of 9 rows pass. #230 closed the LCP row: every run 1988-2009 ms with 0 scripts before
+LCP, HIT or STALE alike (r6 p75 5986). The TBT row is back over the gate (r6 103.5 ms):
+- Not caused by #230: with a dummy session cookie the Worker answers BYPASS (origin HTML, no defer) and TBT is
+  median 342 ms (n=5), the same as the deferred page.
+- No booker code shipped since r6 and script transfer is unchanged (629.6 -> 629.9 KB). The top long task in every
+  run is chunk `3p6ke44unhizm.js` (139-389 ms), then `25sq9vkyrxchr.js` (~120 ms).
+- The r6 Lighthouse reports are no longer on disk, so a host-versus-code split cannot be redone; the row is recorded
+  as measured. Host load average was 4.3-4.5 during r7.
+Next: fix card t_7dfd2cc6 (WC-TW-6j) cuts the top long tasks; INP RUM row needs more field rows (t_56a3e17b). JS stays
+reported only. Next re-run after t_7dfd2cc6 deploys.
+
 ## Re-run r6 (card t_762bea7b run 5815, 2026-10-29 17:28Z), on a27b36f7d7
 
 App under test: `a27b36f7d70e82c8d04056d656d1d812f23d8586` (main tip, #218 WC-TW-6h SSR title shell; Coolify deployment
