@@ -268,3 +268,50 @@ Functional check on the fix variant: FCP 748 ms, first JS request 749 ms, all 49
 Next: Gosi deploys with `python3 ops/cloudflare/worker.py plan|apply`. Stored copies made by the old bundle age out
 within MAX_STALE_S (300 s; `purge` does not reach the Worker's internal Cache API keys), so measure at least 5 min after
 apply. To back out: set `DEFER_JS = false` and apply, or `rollback`. Proof card t_762bea7b re-measures on the deployed edge.
+
+## WC-TW-6m: TBT from the getSchedule commit (cards t_7022411d, t_68154bec, 2026-10-31)
+
+Step 1 (t_7022411d), host noise ruled out: prod x10, Lighthouse 13.5.0 mobile simulated, `https://timeway.co/ahmedwasfie/30min`,
+host load 1.74-2.09, benchmarkIndex 3640-3733 (median 3714, ~30% faster than r7's ~2800), edge HIT 8 / STALE 1 / MISS 1.
+
+| batch | TBT median | TBT range | LCP median |
+|---|---:|---|---:|
+| 6m step 1 (main 1a3cb0bbb2 era deploy) | 261.5 ms | 186-565 ms | ~2000 ms |
+| r7 | 258.25 ms | | |
+| tw6l2 base | 261.75 ms | | |
+| tw6l1b | 253.5 ms | | |
+
+The page sits at ~255-260 ms on its own code. Top long task (70-389 ms): a `TimerFire` from react-query's
+`notifyManager.batch` (setTimeout 0) 1 ms after `/api/trpc/slots/getSchedule` resolves; 87% of its samples are one
+react-dom commit, and deletions (`commitMutationEffects`) take 148 of 328 self samples. That commit removes the
+`SkeletonText` day grid (calendars `DatePicker.tsx`) and `AvailableTimesSkeleton` columns and mounts the real calendar
+and slots. `useDeferredValue(bookerState)` from 6j does not cover this flip.
+
+Slice (t_68154bec):
+1. `Booker.tsx` defers `{isPending, slots}` of the schedule query as one value (`useDeferredValue`), so the
+   loading -> data re-render of DatePicker / AvailableTimeSlots / LargeCalendar runs at transition priority and yields.
+   Going into loading stays urgent (`schedule.isPending || deferred.isPending`); DatePicker never sees loaded=true with
+   the old slots, so the no-availability month skip cannot fire early.
+2. calendars `DatePicker.tsx` keeps the real `Day` buttons mounted while loading (disabled, dimmed with
+   `animate-pulse opacity-60`, `aria-busy`) instead of swapping in a skeleton button per cell, so the commit updates the
+   ~42 cells in place instead of deleting and recreating them.
+
+After-numbers (t_9fd48d6e, 2026-10-31 ~17:45Z): prod on efcebac374 (#234 squash, container
+`poyzdsncp9jsvc3gr4hkitaf:efcebac3748b`, deployed 17:24Z, runs started > 5 min later). Same harness (`lhp.mjs`,
+Lighthouse 13.5.0 mobile simulated, Chrome 156), x10 kept with host 1-min load 1.67-2.03 (3 runs at 2.24-2.85 dropped
+and re-run), benchmarkIndex 3597-3858 (median 3821), edge HIT 8 / STALE 2.
+
+| batch | TBT median | TBT range | LCP median | perf median |
+|---|---:|---|---:|---:|
+| 6m step 1 (1a3cb0bbb2) | 261.5 ms | 186-565 ms | ~2000 ms | |
+| 6m-3 after (efcebac374) | **186.5 ms** | 102-226 ms | 1994.5 ms | 80 |
+
+An ungated x10 taken first (load 1.73-3.45) gave TBT median 177 ms (101-286); it was not used because of the load.
+
+Trace (two runs, TBT 191 / 156.5): the getSchedule commit is no longer the top long task. Its 70 ms
+`TimerFire` (step-1 trace) is now a 20 ms `TimerFire` plus a separate 25-29 ms scheduler-task commit (`commitMutationEffects`
+still the main self cost). In the Lighthouse long-tasks audit, the step-1 top task (222-354 ms simulated in 10/10 runs)
+appears in 1/10 runs, at 94 ms. The remaining TBT comes from three ~105-116 ms simulated tasks (25-30 ms observed), about 60 ms of TBT each:
+the first booker render (react-dom chunk, react-query `useBaseQuery` mount), the deferred getSchedule commit, and the
+Next runtime chunk evaluation (`41-*.js`, `ErrorBoundary`/app-router bootstrap). WC-TW-6 TBT bar (< 200 ms) is met on the
+deployed SHA; no further slice is needed for it.
