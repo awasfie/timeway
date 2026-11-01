@@ -24,7 +24,8 @@ const call = (method: string, path: string[], authorization: string | null, body
   handleOrgApi({ method, path, authorization, query: new URLSearchParams(""), body }, deps) as Promise<R>;
 const proof = (s: string) => console.log(`PROOF ${s}`);
 // biome-ignore lint/suspicious/noExplicitAny: test helper
-const plat = <T>(why: string, fn: (tx: any) => Promise<T>) => withTwPlatform(client as never, why, fn);
+const plat = (why: string, fn: (tx: any) => Promise<any>): Promise<any> =>
+  withTwPlatform(client as never, why, fn);
 
 const mkOrg = async (ref: string) => {
   const r = await call("POST", [], `Bearer ${MASTER}`, {

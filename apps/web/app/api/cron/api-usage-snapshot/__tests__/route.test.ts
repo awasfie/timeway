@@ -14,7 +14,7 @@ const req = (headers: Record<string, string> = {}) =>
 describe("api-usage-snapshot cron", () => {
   beforeEach(() => {
     snapshot.mockReset();
-    process.env.CRON_API_KEY = "k";
+    vi.stubEnv("CRON_API_KEY", "k");
     process.env.CRON_SECRET = "k";
   });
 
