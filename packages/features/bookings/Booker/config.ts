@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import { BookerLayouts } from "@calcom/prisma/zod-utils";
 
@@ -131,16 +131,18 @@ export const getBookerSizeClassNames = (
 };
 
 /**
- * Returns a ref for the booker element and applies the grid layout of the current layout/state to it.
+ * Returns a callback ref for the booker element and applies the grid layout of the current layout/state to it.
  * Width changes animate through the element's CSS transition classes (disabled for reduced motion);
  * height is set directly because CSS cannot transition to "auto".
+ * The element is tracked in state, not a ref object: the booker grid mounts a render after bookerState leaves
+ * "loading" (useDeferredValue keeps the SSR shell up one more commit), so an effect keyed only on
+ * layout/state would run while the element is still null and never apply the grid areas.
  */
 export const useBookerResizeAnimation = (layout: BookerLayout, state: BookerState) => {
-  const animationScope = useRef<HTMLDivElement>(null);
+  const [element, animationScope] = useState<HTMLDivElement | null>(null);
   const isEmbed = typeof window !== "undefined" && window?.isEmbed?.();
   useEffect(() => {
     const animationConfig = resizeAnimationConfig[layout][state] || resizeAnimationConfig[layout].default;
-    const element = animationScope.current;
     if (!element) return;
 
     const height = animationConfig?.height || "auto";
@@ -151,7 +153,7 @@ export const useBookerResizeAnimation = (layout: BookerLayout, state: BookerStat
     element.style.gridTemplateColumns = String(animationConfig?.gridTemplateColumns ?? "");
     element.style.gridTemplateRows = String(animationConfig?.gridTemplateRows ?? "");
     element.style.minHeight = String(animationConfig?.minHeight ?? "");
-  }, [isEmbed, layout, state]);
+  }, [element, isEmbed, layout, state]);
 
   return animationScope;
 };

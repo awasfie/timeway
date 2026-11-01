@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-
-import { getTranslation, loadTranslations, mergeWithEnglishFallback } from "./server";
+import bookerKeys from "./booker-keys.json";
+import { getTranslation, loadTranslationSubset, loadTranslations, mergeWithEnglishFallback } from "./server";
 
 describe("mergeWithEnglishFallback", () => {
   it("should merge locale translations with English fallback", () => {
@@ -173,5 +173,25 @@ describe("getTranslation", () => {
     const frT = await getTranslation("fr", "common");
 
     expect(enT("welcome")).not.toBe(frT("welcome"));
+  });
+});
+
+describe("loadTranslationSubset", () => {
+  it.each([
+    "en",
+    "ar",
+  ])("returns only the booker keys, with the %s values of loadTranslations", async (locale) => {
+    const full = await loadTranslations(locale, "common");
+    const subset = await loadTranslationSubset(locale, "common");
+    expect(Object.keys(subset).length).toBe(bookerKeys.length);
+    expect(Object.keys(subset).length).toBeLessThan(Object.keys(full).length / 4);
+    for (const key of Object.keys(subset)) expect(subset[key]).toBe(full[key]);
+  });
+
+  it("keeps the booker strings and the form-builder default labels", async () => {
+    const subset = await loadTranslationSubset("ar", "common");
+    for (const key of ["your_name", "email_address", "additional_notes", "confirm"])
+      expect(subset).toHaveProperty(key);
+    expect(subset.confirm).not.toBe((await loadTranslations("en", "common")).confirm);
   });
 });
