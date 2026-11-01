@@ -168,10 +168,12 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
       user: teamSlug,
       teamId: team.id,
       slug: meetingSlug,
-      isBrandingHidden: shouldHideBrandingForTeamEvent({
-        eventTypeId: eventData.id,
-        team,
-      }),
+      isBrandingHidden:
+        (eventData as { twHideBranding?: boolean }).twHideBranding === true ||
+        shouldHideBrandingForTeamEvent({
+          eventTypeId: eventData.id,
+          team,
+        }),
       themeBasis: null,
       orgBannerUrl: team.parent?.bannerUrl ?? "",
       teamMemberEmail,

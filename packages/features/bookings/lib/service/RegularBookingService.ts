@@ -60,6 +60,7 @@ import { shouldIgnoreContactOwner } from "@calcom/lib/bookings/routing/utils";
 import { getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
 import { DEFAULT_GROUP_ID, ENABLE_ASYNC_TASKER } from "@calcom/lib/constants";
 import { onBookingCreated } from "@calcom/features/tw-activation/activation";
+import { isOrgBrandingHidden } from "../../../tw-branding/branding";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
 import { extractBaseEmail } from "@calcom/lib/extract-base-email";
@@ -72,6 +73,7 @@ import { getTimeFormatStringFromUserTimeFormat } from "@calcom/lib/timeFormat";
 import { distributedTracing } from "@calcom/lib/tracing/factory";
 import type { PrismaClient } from "@calcom/prisma";
 import type { AssignmentReasonEnum, DestinationCalendar, Prisma, User } from "@calcom/prisma/client";
+import { enqueueApiBookingUsage } from "@calcom/features/payments/gateway/apiUsage";
 import { BookingStatus, CreationSource, SchedulingType, WebhookTriggerEvents } from "@calcom/prisma/enums";
 import { userMetadata as userMetadataSchema } from "@calcom/prisma/zod-utils";
 import type {
@@ -1463,7 +1465,8 @@ async function handler(
         : undefined
     )
     .withHideBranding(
-      await getEventTypeService().shouldHideBrandingForEventType(eventType.id, {
+      (await isOrgBrandingHidden(deps.prismaClient, eventType.twOrgId)) ||
+      (await getEventTypeService().shouldHideBrandingForEventType(eventType.id, {
         team: eventType.team
           ? { hideBranding: eventType.team.hideBranding, parent: eventType.team.parent }
           : null,
@@ -1474,7 +1477,7 @@ async function handler(
             ? [{ organization: organizerOrganizationProfile.organization }]
             : [],
         },
-      } satisfies EventTypeBrandingData)
+      } satisfies EventTypeBrandingData))
     )
     .build();
 
@@ -2542,6 +2545,11 @@ async function handler(
     }
   } catch (error) {
     tracingLogger.error("Error while creating booking references", JSON.stringify({ error }));
+  }
+
+  // WC-TW-14c: one usage line per newly created API booking; never throws, so Passport can't fail a booking.
+  if (!isDryRun && !originalRescheduledBooking) {
+    await enqueueApiBookingUsage({ bookingUid: booking.uid, viaPlatformOAuth: isPlatformBooking });
   }
 
   // Queue BOOKING_REQUESTED webhook after booking update so consumer fetches booking with location, metadata, references
