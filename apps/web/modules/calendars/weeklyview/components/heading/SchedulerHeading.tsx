@@ -1,10 +1,11 @@
 import dayjs from "@calcom/dayjs";
+import { useCalendarStore } from "@calcom/features/calendars/weeklyview/state/store";
+import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { Button } from "@calcom/ui/components/button";
 import { ButtonGroup } from "@calcom/ui/components/buttonGroup";
 
-import { useCalendarStore } from "@calcom/features/calendars/weeklyview/state/store";
-
 export function SchedulerHeading() {
+  const { t } = useLocale();
   const { startDate, endDate, handleDateChange } = useCalendarStore((state) => ({
     startDate: dayjs(state.startDate),
     endDate: dayjs(state.endDate),
@@ -28,12 +29,11 @@ export function SchedulerHeading() {
         /> */}
 
         <ButtonGroup combined>
-          {/* TODO: i18n label with correct view */}
           <Button
             StartIcon="chevron-left"
             variant="icon"
             color="secondary"
-            aria-label="Previous Week"
+            aria-label={t("previous_week")}
             onClick={() => {
               handleDateChange("DECREMENT");
             }}
@@ -42,7 +42,7 @@ export function SchedulerHeading() {
             StartIcon="chevron-right"
             variant="icon"
             color="secondary"
-            aria-label="Next Week"
+            aria-label={t("next_week")}
             onClick={() => {
               handleDateChange("INCREMENT");
             }}

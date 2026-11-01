@@ -183,7 +183,7 @@ export default function JoinCall(props: PageProps) {
           <img
             className="fixed z-10 hidden aspect-square h-16 min-h-16 w-16 min-w-16 rounded-full sm:inline-block"
             src={calVideoLogo}
-            alt="My Org Logo"
+            alt={t("organization_logo")}
             style={{
               top: 32,
               left: 32,
@@ -193,7 +193,7 @@ export default function JoinCall(props: PageProps) {
           <img
             className="fixed z-10 hidden h-5 sm:inline-block"
             src={`${WEBSITE_URL}/cal-logo-word-dark.svg`}
-            alt="Logo"
+            alt={t("logo")}
             style={{
               top: 47,
               left: 20,

@@ -6,6 +6,7 @@ import {
   useEmbedStyles,
   useIsEmbed,
 } from "@calcom/embed-core/embed-iframe";
+import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { useRouterQuery } from "@calcom/lib/hooks/useRouterQuery";
 import useTheme from "@calcom/lib/hooks/useTheme";
 import { UserAvatar } from "@calcom/ui/components/avatar";
@@ -23,6 +24,7 @@ import { Toaster } from "sonner";
 export type PageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
 export function UserPage(props: PageProps) {
   const { users, profile, eventTypes, entity } = props;
+  const { t } = useLocale();
 
   const [user] = users; //To be used when we only have a single user, not dynamic group
   useTheme(profile.theme);
@@ -64,7 +66,7 @@ export function UserPage(props: PageProps) {
           <div className="border-subtle bg-default text-default mb-8 overflow-hidden rounded-xl border">
             {isOrg && user.profile.organization?.bannerUrl && (
               <OrgBanner
-                alt={user.profile.organization.name ?? "Organization banner"}
+                alt={user.profile.organization.name ?? t("organization_banner")}
                 imageSrc={user.profile.organization.bannerUrl}
                 className="p-1 border border-subtle rounded-xl w-full object-cover"
               />
