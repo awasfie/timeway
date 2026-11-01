@@ -7,6 +7,7 @@ import {
   isCustomDomainsEnabled,
   isHostnameApproved,
 } from "@calcom/lib/domainManager/customHostnames/service";
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import { prisma } from "@calcom/prisma";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -36,7 +37,7 @@ const empty = (status: number) =>
  * WC-TW-12b R4: the proxy's on-demand TLS `ask` hook.
  * 200 = issue a cert for ?domain=, anything else = refuse. Never writes, never lists.
  */
-export async function GET(req: NextRequest) {
+async function handler(req: NextRequest) {
   if (!isCustomDomainsEnabled()) return empty(404);
 
   const expected = process.env.TW_DOMAIN_APPROVE_SECRET;
@@ -55,3 +56,6 @@ export async function GET(req: NextRequest) {
   const approved = await isHostnameApproved(new CustomHostnameRepository(prisma), domain);
   return empty(approved ? 200 : 404);
 }
+
+// TW-T9.2b4: secret-gated, reads across orgs, so it runs under a named platform scope.
+export const GET = withTwPlatformJob("custom-domain-approve", handler);
