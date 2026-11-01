@@ -179,7 +179,8 @@ export async function enqueueManagedUserSnapshot(deps: Partial<SnapshotDeps> = {
   }
 
   const timestamp = Math.floor(at.getTime() / 1000);
-  for (const [billingOrgId, value] of totals) {
+  // Array.from: the trpc/app build targets ES5 without downlevelIteration (CI type-check, PR #243)
+  for (const [billingOrgId, value] of Array.from(totals)) {
     result.billingOrgs += 1;
     const ref = `mu:${billingOrgId}`;
     try {
