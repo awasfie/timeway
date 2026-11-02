@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import posthog from "posthog-js";
+import { captureEvent } from "@calcom/lib/analytics/posthogCapture";
 
 import { InstallAppButton } from "@calcom/app-store/InstallAppButton";
 import { isRedirectApp } from "@calcom/app-store/_utils/redirectApps";
@@ -59,7 +59,7 @@ export function AppCard({ app, credentials, searchText, userAdminTeams }: AppCar
   }, [app.name, searchText]);
 
   const handleAppInstall = () => {
-    posthog.capture("app_install_button_clicked", {
+    captureEvent("app_install_button_clicked", {
       slug: app.slug,
       app_type: app.type,
       is_redirect: isRedirectApp(app.slug),
@@ -137,7 +137,7 @@ export function AppCard({ app, credentials, searchText, userAdminTeams }: AppCar
           className="flex w-32 grow justify-center"
           href={`/apps/${app.slug}`}
           onClick={() => {
-            posthog.capture("app_card_details_clicked", { slug: app.slug });
+            captureEvent("app_card_details_clicked", { slug: app.slug });
           }}
           data-testid={`app-store-app-card-${app.slug}`}>
           {t("details")}
@@ -164,7 +164,7 @@ export function AppCard({ app, credentials, searchText, userAdminTeams }: AppCar
                     props = {
                       ...props,
                       onClick: (e) => {
-                        posthog.capture("app_install_button_clicked", {
+                        captureEvent("app_install_button_clicked", {
                           slug: app.slug,
                           app_type: app.type,
                           is_redirect: isRedirectApp(app.slug),
@@ -201,7 +201,7 @@ export function AppCard({ app, credentials, searchText, userAdminTeams }: AppCar
                     props = {
                       ...props,
                       onClick: (e) => {
-                        posthog.capture("app_install_button_clicked", {
+                        captureEvent("app_install_button_clicked", {
                           slug: app.slug,
                           app_type: app.type,
                           is_redirect: isRedirectApp(app.slug),

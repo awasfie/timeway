@@ -27,7 +27,7 @@ env:
 jobs:
   setup-db:
     name: Setup Database
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     services:
       postgres:

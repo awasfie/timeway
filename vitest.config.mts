@@ -45,6 +45,8 @@ function getTestExclude() {
     "**/dist/**",
     "apps/api/v2/**/*.spec.ts",
     "__checks__/**/*.spec.ts",
+    // WC-TW-6g: Worker tests use node:test and run via `node --test ops/cloudflare/worker/booking-edge.test.mjs` in unit-tests.yml
+    "ops/cloudflare/**",
   ];
   if (isIntegrationMode || isTimezoneMode) {
     return [...baseExclude, "packages/embeds/**/*"];

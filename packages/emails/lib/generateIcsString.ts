@@ -3,8 +3,10 @@ import type { DateArray, ParticipationRole, EventStatus, ParticipationStatus } f
 import { createEvent } from "ics";
 import { RRule } from "rrule";
 
+import { camvRoomUrlForBooking } from "@calcom/app-store/livekitvideo/lib/VideoApiAdapter";
+import { metadata as camvMetadata } from "@calcom/app-store/livekitvideo/_metadata";
 import { getRichDescription } from "@calcom/lib/CalEventParser";
-import { getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
+import { getProviderName, getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
 import { ORGANIZER_EMAIL_EXEMPT_DOMAINS } from "@calcom/lib/constants";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
@@ -34,7 +36,33 @@ export type ICSCalendarEvent = Pick<
   | "type"
   | "hideCalendarEventDetails"
   | "hideOrganizerEmail"
+  | "videoCallData"
+  | "additionalInformation"
 >;
+
+const CAMV_LOCATION_TYPE = camvMetadata.appData?.location?.type ?? "integrations:camv";
+const CAMV_VIDEO_TYPE = camvMetadata.type;
+
+/**
+ * TW-ICS-1a: the ICS LOCATION must be something a calendar app can open, never a raw
+ * "integrations:*" app key. Camv bookings resolve to the Camv room URL (from the
+ * livekit_video videoCallData when present, else derived from the booking uid with the
+ * same helper the Camv adapter uses). Other integration keys fall back to the provider
+ * label ("Cal Video", "Zoom", ...).
+ */
+export type IcsLocationEvent = Pick<CalendarEvent, "uid" | "location" | "videoCallData" | "additionalInformation">;
+
+export const resolveIcsLocation = (event: IcsLocationEvent): string | undefined => {
+  if (event.location === CAMV_LOCATION_TYPE) {
+    const v = event.videoCallData;
+    if (v?.type === CAMV_VIDEO_TYPE && v.url) return v.url;
+    if (event.uid) return camvRoomUrlForBooking(event.uid);
+  }
+  const videoUrl = getVideoCallUrlFromCalEvent(event);
+  if (videoUrl) return videoUrl;
+  if (event.location?.startsWith("integrations:")) return getProviderName(event.location) || undefined;
+  return event.location ?? undefined;
+};
 
 const toICalDateArray = (date: string): DateArray => {
   const d = new Date(date);
@@ -58,7 +86,7 @@ const generateIcsString = ({
   partstat?: ParticipationStatus;
   t?: TFunction;
 }): string | undefined => {
-  const location = getVideoCallUrlFromCalEvent(event) || event.location;
+  const location = resolveIcsLocation(event);
 
   // Taking care of recurrence rule
   let recurrenceRule: string | undefined;

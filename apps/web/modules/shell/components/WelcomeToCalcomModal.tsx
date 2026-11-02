@@ -1,7 +1,9 @@
 "use client";
 
-import { APP_NAME } from "@calcom/lib/constants";
+import { bookYourselfUrl } from "@calcom/features/tw-onboarding/seed";
+import { APP_NAME, WEBAPP_URL } from "@calcom/lib/constants";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
+import useMeQuery from "@calcom/trpc/react/hooks/useMeQuery";
 import { Button } from "@calcom/ui/components/button";
 import { Dialog, DialogContent } from "@calcom/ui/components/dialog";
 import { Logo } from "@calcom/ui/components/logo";
@@ -22,6 +24,16 @@ const features = [
 export function WelcomeToCalcomModal() {
   const { t } = useLocale();
   const { isOpen, closeModal } = useWelcomeToCalcomModal();
+  const { data: me } = useMeQuery();
+  // WC-DX-10c "book yourself": the seeded 15 min type, prefilled with the owner's details.
+  const selfBookingUrl = me
+    ? bookYourselfUrl({
+        bookerUrl: WEBAPP_URL,
+        username: me.username,
+        name: me.name,
+        email: me.email,
+      })
+    : null;
 
   const LARGE = { outer: 48, icon: 24 };
   const RINGS = [60, 95, 130]; // Ring radii in px
@@ -95,14 +107,18 @@ export function WelcomeToCalcomModal() {
         </div>
 
         <div className="bg-muted border-subtle flex shrink-0 items-center justify-between rounded-b-2xl border-t px-8 py-6">
-          <Button
-            color="minimal"
-            href="https://cal.diy"
-            target="_blank"
-            EndIcon="external-link"
-            className="pointer-events-none opacity-0">
-            {t("learn_more")}
-          </Button>
+          {selfBookingUrl ? (
+            <Button
+              color="minimal"
+              href={selfBookingUrl}
+              target="_blank"
+              EndIcon="external-link"
+              data-testid="onboarding-book-yourself">
+              {t("onboarding_book_yourself")}
+            </Button>
+          ) : (
+            <span />
+          )}
           <Button color="primary" onClick={closeModal}>
             {t("continue")}
           </Button>

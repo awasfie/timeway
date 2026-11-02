@@ -1,4 +1,5 @@
 import { CredentialRepository } from "@calcom/features/credentials/repositories/CredentialRepository";
+import { onCalendarCredentialCreated } from "@calcom/features/tw-activation/activation";
 import { HttpError } from "@calcom/lib/http-error";
 import prisma from "@calcom/prisma";
 import type { Prisma } from "@calcom/prisma/client";
@@ -54,5 +55,6 @@ export async function createDefaultInstallation({
   if (!installation) {
     throw new Error(`Unable to create user credential for type ${appType}`);
   }
+  await onCalendarCredentialCreated(installation, "installation");
   return installation;
 }

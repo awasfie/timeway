@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import type { LocationObject } from "@calcom/app-store/locations";
-import { locationsResolver } from "@calcom/app-store/locations";
+import { locationsResolver } from "@calcom/app-store/locationsResolver";
 import NoSSR from "@calcom/lib/components/NoSSR";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import type { AppCategories } from "@calcom/prisma/enums";

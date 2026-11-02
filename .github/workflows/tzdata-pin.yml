@@ -1,0 +1,62 @@
+name: tzdata pin (CC-65)
+# WC-TW-5a: Node/ICU, the image OS and Postgres must ship the tzdata version in ops/tzdata/pin.env, and Node and
+# Postgres must agree on every hourly UTC offset 2025-2028 for the zones Timeway serves. Builds only the Dockerfile's
+# tzbase stage (the runner's base) and runs Postgres at the same digest as the live shared DB. No secrets.
+on:
+  pull_request:
+    paths:
+      - "ops/tzdata/**"
+      - "Dockerfile"
+      - ".github/workflows/tzdata-pin.yml"
+  push:
+    branches: [main]
+    paths:
+      - "ops/tzdata/**"
+      - "Dockerfile"
+      - ".github/workflows/tzdata-pin.yml"
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tzdata:
+    name: tzdata pin (Node/ICU = OS = Postgres)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        # Same image digest as the live shared Postgres (salesos-owned). Bump together with ops/tzdata/pin.env.
+        image: pgvector/pgvector:pg16@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tz
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: tz
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the runner's tzdata base (Dockerfile target tzbase)
+        run: docker build --target tzbase -t tzbase:ci .
+      - name: Assert Node/ICU = OS = Postgres = pin
+        run: |
+          pg_line=$(psql -tA -c "select split_part(pg_read_file('/usr/share/zoneinfo/tzdata.zi', 0, 64), E'\n', 1)")
+          echo "postgres tzdata.zi: $pg_line ($(psql -tA -c 'select count(*) from pg_timezone_names') zone names)"
+          docker run --rm tzbase:ci node /opt/tzdata/src/assert.mjs --pg "$pg_line"
+      - name: Offset sweep Node vs Postgres, 2025-2028 hourly
+        run: |
+          zones=$(node ops/tzdata/sweep.mjs zones | paste -sd, -)
+          psql -q -v zones="$zones" -f ops/tzdata/sweep.sql > pg.csv
+          docker run --rm -i tzbase:ci node /opt/tzdata/src/sweep.mjs compare < pg.csv

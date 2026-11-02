@@ -2,6 +2,7 @@ import { getDefaultLocations } from "@calcom/app-store/_utils/getDefaultLocation
 import { DailyLocationType } from "@calcom/app-store/constants";
 import { EventTypeRepository } from "@calcom/features/eventtypes/repositories/eventTypeRepository";
 import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
+import { onEventTypeVisible } from "@calcom/features/tw-activation/activation";
 import type { PrismaClient } from "@calcom/prisma";
 import { Prisma } from "@calcom/prisma/client";
 import { MembershipRole, SchedulingType } from "@calcom/prisma/enums";
@@ -148,6 +149,9 @@ export const createHandler = async ({ ctx, input }: CreateOptions) => {
       ...data,
       profileId: profile.id,
     });
+    if (!eventType.hidden) {
+      await onEventTypeVisible({ id: eventType.id, twOrgId: eventType.twOrgId, userId: eventType.userId }, "create");
+    }
     return { eventType };
   } catch (e) {
     console.warn(e);

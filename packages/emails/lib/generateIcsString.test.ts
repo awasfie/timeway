@@ -257,4 +257,50 @@ describe("generateIcsString", () => {
       expect(typeof icsString).toBe("string");
     });
   });
+  describe("LOCATION never a raw integrations:* key (TW-ICS-1a)", () => {
+    const unfoldedLocation = (ics: string) =>
+      ics
+        .replace(/\r?\n[ \t]/g, "")
+        .split(/\r?\n/)
+        .find((l) => l.startsWith("LOCATION:"));
+
+    test("camv booking without videoCallData (email attachment path) -> camv room URL", () => {
+      const event = buildCalendarEvent({
+        uid: "abc123XYZ",
+        iCalSequence: 0,
+        attendees: [buildPerson()],
+        location: "integrations:camv",
+        videoCallData: undefined,
+      });
+      const icsString = assertHasIcsString(generateIcsString({ event, status: "CONFIRMED" }));
+      expect(unfoldedLocation(icsString)).toBe("LOCATION:https://camv.co/rooms/tw-abc123XYZ?hq=true");
+    });
+
+    test("camv booking with livekit_video videoCallData -> that URL", () => {
+      const event = buildCalendarEvent({
+        uid: "abc123XYZ",
+        iCalSequence: 0,
+        attendees: [buildPerson()],
+        location: "integrations:camv",
+        videoCallData: buildVideoCallData({
+          type: "livekit_video",
+          url: "https://camv.co/rooms/tw-abc123XYZ?hq=true",
+        }),
+      });
+      const icsString = assertHasIcsString(generateIcsString({ event, status: "CONFIRMED" }));
+      expect(unfoldedLocation(icsString)).toBe("LOCATION:https://camv.co/rooms/tw-abc123XYZ?hq=true");
+    });
+
+    test("other integration key without a URL -> provider label, not the key", () => {
+      const event = buildCalendarEvent({
+        iCalSequence: 0,
+        attendees: [buildPerson()],
+        location: "integrations:zoom",
+        videoCallData: undefined,
+      });
+      const icsString = assertHasIcsString(generateIcsString({ event, status: "CONFIRMED" }));
+      expect(icsString).not.toContain("integrations:");
+      expect(unfoldedLocation(icsString)).toBe("LOCATION:Zoom");
+    });
+  });
 });

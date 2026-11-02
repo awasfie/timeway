@@ -258,6 +258,8 @@
     "SLOTS_CACHE_TTL",
     "CSP_POLICY",
     "NEXT_PUBLIC_API_V2_URL",
+    "PLAUSIBLE_HOST",
+    "PLAUSIBLE_DOMAIN",
     "NEXT_PUBLIC_WEBAPP_URL",
     "NEXT_PUBLIC_WEBSITE_URL",
     "BUILD_STANDALONE",
@@ -315,6 +317,11 @@
     "B2_BUCKET_NAME",
     "CAMV_INTERNAL_SECRET",
     "G3_TEST_SECRET"
+  ],
+  "globalPassThroughEnv": [
+    "OTEL_EXPORTER_OTLP_ENDPOINT",
+    "OTEL_METRIC_EXPORT_INTERVAL",
+    "OTEL_SERVICE_NAME"
   ],
   "tasks": {
     "@calcom/web#copy-app-store-static": {

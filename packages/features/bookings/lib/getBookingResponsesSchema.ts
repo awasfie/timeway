@@ -4,7 +4,6 @@ import { dbReadResponseSchema } from "@calcom/lib/dbReadResponseSchema";
 import logger from "@calcom/lib/logger";
 import type { eventTypeBookingFields } from "@calcom/prisma/zod-utils";
 import { bookingResponses, emailSchemaRefinement } from "@calcom/prisma/zod-utils";
-import { isValidPhoneNumber } from "libphonenumber-js/max";
 import z from "zod";
 
 type View = ALL_VIEWS | (string & {});
@@ -109,6 +108,8 @@ async function superRefineField({
   const phoneSchema = isPartialSchema
     ? z.string()
     : z.string().refine(async (val) => {
+        // Full (max) metadata on client and server; the browser fetches it only when a phone value is validated.
+        const { isValidPhoneNumber } = await import("libphonenumber-js/max");
         return isValidPhoneNumber(val);
       });
   // Tag the message with the input name so that the message can be shown at appropriate place

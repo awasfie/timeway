@@ -1,5 +1,6 @@
 import dayjs from "@calcom/dayjs";
 import { validateAndGetCorrectedUsernameInTeam } from "@calcom/features/auth/signup/utils/validateUsername";
+import { emailSchema } from "@calcom/lib/emailSchema";
 import { HttpError } from "@calcom/lib/http-error";
 import { prisma } from "@calcom/prisma";
 
@@ -10,6 +11,7 @@ export async function findTokenByToken({ token }: { token: string }) {
     },
     select: {
       id: true,
+      identifier: true,
       expires: true,
       teamId: true,
     },
@@ -23,6 +25,13 @@ export async function findTokenByToken({ token }: { token: string }) {
   }
 
   return foundToken;
+}
+
+// CC13-D2: an email invite is bound to the email it was minted for, so a forwarded link cannot be
+// redeemed by someone else. Invite-by-link tokens carry a non-email identifier and stay open by design.
+export function tokenIdentifierMatchesEmail(identifier: string, email: string) {
+  if (!emailSchema.safeParse(identifier).success) return true;
+  return identifier.trim().toLowerCase() === email.trim().toLowerCase();
 }
 
 export function throwIfTokenExpired(expires?: Date) {

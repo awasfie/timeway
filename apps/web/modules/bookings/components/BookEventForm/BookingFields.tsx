@@ -6,7 +6,7 @@ import { fieldsThatSupportLabelAsSafeHtml } from "@calcom/features/form-builder/
 import { fieldTypesConfigMap } from "@calcom/features/form-builder/fieldTypes";
 import { SystemField } from "@calcom/lib/bookings/SystemField";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
+import { appendTextToSafeHtml } from "@calcom/lib/safeHtmlClient";
 import type { RouterOutputs } from "@calcom/trpc/react";
 import { FormBuilderField } from "@calcom/web/modules/form-builder/components/FormBuilderField";
 import { useMemo, useRef } from "react";
@@ -90,12 +90,14 @@ export const BookingFields = ({
 
     const price = typeof field.price === "string" ? parseFloat(field.price) : field.price;
     const label = getPriceFormattedLabel(field.label, price);
+    const priceSuffix = label.slice(field.label.length);
 
     return {
       ...field,
       label,
+      // labelAsSafeHtml was rendered from markdown on the server; only the price text is appended here.
       ...(fieldsThatSupportLabelAsSafeHtml.includes(field.type) && field.labelAsSafeHtml
-        ? { labelAsSafeHtml: markdownToSafeHTML(label) }
+        ? { labelAsSafeHtml: appendTextToSafeHtml(field.labelAsSafeHtml, priceSuffix) }
         : { labelAsSafeHtml: undefined }),
     };
   };
