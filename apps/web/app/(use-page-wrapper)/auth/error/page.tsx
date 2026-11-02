@@ -1,13 +1,11 @@
+import { IdentityProvider } from "@calcom/prisma/enums";
+import { Button } from "@calcom/ui/components/button";
+import AuthContainer from "@components/ui/AuthContainer";
+import { XIcon } from "@coss/ui/icons";
 import type { PageProps } from "app/_types";
 import { _generateMetadata, getTranslate } from "app/_utils";
 import Link from "next/link";
 import { z } from "zod";
-
-import { IdentityProvider } from "@calcom/prisma/enums";
-import { Button } from "@calcom/ui/components/button";
-import { XIcon } from "@coss/ui/icons";
-
-import AuthContainer from "@components/ui/AuthContainer";
 
 export const generateMetadata = async () => {
   return await _generateMetadata(
@@ -42,10 +40,10 @@ const ServerPage = async ({ searchParams }: PageProps) => {
         provider === IdentityProvider.GOOGLE
           ? "Google"
           : provider === IdentityProvider.CAL
-            ? "Email and Password"
+            ? t("email_and_password")
             : provider === IdentityProvider.SAML
-              ? "SAML (like Okta)"
-              : "your original login method";
+              ? t("saml_like_okta")
+              : t("your_original_login_method");
       return t("account_managed_by_identity_provider_error", { provider: providerName });
     } else if (error === "saml-idp-not-authoritative") {
       return t("saml_idp_not_authoritative_error");

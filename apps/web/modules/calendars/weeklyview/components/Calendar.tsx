@@ -3,6 +3,7 @@ import {
   createCalendarStore,
   useCalendarStore,
 } from "@calcom/features/calendars/weeklyview/state/store";
+import { useLocale } from "@calcom/lib/hooks/useLocale";
 import classNames from "@calcom/ui/classNames";
 import type React from "react";
 import { useEffect, useMemo, useRef } from "react";
@@ -203,11 +204,12 @@ export function Calendar(props: CalendarComponentProps) {
 
 /** @todo Will be removed once we have mobile support */
 const MobileNotSupported = ({ children }: { children: React.ReactNode }) => {
+  const { t } = useLocale();
   return (
     <>
       <div className="flex h-full flex-col items-center justify-center sm:hidden">
-        <h1 className="text-2xl font-bold">Mobile not supported yet </h1>
-        <p className="text-subtle">Please use a desktop browser to view this page</p>
+        <h1 className="text-2xl font-bold">{t("mobile_not_supported_yet")}</h1>
+        <p className="text-subtle">{t("use_desktop_browser_to_view_page")}</p>
       </div>
       <div className="hidden h-full sm:block">{children}</div>
     </>
