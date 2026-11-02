@@ -1,3 +1,4 @@
+import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import process from "node:process";
 import type { LocationObject } from "@calcom/app-store/locations";
 import { privacyFilteredLocations } from "@calcom/app-store/locations";
@@ -25,18 +26,6 @@ import {
 } from "@calcom/prisma/zod-utils";
 import type { UserProfile } from "@calcom/types/UserProfile";
 
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) {
-    return true;
-  }
-  async hasPermission(..._args: unknown[]) {
-    return true;
-  }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> {
-    return [];
-  }
-}
 const getSlugOrRequestedSlug = (slug: string) => ({ slug });
 const getBookerBaseUrlSync = (_orgSlug?: string | number | null): string =>
   process.env.NEXT_PUBLIC_WEBAPP_URL || "https://app.cal.com";
@@ -541,7 +530,7 @@ export const getPublicEvent = async (
   }
   let canViewPrivateTeamMembers = false;
   if (currentUserId && event.teamId) {
-    const permissionCheckService = new PermissionCheckService();
+    const permissionCheckService = new RoleBasedPermissionCheckService();
     canViewPrivateTeamMembers = await permissionCheckService.checkPermission({
       userId: currentUserId,
       teamId: event.teamId,

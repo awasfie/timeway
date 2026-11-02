@@ -1,3 +1,4 @@
+import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import { EventTypeRepository } from "@calcom/features/eventtypes/repositories/eventTypeRepository";
 import { hasFilter } from "@calcom/features/filters/lib/hasFilter";
 import { MembershipRepository } from "@calcom/features/membership/repositories/MembershipRepository";
@@ -15,12 +16,6 @@ import { MembershipRole, SchedulingType } from "@calcom/prisma/enums";
 import { eventTypeMetaDataSchemaWithUntypedApps, teamMetadataSchema } from "@calcom/prisma/zod-utils";
 import { orderBy } from "lodash";
 
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
 const getBookerBaseUrl = async (_orgSlug?: string | number | null): Promise<string> =>
   process.env.NEXT_PUBLIC_WEBAPP_URL || "https://app.cal.com";
 const getBookerBaseUrlSync = (_orgSlug?: string | number | null): string =>
@@ -58,7 +53,7 @@ export const getEventTypesByViewer = async (user: User, filters?: Filters) => {
     shouldListUserEvents = true;
   }
 
-  const permissionCheckService = new PermissionCheckService();
+  const permissionCheckService = new RoleBasedPermissionCheckService();
   const [teamsWithEventTypeReadPermission, teamsWithEventTypeUpdatePermission] = await Promise.all([
     permissionCheckService.getTeamIdsWithPermission({
       userId: user.id,
