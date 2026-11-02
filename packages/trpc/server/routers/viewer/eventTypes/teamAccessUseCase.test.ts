@@ -1,4 +1,3 @@
-import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import {
   ORG_A,
   TEAM_A1,
@@ -6,6 +5,7 @@ import {
   twoTenantPrisma,
   USERS,
 } from "@calcom/features/membership/services/__tests__/fakeMembershipPrisma";
+import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import { describe, expect, it } from "vitest";
 import { TeamAccessUseCase } from "./teamAccessUseCase";
 

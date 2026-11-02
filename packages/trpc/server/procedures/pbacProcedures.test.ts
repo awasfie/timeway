@@ -15,7 +15,12 @@ vi.mock("../middlewares/sessionMiddleware", async () => {
   return { isAuthed: passthrough, isAdminMiddleware: passthrough, isOrgAdminMiddleware: passthrough };
 });
 
-import { ORG_A, ORG_B, TEAM_A1, USERS } from "@calcom/features/membership/services/__tests__/fakeMembershipPrisma";
+import {
+  ORG_A,
+  ORG_B,
+  TEAM_A1,
+  USERS,
+} from "@calcom/features/membership/services/__tests__/fakeMembershipPrisma";
 import { router } from "../trpc";
 import { createOrgPbacProcedure, createTeamPbacProcedure } from "./pbacProcedures";
 
@@ -58,7 +63,9 @@ describe("pbacProcedures (t_83304bed)", () => {
   });
 
   it("org procedure: denies a non-admin of the caller's org and allows its owner", async () => {
-    await expect(callerFor(USERS.teamA1Admin, ORG_A).orgUpdate()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(callerFor(USERS.teamA1Admin, ORG_A).orgUpdate()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
     await expect(callerFor(USERS.orgBOwner, ORG_A).orgUpdate()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(callerFor(USERS.orgAOwner, ORG_A).orgUpdate()).resolves.toBe(ORG_A);
     await expect(callerFor(USERS.orgBOwner, ORG_B).orgUpdate()).resolves.toBe(ORG_B);

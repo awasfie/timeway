@@ -233,7 +233,15 @@ describe("getUserEventGroups", () => {
         userId: 1,
         accepted: true,
         role: MembershipRole.MEMBER,
-        team: { id: 200, name: "Other", slug: "other", logoUrl: null, parentId: null, parent: null, metadata: {} },
+        team: {
+          id: 200,
+          name: "Other",
+          slug: "other",
+          logoUrl: null,
+          parentId: null,
+          parent: null,
+          metadata: {},
+        },
       } as never;
       vi.mocked(ProfileRepository.findByUpIdWithAuth).mockResolvedValue(mockProfile);
       mockFindAllByUpIdIncludeTeam.mockResolvedValue([membership]);

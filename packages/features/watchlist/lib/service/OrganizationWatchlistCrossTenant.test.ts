@@ -1,5 +1,9 @@
+import {
+  ORG_A,
+  twoTenantPrisma,
+  USERS,
+} from "@calcom/features/membership/services/__tests__/fakeMembershipPrisma";
 import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
-import { ORG_A, twoTenantPrisma, USERS } from "@calcom/features/membership/services/__tests__/fakeMembershipPrisma";
 import { describe, expect, it, vi } from "vitest";
 import { OrganizationWatchlistOperationsService } from "./OrganizationWatchlistOperationsService";
 import { OrganizationWatchlistQueryService } from "./OrganizationWatchlistQueryService";
@@ -28,7 +32,11 @@ describe("Organization watchlist cross-tenant (t_83304bed)", () => {
   });
 
   it("refuses an org B owner creating and deleting entries in org A", async () => {
-    const watchlistRepo = { createEntry: vi.fn(), deleteEntry: vi.fn(), findEntryWithAuditAndReports: vi.fn() };
+    const watchlistRepo = {
+      createEntry: vi.fn(),
+      deleteEntry: vi.fn(),
+      findEntryWithAuditAndReports: vi.fn(),
+    };
     const svc = new OrganizationWatchlistOperationsService({
       watchlistRepo: watchlistRepo as never,
       bookingReportRepo: {} as never,
@@ -38,7 +46,9 @@ describe("Organization watchlist cross-tenant (t_83304bed)", () => {
     await expect(
       svc.createWatchlistEntry({ userId: USERS.orgBOwner, type: "EMAIL", value: "x@example.com" } as never)
     ).rejects.toThrow();
-    await expect(svc.deleteWatchlistEntry({ userId: USERS.orgBOwner, entryId: "e1" } as never)).rejects.toThrow();
+    await expect(
+      svc.deleteWatchlistEntry({ userId: USERS.orgBOwner, entryId: "e1" } as never)
+    ).rejects.toThrow();
     expect(watchlistRepo.createEntry).not.toHaveBeenCalled();
     expect(watchlistRepo.deleteEntry).not.toHaveBeenCalled();
   });

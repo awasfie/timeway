@@ -1,9 +1,9 @@
-import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import { PrismaBookingReportRepository } from "@calcom/features/bookingReport/repositories/PrismaBookingReportRepository";
 import { moduleLoader as prismaModuleLoader } from "@calcom/features/di/modules/Prisma";
 import { moduleLoader as loggerModuleLoader } from "@calcom/features/di/shared/services/logger.service";
 import { taskerServiceModule } from "@calcom/features/di/shared/services/tasker.service";
 import { SHARED_TOKENS } from "@calcom/features/di/shared/shared.tokens";
+import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import { UserRepository } from "@calcom/features/users/repositories/UserRepository";
 import {
   createWatchlistFeature,
@@ -27,7 +27,7 @@ import { createContainer } from "@evyweb/ioctopus";
 import { watchlistModule } from "../modules/Watchlist.module";
 import { WATCHLIST_DI_TOKENS } from "../Watchlist.tokens";
 
-export const watchlistContainer= createContainer();
+export const watchlistContainer = createContainer();
 
 prismaModuleLoader.loadModule(watchlistContainer);
 loggerModuleLoader.loadModule(watchlistContainer);

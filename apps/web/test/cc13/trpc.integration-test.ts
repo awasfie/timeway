@@ -434,7 +434,10 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
       await expectUnchanged(read, async () => {
         expectDenied(
           await attempt(() =>
-            viewerB.ooo.outOfOfficeEntryDelete({ outOfOfficeUid: entry.uuid, userId: seed.A.member.id } as never)
+            viewerB.ooo.outOfOfficeEntryDelete({
+              outOfOfficeUid: entry.uuid,
+              userId: seed.A.member.id,
+            } as never)
           )
         );
       });
@@ -448,7 +451,10 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
           await attempt(() =>
             viewerB.ooo.outOfOfficeCreateOrUpdate({
               forUserId: seed.A.member.id,
-              dateRange: { startDate: new Date(Date.UTC(2031, 1, 1)), endDate: new Date(Date.UTC(2031, 1, 2)) },
+              dateRange: {
+                startDate: new Date(Date.UTC(2031, 1, 1)),
+                endDate: new Date(Date.UTC(2031, 1, 2)),
+              },
               startDateOffset: 0,
               endDateOffset: 0,
               toTeamUserId: null,

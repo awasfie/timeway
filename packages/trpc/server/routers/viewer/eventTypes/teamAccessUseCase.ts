@@ -15,7 +15,9 @@ type TeamMembershipWithTeam = Membership & {
 };
 
 export class TeamAccessUseCase {
-  constructor(private permissionCheckService: RoleBasedPermissionCheckService = new RoleBasedPermissionCheckService()) {}
+  constructor(
+    private permissionCheckService: RoleBasedPermissionCheckService = new RoleBasedPermissionCheckService()
+  ) {}
 
   async filterTeamsByEventTypeReadPermission(
     memberships: TeamMembershipWithTeam[],

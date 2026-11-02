@@ -23,7 +23,8 @@ type MembershipWhere = {
 };
 
 export function createFakeMembershipPrisma(teams: FakeTeam[], memberships: FakeMembership[]) {
-  const childrenOf = (teamId: number) => teams.filter((t) => t.parentId === teamId).map((t) => ({ id: t.id }));
+  const childrenOf = (teamId: number) =>
+    teams.filter((t) => t.parentId === teamId).map((t) => ({ id: t.id }));
   const match = (m: FakeMembership, where: MembershipWhere) => {
     if (where.userId !== undefined && m.userId !== where.userId) return false;
     if (where.accepted !== undefined && m.accepted !== where.accepted) return false;
@@ -80,7 +81,13 @@ export function twoTenantPrisma() {
     [
       { id: 1, userId: USERS.orgAOwner, teamId: ORG_A, role: "OWNER" as MembershipRole, accepted: true },
       { id: 2, userId: USERS.teamA1Admin, teamId: TEAM_A1, role: "ADMIN" as MembershipRole, accepted: true },
-      { id: 3, userId: USERS.teamA1Member, teamId: TEAM_A1, role: "MEMBER" as MembershipRole, accepted: true },
+      {
+        id: 3,
+        userId: USERS.teamA1Member,
+        teamId: TEAM_A1,
+        role: "MEMBER" as MembershipRole,
+        accepted: true,
+      },
       { id: 4, userId: USERS.orgBOwner, teamId: ORG_B, role: "OWNER" as MembershipRole, accepted: true },
       {
         id: 5,
