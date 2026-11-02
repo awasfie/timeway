@@ -77,6 +77,32 @@ stack; its next cut, the SSR title shell, is timeway#218 (draft, not deployed). 
 host (its benchmarkIndex range 2423-3270 is wider than r2's). INP RUM has no emitter. The JS 200 KB row stays a fail:
 t_3eb9a771 recorded the ratchet as the enforced gate and 200 KB as reported only, and the floor on main is 516.7.
 
+## Re-run r8 (card t_762bea7b run 6094, 2026-10-31 22:33Z), on 4c8694cf48 + #230 Worker
+
+App under test: image `poyzdsncp9jsvc3gr4hkitaf:4c8694cf48fb69a0c5e1fc10d1306e14f7ab0339` (container
+`poyzdsncp9jsvc3gr4hkitaf-20261031T190710`, healthy, re-read with `docker ps` on 62.171.141.202 on 2026-11-01),
+Coolify deployment `iosnq0d6odzjq32hueipjiwv`. 4c8694cf48 is docs-only over efcebac374 (#234, WC-TW-6m-2). Edge
+Worker `timeway-booking-edge` v4 (`x-tw-defer: 1`). Dubai host AS15802, direct to prod; Lighthouse runs gated on
+1-min load < 1.9 before and < 2.1 after (1 run dropped at 2.82). Raw numbers: `evidence/2026-10-31-wc-tw-6d-r8.json`.
+
+| region | metric | gate | p75 / value | samples | run id / artifact | deploy SHA | result |
+| --- | --- | --- | ---: | ---: | --- | --- | --- |
+| cairo | TTFB (after TLS) | p75 < 500 ms | 76 ms (p50 72, max 314) | 27 | Globalping 2026-10-31T22:33Z, 9 x 3 probes, 0 failures; r8 evidence | 4c8694cf48 + Worker | PASS |
+| riyadh | TTFB (after TLS) | p75 < 500 ms | 99.5 ms (p50 96, max 111) | 27 | same | 4c8694cf48 + Worker | PASS |
+| dubai | TTFB (after TLS) | p75 < 500 ms | 160.5 ms all probes (p50 147, max 1069; AS9009, AS136258, AS154177) | 27 | same | 4c8694cf48 + Worker | PASS (no exclusion) |
+| dubai (prod) | LCP, Lighthouse 13.5.0 mobile simulated slow 4G | p75 < 2500 ms (target 1500) | p75 1968.75 ms, median 1964.5 (1959-1971) | 10 | r8 evidence (edge HIT 6 / STALE 3 / MISS 1) | 4c8694cf48 + Worker | PASS (target 1500 missed) |
+| dubai (prod) | INP (lab TBT proxy) | < 200 ms | 87 ms median (65-142) | 10 | r8 evidence, benchmarkIndex 3674-3864 | 4c8694cf48 + Worker | PASS |
+| all | INP (RUM, Plausible) | < 200 ms | 48 ms (good) | 1 | ClickHouse `events_v2` site 1, `name='web_vital'`, last row 2026-10-29 09:42Z | 819bf85549 | PASS (n=1) |
+| prod | booking-route first-load JS | <= 200 KB gz | 542.4 KB gz over the 41 chunk scripts in the served HTML (re-fetched 2026-11-01, gzip); Lighthouse counts 49 scripts, 0 before LCP | 1 + 10 | r8 evidence; live fetch | 4c8694cf48 | FAIL, fix card t_2018146b (WC-TW-6n) |
+| dubai | slot API (booker's warm getSchedule) | p95 < 800 ms | 352 ms (p50 305, max 369); cold 356 | 30 + 30 | `scripts/perf/slot-api.mjs`, r8 evidence | 4c8694cf48 | PASS |
+| any org | per-tenant RUM in Plausible | visible for >= 1 org | org `27eb38bb`: booking_page_view 6, web_vital 2, booking_confirmed 1 (7 days) | 1 org | ClickHouse `events_v2` site 1, `meta.org` | 4c8694cf48 | PASS |
+
+r8 verdict: **not met**, 8 of 9 rows pass. #234 (WC-TW-6m) closed the TBT row: 87 ms median at low host load, down
+from r7's 258.5 (the 6m-3 after-number on efcebac374 was 186.5). LCP holds at ~1.97 s in every run. The one row left is
+the WC-TW-6 JS budget: 542 KB gz live against 200 KB. t_3eb9a771 kept the ratchet as the per-PR gate and the 200 KB as
+reported only; that decision governs CI, not this proof, whose gate is the Bible line (JS <= 200 KB gz). The cut from
+~542 to 200 KB gz is fix card WC-TW-6n. This card re-runs r9 (JS row plus a TTFB/LCP/TBT spot check) after it lands.
+
 ## Re-run r7 (card t_762bea7b run 6036, 2026-10-31 14:37Z), on c1d7d6cd8e + #230 Worker
 
 App under test: image `poyzdsncp9jsvc3gr4hkitaf:c1d7d6cd8e4f8fbda2b8841c055559a2ad7aca97` (container
