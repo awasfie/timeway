@@ -464,5 +464,46 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
         );
       });
     });
+
+    it("viewer.bookings.getWrongAssignmentReports (createTeamPbacProcedure): B gets FORBIDDEN on A's team", async () => {
+      const input = { teamId: seed.A.team.id, status: "pending", limit: 10, offset: 0 } as never;
+      const denied = await attempt(() => viewerB.bookings.getWrongAssignmentReports(input));
+      expect(denied).toMatchObject({ kind: "threw", code: "FORBIDDEN" });
+      const viewerA = await viewerFor(seed.A.owner.id);
+      expect(await attempt(() => viewerA.bookings.getWrongAssignmentReports(input))).toMatchObject({
+        kind: "returned",
+      });
+    });
+
+    // viewer.public.event reads the user from the request session (getSession(ctx.req)), which this in-process
+    // harness has no request for, so the probe calls the route's handler with the session user id it would pass.
+    it("viewer.public.event: B (signed in) cannot see the members of A's private team", async () => {
+      const fx = await mkEventType(seed.A);
+      await prisma.host.create({ data: { userId: seed.A.member.id, eventTypeId: fx.id } });
+      const { slug } = await prisma.eventType.findUniqueOrThrow({
+        where: { id: fx.id },
+        select: { slug: true },
+      });
+      await prisma.team.update({ where: { id: seed.A.team.id }, data: { isPrivate: true } });
+      try {
+        const { default: eventHandler } = await import(
+          "@calcom/trpc/server/routers/publicViewer/event.handler"
+        );
+        const input = {
+          username: seed.A.team.slug,
+          eventSlug: slug,
+          isTeamEvent: true,
+          org: null,
+          fromRedirectOfNonOrgLink: false,
+        };
+        const asB = await eventHandler({ input, userId: seed.B.owner.id });
+        expect(asB, "A's team event must still resolve").not.toBeNull();
+        expect(asB?.subsetOfUsers).toEqual([]);
+        const asA = await eventHandler({ input, userId: seed.A.owner.id });
+        expect(asA?.subsetOfUsers.length).toBeGreaterThan(0);
+      } finally {
+        await prisma.team.update({ where: { id: seed.A.team.id }, data: { isPrivate: false } });
+      }
+    });
   });
 });
