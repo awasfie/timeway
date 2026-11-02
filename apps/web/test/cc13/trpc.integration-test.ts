@@ -398,4 +398,65 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
       });
     });
   });
+
+  // t_83304bed: the always-true PermissionCheckService stubs were replaced with RoleBasedPermissionCheckService.
+  describe("PermissionCheckService stubs (t_83304bed)", () => {
+    it("viewer.eventTypesHeavy.create: B cannot create a team event type on A's team", async () => {
+      const slug = `${tag(seed.A)}-hijack${++n}`;
+      const read = () => prisma.eventType.count({ where: { teamId: seed.A.team.id } });
+      await expectUnchanged(read, async () => {
+        expectDenied(
+          await attempt(() =>
+            viewerB.eventTypesHeavy.create({
+              title: "hijacked by B",
+              slug,
+              length: 30,
+              teamId: seed.A.team.id,
+              schedulingType: "ROUND_ROBIN",
+            } as never)
+          )
+        );
+      });
+      expect(await prisma.eventType.findFirst({ where: { slug } })).toBeNull();
+    });
+
+    it("viewer.ooo.outOfOfficeEntryDelete: B (owner of B) cannot delete an OOO entry of A's member", async () => {
+      const entry = await prisma.outOfOfficeEntry.create({
+        data: {
+          uuid: randomUUID(),
+          start: new Date(Date.UTC(2031, 0, 1)),
+          end: new Date(Date.UTC(2031, 0, 2)),
+          userId: seed.A.member.id,
+        },
+        select: { id: true, uuid: true },
+      });
+      const read = () => prisma.outOfOfficeEntry.findUnique({ where: { id: entry.id } });
+      await expectUnchanged(read, async () => {
+        expectDenied(
+          await attempt(() =>
+            viewerB.ooo.outOfOfficeEntryDelete({ outOfOfficeUid: entry.uuid, userId: seed.A.member.id } as never)
+          )
+        );
+      });
+      await prisma.outOfOfficeEntry.delete({ where: { id: entry.id } });
+    });
+
+    it("viewer.ooo.outOfOfficeCreateOrUpdate: B cannot create an OOO entry for A's member", async () => {
+      const read = () => prisma.outOfOfficeEntry.count({ where: { userId: seed.A.member.id } });
+      await expectUnchanged(read, async () => {
+        expectDenied(
+          await attempt(() =>
+            viewerB.ooo.outOfOfficeCreateOrUpdate({
+              forUserId: seed.A.member.id,
+              dateRange: { startDate: new Date(Date.UTC(2031, 1, 1)), endDate: new Date(Date.UTC(2031, 1, 2)) },
+              startDateOffset: 0,
+              endDateOffset: 0,
+              toTeamUserId: null,
+              reasonId: 1,
+            } as never)
+          )
+        );
+      });
+    });
+  });
 });
