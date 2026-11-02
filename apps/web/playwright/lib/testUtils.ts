@@ -218,6 +218,15 @@ export const bookTimeSlot = async (
   });
 };
 
+// The booker renders the day grid (all cells disabled, aria-busy) while getSchedule is in flight,
+// so a visible day does not mean availability has loaded; count enabled days only after this.
+export async function expectBookerDaysLoaded(page: Page) {
+  await expect(page.getByTestId("day").nth(0)).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('[aria-busy="true"]:has([data-testid="day"])')).toHaveCount(0, {
+    timeout: 15_000,
+  });
+}
+
 export async function expectSlotNotAllowedToBook(page: Page) {
   await page.waitForResponse((response) => {
     return response.url().includes("/slots/isAvailable");
