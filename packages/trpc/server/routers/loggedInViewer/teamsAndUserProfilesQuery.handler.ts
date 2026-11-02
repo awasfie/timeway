@@ -1,3 +1,4 @@
+import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import { getPlaceholderAvatar } from "@calcom/lib/defaultAvatarImage";
 import { getUserAvatarUrl } from "@calcom/lib/getAvatarUrl";
 import type { PrismaClient } from "@calcom/prisma";
@@ -8,13 +9,6 @@ import { TRPCError } from "@trpc/server";
 import type { TTeamsAndUserProfilesQueryInputSchema } from "./teamsAndUserProfilesQuery.schema";
 
 type PermissionString = string;
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
-
 type TeamsAndUserProfileOptions = {
   ctx: {
     user: NonNullable<TrpcSessionUser>;
@@ -104,7 +98,7 @@ export const teamsAndUserProfilesQuery = async ({ ctx, input }: TeamsAndUserProf
   // Filter teams based on permission if provided
   let hasPermissionForFiltered: boolean[] = [];
   if (input?.withPermission) {
-    const permissionService = new PermissionCheckService();
+    const permissionService = new RoleBasedPermissionCheckService(prisma);
     const { permission, fallbackRoles } = input.withPermission;
 
     const permissionChecks = await Promise.all(
