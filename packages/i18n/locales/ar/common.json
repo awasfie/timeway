@@ -4666,5 +4666,9 @@
   "custom_domain_error": "خطأ",
   "custom_domain_polling": "نتحقق كل 30 ثانية لمدة تصل إلى 10 دقائق.",
   "custom_domain_check_again": "تحقق مرة أخرى",
+  "org_landing_book_meeting": "احجز اجتماعًا",
+  "org_landing_team_links": "حجوزات الفريق",
+  "org_landing_empty": "لا توجد صفحات حجز عامة بعد.",
+  "org_landing_duration": "{{count}} دقيقة",
   "ADD_NEW_STRINGS_ABOVE_THIS_LINE_TO_PREVENT_MERGE_CONFLICTS": "↑↑↑↑↑↑↑↑↑↑↑↑↑ أضف السلاسل الجديدة أعلاه هنا ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑"
 }
