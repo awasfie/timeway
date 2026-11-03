@@ -2,6 +2,7 @@ name: Conformance soak image
 # WC-TW-4b: prove packages/conformance/Dockerfile builds and the bundled runner starts (report on an empty volume).
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]  # CI-COST-2: ready_for_review re-runs the full suite on the head SHA
     paths:
       - "packages/conformance/**"
       - ".github/workflows/conformance-image.yml"
@@ -10,10 +11,19 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  # CI-COST-1 (t_2d660e6e): a newer push to the same PR or non-main branch cancels the superseded run.
+  # main, tags, schedule, workflow_dispatch and merge_group get a per-run group (github.run_id): never queued
+  # behind another run, never cancelled.
+  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main')) && format('{0}-{1}', github.event_name, github.event.pull_request.number || github.ref) || github.run_id }}
+  cancel-in-progress: ${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main')) }}
+
 jobs:
   docker-build:
+    # CI-COST-2 (t_9b638c09): full job — runs on ready PRs, main, merge_group, schedule, dispatch; not on drafts or branch pushes.
+    if: ${{ github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
     name: conformance docker build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -39,3 +49,23 @@ jobs:
           test "$code" = 1
       - name: Image metadata
         run: docker image inspect timeway-soak:ci --format '{{.Id}} {{json .Config.Volumes}} {{json .Config.Entrypoint}}'
+
+  # CI-COST-2 (t_9b638c09): one honest check per run. On a ready PR, main, merge_group, schedule or dispatch it
+  # fails unless every full job concluded `success` (a job skipped by `if:` fails it). It is skipped on drafts and
+  # branch pushes, and its name carries the event, so a skipped push/draft run never shadows the PR result.
+  full-suite-gate:
+    name: Full suite gate (${{ github.event_name }})
+    needs: [docker-build]
+    if: ${{ always() && github.event.pull_request.draft != true && (github.event_name != 'push' || github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Every full job ran and passed on this head
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key)=\(.value.result)"'
+          bad=$(echo "$NEEDS" | jq -r '[to_entries[] | select(.value.result != "success") | .key] | join(",")')
+          if [ -n "$bad" ]; then echo "::error::full suite incomplete on $HEAD (not success: $bad)"; exit 1; fi
+          echo "full suite green on $HEAD"

@@ -11,6 +11,13 @@ RUN npm install --no-save --no-audit --no-fund esbuild@0.25.12 \
        --outdir=dist --out-extension:.js=.mjs
 
 FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+# IMGSCAN-1026-B (CC-93): same pattern as the timeway tzbase stage. `apt-get upgrade` lands gnutls/perl on the
+# security revisions published at build time; npm/npx are removed because the runner is a self-contained bundle
+# started by `node` and npm's bundled tar was a CRITICAL finding.
+RUN apt-get update \
+  && apt-get upgrade -y \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 ENV NODE_ENV=production SOAK_DIR=/data/soak
 WORKDIR /app
 COPY --from=build /build/dist ./dist

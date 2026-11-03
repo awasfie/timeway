@@ -1,10 +1,17 @@
 // This file configures the initialization of Sentry on the client.
 // The added config here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
-import * as Sentry from "@sentry/nextjs";
 import { initBotId } from "botid/client/core";
 
-if (process.env.NODE_ENV === "production") {
+type SentryModule = typeof import("@sentry/nextjs");
+
+// @sentry/nextjs is ~48 KB gz; a static import put it on the public booking page's first load
+// (WC-TW-6c-6). With no DSN nothing is loaded; with a DSN it loads once the browser is idle, so
+// errors thrown before that are not reported (accepted on the card).
+let sentry: SentryModule | undefined;
+
+function initSentry(Sentry: SentryModule) {
+  sentry = Sentry;
   Sentry.init({
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN_CLIENT,
 
@@ -44,10 +51,20 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+if (
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PUBLIC_SENTRY_DSN_CLIENT &&
+  typeof window !== "undefined"
+) {
+  const load = () => {
+    void import("@sentry/nextjs").then(initSentry).catch(() => undefined);
+  };
+  if (typeof window.requestIdleCallback === "function") window.requestIdleCallback(load, { timeout: 5000 });
+  else window.setTimeout(load, 2000);
+}
+
 export function onRouterTransitionStart(url: string, navigationType: "push" | "replace" | "traverse") {
-  if (process.env.NODE_ENV === "production") {
-    Sentry.captureRouterTransitionStart(url, navigationType);
-  }
+  sentry?.captureRouterTransitionStart(url, navigationType);
 }
 
 if (

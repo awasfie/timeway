@@ -1,0 +1,55 @@
+# promtool test rules timeway-slo.rules.test.yml
+rule_files: [timeway-slo.rules.yml]
+evaluation_interval: 30s
+tests:
+  # Healthy: no alert.
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="timeway-blackbox",product="timeway",target="a"}'
+        values: '1x240'
+      - series: 'probe_success{job="timeway-blackbox",product="timeway",target="b"}'
+        values: '1x240'
+    alert_rule_test:
+      - { eval_time: 2h, alertname: TimewayBurnRatePage, exp_alerts: [] }
+      - { eval_time: 2h, alertname: TimewayBurnRateTicket, exp_alerts: [] }
+      - { eval_time: 2h, alertname: TimewayProbeMissing, exp_alerts: [] }
+  # 6-minute full outage after 1 h healthy: page fires during the outage.
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="timeway-blackbox",product="timeway",target="a"}'
+        values: '1x120 0x12 1x60'
+      - series: 'probe_success{job="timeway-blackbox",product="timeway",target="b"}'
+        values: '1x120 0x12 1x60'
+    alert_rule_test:
+      - eval_time: 65m
+        alertname: TimewayBurnRatePage
+        exp_alerts:
+          - exp_labels: { severity: page, slo: timeway-availability-99.5, product: timeway, instance: timeway }
+            exp_annotations: { summary: "timeway: error budget burning >= 5x over 1 h (1h=8.333%) - check https://timeway.co/api/version and https://status.spenai.net" }
+      # Short window clears 5 min after recovery even though the 1 h window is still high.
+      - { eval_time: 80m, alertname: TimewayBurnRatePage, exp_alerts: [] }
+  # One probe failing 1 in 50 for 7 h (1 % product error, 2x budget): ticket, no page.
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="timeway-blackbox",product="timeway",target="a"}'
+        values: '1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0'
+      - series: 'probe_success{job="timeway-blackbox",product="timeway",target="b"}'
+        values: '1x850'
+    alert_rule_test:
+      - { eval_time: 7h, alertname: TimewayBurnRatePage, exp_alerts: [] }
+      - eval_time: 7h
+        alertname: TimewayBurnRateTicket
+        exp_alerts:
+          - exp_labels: { severity: ticket, slo: timeway-availability-99.5, product: timeway, instance: timeway }
+            exp_annotations: { summary: "timeway: error budget burning >= 1x over 6 h (6h=0.9722%)" }
+  # Exporter gone: ProbeMissing pages after 10 min.
+  - interval: 30s
+    input_series:
+      - series: 'up{job="other"}'
+        values: '1x40'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: TimewayProbeMissing
+        exp_alerts:
+          - exp_labels: { severity: page, instance: timeway, product: timeway, job: timeway-blackbox }
+            exp_annotations: { summary: "timeway: no blackbox probe data for 10m (g3-blackbox-timeway down or scrape job gone) - monitoring is blind" }

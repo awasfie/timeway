@@ -1111,6 +1111,39 @@ describe("getBookingResponsesSchema", () => {
   });
 
   describe("Field Type: phone", () => {
+    // Validator is lazy-loaded (libphonenumber-js/max); EG, SA and AE mobiles must still pass, short ones fail.
+    const phoneSchema = () =>
+      getBookingResponsesSchema({
+        bookingFields: [
+          { name: "name", type: "name", required: true },
+          { name: "email", type: "email", required: true },
+          { name: "testPhone", type: "phone", required: true },
+        ] as z.infer<typeof eventTypeBookingFields> & z.BRAND<"HAS_SYSTEM_FIELDS">,
+        view: "ALL_VIEWS",
+      });
+    const menaMobiles: [country: string, valid: string, truncated: string][] = [
+      ["EG", "+201001234567", "+20100123"],
+      ["SA", "+966501234567", "+96650123"],
+      ["AE", "+971501234567", "+97150123"],
+    ];
+    for (const [country, valid, truncated] of menaMobiles) {
+      test(`should accept a valid ${country} mobile number`, async ({}) => {
+        const parsedResponses = await phoneSchema().safeParseAsync({
+          email: "test@test.com",
+          name: "test",
+          testPhone: valid,
+        });
+        expectResponsesToBe(parsedResponses, { email: "test@test.com", name: "test", testPhone: valid });
+      });
+      test(`should reject a truncated ${country} mobile number`, async ({}) => {
+        const parsedResponses = await phoneSchema().safeParseAsync({
+          email: "test@test.com",
+          name: "test",
+          testPhone: truncated,
+        });
+        expect(parsedResponses.success).toBe(false);
+      });
+    }
     test(`should fail parsing if invalid phone provided`, async ({}) => {
       const schema = getBookingResponsesSchema({
         bookingFields: [

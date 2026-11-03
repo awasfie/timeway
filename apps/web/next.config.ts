@@ -1,9 +1,11 @@
+import process from "node:process";
+import i18nConfig from "@calcom/i18n/next-i18next.config";
 import { withBotId } from "botid/next/config";
 import { config as dotenvConfig } from "dotenv";
 import type { NextConfig } from "next";
 import type { RouteHas } from "next/dist/lib/load-custom-routes";
 import { withAxiom } from "next-axiom";
-import i18nConfig from "@calcom/i18n/next-i18next.config";
+import { staticShellHeaders } from "./lib/edgeCacheHeaders";
 import packageJson from "./package.json";
 import {
   nextJsOrgRewriteConfig,
@@ -11,6 +13,7 @@ import {
   orgUserTypeEmbedRoutePath,
   orgUserTypeRoutePath,
 } from "./pagesAndRewritePaths";
+import { getPlausibleRewrites } from "./plausibleRewrites";
 import { TRIGGER_VERSION } from "./trigger.version"; // adjust path as needed
 
 dotenvConfig({ path: "../../.env" });
@@ -258,7 +261,12 @@ const nextConfig = (phase: string): NextConfig => {
     images: {
       unoptimized: true,
     },
-    turbopack: {},
+    turbopack: {
+      // Client bundles get a console-only tslog (packages/lib/tslog.browser.ts); servers keep the real one.
+      resolveAlias: {
+        tslog: { browser: "@calcom/lib/tslog.browser" },
+      },
+    },
     async rewrites() {
       const { orgSlug } = nextJsOrgRewriteConfig;
       const beforeFiles = [
@@ -306,6 +314,7 @@ const nextConfig = (phase: string): NextConfig => {
           source: "/login",
           destination: "/auth/login",
         },
+        ...getPlausibleRewrites(process.env.PLAUSIBLE_HOST),
         ...(isOrganizationsEnabled
           ? [
               orgDomainMatcherConfig.root
@@ -465,6 +474,7 @@ const nextConfig = (phase: string): NextConfig => {
             },
           ],
         },
+        ...staticShellHeaders(),
         ...(isOrganizationsEnabled
           ? [
               orgDomainMatcherConfig.root

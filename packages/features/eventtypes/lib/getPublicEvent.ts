@@ -6,6 +6,7 @@ import { eventTypeMetaDataSchemaWithTypedApps } from "@calcom/app-store/zod-util
 import dayjs from "@calcom/dayjs";
 import { getBookingFieldsWithSystemFields } from "@calcom/features/bookings/lib/getBookingFields";
 import { getDefaultEvent, getUsernameList } from "@calcom/features/eventtypes/lib/defaultEvents";
+import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import { UserRepository } from "@calcom/features/users/repositories/UserRepository";
 import { getOrgOrTeamAvatar, getPlaceholderAvatar } from "@calcom/lib/defaultAvatarImage";
 import { getUserAvatarUrl } from "@calcom/lib/getAvatarUrl";
@@ -13,7 +14,7 @@ import { isRecurringEvent, parseRecurringEvent } from "@calcom/lib/isRecurringEv
 import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 import type { PrismaClient } from "@calcom/prisma";
 import type { Prisma, Team, User as UserType } from "@calcom/prisma/client";
-import { MembershipRole } from "@calcom/prisma/enums";
+import { EventTypeAutoTranslatedField, MembershipRole } from "@calcom/prisma/enums";
 import type { BookerLayoutSettings } from "@calcom/prisma/zod-utils";
 import {
   BookerLayouts,
@@ -25,18 +26,6 @@ import {
 } from "@calcom/prisma/zod-utils";
 import type { UserProfile } from "@calcom/types/UserProfile";
 
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) {
-    return true;
-  }
-  async hasPermission(..._args: unknown[]) {
-    return true;
-  }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> {
-    return [];
-  }
-}
 const getSlugOrRequestedSlug = (slug: string) => ({ slug });
 const getBookerBaseUrlSync = (_orgSlug?: string | number | null): string =>
   process.env.NEXT_PUBLIC_WEBAPP_URL || "https://app.cal.com";
@@ -70,6 +59,7 @@ const userSelect = {
 export const getPublicEventSelect = (fetchAllUsers: boolean) => {
   return {
     id: true,
+    twOrgId: true,
     title: true,
     description: true,
     interfaceLanguage: true,
@@ -305,8 +295,7 @@ export const getPublicEvent = async (
     // this reason (sortUsersByDynamicList in getLocationValuesForDb.ts) — without the same sort
     // here, the booking page can advertise a different location than the one actually booked.
     const users = [...usersInOrgContext].sort(
-      (a, b) =>
-        usernameList.indexOf(a.username ?? "") - usernameList.indexOf(b.username ?? "")
+      (a, b) => usernameList.indexOf(a.username ?? "") - usernameList.indexOf(b.username ?? "")
     );
 
     const defaultEvent = getDefaultEvent(eventSlug);
@@ -348,6 +337,7 @@ export const getPublicEvent = async (
 
     return {
       ...defaultEvent,
+      description: markdownToSafeHTML(defaultEvent.description),
       bookingFields: getBookingFieldsWithSystemFields({ ...defaultEvent, disableBookingTitle }),
       // Only return fields consumed by the booker.
       subsetOfUsers: users.map((user) => ({
@@ -541,7 +531,7 @@ export const getPublicEvent = async (
   }
   let canViewPrivateTeamMembers = false;
   if (currentUserId && event.teamId) {
-    const permissionCheckService = new PermissionCheckService();
+    const permissionCheckService = new RoleBasedPermissionCheckService();
     canViewPrivateTeamMembers = await permissionCheckService.checkPermission({
       userId: currentUserId,
       teamId: event.teamId,
@@ -567,6 +557,7 @@ export const getPublicEvent = async (
     ...eventWithUserProfiles,
     bookerLayouts: bookerLayoutsSchema.parse(eventMetaData?.bookerLayouts || null),
     description: markdownToSafeHTML(eventWithUserProfiles.description),
+    fieldTranslations: descriptionTranslationsToSafeHTML(eventWithUserProfiles.fieldTranslations),
     metadata: eventMetaData,
     customInputs: customInputSchema.array().parse(event.customInputs || []),
     locations: privacyFilteredLocations((eventWithUserProfiles.locations || []) as LocationObject[]),
@@ -613,6 +604,20 @@ export const getPublicEvent = async (
 };
 
 const eventData = getPublicEventSelect(true);
+
+/**
+ * The booker renders translated descriptions with dangerouslySetInnerHTML, so they get the same
+ * server-side markdown rendering as `description`; the client bundle never ships markdown-it.
+ */
+export function descriptionTranslationsToSafeHTML<T extends { field: string; translatedText: string }>(
+  translations: T[]
+): T[] {
+  return translations.map((translation) =>
+    translation.field === EventTypeAutoTranslatedField.DESCRIPTION
+      ? { ...translation, translatedText: markdownToSafeHTML(translation.translatedText) }
+      : translation
+  );
+}
 
 type Event = Prisma.EventTypeGetPayload<{ select: typeof eventData }>;
 
@@ -774,6 +779,7 @@ export const processEventDataShared = async ({
     ...eventData,
     bookerLayouts: bookerLayoutsSchema.parse(metadata?.bookerLayouts || null),
     description: markdownToSafeHTML(eventData.description),
+    fieldTranslations: descriptionTranslationsToSafeHTML(eventData.fieldTranslations),
     metadata,
     customInputs: customInputSchema.array().parse(eventData.customInputs || []),
     locations: privacyFilteredLocations((eventData.locations || []) as LocationObject[]),

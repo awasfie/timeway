@@ -50,7 +50,9 @@ vi.mock("@calcom/features/auth/signup/utils/validateUsername", () => ({
 }));
 vi.mock("@calcom/features/auth/signup/utils/organization", () => ({ joinAnyChildTeamOnOrgInvite: vi.fn() }));
 vi.mock("@calcom/features/auth/signup/utils/prefillAvatar", () => ({ prefillAvatar: vi.fn() }));
-vi.mock("@calcom/features/auth/signup/utils/token", () => ({
+vi.mock("@calcom/features/auth/signup/utils/token", async (importOriginal) => ({
+  tokenIdentifierMatchesEmail: (await importOriginal<typeof import("@calcom/features/auth/signup/utils/token")>())
+    .tokenIdentifierMatchesEmail,
   findTokenByToken: (...args: unknown[]) => mockFindTokenByToken(...args),
   throwIfTokenExpired: vi.fn(),
   validateAndGetCorrectedUsernameForTeam: (...args: unknown[]) =>
@@ -72,4 +74,4 @@ runP2002TestSuite("selfHostedHandler", callHandler, () => {
   mockValidateAndGetCorrectedUsernameForTeam.mockResolvedValue("testuser");
   prismaMock.team.findUnique.mockResolvedValue(createMockTeam() as never);
   prismaMock.verificationToken.delete.mockResolvedValue({} as never);
-});
+}, (identifier) => mockFindTokenByToken.mockResolvedValue(createMockFoundToken({ identifier })));

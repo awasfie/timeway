@@ -4,7 +4,7 @@
     "tenantFields": ["organizationId", "teamId", "orgId", "twOrgId"],
     "roots": ["Organization", "Team"]
   },
-  "count": 45,
+  "count": 46,
   "models": [
     {
       "model": "AccessCode",
@@ -18,6 +18,19 @@
         }
       ],
       "nullable": true
+    },
+    {
+      "model": "ActivationEvent",
+      "table": "tw_activation_event",
+      "root": false,
+      "tenantFields": [
+        {
+          "name": "twOrgId",
+          "type": "String",
+          "nullable": false
+        }
+      ],
+      "nullable": false
     },
     {
       "model": "Agent",

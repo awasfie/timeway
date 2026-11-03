@@ -1,4 +1,3 @@
-import { Timezone as PlatformTimezoneSelect } from "@calcom/atoms/timezone";
 import dayjs from "@calcom/dayjs";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import type { Timezone } from "@calcom/features/bookings/Booker/types";
@@ -27,6 +26,9 @@ type TimezoneSelectProps = Omit<
 > & {
   timeZones?: Timezone[];
 };
+
+// Lazy so the platform atoms HTTP client (axios, which pulls the Buffer polyfill) stays off the web booker's first load.
+const PlatformTimezoneSelect: ComponentType<TimezoneSelectProps> = dynamic<TimezoneSelectProps>(() => import("@calcom/atoms/timezone").then((mod) => mod.Timezone));
 
 const WebTimezoneSelect: ComponentType<TimezoneSelectProps> = dynamic(
   () => import("@calcom/web/modules/timezone/components/TimezoneSelect").then((mod) => mod.TimezoneSelect),

@@ -20,6 +20,17 @@ describe("getCalendarLinks", () => {
     expect(l.outlook).toContain("startdt=2026-10-18T08%3A00%3A00.000Z");
     expect(l.ics).toBe("https://timeway.co/api/ics/abcDEF1234567890");
   });
+  it("camv booking without videoCallData -> camv room URL in Google and Outlook links", () => {
+    const camv = "https://camv.co/rooms/tw-abcDEF1234567890?hq=true";
+    const l = getCalendarLinks({ ...ev, location: "integrations:camv", videoCallData: undefined });
+    for (const url of [l.google, l.outlook]) {
+      const q = new URL(url).searchParams;
+      expect(q.get("location")).toBe(camv);
+      expect(decodeURIComponent(url)).not.toContain("integrations:");
+    }
+    expect(new URL(l.google).searchParams.get("details")).toBe(`Join: ${camv}`);
+    expect(new URL(l.outlook).searchParams.get("body")).toBe(`Join: ${camv}`);
+  });
   it("omits .ics without uid", () => {
     expect(getCalendarLinks({ ...ev, uid: undefined }).ics).toBeNull();
   });

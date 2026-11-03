@@ -3,20 +3,23 @@ on:
   pull_request_target:
   workflow_dispatch:
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # CI-COST-1 (t_2d660e6e): a newer push to the same PR or non-main branch cancels the superseded run.
+  # main, tags, schedule, workflow_dispatch and merge_group get a per-run group (github.run_id): never queued
+  # behind another run, never cancelled.
+  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main')) && format('{0}-{1}', github.event_name, github.event.pull_request.number || github.ref) || github.run_id }}
+  cancel-in-progress: ${{ (github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main')) }}
 jobs:
   labeler:
     permissions:
       contents: read
       pull-requests: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/labeler@v5
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
   apply-labels-from-issue:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: none

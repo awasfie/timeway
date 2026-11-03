@@ -7,7 +7,6 @@ import logger from "@calcom/lib/logger";
 import { BookingStatus } from "@calcom/prisma/enums";
 import type { Ensure, Optional } from "@calcom/types/utils";
 import type { TFunction } from "i18next";
-import { isValidPhoneNumber } from "libphonenumber-js/max";
 import { z } from "zod";
 
 import type { EventLocationTypeFromAppMeta } from "../types/App";
@@ -519,67 +518,4 @@ export const isAttendeeInputRequired = (locationType: string) => {
     return false;
   }
   return location.attendeeInputType;
-};
-
-export const locationsResolver = (t: TFunction) => {
-  return z
-    .array(
-      z
-        .object({
-          type: z.string(),
-          address: z.string().optional(),
-          link: z.string().url().optional(),
-          phone: z
-            .string()
-            .refine((val) => isValidPhoneNumber(val))
-            .optional(),
-          hostPhoneNumber: z
-            .string()
-            .refine((val) => isValidPhoneNumber(val))
-            .optional(),
-          displayLocationPublicly: z.boolean().optional(),
-          credentialId: z.number().optional(),
-          teamName: z.string().optional(),
-        })
-        .passthrough()
-        .superRefine((val, ctx) => {
-          if (val?.link) {
-            const link = val.link;
-            const eventLocationType = getLocationByType(val.type);
-            if (
-              eventLocationType &&
-              !eventLocationType.default &&
-              eventLocationType.linkType === "static" &&
-              eventLocationType.urlRegExp
-            ) {
-              const valid = z.string().regex(new RegExp(eventLocationType.urlRegExp)).safeParse(link).success;
-
-              if (!valid) {
-                const sampleUrl = eventLocationType.organizerInputPlaceholder;
-                ctx.addIssue({
-                  code: z.ZodIssueCode.custom,
-                  path: [eventLocationType?.defaultValueVariable ?? "link"],
-                  message: t("invalid_url_error_message", {
-                    label: eventLocationType.label,
-                    sampleUrl: sampleUrl ?? "https://cal.com",
-                  }),
-                });
-              }
-              return;
-            }
-
-            const valid = z.string().url().optional().safeParse(link).success;
-
-            if (!valid) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: [eventLocationType?.defaultValueVariable ?? "link"],
-                message: `Invalid URL`,
-              });
-            }
-          }
-          return;
-        })
-    )
-    .optional();
 };
