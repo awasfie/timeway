@@ -270,6 +270,11 @@ function icsProp(ics: string, name: string): string | undefined {
   return m?.[2]?.trim();
 }
 
+function vevent(ics: string): string {
+  const m = /BEGIN:VEVENT[\s\S]*?END:VEVENT/i.exec(ics);
+  return m ? m[0] : ics;
+}
+
 type Invite = {
   imapUid: number;
   date: string;
@@ -305,7 +310,8 @@ function parseInvite(imapUid: number, raw: string): Invite {
     // RFC 5545 3.8.7.4: an absent SEQUENCE means 0.
     sequence: ics ? Number(icsProp(ics, "SEQUENCE") ?? 0) : undefined,
     organizer,
-    dtstart: icsProp(ics, "DTSTART"),
+    // VTIMEZONE STANDARD/DAYLIGHT blocks carry their own DTSTART lines ahead of the VEVENT.
+    dtstart: icsProp(vevent(ics), "DTSTART"),
     partKinds: cal.map((c) => c.ctype),
     auth: {
       // DKIM must be signed by the sending domain itself (aligned), not only by the ESP.
@@ -662,6 +668,15 @@ function selftest(): void {
     "neg: lookalike notify.timeway.co.example.net not aligned",
     !lookalike.auth.dkim && !lookalike.auth.spf && !lookalike.auth.dmarc
   );
+
+  const withTz = parseInvite(
+    202,
+    readFileSync(join(dir, "reschedule.eml"), "latin1").replace(
+      "BEGIN:VEVENT",
+      "BEGIN:VTIMEZONE\r\nTZID:Europe/London\r\nBEGIN:STANDARD\r\nDTSTART:19700101T000000\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT"
+    )
+  );
+  check("DTSTART read from VEVENT, not VTIMEZONE", withTz.dtstart === "20261111T090000Z", withTz.dtstart);
 
   console.log(process.exitCode ? `selftest FAILED` : `selftest: ${n}/${n} ok`);
 }
