@@ -10,7 +10,10 @@
  * Env (values never printed):
  *   CC66_MAILBOXES   comma list of provider ids to run: gmail,outlook (default gmail)
  *   CC66_GMAIL_USER / CC66_GMAIL_APP_PASSWORD
- *   CC66_OUTLOOK_USER / CC66_OUTLOOK_APP_PASSWORD
+ *   CC66_OUTLOOK_USER / CC66_OUTLOOK_APP_PASSWORD (Outlook.com refuses LOGIN: "Basic authentication is disabled")
+ *   CC66_OUTLOOK_REFRESH_TOKEN + CC66_MS_CLIENT_ID / CC66_MS_CLIENT_SECRET
+ *                    when set, outlook signs in with AUTHENTICATE XOAUTH2 instead of LOGIN
+ *                    (token scope https://outlook.office.com/IMAP.AccessAsUser.All offline_access)
  *   CC66_BASE_URL    default https://timeway.co
  *   CC66_EN_HOST / CC66_AR_HOST  "username/eventSlug" of the staff test event types
  *   CC66_EXPECT_ORGANIZER  sending address the ICS ORGANIZER must equal (default bookings@notify.timeway.co)
@@ -47,6 +50,7 @@ const PROVIDERS = {
     imapHost: "outlook.office365.com",
     userEnv: "CC66_OUTLOOK_USER",
     passEnv: "CC66_OUTLOOK_APP_PASSWORD",
+    oauthEnv: "CC66_OUTLOOK_REFRESH_TOKEN",
   },
 } as const;
 type Provider = keyof typeof PROVIDERS;
@@ -193,6 +197,25 @@ class Imap {
     await this.cmd(`LOGIN ${quote(user)} ${quote(pass)}`);
   }
 
+  // SASL-IR. On a bad token the server sends a "+ <base64 json>" challenge and waits;
+  // answering with an empty line makes it return the tagged NO instead of hanging.
+  async xoauth2(user: string, accessToken: string): Promise<void> {
+    const tag = `A${++this.tagN}`;
+    const tagged = new RegExp(`(^|\\r\\n)${tag} (OK|NO|BAD)([^\\r\\n]*)`);
+    this.buf = Buffer.alloc(0);
+    this.sock.write(`${tag} AUTHENTICATE XOAUTH2 ${xoauth2Ir(user, accessToken)}\r\n`);
+    let out = await this.readUntil((s) => tagged.test(s) || /(^|\r\n)\+ [^\r\n]*\r\n/.test(s));
+    let challenge = "";
+    if (!tagged.test(out)) {
+      challenge = Buffer.from(/\+ ([^\r\n]*)/.exec(out)?.[1] ?? "", "base64").toString("utf8");
+      this.sock.write("\r\n");
+      out = await this.readUntil((s) => tagged.test(s));
+    }
+    const status = tagged.exec(out);
+    if (status?.[2] !== "OK")
+      throw new Error(`IMAP AUTHENTICATE XOAUTH2 failed: ${status?.[2]}${status?.[3]} ${challenge}`.trim());
+  }
+
   async searchTo(addr: string): Promise<number[]> {
     const out = await this.cmd(`UID SEARCH TO ${quote(addr)}`);
     const line = /\* SEARCH([^\r\n]*)/.exec(out)?.[1] ?? "";
@@ -213,6 +236,41 @@ class Imap {
     this.sock.write(`Z LOGOUT\r\n`);
     this.sock.end();
   }
+}
+
+const xoauth2Ir = (user: string, token: string) =>
+  Buffer.from(`user=${user}\x01auth=Bearer ${token}\x01\x01`, "utf8").toString("base64");
+
+// Refresh tokens rotate on each use; the new one is not persisted, the stored one keeps
+// working until its 90-day idle expiry.
+async function msAccessToken(refreshToken: string): Promise<string> {
+  const clientId = process.env.CC66_MS_CLIENT_ID;
+  const clientSecret = process.env.CC66_MS_CLIENT_SECRET;
+  if (!clientId) throw new Error("CC66_MS_CLIENT_ID not set (needed with CC66_OUTLOOK_REFRESH_TOKEN)");
+  const body = new URLSearchParams({
+    client_id: clientId,
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+    scope: "https://outlook.office.com/IMAP.AccessAsUser.All offline_access",
+  });
+  if (clientSecret) body.set("client_secret", clientSecret);
+  const res = await fetch("https://login.microsoftonline.com/consumers/oauth2/v2.0/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  const j = (await res.json()) as { access_token?: string; error?: string; error_description?: string };
+  if (!j.access_token)
+    throw new Error(`MS token refresh HTTP ${res.status}: ${j.error} ${(j.error_description ?? "").split("\r\n")[0]}`);
+  return j.access_token;
+}
+
+async function imapSignIn(imap: Imap, provider: Provider, user: string, pass: string | undefined): Promise<void> {
+  const cfg = PROVIDERS[provider];
+  const refresh = "oauthEnv" in cfg ? process.env[cfg.oauthEnv] : undefined;
+  if (refresh) return imap.xoauth2(user, await msAccessToken(refresh));
+  if (!pass) throw new Error(`${cfg.passEnv} not set`);
+  return imap.login(user, pass);
 }
 
 const quote = (s: string) => `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
@@ -370,7 +428,7 @@ async function runCell(provider: Provider, locale: Locale, runId: string): Promi
   const cfg = PROVIDERS[provider];
   const user = process.env[cfg.userEnv];
   const pass = process.env[cfg.passEnv];
-  if (!user || !pass) throw new Error(`${cfg.userEnv}/${cfg.passEnv} not set`);
+  if (!user) throw new Error(`${cfg.userEnv} not set`);
   const [local, domain] = user.split("@");
   const attendee = `${local}+cc66-${runId}-${locale}@${domain}`;
   const cell: Cell = { provider, locale, attendee, bookings: [], invites: {} };
@@ -378,7 +436,7 @@ async function runCell(provider: Provider, locale: Locale, runId: string): Promi
 
   const imap = new Imap();
   await imap.open(cfg.imapHost);
-  await imap.login(user, pass);
+  await imapSignIn(imap, provider, user, pass);
   await imap.cmd("SELECT INBOX");
   const seen = new Set<number>(await imap.searchTo(attendee));
 
@@ -677,6 +735,11 @@ function selftest(): void {
     )
   );
   check("DTSTART read from VEVENT, not VTIMEZONE", withTz.dtstart === "20261111T090000Z", withTz.dtstart);
+
+  // RFC 7628 / Microsoft XOAUTH2 initial response: user=<u>^Aauth=Bearer <t>^A^A, base64.
+  const ir = Buffer.from(xoauth2Ir("someone@example.com", "tok"), "base64").toString("latin1");
+  check("XOAUTH2 initial response format", ir === "user=someone@example.com\x01auth=Bearer tok\x01\x01");
+  check("XOAUTH2 only on outlook", "oauthEnv" in PROVIDERS.outlook && !("oauthEnv" in PROVIDERS.gmail));
 
   console.log(process.exitCode ? `selftest FAILED` : `selftest: ${n}/${n} ok`);
 }
