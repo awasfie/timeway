@@ -280,7 +280,8 @@ function parseInvite(imapUid: number, raw: string): Invite {
     from: header(top.headers, "from")[0] ?? "",
     method: icsProp(ics, "METHOD")?.toUpperCase(),
     uid: icsProp(ics, "UID"),
-    sequence: icsProp(ics, "SEQUENCE") !== undefined ? Number(icsProp(ics, "SEQUENCE")) : undefined,
+    // RFC 5545 3.8.7.4: an absent SEQUENCE means 0.
+    sequence: ics ? Number(icsProp(ics, "SEQUENCE") ?? 0) : undefined,
     organizer,
     dtstart: icsProp(ics, "DTSTART"),
     partKinds: cal.map((c) => c.ctype),
