@@ -1,0 +1,423 @@
+{
+  "runId": "20261103t2004",
+  "base": "https://timeway.co",
+  "expectOrganizer": "bookings@notify.timeway.co",
+  "expectDomain": "notify.timeway.co",
+  "skipped": [],
+  "rows": [
+    {
+      "provider": "gmail",
+      "locale": "en",
+      "check": "invite-chain",
+      "pass": true,
+      "detail": "METHOD REQUEST,REQUEST,CANCEL ok; UID same; SEQUENCE 0→1→2 ok; ORGANIZER bookings@notify.timeway.co"
+    },
+    {
+      "provider": "gmail",
+      "locale": "en",
+      "check": "auth-aligned",
+      "pass": true,
+      "detail": "spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass"
+    },
+    {
+      "provider": "gmail",
+      "locale": "ar",
+      "check": "invite-chain",
+      "pass": true,
+      "detail": "METHOD REQUEST,REQUEST,CANCEL ok; UID same; SEQUENCE 0→1→2 ok; ORGANIZER bookings@notify.timeway.co"
+    },
+    {
+      "provider": "gmail",
+      "locale": "ar",
+      "check": "auth-aligned",
+      "pass": true,
+      "detail": "spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass"
+    },
+    {
+      "provider": "outlook",
+      "locale": "en",
+      "check": "invite-chain",
+      "pass": true,
+      "detail": "METHOD REQUEST,REQUEST,CANCEL ok; UID same; SEQUENCE 0→1→2 ok; ORGANIZER bookings@notify.timeway.co"
+    },
+    {
+      "provider": "outlook",
+      "locale": "en",
+      "check": "auth-aligned",
+      "pass": true,
+      "detail": "spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass"
+    },
+    {
+      "provider": "outlook",
+      "locale": "ar",
+      "check": "invite-chain",
+      "pass": true,
+      "detail": "METHOD REQUEST,REQUEST,CANCEL ok; UID same; SEQUENCE 0→1→2 ok; ORGANIZER bookings@notify.timeway.co"
+    },
+    {
+      "provider": "outlook",
+      "locale": "ar",
+      "check": "auth-aligned",
+      "pass": true,
+      "detail": "spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass"
+    }
+  ],
+  "cells": [
+    {
+      "provider": "gmail",
+      "locale": "en",
+      "attendee": "timeway.cc66+cc66-20261103t2004-en@gmail.com",
+      "bookings": [
+        {
+          "step": "create",
+          "bookingUid": "sMDqtQXL4Fb2y8eh2HkhMB",
+          "bookingId": 607,
+          "at": "2026-11-03T20:04:12.314Z"
+        },
+        {
+          "step": "reschedule",
+          "bookingUid": "gYKpd2HLcZhKpCJ7GeqL5N",
+          "bookingId": 608,
+          "at": "2026-11-03T20:04:44.532Z"
+        },
+        {
+          "step": "cancel",
+          "bookingUid": "gYKpd2HLcZhKpCJ7GeqL5N",
+          "at": "2026-11-03T20:07:19.163Z"
+        }
+      ],
+      "invites": {
+        "create": {
+          "imapUid": 109,
+          "date": "Tue, 03 Nov 2026 20:04:13 +0000 (UTC)",
+          "subject": "30 min meeting between WC-DX-10c Synthetic EN and CC-66 matrix",
+          "from": "WC-DX-10c Synthetic EN <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "sMDqtQXL4Fb2y8eh2HkhMB@Timeway",
+          "sequence": 0,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T090000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=OAneAkvb; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=gMxHAyby; spf=pass (google.com: domain of bounces+47995021-bc52-timeway.cc66+cc66-20261103t2004-en=…@em5498.notify.timeway.co designates 167.89.18.14 as permitted sender) smtp.mailfrom=\"bounces+47995021-bc52-timeway.cc66+cc66-20261103t2004-en=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        },
+        "reschedule": {
+          "imapUid": 112,
+          "date": "Tue, 03 Nov 2026 20:04:46 +0000 (UTC)",
+          "subject": "Your 30 min meeting between WC-DX-10c Synthetic EN and CC-66 matrix has been rescheduled to 1:30pm - 2:00pm, Wednesday, November 4, 2026.",
+          "from": "WC-DX-10c Synthetic EN <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "sMDqtQXL4Fb2y8eh2HkhMB@Timeway",
+          "sequence": 1,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T093000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=YQibeIUz; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=SSdXh5gE; spf=pass (google.com: domain of bounces+47995021-bc52-timeway.cc66+cc66-20261103t2004-en=…@em5498.notify.timeway.co designates 159.183.224.102 as permitted sender) smtp.mailfrom=\"bounces+47995021-bc52-timeway.cc66+cc66-20261103t2004-en=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        },
+        "cancel": {
+          "imapUid": 115,
+          "date": "Tue, 03 Nov 2026 20:07:21 +0000 (UTC)",
+          "subject": "Canceled: 30 min meeting between WC-DX-10c Synthetic EN and CC-66 matrix between WC-DX-10c Synthetic EN and CC-66 matrix at 1:30pm - 2:00pm, Wednesday, November 4, 2026",
+          "from": "WC-DX-10c Synthetic EN <bookings@notify.timeway.co>",
+          "method": "CANCEL",
+          "uid": "sMDqtQXL4Fb2y8eh2HkhMB@Timeway",
+          "sequence": 2,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T093000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=tUOswL+7; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=Et5t0+WP; spf=pass (google.com: domain of bounces+47995021-bc52-timeway.cc66+cc66-20261103t2004-en=…@em5498.notify.timeway.co designates 159.183.233.119 as permitted sender) smtp.mailfrom=\"bounces+47995021-bc52-timeway.cc66+cc66-20261103t2004-en=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        }
+      }
+    },
+    {
+      "provider": "gmail",
+      "locale": "ar",
+      "attendee": "timeway.cc66+cc66-20261103t2004-ar@gmail.com",
+      "bookings": [
+        {
+          "step": "create",
+          "bookingUid": "cVrCvuuBVf1Sr38LAPsKky",
+          "bookingId": 610,
+          "at": "2026-11-03T20:10:56.526Z"
+        },
+        {
+          "step": "reschedule",
+          "bookingUid": "hpr7gwFzsbufQpSddJuhdb",
+          "bookingId": 612,
+          "at": "2026-11-03T20:11:28.615Z"
+        },
+        {
+          "step": "cancel",
+          "bookingUid": "hpr7gwFzsbufQpSddJuhdb",
+          "at": "2026-11-03T20:13:01.953Z"
+        }
+      ],
+      "invites": {
+        "create": {
+          "imapUid": 118,
+          "date": "Tue, 03 Nov 2026 20:10:57 +0000 (UTC)",
+          "subject": "اجتماع لمدة 30 دقيقة بين WC-DX-10c Synthetic AR واختبار CC-66",
+          "from": "WC-DX-10c Synthetic AR <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "cVrCvuuBVf1Sr38LAPsKky@Timeway",
+          "sequence": 0,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T100000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=ODs8vrW4; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=WCCW45Wi; spf=pass (google.com: domain of bounces+47995021-8c9b-timeway.cc66+cc66-20261103t2004-ar=…@em5498.notify.timeway.co designates 167.89.20.171 as permitted sender) smtp.mailfrom=\"bounces+47995021-8c9b-timeway.cc66+cc66-20261103t2004-ar=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        },
+        "reschedule": {
+          "imapUid": 121,
+          "date": "Tue, 03 Nov 2026 20:11:30 +0000 (UTC)",
+          "subject": "تم إعادة جدولة  اجتماع لمدة 30 دقيقة between WC-DX-10c Synthetic AR and اختبار CC-66 إلى 2:30pm - 3:00pm, الأربعاء, نوفمبر 4, 2026.",
+          "from": "WC-DX-10c Synthetic AR <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "cVrCvuuBVf1Sr38LAPsKky@Timeway",
+          "sequence": 1,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T103000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=0Zok62ft; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=uEm6bIzJ; spf=pass (google.com: domain of bounces+47995021-8c9b-timeway.cc66+cc66-20261103t2004-ar=…@em5498.notify.timeway.co designates 50.31.63.70 as permitted sender) smtp.mailfrom=\"bounces+47995021-8c9b-timeway.cc66+cc66-20261103t2004-ar=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        },
+        "cancel": {
+          "imapUid": 122,
+          "date": "Tue, 03 Nov 2026 20:13:03 +0000 (UTC)",
+          "subject": "تم الإلغاء: اجتماع  لمدة 30 دقيقة between WC-DX-10c Synthetic AR and اختبار CC-66 بين WC-DX-10c Synthetic AR واختبار CC-66 في 2:30pm - 3:00pm, الأربعاء, نوفمبر 4, 2026",
+          "from": "WC-DX-10c Synthetic AR <bookings@notify.timeway.co>",
+          "method": "CANCEL",
+          "uid": "cVrCvuuBVf1Sr38LAPsKky@Timeway",
+          "sequence": 2,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T103000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=hBDLM94t; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=nOzzpF3n; spf=pass (google.com: domain of bounces+47995021-8c9b-timeway.cc66+cc66-20261103t2004-ar=…@em5498.notify.timeway.co designates 167.89.20.171 as permitted sender) smtp.mailfrom=\"bounces+47995021-8c9b-timeway.cc66+cc66-20261103t2004-ar=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        }
+      }
+    },
+    {
+      "provider": "outlook",
+      "locale": "en",
+      "attendee": "timeway.cc66+cc66-20261103t2004-en@outlook.com",
+      "bookings": [
+        {
+          "step": "create",
+          "bookingUid": "7bZzEQM9AACX2ZDYK1Qmha",
+          "bookingId": 613,
+          "at": "2026-11-03T20:13:36.820Z"
+        },
+        {
+          "step": "reschedule",
+          "bookingUid": "kNZNtATHfu4uMkgkAHmadu",
+          "bookingId": 614,
+          "at": "2026-11-03T20:14:08.893Z"
+        },
+        {
+          "step": "cancel",
+          "bookingUid": "kNZNtATHfu4uMkgkAHmadu",
+          "at": "2026-11-03T20:14:41.657Z"
+        }
+      ],
+      "invites": {
+        "create": {
+          "imapUid": 1,
+          "date": "Tue, 03 Nov 2026 20:13:38 +0000 (UTC)",
+          "subject": "30 min meeting between WC-DX-10c Synthetic EN and CC-66 matrix",
+          "from": "WC-DX-10c Synthetic EN <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "7bZzEQM9AACX2ZDYK1Qmha@Timeway",
+          "sequence": 0,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T110000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.microsoft.com 1; spf=pass (sender IP is 50.31.63.70) smtp.mailfrom=em5498.notify.timeway.co; dkim=pass (signature was verified) header.d=notify.timeway.co;dmarc=pass action=none header.from=notify.timeway.co;compauth=pass reason=100"
+          }
+        },
+        "reschedule": {
+          "imapUid": 2,
+          "date": "Tue, 03 Nov 2026 20:14:10 +0000 (UTC)",
+          "subject": "Your 30 min meeting between WC-DX-10c Synthetic EN and CC-66 matrix has been rescheduled to 3:30pm - 4:00pm, Wednesday, November 4, 2026.",
+          "from": "WC-DX-10c Synthetic EN <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "7bZzEQM9AACX2ZDYK1Qmha@Timeway",
+          "sequence": 1,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T113000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.microsoft.com 1; spf=pass (sender IP is 50.31.63.70) smtp.mailfrom=em5498.notify.timeway.co; dkim=pass (signature was verified) header.d=notify.timeway.co;dmarc=pass action=none header.from=notify.timeway.co;compauth=pass reason=100"
+          }
+        },
+        "cancel": {
+          "imapUid": 3,
+          "date": "Tue, 03 Nov 2026 20:14:43 +0000 (UTC)",
+          "subject": "Canceled: 30 min meeting between WC-DX-10c Synthetic EN and CC-66 matrix between WC-DX-10c Synthetic EN and CC-66 matrix at 3:30pm - 4:00pm, Wednesday, November 4, 2026",
+          "from": "WC-DX-10c Synthetic EN <bookings@notify.timeway.co>",
+          "method": "CANCEL",
+          "uid": "7bZzEQM9AACX2ZDYK1Qmha@Timeway",
+          "sequence": 2,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T113000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.microsoft.com 1; spf=pass (sender IP is 50.31.63.70) smtp.mailfrom=em5498.notify.timeway.co; dkim=pass (signature was verified) header.d=notify.timeway.co;dmarc=pass action=none header.from=notify.timeway.co;compauth=pass reason=100"
+          }
+        }
+      }
+    },
+    {
+      "provider": "outlook",
+      "locale": "ar",
+      "attendee": "timeway.cc66+cc66-20261103t2004-ar@outlook.com",
+      "bookings": [
+        {
+          "step": "create",
+          "bookingUid": "k7HaaxX1z9nn7oXjd4wcNT",
+          "bookingId": 615,
+          "at": "2026-11-03T20:15:15.934Z"
+        },
+        {
+          "step": "reschedule",
+          "bookingUid": "uauwC7hQdPLtmrrWeWMiAi",
+          "bookingId": 616,
+          "at": "2026-11-03T20:15:48.240Z"
+        },
+        {
+          "step": "cancel",
+          "bookingUid": "uauwC7hQdPLtmrrWeWMiAi",
+          "at": "2026-11-03T20:16:20.994Z"
+        }
+      ],
+      "invites": {
+        "create": {
+          "imapUid": 1,
+          "date": "Tue, 03 Nov 2026 20:15:17 +0000 (UTC)",
+          "subject": "اجتماع لمدة 30 دقيقة بين WC-DX-10c Synthetic AR واختبار CC-66",
+          "from": "WC-DX-10c Synthetic AR <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "k7HaaxX1z9nn7oXjd4wcNT@Timeway",
+          "sequence": 0,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T120000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.microsoft.com 1; spf=pass (sender IP is 50.31.49.42) smtp.mailfrom=em5498.notify.timeway.co; dkim=pass (signature was verified) header.d=notify.timeway.co;dmarc=pass action=none header.from=notify.timeway.co;compauth=pass reason=100"
+          }
+        },
+        "reschedule": {
+          "imapUid": 2,
+          "date": "Tue, 03 Nov 2026 20:15:50 +0000 (UTC)",
+          "subject": "تم إعادة جدولة  اجتماع لمدة 30 دقيقة between WC-DX-10c Synthetic AR and اختبار CC-66 إلى 4:30pm - 5:00pm, الأربعاء, نوفمبر 4, 2026.",
+          "from": "WC-DX-10c Synthetic AR <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "k7HaaxX1z9nn7oXjd4wcNT@Timeway",
+          "sequence": 1,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T123000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.microsoft.com 1; spf=pass (sender IP is 50.31.49.42) smtp.mailfrom=em5498.notify.timeway.co; dkim=pass (signature was verified) header.d=notify.timeway.co;dmarc=pass action=none header.from=notify.timeway.co;compauth=pass reason=100"
+          }
+        },
+        "cancel": {
+          "imapUid": 3,
+          "date": "Tue, 03 Nov 2026 20:16:22 +0000 (UTC)",
+          "subject": "تم الإلغاء: اجتماع  لمدة 30 دقيقة between WC-DX-10c Synthetic AR and اختبار CC-66 بين WC-DX-10c Synthetic AR واختبار CC-66 في 4:30pm - 5:00pm, الأربعاء, نوفمبر 4, 2026",
+          "from": "WC-DX-10c Synthetic AR <bookings@notify.timeway.co>",
+          "method": "CANCEL",
+          "uid": "k7HaaxX1z9nn7oXjd4wcNT@Timeway",
+          "sequence": 2,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T123000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.microsoft.com 1; spf=pass (sender IP is 167.89.18.14) smtp.mailfrom=em5498.notify.timeway.co; dkim=pass (signature was verified) header.d=notify.timeway.co;dmarc=pass action=none header.from=notify.timeway.co;compauth=pass reason=100"
+          }
+        }
+      }
+    }
+  ]
+}

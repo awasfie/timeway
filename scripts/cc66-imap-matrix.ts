@@ -11,6 +11,8 @@
  *   CC66_MAILBOXES   comma list of provider ids to run: gmail,outlook (default gmail)
  *   CC66_GMAIL_USER / CC66_GMAIL_APP_PASSWORD
  *   CC66_OUTLOOK_USER / CC66_OUTLOOK_APP_PASSWORD (Outlook.com refuses LOGIN: "Basic authentication is disabled")
+ *   CC66_OUTLOOK_GRAPH_REFRESH_TOKEN + CC66_MS_CLIENT_ID  Outlook via Microsoft Graph Mail.Read (preferred; IMAP is
+ *                    "authenticated but not connected" for this mailbox)
  *   CC66_OUTLOOK_REFRESH_TOKEN + CC66_MS_CLIENT_ID / CC66_MS_CLIENT_SECRET
  *                    when set, outlook signs in with AUTHENTICATE XOAUTH2 instead of LOGIN
  *                    (token scope https://outlook.office.com/IMAP.AccessAsUser.All offline_access)
@@ -232,10 +234,81 @@ class Imap {
       .toString("latin1");
   }
 
+  async noop(): Promise<void> {
+    await this.cmd("NOOP");
+  }
+
   close(): void {
     this.sock.write(`Z LOGOUT\r\n`);
     this.sock.end();
   }
+}
+
+// Microsoft Graph transport for Outlook.com: the mailbox answers XOAUTH2 with "User is
+// authenticated but not connected" on IMAP, but Graph reads the same raw RFC 822 message
+// (GET /me/messages/{id}/$value), so the MIME/ICS/auth-header checks are unchanged.
+// Graph ids are strings; they are mapped to stable small numbers to fit the Imap shape.
+interface Mailbox {
+  searchTo(addr: string): Promise<number[]>;
+  fetchRaw(uid: number): Promise<string>;
+  noop(): Promise<void>;
+  close(): void;
+}
+
+class GraphMailbox implements Mailbox {
+  private ids: string[] = [];
+  private constructor(private token: string) {}
+
+  static async open(refreshToken: string): Promise<GraphMailbox> {
+    const clientId = process.env.CC66_MS_CLIENT_ID;
+    if (!clientId) throw new Error("CC66_MS_CLIENT_ID not set (needed with CC66_OUTLOOK_GRAPH_REFRESH_TOKEN)");
+    const res = await fetch("https://login.microsoftonline.com/consumers/oauth2/v2.0/token", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+        scope: "https://graph.microsoft.com/Mail.Read offline_access",
+      }),
+    });
+    const j = (await res.json()) as { access_token?: string; error?: string; error_description?: string };
+    if (!j.access_token)
+      throw new Error(`MS Graph token refresh HTTP ${res.status}: ${j.error} ${(j.error_description ?? "").split("\r\n")[0]}`);
+    return new GraphMailbox(j.access_token);
+  }
+
+  private async get(path: string): Promise<Response> {
+    const res = await fetch(`https://graph.microsoft.com/v1.0${path}`, {
+      headers: { authorization: `Bearer ${this.token}` },
+    });
+    if (!res.ok) throw new Error(`Graph GET ${path.split("?")[0].replace(/[0-9A-Za-z_=-]{20,}/g, "<id>")} HTTP ${res.status}`);
+    return res;
+  }
+
+  async searchTo(addr: string): Promise<number[]> {
+    // $filter on toRecipients is rejected for consumer mailboxes (HTTP 400), so list the newest
+    // messages and match the recipient locally. Plus-addresses are unique per run.
+    const j = (await (
+      await this.get("/me/messages?$select=id,toRecipients&$orderby=receivedDateTime%20desc&$top=100")
+    ).json()) as { value: { id: string; toRecipients?: { emailAddress?: { address?: string } }[] }[] };
+    const want = addr.toLowerCase();
+    j.value = j.value.filter((m) => (m.toRecipients ?? []).some((r) => r.emailAddress?.address?.toLowerCase() === want));
+    return j.value.map((m) => {
+      let i = this.ids.indexOf(m.id);
+      if (i < 0) i = this.ids.push(m.id) - 1;
+      return i + 1;
+    });
+  }
+
+  async fetchRaw(uid: number): Promise<string> {
+    const id = this.ids[uid - 1];
+    if (!id) throw new Error(`Graph fetch: unknown uid ${uid}`);
+    return Buffer.from(await (await this.get(`/me/messages/${encodeURIComponent(id)}/$value`)).arrayBuffer()).toString("latin1");
+  }
+
+  async noop(): Promise<void> {}
+  close(): void {}
 }
 
 const xoauth2Ir = (user: string, token: string) =>
@@ -374,7 +447,7 @@ function parseInvite(imapUid: number, raw: string): Invite {
     auth: {
       // DKIM must be signed by the sending domain itself (aligned), not only by the ESP.
       dkim: new RegExp(`dkim=pass[^;]*header\\.(i|d)=@?(?:[\\w-]+\\.)*${dom}`, "i").test(authRaw),
-      spf: new RegExp(`spf=pass[^;]*smtp\\.mailfrom=[^;\\s]*@(?:[\\w-]+\\.)*${dom}`, "i").test(authRaw),
+      spf: new RegExp(`spf=pass[^;]*smtp\\.mailfrom=\"?(?:[^;\\s@]*@)?(?:[\\w-]+\\.)*${dom}`, "i").test(authRaw),
       dmarc: new RegExp(`dmarc=pass[^;]*header\\.from=${dom}`, "i").test(authRaw),
       // Bounce local parts can carry the attendee address; providers also echo them in comments.
       raw: authRaw.replace(/[^\s"'(<=@;]+@/g, "…@"),
@@ -406,7 +479,7 @@ type Cell = {
   error?: string;
 };
 
-async function waitForInvites(imap: Imap, addr: string, want: number, seen: Set<number>): Promise<Invite[]> {
+async function waitForInvites(imap: Mailbox, addr: string, want: number, seen: Set<number>): Promise<Invite[]> {
   const deadline = Date.now() + POLL_MAX_MS;
   for (;;) {
     const uids = (await imap.searchTo(addr)).filter((u) => !seen.has(u));
@@ -420,7 +493,7 @@ async function waitForInvites(imap: Imap, addr: string, want: number, seen: Set<
       return found;
     }
     await sleep(POLL_MS);
-    await imap.cmd("NOOP");
+    await imap.noop();
   }
 }
 
@@ -434,10 +507,17 @@ async function runCell(provider: Provider, locale: Locale, runId: string): Promi
   const cell: Cell = { provider, locale, attendee, bookings: [], invites: {} };
   const [username, slug] = HOSTS[locale].split("/");
 
-  const imap = new Imap();
-  await imap.open(cfg.imapHost);
-  await imapSignIn(imap, provider, user, pass);
-  await imap.cmd("SELECT INBOX");
+  const graphRefresh = provider === "outlook" ? process.env.CC66_OUTLOOK_GRAPH_REFRESH_TOKEN : undefined;
+  let imap: Mailbox;
+  if (graphRefresh) {
+    imap = await GraphMailbox.open(graphRefresh);
+  } else {
+    const im = new Imap();
+    await im.open(cfg.imapHost);
+    await imapSignIn(im, provider, user, pass);
+    await im.cmd("SELECT INBOX");
+    imap = im;
+  }
   const seen = new Set<number>(await imap.searchTo(attendee));
 
   let liveUid: string | undefined;
@@ -726,6 +806,24 @@ function selftest(): void {
     "neg: lookalike notify.timeway.co.example.net not aligned",
     !lookalike.auth.dkim && !lookalike.auth.spf && !lookalike.auth.dmarc
   );
+
+  // Outlook.com writes smtp.mailfrom as a bare domain (no local part); Gmail writes the full address.
+  const ms = parseInvite(
+    203,
+    readFileSync(join(dir, "create.eml"), "latin1").replace(
+      /smtp\.mailfrom="bounces\+0@notify\.timeway\.co"/,
+      "smtp.mailfrom=em5498.notify.timeway.co"
+    )
+  );
+  check("outlook-style bare-domain smtp.mailfrom aligns", ms.auth.spf);
+  const msBad = parseInvite(
+    204,
+    readFileSync(join(dir, "create.eml"), "latin1").replace(
+      /smtp\.mailfrom="bounces\+0@notify\.timeway\.co"/,
+      "smtp.mailfrom=em5498.notify.timeway.co.example.net"
+    )
+  );
+  check("neg: bare-domain lookalike smtp.mailfrom not aligned", !msBad.auth.spf);
 
   const withTz = parseInvite(
     202,
