@@ -1,17 +1,40 @@
 import process from "node:process";
+import { prisma } from "@calcom/prisma";
+import { withTwPlatform } from "@calcom/prisma/tw-org-context";
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 
-// WC-TW-12d. Needs TW_CUSTOM_DOMAINS_ENABLED=true on the test server and a user who is owner/admin of an org.
-// tRPC is mocked at the network layer; no TwCustomHostname rows are written.
+// WC-TW-12d. Needs TW_CUSTOM_DOMAINS_ENABLED=true on the test server.
+// The user is made owner of a TW-T9 Organization (tw_organization_member) so the page and nav tab render;
+// customDomain tRPC is mocked at the network layer, so no TwCustomHostname rows are written.
 type Row = { hostname: string; status: string; lastError: string | null } | null;
 
 test.describe("Org settings > Custom domain", () => {
   test.skip(process.env.TW_CUSTOM_DOMAINS_ENABLED !== "true", "needs TW_CUSTOM_DOMAINS_ENABLED=true");
 
+  const orgIds: string[] = [];
+  test.afterEach(async () => {
+    const ids = orgIds.splice(0);
+    if (ids.length)
+      await withTwPlatform(prisma, "wc-tw-12d e2e cleanup", (tx) =>
+        tx.organization.deleteMany({ where: { id: { in: ids } } })
+      );
+  });
+
   for (const locale of ["en", "ar"] as const) {
     test(`add -> pending -> active -> remove (${locale})`, async ({ page, users }, testInfo) => {
       const user = await users.create({ locale } as never);
+      const org = await withTwPlatform(prisma, "wc-tw-12d e2e seed", (tx) =>
+        tx.organization.create({
+          data: {
+            slug: `e2e-cd-${locale}-${Date.now()}`,
+            name: "E2E Custom Domain Org",
+            members: { create: { userId: user.id, role: "owner" } },
+          },
+          select: { id: true },
+        })
+      );
+      orgIds.push(org.id);
       await user.apiLogin();
 
       let row: Row = null;
@@ -37,6 +60,7 @@ test.describe("Org settings > Custom domain", () => {
       });
 
       await page.goto("/settings/organizations/custom-domain");
+      await expect(page.locator(`a[href="/settings/organizations/custom-domain"]`).first()).toBeVisible();
       await page.getByTestId("custom-domain-input").fill("book.example.com");
       await page.getByTestId("custom-domain-add").click();
       await expect(page.getByTestId("custom-domain-cname")).toHaveText(
