@@ -1853,6 +1853,7 @@ export class BookingRepository implements IBookingRepository {
     cancelledBy,
     rescheduledBy,
     rescheduled,
+    iCalSequence,
   }: {
     bookingId: number;
     status?: BookingStatus;
@@ -1860,6 +1861,7 @@ export class BookingRepository implements IBookingRepository {
     cancelledBy?: string;
     rescheduledBy?: string;
     rescheduled?: boolean;
+    iCalSequence?: number;
   }) {
     return await this.prismaClient.booking.update({
       where: {
@@ -1871,6 +1873,7 @@ export class BookingRepository implements IBookingRepository {
         ...(cancellationReason !== undefined && { cancellationReason }),
         ...(cancelledBy !== undefined && { cancelledBy }),
         ...(rescheduledBy !== undefined && { rescheduledBy }),
+        ...(iCalSequence !== undefined && { iCalSequence }),
         updatedAt: new Date().toISOString(),
       },
     });
