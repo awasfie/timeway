@@ -3,7 +3,7 @@ import withEmbedSsrAppDir from "app/WithEmbedSSR";
 import type { PageProps as ServerPageProps } from "app/_types";
 import { cookies, headers } from "next/headers";
 
-import { loadTranslations } from "@calcom/i18n/server";
+import { loadTranslationSubset } from "@calcom/i18n/server";
 
 import { buildLegacyCtx } from "@lib/buildLegacyCtx";
 
@@ -29,9 +29,9 @@ const ServerPage = async ({ params, searchParams }: ServerPageProps) => {
   const eventLocale = props.eventType?.interfaceLanguage;
   if (eventLocale) {
     const ns = "common";
-    const translations = await loadTranslations(eventLocale, ns);
+    const translations = await loadTranslationSubset(eventLocale, ns);
     return (
-      <CustomI18nProvider translations={translations} locale={eventLocale} ns={ns}>
+      <CustomI18nProvider translations={translations} locale={eventLocale} ns={ns} isSubset>
         <OldPage {...props} />
       </CustomI18nProvider>
     );
