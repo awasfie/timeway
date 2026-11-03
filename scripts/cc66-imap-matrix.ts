@@ -17,9 +17,11 @@
  *   CC66_EXPECT_DOMAIN     d= / header.from domain (default notify.timeway.co)
  *   CC66_OUT_DIR           default docs/proofs/cc-66
  */
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import process from "node:process";
 import { connect, type TLSSocket } from "node:tls";
+import { fileURLToPath } from "node:url";
 
 type Locale = "en" | "ar";
 type Step = "create" | "reschedule" | "cancel";
@@ -41,7 +43,11 @@ const HOSTS: Record<Locale, string> = {
 
 const PROVIDERS = {
   gmail: { imapHost: "imap.gmail.com", userEnv: "CC66_GMAIL_USER", passEnv: "CC66_GMAIL_APP_PASSWORD" },
-  outlook: { imapHost: "outlook.office365.com", userEnv: "CC66_OUTLOOK_USER", passEnv: "CC66_OUTLOOK_APP_PASSWORD" },
+  outlook: {
+    imapHost: "outlook.office365.com",
+    userEnv: "CC66_OUTLOOK_USER",
+    passEnv: "CC66_OUTLOOK_APP_PASSWORD",
+  },
 } as const;
 type Provider = keyof typeof PROVIDERS;
 
@@ -58,7 +64,8 @@ async function getEventTypeId(username: string, slug: string): Promise<{ id: num
   );
   const body = (await res.json()) as Array<{ result?: { data?: { json?: { id: number; length: number } } } }>;
   const ev = body[0]?.result?.data?.json;
-  if (!ev?.id) throw new Error(`event type ${username}/${slug} not resolvable via public/event (HTTP ${res.status})`);
+  if (!ev?.id)
+    throw new Error(`event type ${username}/${slug} not resolvable via public/event (HTTP ${res.status})`);
   return { id: ev.id, length: ev.length };
 }
 
@@ -81,8 +88,12 @@ async function getSlots(username: string, slug: string, length: number): Promise
     `${BASE}/api/trpc/slots/getSchedule?batch=1&input=${encodeURIComponent(JSON.stringify(input))}`,
     { headers: { "user-agent": UA } }
   );
-  const body = (await res.json()) as Array<{ result?: { data?: { json?: { slots?: Record<string, { time: string }[]> } } } }>;
-  const slots = Object.values(body[0]?.result?.data?.json?.slots ?? {}).flat().map((s) => s.time);
+  const body = (await res.json()) as Array<{
+    result?: { data?: { json?: { slots?: Record<string, { time: string }[]> } } };
+  }>;
+  const slots = Object.values(body[0]?.result?.data?.json?.slots ?? {})
+    .flat()
+    .map((s) => s.time);
   return slots.sort();
 }
 
@@ -109,11 +120,16 @@ async function book(p: {
       language: p.language,
       metadata: { source: "cc66-imap-matrix" },
       responses: { name: p.name, email: p.email, location: { value: "integrations:camv", optionValue: "" } },
-      ...(p.rescheduleUid ? { rescheduleUid: p.rescheduleUid, rescheduleReason: "CC-66 matrix reschedule" } : {}),
+      ...(p.rescheduleUid
+        ? { rescheduleUid: p.rescheduleUid, rescheduleReason: "CC-66 matrix reschedule" }
+        : {}),
     }),
   });
   const text = await res.text();
-  if (!res.ok) throw new Error(`book ${p.rescheduleUid ? "reschedule" : "create"} HTTP ${res.status}: ${text.slice(0, 300)}`);
+  if (!res.ok)
+    throw new Error(
+      `book ${p.rescheduleUid ? "reschedule" : "create"} HTTP ${res.status}: ${text.slice(0, 300)}`
+    );
   const data = JSON.parse(text) as { uid: string; id: number };
   return { uid: data.uid, id: data.id };
 }
@@ -168,7 +184,8 @@ class Imap {
     this.sock.write(`${tag} ${command}\r\n`);
     const out = await this.readUntil((s) => new RegExp(`(^|\\r\\n)${tag} (OK|NO|BAD)`).test(s));
     const status = new RegExp(`(^|\\r\\n)${tag} (OK|NO|BAD)([^\\r\\n]*)`).exec(out);
-    if (status?.[2] !== "OK") throw new Error(`IMAP ${command.split(" ")[0]} failed: ${status?.[2]}${status?.[3]}`);
+    if (status?.[2] !== "OK")
+      throw new Error(`IMAP ${command.split(" ")[0]} failed: ${status?.[2]}${status?.[3]}`);
     return out;
   }
 
@@ -187,7 +204,9 @@ class Imap {
     const m = /\{(\d+)\}\r\n/.exec(out);
     if (!m) throw new Error(`IMAP FETCH ${uid}: no literal`);
     const start = m.index + m[0].length;
-    return Buffer.from(out, "latin1").subarray(start, start + Number(m[1])).toString("latin1");
+    return Buffer.from(out, "latin1")
+      .subarray(start, start + Number(m[1]))
+      .toString("latin1");
   }
 
   close(): void {
@@ -270,8 +289,11 @@ function parseInvite(imapUid: number, raw: string): Invite {
   const cal = calendarParts(top);
   const ics = cal[0]?.text ?? "";
   const authRaw = header(top.headers, "authentication-results")[0] ?? "";
-  const dom = EXPECT_DOMAIN.replace(/\./g, "\\.");
-  const organizer = icsProp(ics, "ORGANIZER")?.replace(/^mailto:/i, "").toLowerCase();
+  // The trailing guard stops a lookalike such as notify.timeway.co.example.net from aligning.
+  const dom = `${EXPECT_DOMAIN.replace(/\./g, "\\.")}(?![\\w-]|\\.\\w)`;
+  const organizer = icsProp(ics, "ORGANIZER")
+    ?.replace(/^mailto:/i, "")
+    .toLowerCase();
   const subjectRaw = header(top.headers, "subject")[0] ?? "";
   return {
     imapUid,
@@ -290,7 +312,8 @@ function parseInvite(imapUid: number, raw: string): Invite {
       dkim: new RegExp(`dkim=pass[^;]*header\\.(i|d)=@?(?:[\\w-]+\\.)*${dom}`, "i").test(authRaw),
       spf: new RegExp(`spf=pass[^;]*smtp\\.mailfrom=[^;\\s]*@(?:[\\w-]+\\.)*${dom}`, "i").test(authRaw),
       dmarc: new RegExp(`dmarc=pass[^;]*header\\.from=${dom}`, "i").test(authRaw),
-      raw: authRaw.replace(/smtp\.mailfrom=\S+?@/i, "smtp.mailfrom=…@"),
+      // Bounce local parts can carry the attendee address; providers also echo them in comments.
+      raw: authRaw.replace(/[^\s"'(<=@;]+@/g, "…@"),
     },
   };
 }
@@ -299,7 +322,12 @@ function decodeMimeWords(s: string): string {
   return s.replace(/=\?([^?]+)\?([BQ])\?([^?]*)\?=/gi, (_m, _cs: string, enc: string, txt: string) =>
     enc.toUpperCase() === "B"
       ? Buffer.from(txt, "base64").toString("utf8")
-      : Buffer.from(txt.replace(/_/g, " ").replace(/=([0-9A-F]{2})/gi, (_x, h: string) => String.fromCharCode(parseInt(h, 16))), "latin1").toString("utf8")
+      : Buffer.from(
+          txt
+            .replace(/_/g, " ")
+            .replace(/=([0-9A-F]{2})/gi, (_x, h: string) => String.fromCharCode(parseInt(h, 16))),
+          "latin1"
+        ).toString("utf8")
   );
 }
 
@@ -362,7 +390,15 @@ async function runCell(provider: Provider, locale: Locale, runId: string): Promi
     for (const step of steps) {
       const at = new Date().toISOString();
       if (step === "create") {
-        const b = await book({ eventTypeId: et.id, slug, start: s1, length: et.length, name, email: attendee, language: locale });
+        const b = await book({
+          eventTypeId: et.id,
+          slug,
+          start: s1,
+          length: et.length,
+          name,
+          email: attendee,
+          language: locale,
+        });
         liveUid = b.uid;
         cell.bookings.push({ step, bookingUid: b.uid, bookingId: b.id, at });
       } else if (step === "reschedule") {
@@ -396,14 +432,22 @@ async function runCell(provider: Provider, locale: Locale, runId: string): Promi
   } finally {
     if (liveUid) {
       // Never leave a test booking behind, whatever failed above.
-      await cancel(liveUid).catch((e: Error) => (cell.error = `${cell.error ?? ""}; cleanup cancel failed: ${e.message}`));
+      await cancel(liveUid).catch(
+        (e: Error) => (cell.error = `${cell.error ?? ""}; cleanup cancel failed: ${e.message}`)
+      );
     }
     imap.close();
   }
   return cell;
 }
 
-type Row = { provider: Provider; locale: Locale; check: "invite-chain" | "auth-aligned"; pass: boolean; detail: string };
+type Row = {
+  provider: Provider;
+  locale: Locale;
+  check: "invite-chain" | "auth-aligned";
+  pass: boolean;
+  detail: string;
+};
 
 function rowsFor(c: Cell): Row[] {
   const a = c.invites.create;
@@ -426,17 +470,34 @@ function rowsFor(c: Cell): Row[] {
       `ORGANIZER ${oOk ? EXPECT_ORGANIZER : `FAIL (${orgs.join(" | ")})`}`
     );
   } else {
-    chain.push(`missing: ${(["create", "reschedule", "cancel"] as Step[]).filter((s) => !c.invites[s]).join(",")}`);
+    chain.push(
+      `missing: ${(["create", "reschedule", "cancel"] as Step[]).filter((s) => !c.invites[s]).join(",")}`
+    );
   }
   if (c.error) chain.push(`error: ${c.error}`);
   const invs = [a, b, x].filter(Boolean) as Invite[];
   const authOk = invs.length === 3 && invs.every((i) => i.auth.spf && i.auth.dkim && i.auth.dmarc);
   const authDetail = invs
-    .map((i) => `spf=${i.auth.spf ? "pass" : "FAIL"} dkim=${i.auth.dkim ? "pass" : "FAIL"} dmarc=${i.auth.dmarc ? "pass" : "FAIL"}`)
+    .map(
+      (i) =>
+        `spf=${i.auth.spf ? "pass" : "FAIL"} dkim=${i.auth.dkim ? "pass" : "FAIL"} dmarc=${i.auth.dmarc ? "pass" : "FAIL"}`
+    )
     .join(" / ");
   return [
-    { provider: c.provider, locale: c.locale, check: "invite-chain", pass: chainOk, detail: chain.join("; ") },
-    { provider: c.provider, locale: c.locale, check: "auth-aligned", pass: authOk, detail: authDetail || "no mail" },
+    {
+      provider: c.provider,
+      locale: c.locale,
+      check: "invite-chain",
+      pass: chainOk,
+      detail: chain.join("; "),
+    },
+    {
+      provider: c.provider,
+      locale: c.locale,
+      check: "auth-aligned",
+      pass: authOk,
+      detail: authDetail || "no mail",
+    },
   ];
 }
 
@@ -450,14 +511,20 @@ function markdown(runId: string, cells: Cell[], rows: Row[], skipped: string[]):
     "",
     "| Mailbox | Locale | Check | Result | Detail |",
     "|---|---|---|---|---|",
-    ...rows.map((r) => `| ${r.provider} | ${r.locale.toUpperCase()} | ${r.check} | ${r.pass ? "PASS" : "FAIL"} | ${r.detail.replace(/\|/g, "\\|")} |`),
+    ...rows.map(
+      (r) =>
+        `| ${r.provider} | ${r.locale.toUpperCase()} | ${r.check} | ${r.pass ? "PASS" : "FAIL"} | ${r.detail.replace(/\|/g, "\\|")} |`
+    ),
     "",
     "## Bookings and messages",
     "",
   ];
   for (const c of cells) {
     lines.push(`### ${c.provider} ${c.locale.toUpperCase()}`, "");
-    for (const b of c.bookings) lines.push(`- ${b.step}: booking uid \`${b.bookingUid}\`${b.bookingId ? ` (id ${b.bookingId})` : ""} at ${b.at}`);
+    for (const b of c.bookings)
+      lines.push(
+        `- ${b.step}: booking uid \`${b.bookingUid}\`${b.bookingId ? ` (id ${b.bookingId})` : ""} at ${b.at}`
+      );
     for (const s of ["create", "reschedule", "cancel"] as Step[]) {
       const i = c.invites[s];
       if (!i) continue;
@@ -486,14 +553,124 @@ async function main(): Promise<void> {
   const rows = cells.flatMap(rowsFor);
   mkdirSync(OUT_DIR, { recursive: true });
   const date = new Date().toISOString().slice(0, 10);
-  const json = { runId, base: BASE, expectOrganizer: EXPECT_ORGANIZER, expectDomain: EXPECT_DOMAIN, skipped, rows, cells };
+  const json = {
+    runId,
+    base: BASE,
+    expectOrganizer: EXPECT_ORGANIZER,
+    expectDomain: EXPECT_DOMAIN,
+    skipped,
+    rows,
+    cells,
+  };
   writeFileSync(join(OUT_DIR, `${date}-${runId}.json`), `${JSON.stringify(json, null, 2)}\n`);
   writeFileSync(join(OUT_DIR, `${date}-${runId}.md`), markdown(runId, cells, rows, skipped));
-  log(`wrote ${OUT_DIR}/${date}-${runId}.{md,json}: ${rows.filter((r) => r.pass).length}/${rows.length} pass`);
+  log(
+    `wrote ${OUT_DIR}/${date}-${runId}.{md,json}: ${rows.filter((r) => r.pass).length}/${rows.length} pass`
+  );
   if (rows.some((r) => !r.pass)) process.exitCode = 1;
 }
 
-main().catch((e: Error) => {
-  console.error(e.message);
-  process.exit(2);
-});
+// ---------- offline self-test (--selftest) ----------
+
+// Synthetic REQUEST/REQUEST/CANCEL mails in scripts/cc66-fixtures/ (example.com attendee,
+// TEST-NET IP). Negative cases prove each check can fail, so a green live run means something.
+function selftest(): void {
+  const dir = join(dirname(fileURLToPath(import.meta.url)), "cc66-fixtures");
+  const load = (s: Step, i: number) => parseInvite(100 + i, readFileSync(join(dir, `${s}.eml`), "latin1"));
+  const steps: Step[] = ["create", "reschedule", "cancel"];
+  const invites = Object.fromEntries(steps.map((s, i) => [s, load(s, i)])) as Record<Step, Invite>;
+  const cell = (inv: Partial<Record<Step, Invite>>): Cell => ({
+    provider: "gmail",
+    locale: "en",
+    attendee: "guest+cc66-fixture@example.com",
+    bookings: [],
+    invites: inv,
+  });
+  let n = 0;
+  const check = (name: string, ok: boolean, detail = "") => {
+    n++;
+    console.log(`${ok ? "ok  " : "FAIL"} ${n} ${name}${detail ? ` (${detail})` : ""}`);
+    if (!ok) process.exitCode = 1;
+  };
+
+  for (const s of steps) {
+    const i = invites[s];
+    check(
+      `${s}: calendar parts found`,
+      i.partKinds.join("+") === "text/calendar+application/ics",
+      i.partKinds.join("+")
+    );
+    check(`${s}: ORGANIZER`, i.organizer === EXPECT_ORGANIZER, i.organizer);
+    check(`${s}: spf/dkim/dmarc=pass d=${EXPECT_DOMAIN}`, i.auth.spf && i.auth.dkim && i.auth.dmarc);
+    check(`${s}: mailfrom local part masked`, !/bounces\+0@/.test(i.auth.raw));
+  }
+  const { create: a, reschedule: b, cancel: x } = invites;
+  check(
+    "METHOD REQUEST,REQUEST,CANCEL",
+    [a.method, b.method, x.method].join(",") === "REQUEST,REQUEST,CANCEL"
+  );
+  check("same UID", !!a.uid && a.uid === b.uid && b.uid === x.uid, a.uid);
+  check(
+    "SEQUENCE strictly increasing",
+    a.sequence! < b.sequence! && b.sequence! < x.sequence!,
+    [a.sequence, b.sequence, x.sequence].join("→")
+  );
+  check(
+    "quoted-printable part + RFC 2047 subject decoded",
+    b.subject === "Rescheduled: CC-66 fixture" && b.dtstart === "20261111T090000Z",
+    b.subject
+  );
+
+  const rows = rowsFor(cell(invites));
+  check("rowsFor: invite-chain PASS", rows[0].pass, rows[0].detail);
+  check("rowsFor: auth-aligned PASS", rows[1].pass, rows[1].detail);
+
+  // Negative cases.
+  const rowsOf = (inv: Partial<Record<Step, Invite>>) => rowsFor(cell(inv));
+  check("neg: missing cancel fails chain", !rowsOf({ create: a, reschedule: b }).some((r) => r.pass));
+  check(
+    "neg: equal SEQUENCE fails chain",
+    !rowsOf({ create: a, reschedule: { ...b, sequence: a.sequence }, cancel: x })[0].pass
+  );
+  check(
+    "neg: new UID on reschedule fails chain",
+    !rowsOf({ create: a, reschedule: { ...b, uid: "other" }, cancel: x })[0].pass
+  );
+  check(
+    "neg: REQUEST instead of CANCEL fails chain",
+    !rowsOf({ create: a, reschedule: b, cancel: { ...x, method: "REQUEST" } })[0].pass
+  );
+  check(
+    "neg: foreign ORGANIZER fails chain",
+    !rowsOf({ create: a, reschedule: b, cancel: { ...x, organizer: "noreply@example.com" } })[0].pass
+  );
+  const espOnly = readFileSync(join(dir, "create.eml"), "latin1")
+    .replace("header.i=@notify.timeway.co", "header.i=@esp.example.net")
+    .replace('smtp.mailfrom="bounces+0@notify.timeway.co"', 'smtp.mailfrom="bounces@esp.example.net"')
+    .replace("header.from=notify.timeway.co", "header.from=esp.example.net");
+  const e = parseInvite(200, espOnly);
+  check("neg: ESP-only dkim/spf/dmarc not aligned", !e.auth.dkim && !e.auth.spf && !e.auth.dmarc);
+  check("neg: unaligned mail fails auth row", !rowsOf({ create: e, reschedule: b, cancel: x })[1].pass);
+  const lookalike = parseInvite(
+    201,
+    readFileSync(join(dir, "create.eml"), "latin1").replace(
+      /notify\.timeway\.co/g,
+      "notify.timeway.co.example.net"
+    )
+  );
+  check(
+    "neg: lookalike notify.timeway.co.example.net not aligned",
+    !lookalike.auth.dkim && !lookalike.auth.spf && !lookalike.auth.dmarc
+  );
+
+  console.log(process.exitCode ? `selftest FAILED` : `selftest: ${n}/${n} ok`);
+}
+
+if (process.argv.includes("--selftest")) {
+  selftest();
+} else {
+  main().catch((e: Error) => {
+    console.error(e.message);
+    process.exit(2);
+  });
+}
