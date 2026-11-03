@@ -4793,5 +4793,9 @@
   "custom_domain_error": "Error",
   "custom_domain_polling": "Checking every 30 seconds for up to 10 minutes.",
   "custom_domain_check_again": "Check again",
+  "org_landing_book_meeting": "Book a meeting",
+  "org_landing_team_links": "Team bookings",
+  "org_landing_empty": "No public booking pages yet.",
+  "org_landing_duration": "{{count}} min",
   "ADD_NEW_STRINGS_ABOVE_THIS_LINE_TO_PREVENT_MERGE_CONFLICTS": "↑↑↑↑↑↑↑↑↑↑↑↑↑ Add your new strings above here ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑"
 }
