@@ -1,0 +1,56 @@
+Received: from o1.notify.timeway.co (o1.notify.timeway.co. [192.0.2.10])
+        by mx.google.com; Tue, 03 Nov 2026 08:00:00 -0800 (PST)
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=AAAAAAAA;
+       spf=pass (google.com: domain of bounces+0@notify.timeway.co designates 192.0.2.10 as permitted sender) smtp.mailfrom="bounces+0@notify.timeway.co";
+       dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co
+From: Timeway <bookings@notify.timeway.co>
+To: guest+cc66-fixture@example.com
+Subject: =?UTF-8?B?UmVzY2hlZHVsZWQ6IENDLTY2IGZpeHR1cmU=?=
+Date: Tue, 03 Nov 2026 16:00:01 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="mix-b"
+
+--mix-b
+Content-Type: multipart/alternative; boundary="alt-b"
+
+--alt-b
+Content-Type: text/plain; charset=utf-8
+
+CC-66 fixture body.
+--alt-b
+Content-Type: text/calendar; charset=utf-8; method=REQUEST
+Content-Transfer-Encoding: quoted-printable
+
+BEGIN:VCALENDAR
+PRODID:-//cc66-fixture//EN
+VERSION:2.0
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:synthetic-0000-4000-8000-cc66fixture
+SEQUENCE:1
+DTSTAMP:20261103T080000Z
+DTSTART:20261111T090000Z
+DTEND:20261111T090000Z
+SUMMARY:CC-66 fixture
+ORGANIZER;CN=3DTimeway:mailto:bookings@notify.timeway.co
+ATTENDEE;CN=3DFixture Guest;ROLE=3DREQ-PARTICIPANT;RSVP=3DTRUE:mailto:guest+cc66-fixture@example.com
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR
+
+--alt-b--
+--mix-b
+Content-Type: application/ics; name="invite.ics"
+Content-Disposition: attachment; filename="invite.ics"
+Content-Transfer-Encoding: base64
+
+QkVHSU46VkNBTEVOREFSDQpQUk9ESUQ6LS8vY2M2Ni1maXh0dXJlLy9FTg0KVkVSU0lPTjoyLjAN
+Ck1FVEhPRDpSRVFVRVNUDQpCRUdJTjpWRVZFTlQNClVJRDpzeW50aGV0aWMtMDAwMC00MDAwLTgw
+MDAtY2M2NmZpeHR1cmUNClNFUVVFTkNFOjENCkRUU1RBTVA6MjAyNjExMDNUMDgwMDAwWg0KRFRT
+VEFSVDoyMDI2MTExMVQwOTAwMDBaDQpEVEVORDoyMDI2MTExMVQwOTAwMDBaDQpTVU1NQVJZOkND
+LTY2IGZpeHR1cmUNCk9SR0FOSVpFUjtDTj1UaW1ld2F5Om1haWx0bzpib29raW5nc0Bub3RpZnku
+dGltZXdheS5jbw0KQVRURU5ERUU7Q049Rml4dHVyZSBHdWVzdDtST0xFPVJFUS1QQVJUSUNJUEFO
+VDtSU1ZQPVRSVUU6bWFpbHRvOmd1ZXN0K2NjNjYtZml4dHVyZUBleGFtcGxlLmNvbQ0KU1RBVFVT
+OkNPTkZJUk1FRA0KRU5EOlZFVkVOVA0KRU5EOlZDQUxFTkRBUg0K
+--mix-b--
