@@ -296,6 +296,18 @@ const useTabs = ({
           avatar: getUserAvatarUrl(user),
         };
       } else if (tab.href === "/settings/organizations") {
+        // TW-T9 orgs live in tw_organization_member, not legacy cal orgs, so without orgBranding
+        // the section carries only the custom-domain page.
+        if (!orgBranding) {
+          return {
+            ...tab,
+            children: (tab.children ?? []).filter(
+              (child) => child.name === "custom_domain" && permissions?.canManageCustomDomain
+            ),
+            name: "organization",
+            avatar: getPlaceholderAvatar(null, undefined),
+          };
+        }
         const newArray = (tab?.children ?? []).filter(
           (child) =>
             (permissions?.canUpdateOrganization || !organizationAdminKeys.includes(child.name)) &&
@@ -374,7 +386,8 @@ const useTabs = ({
 
     // check if name is in adminRequiredKeys
     return processedTabs.filter((tab) => {
-      if (organizationRequiredKeys.includes(tab.name)) return !!orgBranding;
+      if (organizationRequiredKeys.includes(tab.name))
+        return !!orgBranding || (tab.children?.length ?? 0) > 0;
       if (tab.name === "other_teams" && !permissions?.canUpdateOrganization) return false;
 
       if (isAdmin) return true;
