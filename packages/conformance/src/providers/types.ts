@@ -25,7 +25,8 @@ export interface CalendarProvider {
 
 export type OAuthClientConfig = {
   clientId: string;
-  clientSecret: string;
+  /** omitted for a public client (no secret; e.g. a personal-account Entra app) */
+  clientSecret?: string;
   refreshToken: string;
 };
 

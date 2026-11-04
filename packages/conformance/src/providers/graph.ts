@@ -91,11 +91,11 @@ export class GraphCalendarClient implements CalendarProvider {
     if (this.accessToken && this.now() < this.expiresAt - TOKEN_SKEW_MS) return this.accessToken;
     const body = new URLSearchParams({
       client_id: this.oauth.clientId,
-      client_secret: this.oauth.clientSecret,
       refresh_token: this.refreshToken,
       grant_type: "refresh_token",
       scope: GRAPH_SCOPE,
     });
+    if (this.oauth.clientSecret) body.set("client_secret", this.oauth.clientSecret);
     const res = await fetchWithRetry(
       graphTokenUrl(this.opts.tenant),
       {
