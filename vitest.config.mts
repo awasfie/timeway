@@ -72,8 +72,9 @@ export default defineConfig({
       },
       // Alias Node.js built-ins for jsdom environment
       { find: "crypto", replacement: "node:crypto" },
-      // API v1 path alias
-      { find: "~", replacement: path.resolve(__dirname, "apps/api/v1") },
+      // apps/api/v1 is gone from this fork; "~" follows apps/web/tsconfig.json ("~/*" -> modules/*)
+      // so Next pages can be imported in-process (CC-13 page probes).
+      { find: /^~\//, replacement: `${path.resolve(__dirname, "apps/web/modules")}/` },
       // apps/web path aliases
       { find: "@lib", replacement: path.resolve(__dirname, "apps/web/lib") },
       { find: "@server", replacement: path.resolve(__dirname, "apps/web/server") },
