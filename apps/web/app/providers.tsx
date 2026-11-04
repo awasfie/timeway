@@ -2,14 +2,9 @@
 
 import { TrpcProvider } from "app/_trpc/trpc-provider";
 import { SessionProvider } from "next-auth/react";
-import CacheProvider from "react-inlinesvg/provider";
 import { ToastProvider } from "@coss/ui/components/toast";
 
-import { WebPushProvider } from "@calcom/web/modules/notifications/components/WebPushContext";
-import { NotificationSoundHandler } from "@calcom/web/components/notification-sound-handler";
-
 import { AnalyticsIdentify } from "@lib/analytics/AnalyticsIdentify";
-import useIsBookingPage from "@lib/hooks/useIsBookingPage";
 
 import { GeoProvider } from "./GeoContext";
 
@@ -19,21 +14,16 @@ type ProvidersProps = {
   nonce: string | undefined;
   country: string;
 };
-export function Providers({ isEmbed, children, country }: ProvidersProps) {
-  const isBookingPage = useIsBookingPage();
-
+// WC-TW-6n-1: SessionProvider and TrpcProvider stay here because the booker reads the session
+// (prefill, own-page detection) and loads slots through tRPC on first render. Web push, the
+// notification sound, react-inlinesvg's cache and nuqs moved to (use-page-wrapper)/AppShellProviders.
+export function Providers({ children, country }: ProvidersProps) {
   return (
     <GeoProvider country={country}>
       <SessionProvider>
         <AnalyticsIdentify />
         <TrpcProvider>
-          <ToastProvider position="bottom-center">
-            {!isEmbed && !isBookingPage && <NotificationSoundHandler />}
-            {/* @ts-expect-error react-inlinesvg/provider is incompatible with @types/react@18.0.26. Remove when these types are compatible. */}
-            <CacheProvider>
-              <WebPushProvider>{children}</WebPushProvider>
-            </CacheProvider>
-          </ToastProvider>
+          <ToastProvider position="bottom-center">{children}</ToastProvider>
         </TrpcProvider>
       </SessionProvider>
     </GeoProvider>
