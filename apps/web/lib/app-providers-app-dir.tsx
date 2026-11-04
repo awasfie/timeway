@@ -11,6 +11,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import type { Session } from "next-auth";
 import { useSession } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
+import { useEffect } from "react";
 import { getThemeProviderProps } from "./getThemeProviderProps";
 
 // Workaround for https://github.com/vercel/next.js/issues/8592
@@ -63,12 +64,20 @@ const CalcomThemeProvider = (props: CalcomThemeProps) => {
     searchParams,
   });
 
+  // WC-TW-6n-1: injected from an effect instead of styled-jsx, which kept its runtime on the booking
+  // first load. Client-only, like the old `typeof window` guard, without a hydration mismatch.
+  useEffect(() => {
+    if (isEmbedMode) return;
+    const style = document.createElement("style");
+    style.textContent = ".dark { color-scheme: dark; }";
+    document.head.appendChild(style);
+    return () => style.remove();
+  }, [isEmbedMode]);
+
   return (
     <ThemeProvider key={key} {...themeProviderProps}>
       {/* Embed Mode can be detected reliably only on client side here as there can be static generated pages as well which can't determine if it's embed mode at backend */}
       {/* color-scheme makes background:transparent not work in iframe which is required by embed. */}
-      {/* WC-TW-6n-1: a plain <style> instead of styled-jsx, which kept its runtime on the booking first load. */}
-      {typeof window !== "undefined" && !isEmbedMode && <style>{".dark { color-scheme: dark; }"}</style>}
       {props.children}
     </ThemeProvider>
   );
