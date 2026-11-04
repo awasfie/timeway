@@ -6,7 +6,6 @@ import { FromToTime } from "@calcom/features/bookings/Booker/utils/dates";
 import { useTimePreferences } from "@calcom/features/bookings/lib";
 import type { BookerEvent } from "@calcom/features/bookings/types";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { sanitizeSafeHtmlClient } from "@calcom/lib/safeHtmlClient";
 import { CURRENT_TIMEZONE } from "@calcom/lib/timezoneConstants";
 import type { EventTypeTranslation } from "@calcom/prisma/client";
 import { EventTypeAutoTranslatedField } from "@calcom/prisma/enums";
@@ -182,10 +181,10 @@ export const EventMeta = ({
               <ScrollableWithGradients
                 className="wrap-break-word scroll-bar max-h-[180px] max-w-full overflow-y-auto pr-4"
                 ariaLabel={t("description")}>
-                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: rendered by markdownToSafeHTML in getPublicEvent, re-sanitized with DOMPurify */}
+                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: description and its translations are sanitised by markdownToSafeHTML / descriptionTranslationsToSafeHTML in getPublicEvent (all three return paths, SSR props and the tRPC refetch). No client DOMPurify pass: it kept ~10 KB gz of dompurify in every booking page's first load (WC-TW-6n-2); the label path (FormBuilderField) still re-sanitises inside the lazy form chunk. */}
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: sanitizeSafeHtmlClient(translatedDescription ?? event.description),
+                    __html: translatedDescription ?? event.description ?? "",
                   }}
                 />
               </ScrollableWithGradients>
