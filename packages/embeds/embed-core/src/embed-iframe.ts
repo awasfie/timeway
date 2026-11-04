@@ -12,7 +12,6 @@ import { embedStore } from "./embed-iframe/lib/embedStore";
 import { isBrowser, log } from "./embed-iframe/lib/utils";
 import { sdkActionManager } from "./sdk-event";
 import type {
-  UiConfig,
   EmbedNonStylesConfig,
   BookerLayouts,
   EmbedStyles,
@@ -29,17 +28,7 @@ export { useBookerEmbedEvents, useSlotsViewOnSmallScreen } from "./embed-iframe/
 // We don't import it from Booker/types because the types from this module are published to npm and we can't import packages that aren't published
 type BookerState = "loading" | "selecting_date" | "selecting_time" | "booking";
 
-declare global {
-  interface Window {
-    CalEmbed: {
-      __logQueue?: unknown[];
-      embedStore: typeof embedStore;
-      applyCssVars: (cssVarsPerTheme: UiConfig["cssVarsPerTheme"]) => void;
-    };
-    // Marks that Booker has moved to some non-"loading" state
-    _embedBookerState?: EmbedBookerState;
-  }
-}
+// Window.CalEmbed and Window._embedBookerState are declared in ./types (declare global).
 
 let isSafariBrowser = false;
 
