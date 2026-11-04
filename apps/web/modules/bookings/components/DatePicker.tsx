@@ -214,6 +214,8 @@ export const DatePicker = ({
             if (!allAway) return undefined;
             return <span data-testid="away-emoji">{daySlots.find((slot) => slot.away)?.emoji}</span>;
           }}
+          // Two/three-letter headers (So Mo Di / dom lun mar) as the previous grid; e2e checks them.
+          weekdayStyle="short"
           firstDayOfWeek={weekIndexToWeekdayId(weekStart)}
           value={selected ? toCalendarDate(selected) : null}
           focusedValue={focusedDate}
