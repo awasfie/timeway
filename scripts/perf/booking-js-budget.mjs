@@ -50,9 +50,22 @@ if (!Number.isFinite(baselineKb) || baselineKb <= 0) {
   process.exit(1);
 }
 
+// WC-TW-6n-1: <script noModule> (Next's core-js polyfills.js) is fetched only by browsers without ES
+// module support, so it is not part of a modern first load. It is reported on its own line instead.
+export function noModuleSrcs(html) {
+  const srcs = new Set();
+  for (const m of html.matchAll(/<script\b[^>]*>/gi)) {
+    if (!/\bnomodule\b/i.test(m[0])) continue;
+    const src = m[0].match(/\bsrc="([^"]+\.js[^"]*)"/);
+    if (src) srcs.add(src[1]);
+  }
+  return [...srcs];
+}
+
 export function scriptSrcs(html) {
   const srcs = new Set();
-  for (const m of html.matchAll(/<script\b[^>]*\bsrc="([^"]+\.js[^"]*)"/g)) srcs.add(m[1]);
+  const legacy = new Set(noModuleSrcs(html));
+  for (const m of html.matchAll(/<script\b[^>]*\bsrc="([^"]+\.js[^"]*)"/g)) if (!legacy.has(m[1])) srcs.add(m[1]);
   // Turbopack/app-router preloads chunks with <link rel="preload" as="script"> before the tags.
   for (const m of html.matchAll(/<link\b[^>]*\bas="script"[^>]*\bhref="([^"]+\.js[^"]*)"/g)) srcs.add(m[1]);
   for (const m of html.matchAll(/<link\b[^>]*\bhref="([^"]+\.js[^"]*)"[^>]*\bas="script"/g)) srcs.add(m[1]);
@@ -89,6 +102,11 @@ async function main() {
     const text = bytes.toString("utf8");
     for (const hit of forbidHits) if (text.includes(hit.marker)) hit.found_in.push(src.split("?")[0]);
   }
+  const legacyFiles = [];
+  for (const src of noModuleSrcs(html)) {
+    const { bytes, from } = await loadBytes(src);
+    legacyFiles.push({ src, raw: bytes.length, gz: gzipSync(bytes, { level: 9 }).length, from });
+  }
   const forbidOk = forbidHits.every((h) => h.found_in.length === 0);
   files.sort((a, b) => b.gz - a.gz);
   const totalGz = files.reduce((s, f) => s + f.gz, 0);
@@ -121,6 +139,11 @@ async function main() {
     forbidden: forbidHits,
     pass,
     files,
+    nomodule: {
+      note: "legacy <script noModule>, not fetched by browsers with ES module support; outside the total",
+      total_kb_gz: Number((legacyFiles.reduce((s, f) => s + f.gz, 0) / 1024).toFixed(1)),
+      files: legacyFiles,
+    },
   };
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(result, null, 2)}\n`);
@@ -144,6 +167,7 @@ async function main() {
     "| --- | ---: | ---: |",
     ...files.map((f) => `| \`${f.src.split("?")[0]}\` | ${kb(f.gz)} | ${kb(f.raw)} |`),
     `| **total (${files.length})** | **${kb(totalGz)}** | ${kb(totalRaw)} |`,
+    ...legacyFiles.map((f) => `| not counted, noModule: \`${f.src.split("?")[0]}\` | ${kb(f.gz)} | ${kb(f.raw)} |`),
     "",
   ];
   console.log(lines.join("\n"));
