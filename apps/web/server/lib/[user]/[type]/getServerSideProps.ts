@@ -268,10 +268,12 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
     eventData: eventData,
     user: username,
     slug,
-    isBrandingHidden: shouldHideBrandingForUserEvent({
-      eventTypeId: eventData.id,
-      owner: user,
-    }),
+    isBrandingHidden:
+      (eventData as { twHideBranding?: boolean }).twHideBranding === true ||
+      shouldHideBrandingForUserEvent({
+        eventTypeId: eventData.id,
+        owner: user,
+      }),
     isSEOIndexable: allowSEOIndexing,
     themeBasis: username,
     bookingUid: bookingUid ? `${bookingUid}` : null,

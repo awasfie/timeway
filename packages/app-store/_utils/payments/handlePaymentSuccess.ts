@@ -5,6 +5,7 @@ import EventManager, { placeholderCreatedEvent } from "@calcom/features/bookings
 import { getAllCredentialsIncludeServiceAccountKey } from "@calcom/features/bookings/lib/getAllCredentialsForUsersOnEvent/getAllCredentials";
 import { handleBookingRequested } from "@calcom/features/bookings/lib/handleBookingRequested";
 import { handleConfirmation } from "@calcom/features/bookings/lib/handleConfirmation";
+import { enqueuePlatformFeeUsage } from "@calcom/features/payments/gateway/platformFee";
 import { getBooking } from "@calcom/features/bookings/lib/payment/getBooking";
 import { getPlatformParams } from "@calcom/features/platform-oauth-client/get-platform-params";
 import { PlatformOAuthClientRepository } from "@calcom/features/platform-oauth-client/platform-oauth-client.repository";
@@ -113,6 +114,9 @@ export async function handlePaymentSuccess(params: {
   });
 
   const [payment, updatedBooking] = await prisma.$transaction([paymentUpdate, bookingUpdate]);
+
+  // WC-TW-13e: never throws, so Passport can never fail the booking.
+  await enqueuePlatformFeeUsage({ paymentId, kind: "charge" });
 
   const platformClientParams = platformOAuthClient ? getPlatformParams(platformOAuthClient) : undefined;
   const teamId = await getTeamIdFromEventType({

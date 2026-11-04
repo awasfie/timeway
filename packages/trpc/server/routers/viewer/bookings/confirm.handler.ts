@@ -25,6 +25,7 @@ import logger from "@calcom/lib/logger";
 import { safeStringify } from "@calcom/lib/safeStringify";
 import { getTimeFormatStringFromUserTimeFormat } from "@calcom/lib/timeFormat";
 import type { TraceContext } from "@calcom/lib/tracing";
+import { isEventTypeBrandingHidden } from "@calcom/features/tw-branding/branding";
 import { prisma } from "@calcom/prisma";
 import { Prisma } from "@calcom/prisma/client";
 import { BookingStatus, WebhookTriggerEvents } from "@calcom/prisma/enums";
@@ -299,6 +300,8 @@ export const confirmHandler = async ({ ctx, input }: ConfirmOptions) => {
           },
         } satisfies EventTypeBrandingData)
       : false,
+    // WC-TW-14b: a Timeway org entitled to hideBranding overrides the cal.com result
+    ...((await isEventTypeBrandingHidden(prisma, booking.eventType?.id)) ? { hideBranding: true } : {}),
   };
 
   const recurringEvent = parseRecurringEvent(booking.eventType?.recurringEvent);
