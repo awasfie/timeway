@@ -276,6 +276,10 @@ describe("CC-13 public slugs: anonymous and tenant B vs tenant A (WC-TW-7b-3)", 
         select: { slug: true },
       });
       const res = await asViewer("B", () => teamTypeSSR(ctx({ slug: seed.A.team.slug, type: t.slug })));
+      // Without the host on the page the email check below would pass vacuously.
+      const users = (res as { props?: { eventData?: { users?: { username?: string | null }[] } } }).props
+        ?.eventData?.users;
+      expect(users?.map((u) => u.username)).toContain(seed.A.owner.username);
       expectNoSecrets(res);
     });
 
