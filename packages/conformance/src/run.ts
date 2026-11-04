@@ -84,7 +84,8 @@ export function buildRuntime(env: NodeJS.ProcessEnv = process.env, clock: Clock 
     } else {
       graph ??= new GraphCalendarClient({
         clientId: required(env, "SOAK_MS_CLIENT_ID"),
-        clientSecret: required(env, "SOAK_MS_CLIENT_SECRET"),
+        // optional: a public client (personal-account Entra app) has no secret
+        clientSecret: env.SOAK_MS_CLIENT_SECRET || undefined,
         refreshToken: required(env, "SOAK_MS_REFRESH_TOKEN"),
       });
     }

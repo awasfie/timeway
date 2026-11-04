@@ -55,7 +55,7 @@ export class GoogleCalendarClient implements CalendarProvider {
     if (this.accessToken && this.now() < this.expiresAt - TOKEN_SKEW_MS) return this.accessToken;
     const body = new URLSearchParams({
       client_id: this.oauth.clientId,
-      client_secret: this.oauth.clientSecret,
+      client_secret: this.oauth.clientSecret ?? "",
       refresh_token: this.oauth.refreshToken,
       grant_type: "refresh_token",
     });
