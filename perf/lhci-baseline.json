@@ -1,0 +1,49 @@
+{
+  "_comment": "WC-TW-6c LHCI ratchet: medians of 5 Lighthouse runs per region on the CI production build. While a median is over its absolute error threshold the gate asserts median <= baseline x (1 + tolerance) and the absolute threshold is a warning; lower these in every reduction PR.",
+  "lcp_ms": 8240,
+  "tbt_ms": 1004,
+  "tolerance": 0.1,
+  "tbt_tolerance": 1.0,
+  "source": "median of 6 booking-perf runs on main d189e4b143 (workflow_dispatch 40540356445, 40541593114, 40543653859, 40545359153, 40547058825; push 40526532334), WC-TW-6c-12, region=gh-runner",
+  "regions": {
+    "_comment": "WC-TW-6c-12 per-region ratchet: lcp_ms and tbt_ms are each region's own median over the same 6 runs (the region collects run on the same runner as gh-runner, so TBT is CPU-only and tracks the runner).",
+    "cairo": {
+      "lcp_ms": 8753,
+      "tbt_ms": 986,
+      "city_rtt_ms": 47,
+      "source": "median of 6 booking-perf runs on main d189e4b143 (workflow_dispatch 40540356445, 40541593114, 40543653859, 40545359153, 40547058825; push 40526532334), WC-TW-6c-12, region=cairo; city_rtt_ms from the WC-TW-6c-10 baseline run 40144176236 (informational, each run measures its own)"
+    },
+    "riyadh": {
+      "lcp_ms": 8726,
+      "tbt_ms": 950,
+      "city_rtt_ms": 9,
+      "source": "median of 6 booking-perf runs on main d189e4b143 (workflow_dispatch 40540356445, 40541593114, 40543653859, 40545359153, 40547058825; push 40526532334), WC-TW-6c-12, region=riyadh; city_rtt_ms from the WC-TW-6c-10 baseline run 40144176236 (informational, each run measures its own)"
+    },
+    "dubai": {
+      "lcp_ms": 8804,
+      "tbt_ms": 986,
+      "city_rtt_ms": 113,
+      "source": "median of 6 booking-perf runs on main d189e4b143 (workflow_dispatch 40540356445, 40541593114, 40543653859, 40545359153, 40547058825; push 40526532334), WC-TW-6c-12, region=dubai; city_rtt_ms from the WC-TW-6c-10 baseline run 40144176236 (informational, each run measures its own)"
+    }
+  },
+  "rule": "WC-TW-6c-12. Baseline = median over >= 5 main runs at one SHA of each run's per-region median. Gate = baseline x (1 + tolerance): LCP 10% (same-code worst run was <= 1.02x its median), TBT 100% (same-code worst run 1.35-1.61x its median, because GH runners come in two CPU classes: benchmarkIndex ~2400 gives TBT 1100-1620 ms, ~3000-4200 gives 450-850 ms). Lighthouse runs 5 per region (was 3) so the cold first run on a fresh next start (TBT 0.85-10.2 s) never decides the median. Every collected run passes the new gates; bundle regressions stay hard-gated by perf/js-baseline.json (5 KB tolerance). Lower these baselines in every reduction PR.",
+  "samples": {
+    "gh-runner": {
+      "tbt_ms": [568, 828, 1180, 1220, 603, 1617],
+      "lcp_ms": [8253, 8291, 8228, 7516, 8214, 8387]
+    },
+    "cairo": {
+      "tbt_ms": [778, 728, 1195, 1328, 642, 1285],
+      "lcp_ms": [8691, 7917, 8815, 8837, 8912, 8187]
+    },
+    "riyadh": {
+      "tbt_ms": [644, 821, 1080, 1307, 532, 1233],
+      "lcp_ms": [8710, 8741, 8754, 7906, 7786, 8783]
+    },
+    "dubai": {
+      "tbt_ms": [781, 663, 1190, 1380, 722, 1367],
+      "lcp_ms": [7674, 8693, 8930, 8959, 8769, 8839]
+    }
+  },
+  "samples_runs": ["40540356445", "40541593114", "40543653859", "40545359153", "40547058825", "40526532334"]
+}

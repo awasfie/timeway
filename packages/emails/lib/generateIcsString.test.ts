@@ -8,7 +8,8 @@ import { buildVideoCallData } from "@calcom/lib/test/builder";
 import type { CalendarEvent } from "@calcom/types/Calendar";
 import { test } from "@calcom/testing/lib/fixtures/fixtures";
 
-import generateIcsString from "./generateIcsString";
+import generateIcsString, { getIcsOrganizerEmail } from "./generateIcsString";
+import { toLocalIcsDateTime } from "./icsTimezone";
 
 const assertHasIcsString = (icsString: string | undefined) => {
   if (!icsString) throw new Error("icsString is undefined");
@@ -19,7 +20,7 @@ const assertHasIcsString = (icsString: string | undefined) => {
 };
 
 const testIcsStringContains = ({
-  icsString,
+  icsString: rawIcsString,
   event,
   status,
 }: {
@@ -27,24 +28,30 @@ const testIcsStringContains = ({
   event: CalendarEvent;
   status: string;
 }) => {
-  const DTSTART = `${event.startTime.split(".")[0].split(":").slice(0, 2).join(":").replace(/[-:]/g, "")}00Z`;
-  const DTEND = `${event.endTime.split(".")[0].split(":").slice(0, 2).join(":").replace(/[-:]/g, "")}00Z`;
+  const tz = event.organizer.timeZone;
+  const DTSTART = `;TZID=${tz}:${toLocalIcsDateTime(tz, event.startTime)}`;
+  const DTEND = `;TZID=${tz}:${toLocalIcsDateTime(tz, event.endTime)}`;
+  const icsString = rawIcsString.replace(/\r\n[ \t]/g, "");
   const isOrganizerExempt = ORGANIZER_EMAIL_EXEMPT_DOMAINS?.split(",")
     .filter((domain) => domain.trim() !== "")
     .some((domain) => event.organizer.email.toLowerCase().endsWith(domain.toLowerCase()));
   expect(icsString).toEqual(expect.stringContaining(`UID:${event.iCalUID}`));
   // Sometimes the deeply equal stringMatching error appears. Don't want to add flakey tests
   // expect(icsString).toEqual(expect.stringContaining(`SUMMARY:${event.title}`));
-  expect(icsString).toEqual(expect.stringContaining(`DTSTART:${DTSTART}`));
+  expect(icsString).toEqual(expect.stringContaining(`DTSTART${DTSTART}`));
+  expect(icsString).toEqual(
+    expect.stringContaining(`ORGANIZER;CN=${event.organizer.name}:mailto:${getIcsOrganizerEmail()}`)
+  );
   if (event.hideOrganizerEmail && !isOrganizerExempt) {
-    expect(icsString).toEqual(expect.stringContaining(`ORGANIZER;CN=${event.organizer.name}`));
     expect(icsString).not.toEqual(expect.stringContaining(`mailto:${event.organizer.email}`));
   } else {
     expect(icsString).toEqual(
-      expect.stringContaining(`ORGANIZER;CN=${event.organizer.name}:mailto:${event.organizer.email}`)
+      expect.stringContaining(
+        `ATTENDEE;RSVP=FALSE;ROLE=CHAIR;PARTSTAT=ACCEPTED;CN=${event.organizer.name}:mailto:${event.organizer.email}`
+      )
     );
   }
-  expect(icsString).toEqual(expect.stringContaining(`DTEND:${DTEND}`));
+  expect(icsString).toEqual(expect.stringContaining(`DTEND${DTEND}`));
   expect(icsString).toEqual(expect.stringContaining(`STATUS:${status}`));
   expect(icsString).toEqual(
     expect.stringContaining(`METHOD:${status === "CANCELLED" ? "CANCEL" : "REQUEST"}`)
@@ -255,6 +262,52 @@ describe("generateIcsString", () => {
 
       expect(icsString).toBeDefined();
       expect(typeof icsString).toBe("string");
+    });
+  });
+  describe("LOCATION never a raw integrations:* key (TW-ICS-1a)", () => {
+    const unfoldedLocation = (ics: string) =>
+      ics
+        .replace(/\r?\n[ \t]/g, "")
+        .split(/\r?\n/)
+        .find((l) => l.startsWith("LOCATION:"));
+
+    test("camv booking without videoCallData (email attachment path) -> camv room URL", () => {
+      const event = buildCalendarEvent({
+        uid: "abc123XYZ",
+        iCalSequence: 0,
+        attendees: [buildPerson()],
+        location: "integrations:camv",
+        videoCallData: undefined,
+      });
+      const icsString = assertHasIcsString(generateIcsString({ event, status: "CONFIRMED" }));
+      expect(unfoldedLocation(icsString)).toBe("LOCATION:https://camv.co/rooms/tw-abc123XYZ?hq=true");
+    });
+
+    test("camv booking with livekit_video videoCallData -> that URL", () => {
+      const event = buildCalendarEvent({
+        uid: "abc123XYZ",
+        iCalSequence: 0,
+        attendees: [buildPerson()],
+        location: "integrations:camv",
+        videoCallData: buildVideoCallData({
+          type: "livekit_video",
+          url: "https://camv.co/rooms/tw-abc123XYZ?hq=true",
+        }),
+      });
+      const icsString = assertHasIcsString(generateIcsString({ event, status: "CONFIRMED" }));
+      expect(unfoldedLocation(icsString)).toBe("LOCATION:https://camv.co/rooms/tw-abc123XYZ?hq=true");
+    });
+
+    test("other integration key without a URL -> provider label, not the key", () => {
+      const event = buildCalendarEvent({
+        iCalSequence: 0,
+        attendees: [buildPerson()],
+        location: "integrations:zoom",
+        videoCallData: undefined,
+      });
+      const icsString = assertHasIcsString(generateIcsString({ event, status: "CONFIRMED" }));
+      expect(icsString).not.toContain("integrations:");
+      expect(unfoldedLocation(icsString)).toBe("LOCATION:Zoom");
     });
   });
 });

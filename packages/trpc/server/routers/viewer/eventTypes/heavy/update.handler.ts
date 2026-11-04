@@ -7,6 +7,7 @@ import { HashedLinkService } from "@calcom/features/hashedLink/lib/service/Hashe
 import { MembershipRepository } from "@calcom/features/membership/repositories/MembershipRepository";
 import { ScheduleRepository } from "@calcom/features/schedules/repositories/ScheduleRepository";
 import tasker from "@calcom/features/tasker";
+import { onEventTypeVisible } from "@calcom/features/tw-activation/activation";
 import { getTranslation } from "@calcom/i18n/server";
 import { validateIntervalLimitOrder } from "@calcom/lib/intervalLimits/validateIntervalLimitOrder";
 import logger from "@calcom/lib/logger";
@@ -99,6 +100,9 @@ export const updateHandler = async ({ ctx, input }: UpdateOptions) => {
     where: { id },
     select: {
       title: true,
+      hidden: true,
+      twOrgId: true,
+      userId: true,
       locations: true,
       description: true,
       seatsPerTimeSlot: true,
@@ -712,6 +716,10 @@ export const updateHandler = async ({ ctx, input }: UpdateOptions) => {
       }
     }
     throw e;
+  }
+
+  if (eventType.hidden && rest.hidden === false) {
+    await onEventTypeVisible({ id, twOrgId: eventType.twOrgId, userId: eventType.userId }, "update");
   }
 
   if (hostLocationDeletions.length > 0) {

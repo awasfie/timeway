@@ -1,4 +1,9 @@
 import process from "node:process";
+import {
+  createHttpResolver,
+  decideCustomHost,
+  readGateEnv,
+} from "@calcom/lib/domainManager/customHostnames/proxyGate";
 import { getCspHeader, getCspNonce } from "@lib/csp";
 import { PATHNAME_HEADER } from "@lib/i18n/pathnameHeader";
 import { get } from "@vercel/edge-config";
@@ -66,8 +71,31 @@ const shouldEnforceCsp = (url: URL) => {
   return url.pathname.startsWith("/auth/login") || url.pathname.startsWith("/login");
 };
 
+// The pre-12c2 matcher list. The catch-all matcher entry below exists only for customer hosts, so
+// platform-host requests outside this list must pass through untouched.
+const isLegacyMatchedPath = (pathname: string) =>
+  ["/auth/login", "/login", "/apps/installed", "/auth/logout", "/availability", "/api/auth/signup"].includes(
+    pathname
+  ) ||
+  pathname.endsWith("/embed") ||
+  pathname === "/team" ||
+  pathname.startsWith("/team/");
+
+const resolveCustomHost = createHttpResolver();
+
+const notFound = () =>
+  new NextResponse("Not Found", { status: 404, headers: { "cache-control": "no-store" } });
+
 const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
   const url = req.nextUrl;
+  const customHost = await decideCustomHost(
+    { hostHeader: req.headers.get("host"), pathname: url.pathname, search: url.search },
+    readGateEnv(),
+    resolveCustomHost
+  );
+  if (customHost.action === "notFound") return notFound();
+  if (customHost.action === "next" && !isLegacyMatchedPath(url.pathname)) return NextResponse.next();
+
   const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });
   const requestHeaders = new Headers(reqWithEnrichedHeaders.headers);
   // Always overwrite: the root layout uses it to pick <html lang/dir> for booking pages.
@@ -94,11 +122,16 @@ const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
     }
   }
 
-  const res = NextResponse.next({
-    request: {
-      headers: sanitizeRequestHeaders(requestHeaders),
-    },
-  });
+  const res =
+    customHost.action === "rewrite"
+      ? NextResponse.rewrite(new URL(`${customHost.pathname}${customHost.search}`, req.url), {
+          request: { headers: sanitizeRequestHeaders(requestHeaders) },
+        })
+      : NextResponse.next({
+          request: {
+            headers: sanitizeRequestHeaders(requestHeaders),
+          },
+        });
 
   if (url.pathname.startsWith("/auth/logout")) {
     res.cookies.delete("next-auth.session-token");
@@ -175,6 +208,12 @@ export const config = {
     "/team/:path*",
     "/availability",
     "/api/auth/signup",
+    // WC-TW-12c2: every page on a customer host. Static assets are skipped; platform hosts are
+    // excluded here and again in isLegacyMatchedPath.
+    {
+      source: "/((?!_next/static|_next/image).*)",
+      missing: [{ type: "host", value: "((.+\\.)?timeway\\.co|localhost|127\\.0\\.0\\.1)" }],
+    },
   ],
 };
 

@@ -2906,6 +2906,12 @@ enum TwBillingAttribution {
   parent
 }
 
+/// WC-TW-10b: which WhatsApp number sends an org's reminders.
+enum TwWaSenderMode {
+  shared
+  own
+}
+
 model Organization {
   id           String                   @id @default(uuid()) @db.Uuid
   slug         String                   @unique
@@ -2929,9 +2935,19 @@ model Organization {
   /// WC-TW-14a (E7): developer sandbox; emits no usage lines (nor do its sub-orgs).
   isSandbox          Boolean              @default(false)
 
-  members        OrganizationMember[]
-  apiKeys        OrgApiKey[]
-  customHostname TwCustomHostname?
+  /// WC-TW-10b (expand): WhatsApp reminder sender. NULL or `shared` = the platform's shared number.
+  waSenderMode          TwWaSenderMode?
+  /// Whatsaff WhatsappPhoneNumber id of the org's own number (the add-on); used only while mode = own and verified.
+  waSenderPhoneNumberId String?
+  /// Display number captured at verification, for the settings UI and support.
+  waSenderDisplayNumber String?
+  /// Set when Whatsaff listed the number as active for our account; cleared when it stops being listed.
+  waSenderVerifiedAt    DateTime?
+
+  members          OrganizationMember[]
+  apiKeys          OrgApiKey[]
+  customHostname   TwCustomHostname?
+  activationEvents ActivationEvent[]
 
   @@index([parentOrgId])
   @@map("tw_organization")
@@ -2995,4 +3011,27 @@ model OrgApiKey {
 
   @@index([orgId])
   @@map("tw_org_api_key")
+}
+
+/// WC-TW-9b: the three activation milestones (WC-9 step 2). First occurrence per org wins.
+enum TwActivationKind {
+  calendar_connected
+  event_type_published
+  first_external_booking
+}
+
+/// WC-TW-9b: activation ledger, DB source of truth for "activation <= 7 days" (Plausible is the funnel view).
+/// One row per (org, kind); inserts use ON CONFLICT DO NOTHING. RLS forced like the other TW-T9 tables.
+model ActivationEvent {
+  id         String           @id @default(uuid()) @db.Uuid
+  twOrgId    String           @db.Uuid
+  org        Organization     @relation(fields: [twOrgId], references: [id], onDelete: Cascade)
+  kind       TwActivationKind
+  occurredAt DateTime
+  /// credential id / event type id / booking uid, as text.
+  refId      String?
+  createdAt  DateTime         @default(now())
+
+  @@unique([twOrgId, kind])
+  @@map("tw_activation_event")
 }

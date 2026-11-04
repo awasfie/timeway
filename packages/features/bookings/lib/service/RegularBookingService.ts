@@ -13,6 +13,7 @@ import {
   eventTypeMetaDataSchemaWithTypedApps,
 } from "@calcom/app-store/zod-utils";
 import dayjs from "@calcom/dayjs";
+import { getICalSequenceForBooking } from "@calcom/emails/lib/getICalSequence";
 import getICalUID from "@calcom/emails/lib/getICalUID";
 import { verifyCodeUnAuthenticated } from "@calcom/features/auth/lib/verifyCodeUnAuthenticated";
 import type {
@@ -54,10 +55,12 @@ import {
 } from "@calcom/features/webhooks/lib/scheduleTrigger";
 import type { EventPayloadType, EventTypeInfo } from "@calcom/features/webhooks/lib/sendPayload";
 import { getTranslation } from "@calcom/i18n/server";
+import { captureFirstBookingReceived } from "@calcom/lib/analytics/activation";
 import { groupHostsByGroupId } from "@calcom/lib/bookings/hostGroupUtils";
 import { shouldIgnoreContactOwner } from "@calcom/lib/bookings/routing/utils";
 import { getVideoCallUrlFromCalEvent } from "@calcom/lib/CalEventParser";
 import { DEFAULT_GROUP_ID, ENABLE_ASYNC_TASKER } from "@calcom/lib/constants";
+import { onBookingCreated } from "@calcom/features/tw-activation/activation";
 import { ErrorCode } from "@calcom/lib/errorCodes";
 import { ErrorWithCode } from "@calcom/lib/errors";
 import { extractBaseEmail } from "@calcom/lib/extract-base-email";
@@ -130,21 +133,6 @@ function assertNonEmptyArray<T>(arr: T[]): asserts arr is [T, ...T[]] {
   if (arr.length === 0) {
     throw new Error("Array should have at least one item, but it's empty");
   }
-}
-
-function getICalSequence(originalRescheduledBooking: BookingType | null) {
-  // If new booking set the sequence to 0
-  if (!originalRescheduledBooking) {
-    return 0;
-  }
-
-  // If rescheduling and there is no sequence set, assume sequence should be 1
-  if (!originalRescheduledBooking.iCalSequence) {
-    return 1;
-  }
-
-  // If rescheduling then increment sequence by 1
-  return originalRescheduledBooking.iCalSequence + 1;
 }
 
 type CreatedBooking = Booking & {
@@ -1335,7 +1323,7 @@ async function handler(
     uid,
   });
   // For bookings made before introducing iCalSequence, assume that the sequence should start at 1. For new bookings start at 0.
-  const iCalSequence = getICalSequence(originalRescheduledBooking);
+  const iCalSequence = getICalSequenceForBooking(originalRescheduledBooking);
   const organizerOrganizationProfile = await deps.prismaClient.profile.findFirst({
     where: {
       userId: organizerUser.id,
@@ -1759,6 +1747,10 @@ async function handler(
         tracking: reqBody.tracking,
       });
 
+      if (booking) {
+        await onBookingCreated(booking, input.bookingData.creationSource ?? "unknown");
+      }
+
       if (booking?.userId) {
         const usersRepository = new UsersRepository();
         await usersRepository.updateLastActiveAt(booking.userId);
@@ -2049,7 +2041,7 @@ async function handler(
 
       evt.iCalUID = Array.isArray(calendarResult?.updatedEvent)
         ? calendarResult?.updatedEvent[0]?.iCalUID
-        : calendarResult?.updatedEvent?.iCalUID || undefined;
+        : calendarResult?.updatedEvent?.iCalUID || iCalUID;
     }
 
     evt.appsStatus = handleAppsStatus(results, booking, reqAppsStatus);
@@ -2292,6 +2284,18 @@ async function handler(
     isRecurringBooking: !!input.bookingData.allRecurringDates,
     tracingLogger,
   });
+
+  if (booking?.twOrgId) {
+    // Fire-and-forget: analytics must never delay or fail a booking.
+    void captureFirstBookingReceived({
+      twOrgId: booking.twOrgId,
+      organizerUuid: organizerUser.uuid,
+      organizerLocale: organizerUser.locale,
+      isDryRun,
+      isReschedule: !!originalRescheduledBooking,
+      bookingFindMany: (args) => deps.prismaClient.booking.findMany(args),
+    });
+  }
 
   const webhookLocation = metadata?.videoCallUrl || evt.location;
 

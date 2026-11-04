@@ -30,7 +30,7 @@ export default function generateIcsFile({
     return null;
 
   return {
-    filename: "event.ics",
+    filename: "invite.ics",
     content: generateIcsString({
       event: calEvent,
       status,

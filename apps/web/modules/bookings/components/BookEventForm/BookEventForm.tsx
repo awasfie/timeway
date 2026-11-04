@@ -1,4 +1,4 @@
-import { getPaymentAppData } from "@calcom/app-store/_utils/payments/getPaymentAppData";
+import { getPaymentAppDataFromParsedMetadata } from "@calcom/app-store/_utils/payments/getPaymentAppDataFromParsedMetadata";
 import { useIsPlatformBookerEmbed } from "@calcom/atoms/hooks/useIsPlatformBookerEmbed";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import { useBookerTime } from "@calcom/features/bookings/Booker/hooks/useBookerTime";
@@ -80,13 +80,13 @@ export const BookEventForm = ({
 
   const isPaidEvent = useMemo(() => {
     if (!eventType?.price) return false;
-    const paymentAppData = getPaymentAppData(eventType);
+    const paymentAppData = getPaymentAppDataFromParsedMetadata(eventType);
     return eventType?.price > 0 && !Number.isNaN(paymentAppData.price) && paymentAppData.price > 0;
   }, [eventType]);
 
   const paymentCurrency = useMemo(() => {
     if (!eventType) return "USD";
-    return getPaymentAppData(eventType)?.currency || "USD";
+    return getPaymentAppDataFromParsedMetadata(eventType)?.currency || "USD";
   }, [eventType]);
 
   if (eventQuery.isError) return <Alert severity="warning" message={t("error_booking_event")} />;

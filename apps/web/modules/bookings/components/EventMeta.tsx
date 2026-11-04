@@ -1,25 +1,26 @@
-import { Timezone as PlatformTimezoneSelect } from "@calcom/atoms/timezone";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import { useBookerTime } from "@calcom/features/bookings/Booker/hooks/useBookerTime";
-import { fadeInUp } from "@calcom/features/bookings/Booker/config";
+import { fadeInUpClassName } from "@calcom/features/bookings/Booker/config";
 import type { Timezone } from "@calcom/features/bookings/Booker/types";
 import { FromToTime } from "@calcom/features/bookings/Booker/utils/dates";
 import { useTimePreferences } from "@calcom/features/bookings/lib";
 import type { BookerEvent } from "@calcom/features/bookings/types";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { markdownToSafeHTMLClient } from "@calcom/lib/markdownToSafeHTMLClient";
+import { sanitizeSafeHtmlClient } from "@calcom/lib/safeHtmlClient";
 import { CURRENT_TIMEZONE } from "@calcom/lib/timezoneConstants";
 import type { EventTypeTranslation } from "@calcom/prisma/client";
 import { EventTypeAutoTranslatedField } from "@calcom/prisma/enums";
 import { EventMetaBlock } from "@calcom/web/modules/bookings/components/event-meta/Details";
 import { SeatsAvailabilityText } from "@calcom/web/modules/bookings/components/SeatsAvailabilityText";
-import { m } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo } from "react";
 import { shallow } from "zustand/shallow";
 import i18nConfigration from "../../../../../i18n.json";
 import { EventDetails, EventMembers, EventMetaSkeleton, EventTitle } from "./event-meta";
 import { ScrollableWithGradients } from "./ScrollableWithGradients";
+
+// Lazy so the platform atoms HTTP client (axios, which pulls the Buffer polyfill) stays off the web booker's first load.
+const PlatformTimezoneSelect = dynamic(() => import("@calcom/atoms/timezone").then((mod) => mod.Timezone));
 
 const WebTimezoneSelect = dynamic(
   () => import("@calcom/web/modules/timezone/components/TimezoneSelect").then((mod) => mod.TimezoneSelect),
@@ -158,12 +159,12 @@ export const EventMeta = ({
   return (
     <div className={`${classNames?.eventMetaContainer || ""} relative z-10 p-6`} data-testid="event-meta">
       {isPending && (
-        <m.div {...fadeInUp} initial="visible" layout>
+        <div>
           <EventMetaSkeleton />
-        </m.div>
+        </div>
       )}
       {!isPending && !!event && (
-        <m.div {...fadeInUp} layout transition={{ ...fadeInUp.transition, delay: 0.3 }}>
+        <div className={fadeInUpClassName}>
           <EventMembers
             schedulingType={event.schedulingType}
             users={event.subsetOfUsers}
@@ -181,10 +182,10 @@ export const EventMeta = ({
               <ScrollableWithGradients
                 className="wrap-break-word scroll-bar max-h-[180px] max-w-full overflow-y-auto pr-4"
                 ariaLabel={t("description")}>
-                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized via markdownToSafeHTMLClient */}
+                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: rendered by markdownToSafeHTML in getPublicEvent, re-sanitized with DOMPurify */}
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: markdownToSafeHTMLClient(translatedDescription ?? event.description),
+                    __html: sanitizeSafeHtmlClient(translatedDescription ?? event.description),
                   }}
                 />
               </ScrollableWithGradients>
@@ -272,7 +273,7 @@ export const EventMeta = ({
             ) : null}
           </div>
           {children && <div className={classNames?.eventMetaChildren}>{children}</div>}
-        </m.div>
+        </div>
       )}
     </div>
   );

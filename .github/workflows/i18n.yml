@@ -1,6 +1,7 @@
 name: Run i18n AI automation
 on:
   push:
+    paths-ignore: ['docs/**', '**.md']  # CI-COST-3: docs-only pushes (ledger, group-log) skip CI; PR runs are unchanged
     branches:
       - main
 concurrency:
@@ -12,7 +13,7 @@ jobs:
     name: Run i18n
     # Timeway (Q1-R7): `secrets` isn't allowed in a job-level `if`, which made every push fail at parse time; gate on a repo variable instead.
     if: ${{ vars.CI_LINGO_ENABLED == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: write
       contents: write

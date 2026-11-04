@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import posthog from "posthog-js";
 
+import { missingSeedEventTypes } from "@calcom/features/tw-onboarding/seed";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { md } from "@calcom/lib/markdownIt";
 import turndown from "@calcom/lib/turndownService";
@@ -55,13 +56,10 @@ const UserProfile = ({ user }: UserProfileProps) => {
   const mutation = trpc.viewer.me.updateProfile.useMutation({
     onSuccess: async () => {
       try {
-        if (eventTypes?.length === 0) {
-          await Promise.all(
-            DEFAULT_EVENT_TYPES.map(async (event) => {
-              return createEventType.mutate(event);
-            })
-          );
-        }
+        // WC-DX-10c: two public event types, only the slugs still missing.
+        await Promise.all(
+          missingSeedEventTypes(eventTypes, t).map((event) => createEventType.mutateAsync(event))
+        );
       } catch (error) {
         console.error(error);
       }
@@ -94,25 +92,6 @@ const UserProfile = ({ user }: UserProfileProps) => {
       avatarUrl: newAvatar,
     });
   }
-
-  const DEFAULT_EVENT_TYPES = [
-    {
-      title: t("15min_meeting"),
-      slug: "15min",
-      length: 15,
-    },
-    {
-      title: t("30min_meeting"),
-      slug: "30min",
-      length: 30,
-    },
-    {
-      title: t("secret_meeting"),
-      slug: "secret",
-      length: 15,
-      hidden: true,
-    },
-  ];
 
   return (
     <form onSubmit={onSubmit}>

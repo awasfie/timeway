@@ -7,6 +7,7 @@ export interface MockTeam {
 
 export interface MockFoundToken {
   id: number;
+  identifier: string;
   teamId: number | null;
   expires: Date;
 }
@@ -36,6 +37,7 @@ export function createMockTeam(overrides: Partial<MockTeam> = {}): MockTeam {
 export function createMockFoundToken(overrides: Partial<MockFoundToken> = {}): MockFoundToken {
   return {
     id: 1,
+    identifier: "test@example.com",
     teamId: 1,
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     ...overrides,

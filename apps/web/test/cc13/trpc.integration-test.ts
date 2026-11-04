@@ -398,4 +398,112 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
       });
     });
   });
+
+  // t_83304bed: the always-true PermissionCheckService stubs were replaced with RoleBasedPermissionCheckService.
+  describe("PermissionCheckService stubs (t_83304bed)", () => {
+    it("viewer.eventTypesHeavy.create: B cannot create a team event type on A's team", async () => {
+      const slug = `${tag(seed.A)}-hijack${++n}`;
+      const read = () => prisma.eventType.count({ where: { teamId: seed.A.team.id } });
+      await expectUnchanged(read, async () => {
+        expectDenied(
+          await attempt(() =>
+            viewerB.eventTypesHeavy.create({
+              title: "hijacked by B",
+              slug,
+              length: 30,
+              teamId: seed.A.team.id,
+              schedulingType: "ROUND_ROBIN",
+            } as never)
+          )
+        );
+      });
+      expect(await prisma.eventType.findFirst({ where: { slug } })).toBeNull();
+    });
+
+    it("viewer.ooo.outOfOfficeEntryDelete: B (owner of B) cannot delete an OOO entry of A's member", async () => {
+      const entry = await prisma.outOfOfficeEntry.create({
+        data: {
+          uuid: randomUUID(),
+          start: new Date(Date.UTC(2031, 0, 1)),
+          end: new Date(Date.UTC(2031, 0, 2)),
+          userId: seed.A.member.id,
+        },
+        select: { id: true, uuid: true },
+      });
+      const read = () => prisma.outOfOfficeEntry.findUnique({ where: { id: entry.id } });
+      await expectUnchanged(read, async () => {
+        expectDenied(
+          await attempt(() =>
+            viewerB.ooo.outOfOfficeEntryDelete({
+              outOfOfficeUid: entry.uuid,
+              userId: seed.A.member.id,
+            } as never)
+          )
+        );
+      });
+      await prisma.outOfOfficeEntry.delete({ where: { id: entry.id } });
+    });
+
+    it("viewer.ooo.outOfOfficeCreateOrUpdate: B cannot create an OOO entry for A's member", async () => {
+      const read = () => prisma.outOfOfficeEntry.count({ where: { userId: seed.A.member.id } });
+      await expectUnchanged(read, async () => {
+        expectDenied(
+          await attempt(() =>
+            viewerB.ooo.outOfOfficeCreateOrUpdate({
+              forUserId: seed.A.member.id,
+              dateRange: {
+                startDate: new Date(Date.UTC(2031, 1, 1)),
+                endDate: new Date(Date.UTC(2031, 1, 2)),
+              },
+              startDateOffset: 0,
+              endDateOffset: 0,
+              toTeamUserId: null,
+              reasonId: 1,
+            } as never)
+          )
+        );
+      });
+    });
+
+    it("viewer.bookings.getWrongAssignmentReports (createTeamPbacProcedure): B gets FORBIDDEN on A's team", async () => {
+      const input = { teamId: seed.A.team.id, status: "pending", limit: 10, offset: 0 } as never;
+      const denied = await attempt(() => viewerB.bookings.getWrongAssignmentReports(input));
+      expect(denied).toMatchObject({ kind: "threw", code: "FORBIDDEN" });
+      const viewerA = await viewerFor(seed.A.owner.id);
+      expect(await attempt(() => viewerA.bookings.getWrongAssignmentReports(input))).toMatchObject({
+        kind: "returned",
+      });
+    });
+
+    // viewer.public.event reads the user from the request session (getSession(ctx.req)), which this in-process
+    // harness has no request for, so the probe calls the route's handler with the session user id it would pass.
+    it("viewer.public.event: B (signed in) cannot see the members of A's private team", async () => {
+      const fx = await mkEventType(seed.A);
+      await prisma.host.create({ data: { userId: seed.A.member.id, eventTypeId: fx.id } });
+      const { slug } = await prisma.eventType.findUniqueOrThrow({
+        where: { id: fx.id },
+        select: { slug: true },
+      });
+      await prisma.team.update({ where: { id: seed.A.team.id }, data: { isPrivate: true } });
+      try {
+        const { default: eventHandler } = await import(
+          "@calcom/trpc/server/routers/publicViewer/event.handler"
+        );
+        const input = {
+          username: seed.A.team.slug,
+          eventSlug: slug,
+          isTeamEvent: true,
+          org: null,
+          fromRedirectOfNonOrgLink: false,
+        };
+        const asB = await eventHandler({ input, userId: seed.B.owner.id });
+        expect(asB, "A's team event must still resolve").not.toBeNull();
+        expect(asB?.subsetOfUsers).toEqual([]);
+        const asA = await eventHandler({ input, userId: seed.A.owner.id });
+        expect(asA?.subsetOfUsers.length).toBeGreaterThan(0);
+      } finally {
+        await prisma.team.update({ where: { id: seed.A.team.id }, data: { isPrivate: false } });
+      }
+    });
+  });
 });

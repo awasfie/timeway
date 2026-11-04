@@ -1,4 +1,4 @@
-import { getPaymentAppData } from "@calcom/app-store/_utils/payments/getPaymentAppData";
+import { getPaymentAppDataFromParsedMetadata } from "@calcom/app-store/_utils/payments/getPaymentAppDataFromParsedMetadata";
 import { useBookerStore } from "@calcom/features/bookings/Booker/store";
 import { Price } from "@calcom/features/bookings/components/event-meta/Price";
 import type { BookerEvent } from "@calcom/features/bookings/types";
@@ -174,7 +174,7 @@ export const EventDetails = ({ event, blocks = defaultEventDetailsBlocks }: Even
             );
 
           case EventDetailBlocks.PRICE: {
-            const paymentAppData = getPaymentAppData(event);
+            const paymentAppData = getPaymentAppDataFromParsedMetadata(event);
             if (event.price <= 0 || paymentAppData.price <= 0) return null;
 
             return (

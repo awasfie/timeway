@@ -1,15 +1,9 @@
 import { getAppFromSlug } from "@calcom/app-store/utils";
+import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import type { InvalidAppCredentialBannerProps } from "@calcom/features/users/types/invalidAppCredentials";
 import { prisma } from "@calcom/prisma";
 import { MembershipRole } from "@calcom/prisma/enums";
 import type { TrpcSessionUser } from "@calcom/trpc/server/types";
-
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
 
 type checkInvalidAppCredentialsOptions = {
   ctx: {
@@ -20,7 +14,7 @@ type checkInvalidAppCredentialsOptions = {
 export const checkInvalidAppCredentials = async ({ ctx }: checkInvalidAppCredentialsOptions) => {
   const userId = ctx.user.id;
 
-  const permissionCheckService = new PermissionCheckService();
+  const permissionCheckService = new RoleBasedPermissionCheckService();
   const userTeamIds = await permissionCheckService.getTeamIdsWithPermission({
     userId,
     permission: "team.update",
