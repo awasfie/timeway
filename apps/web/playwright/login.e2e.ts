@@ -53,7 +53,7 @@ test.describe("Login and logout tests", () => {
     await users.logout();
 
     // check if we are at the login page
-    await page.goto("/");
+    await page.goto("/auth/login");
     await expect(page.locator(`[data-testid=login-form]`)).toBeVisible();
   });
 
