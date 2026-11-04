@@ -1,6 +1,6 @@
 {
   "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200. Since WC-TW-6n-1 the total excludes <script noModule> (Next's legacy polyfills.js), reported separately.",
-  "total_kb_gz": 491.0,
+  "total_kb_gz": 480.2,
   "tolerance_kb": 5,
-  "source": "WC-TW-6n-1 local production build on main 56f5eeefbd + this PR (40 scripts, 490.9 KB gz; noModule polyfills 38.5 KB gz not counted)"
+  "source": "WC-TW-6n-1b local production build on PR #251 head 665fde1907 + this PR (40 scripts, 480.2 KB gz; embed-iframe runtime off first load; noModule polyfills 38.5 KB gz not counted)"
 }

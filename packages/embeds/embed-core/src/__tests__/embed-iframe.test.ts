@@ -266,7 +266,7 @@ describe("embed-iframe", async () => {
         configurable: true,
       });
       console.log('Importing embed-iframe');
-      await import("../embed-iframe");
+      await import("../embed-iframe/runtime");
       embedStore.viewId = null;
       resetPageData();
     });
@@ -389,28 +389,28 @@ describe("embed-iframe", async () => {
 
     it("should default to false when parameter is not present", async () => {
       fakeCurrentDocumentUrl(); // No useSlotsViewOnSmallScreen param
-      await import("../embed-iframe"); // This triggers main()
+      await import("../embed-iframe/runtime"); // This triggers main()
 
       expect(embedStore.uiConfig?.useSlotsViewOnSmallScreen).toBe(false);
     });
 
     it("should be true when parameter is 'true'", async () => {
       fakeCurrentDocumentUrl({ params: { useSlotsViewOnSmallScreen: "true" } });
-      await import("../embed-iframe"); // This triggers main()
+      await import("../embed-iframe/runtime"); // This triggers main()
 
       expect(embedStore.uiConfig?.useSlotsViewOnSmallScreen).toBe(true);
     });
 
     it("should be false when parameter is 'false'", async () => {
       fakeCurrentDocumentUrl({ params: { useSlotsViewOnSmallScreen: "false" } });
-      await import("../embed-iframe"); // This triggers main()
+      await import("../embed-iframe/runtime"); // This triggers main()
 
       expect(embedStore.uiConfig?.useSlotsViewOnSmallScreen).toBe(false);
     });
 
     it("should be false when parameter has any other value", async () => {
       fakeCurrentDocumentUrl({ params: { useSlotsViewOnSmallScreen: "invalid" } });
-      await import("../embed-iframe"); // This triggers main()
+      await import("../embed-iframe/runtime"); // This triggers main()
 
       expect(embedStore.uiConfig?.useSlotsViewOnSmallScreen).toBe(false);
     });
