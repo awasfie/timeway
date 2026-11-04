@@ -1,9 +1,7 @@
 import { _generateMetadata } from "app/_utils";
 import { headers } from "next/headers";
 
-import PageWrapper from "@components/PageWrapperAppDir";
-
-import { NotFound } from "./notFoundClient";
+import { NotFoundLazy } from "./notFoundLazy";
 
 export const generateMetadata = async () => {
   const metadata = await _generateMetadata(
@@ -25,9 +23,7 @@ const ServerPage = async () => {
   const host = h.get("x-forwarded-host") ?? "";
 
   return (
-    <PageWrapper requiresLicense={false} nonce={nonce}>
-      <NotFound host={host} />
-    </PageWrapper>
+    <NotFoundLazy nonce={nonce} host={host} />
   );
 };
 export default ServerPage;
