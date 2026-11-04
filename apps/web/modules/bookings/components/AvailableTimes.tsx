@@ -14,11 +14,11 @@ import classNames from "@calcom/ui/classNames";
 import { Button } from "@calcom/ui/components/button";
 import { SkeletonText } from "@calcom/ui/components/skeleton";
 import { CalendarX2Icon } from "@coss/ui/icons";
-import * as HoverCard from "@radix-ui/react-hover-card";
 import { useMemo } from "react";
 import type { Slot } from "~/schedules/lib/types";
 import type { IUseBookingLoadingStates } from "../hooks/useBookings";
 import { OutOfOfficeInSlots } from "./OutOfOfficeInSlots";
+import { BusyOverlapHoverCard } from "./BusyOverlapHoverCard";
 import { SeatsAvailabilityText } from "./SeatsAvailabilityText";
 
 type TOnTimeSelect = (
@@ -195,57 +195,44 @@ const SlotItem = ({
           )}
         </Button>
         {!!slot.showConfirmButton && (
-          <HoverCard.Root>
-            <HoverCard.Trigger asChild>
-              <div key={slot.time} className="animate-in fade-in slide-in-from-end-2 duration-200 motion-reduce:animate-none">
-                <Button
-                  variant={layout === "column_view" ? "icon" : "button"}
-                  StartIcon={layout === "column_view" ? "chevron-right" : undefined}
-                  type="button"
-                  className={confirmStepClassNames?.confirmButton}
-                  onClick={() =>
-                    onTimeSelect &&
-                    onTimeSelect(slot.time, slot?.attendees || 0, seatsPerTimeSlot, slot.bookingUid)
-                  }
-                  data-testid="skip-confirm-book-button"
-                  disabled={
-                    isTimeslotUnavailable ||
-                    (!!shouldRenderCaptcha && !watchedCfToken) ||
-                    loadingStates?.creatingBooking ||
-                    loadingStates?.creatingRecurringBooking ||
-                    isVerificationCodeSending ||
-                    confirmButtonDisabled
-                  }
-                  color="primary"
-                  loading={
-                    (selectedTimeslot === slot.time && loadingStates?.creatingBooking) ||
-                    loadingStates?.creatingRecurringBooking ||
-                    isVerificationCodeSending
-                  }>
-                  {(() => {
-                    if (layout === "column_view") return "";
-                    if (isTimeslotUnavailable) return t("timeslot_unavailable_short");
-                    if (!renderConfirmNotVerifyEmailButtonCond) return t("verify_email_button");
-                    return isPaidEvent ? t("pay_and_book") : t("confirm");
-                  })()}
-                </Button>
-              </div>
-            </HoverCard.Trigger>
-            {isOverlapping && (
-              <HoverCard.Portal>
-                <HoverCard.Content side="top" align="end" sideOffset={2}>
-                  <div className="text-emphasis bg-inverted w-(--booker-timeslots-width) rounded-md p-3">
-                    <div className="flex items-center gap-2">
-                      <p>Busy</p>
-                    </div>
-                    <p className="text-muted">
-                      {overlappingTimeStart} - {overlappingTimeEnd}
-                    </p>
-                  </div>
-                </HoverCard.Content>
-              </HoverCard.Portal>
-            )}
-          </HoverCard.Root>
+          <BusyOverlapHoverCard
+            open={isOverlapping}
+            overlappingTimeStart={overlappingTimeStart}
+            overlappingTimeEnd={overlappingTimeEnd}>
+          <div key={slot.time} className="animate-in fade-in slide-in-from-end-2 duration-200 motion-reduce:animate-none">
+            <Button
+              variant={layout === "column_view" ? "icon" : "button"}
+              StartIcon={layout === "column_view" ? "chevron-right" : undefined}
+              type="button"
+              className={confirmStepClassNames?.confirmButton}
+              onClick={() =>
+                onTimeSelect &&
+                onTimeSelect(slot.time, slot?.attendees || 0, seatsPerTimeSlot, slot.bookingUid)
+              }
+              data-testid="skip-confirm-book-button"
+              disabled={
+                isTimeslotUnavailable ||
+                (!!shouldRenderCaptcha && !watchedCfToken) ||
+                loadingStates?.creatingBooking ||
+                loadingStates?.creatingRecurringBooking ||
+                isVerificationCodeSending ||
+                confirmButtonDisabled
+              }
+              color="primary"
+              loading={
+                (selectedTimeslot === slot.time && loadingStates?.creatingBooking) ||
+                loadingStates?.creatingRecurringBooking ||
+                isVerificationCodeSending
+              }>
+              {(() => {
+                if (layout === "column_view") return "";
+                if (isTimeslotUnavailable) return t("timeslot_unavailable_short");
+                if (!renderConfirmNotVerifyEmailButtonCond) return t("verify_email_button");
+                return isPaidEvent ? t("pay_and_book") : t("confirm");
+              })()}
+            </Button>
+          </div>
+          </BusyOverlapHoverCard>
         )}
     </div>
   );
