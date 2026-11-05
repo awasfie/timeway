@@ -1,0 +1,7 @@
+{
+  "_comment": "UX.13.3 ratchet (CC-56): per target and surface, the median of 5 Lighthouse runs at one SHA. While a median is over its UX.13.3 budget the gate is baseline x (1 + tolerance) and the budget is a warning; a surface absent here asserts the budget outright. Lower these in every reduction PR; never raise them without a ruling.",
+  "tolerance": { "lcp_ms": 0.1, "tbt_ms": 1.0, "cls": 0.1, "js_kb": 0.1 },
+  "tolerance_note": "tbt_ms 1.0 as perf/lhci-baseline.json (WC-TW-6c-12): GH runners come in two CPU classes and TBT swings 1.35-1.61x at the same code.",
+  "ci": {},
+  "deployed": {}
+}
