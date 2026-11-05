@@ -134,7 +134,9 @@ ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
 ENV NODE_ENV=production
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=30s --retries=5 \
-  CMD wget --spider http://localhost:3000 || exit 1
+# HC-1a (t_7199c289): the probe is node itself (no curl/wget dependency) and hits /api/health, which is 200 only when
+# Postgres answers; exit 0 only on HTTP 2xx, 1 on any other status, refusal or timeout.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health',{signal:AbortSignal.timeout(5000)}).then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
 
 CMD ["/calcom/scripts/start.sh"]
