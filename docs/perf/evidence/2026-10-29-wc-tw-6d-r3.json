@@ -1,0 +1,817 @@
+{
+ "card": "t_762bea7b",
+ "run": 5697,
+ "url": "https://timeway.co/ahmedwasfie/30min",
+ "deploy": {
+  "sha": "11ebad82ee883b04916eeab577d2d890bd64d9f6",
+  "container": "poyzdsncp9jsvc3gr4hkitaf-20261029T062633",
+  "edge_worker": "timeway-booking-edge (x-tw-edge HIT)"
+ },
+ "region_ttfb_globalping": {
+  "measured_at": "2026-10-29T07:54:38.516Z",
+  "probe_failures": [],
+  "regions": {
+   "cairo": {
+    "n": 27,
+    "p50": 83,
+    "p75": 92.0,
+    "max": 222,
+    "samples": [
+     {
+      "mid": "2LZBSIU4rlEl1C9z300021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 81,
+      "cf_ray": "a5209c1d0ee5cb74-ZRH"
+     },
+     {
+      "mid": "2LZBSIU4rlEl1C9z300021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 83,
+      "cf_ray": "a5209c1d5b10e28e-MRS"
+     },
+     {
+      "mid": "2LZBSIU4rlEl1C9z300021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 104,
+      "cf_ray": "a5209c1cfa8360d4-MRS"
+     },
+     {
+      "mid": "2834EduEUB8p3mPyJ00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 91,
+      "cf_ray": "a5209c260812c6a5-MRS"
+     },
+     {
+      "mid": "2834EduEUB8p3mPyJ00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 70,
+      "cf_ray": "a5209c260a2acac8-MRS"
+     },
+     {
+      "mid": "2834EduEUB8p3mPyJ00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 102,
+      "cf_ray": "a5209c25f872ebe8-MRS"
+     },
+     {
+      "mid": "2SMwnG6TLXWdh7EDL00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 97,
+      "cf_ray": "a5209c2ebbff890f-MRS"
+     },
+     {
+      "mid": "2SMwnG6TLXWdh7EDL00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 222,
+      "cf_ray": "a5209c2ebe5d811e-MRS"
+     },
+     {
+      "mid": "2SMwnG6TLXWdh7EDL00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 80,
+      "cf_ray": "a5209c2ecbf4b416-MRS"
+     },
+     {
+      "mid": "2wu6ZybcvMMWx0D4b00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 80,
+      "cf_ray": "a5209c37384d0d4b-MRS"
+     },
+     {
+      "mid": "2wu6ZybcvMMWx0D4b00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 90,
+      "cf_ray": "a5209c3739bad2ad-MRS"
+     },
+     {
+      "mid": "2wu6ZybcvMMWx0D4b00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 86,
+      "cf_ray": "a5209c373c2be18d-MRS"
+     },
+     {
+      "mid": "2g6WEBZ10RDsGXYYl00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 87,
+      "cf_ray": "a5209c3fab85078b-MRS"
+     },
+     {
+      "mid": "2g6WEBZ10RDsGXYYl00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 74,
+      "cf_ray": "a5209c3fef4f8df0-MRS"
+     },
+     {
+      "mid": "2g6WEBZ10RDsGXYYl00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 64,
+      "cf_ray": "a5209c3fce1c4777-MRS"
+     },
+     {
+      "mid": "2yHKDav2NidWcUQVG00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 89,
+      "cf_ray": "a5209c485b28a630-MRS"
+     },
+     {
+      "mid": "2yHKDav2NidWcUQVG00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 108,
+      "cf_ray": "a5209c4839644f93-MRS"
+     },
+     {
+      "mid": "2yHKDav2NidWcUQVG00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 93,
+      "cf_ray": "a5209c48290f70ec-MRS"
+     },
+     {
+      "mid": "2DRodb1OxqwEDcDZY00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 82,
+      "cf_ray": "a5209c517dadbbf4-ZRH"
+     },
+     {
+      "mid": "2DRodb1OxqwEDcDZY00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 67,
+      "cf_ray": "a5209c518ed8e1b2-MRS"
+     },
+     {
+      "mid": "2DRodb1OxqwEDcDZY00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 82,
+      "cf_ray": "a5209c516a7d4f23-MRS"
+     },
+     {
+      "mid": "262Mh7w8rmhNla3Vl00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 79,
+      "cf_ray": "a5209c595b2ee1ed-MRS"
+     },
+     {
+      "mid": "262Mh7w8rmhNla3Vl00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 68,
+      "cf_ray": "a5209c5999bb61ee-MRS"
+     },
+     {
+      "mid": "262Mh7w8rmhNla3Vl00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 74,
+      "cf_ray": "a5209c595df899b3-MRS"
+     },
+     {
+      "mid": "2C7O75mUAbfvnHFCb00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 112,
+      "cf_ray": "a5209c625cb443f0-MRS"
+     },
+     {
+      "mid": "2C7O75mUAbfvnHFCb00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 80,
+      "cf_ray": "a5209c62486511aa-MRS"
+     },
+     {
+      "mid": "2C7O75mUAbfvnHFCb00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 86,
+      "cf_ray": "a5209c623b34e1f5-MRS"
+     }
+    ]
+   },
+   "riyadh": {
+    "n": 27,
+    "p50": 106,
+    "p75": 109.5,
+    "max": 148,
+    "samples": [
+     {
+      "mid": "2KDHST5VlfDacvc8P00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 106,
+      "cf_ray": "a5209c6b4f90e1c9-MRS"
+     },
+     {
+      "mid": "2KDHST5VlfDacvc8P00021P9G",
+      "asn": 202105,
+      "network": "Wafai Net",
+      "firstByte": 104,
+      "cf_ray": "a5209c6bcab43391-MRS"
+     },
+     {
+      "mid": "2KDHST5VlfDacvc8P00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 91,
+      "cf_ray": "a5209c6b2e0be15c-MRS"
+     },
+     {
+      "mid": "2oAyyZLPIMgxRB33Q00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 96,
+      "cf_ray": "a5209c739ed0b870-MRS"
+     },
+     {
+      "mid": "2oAyyZLPIMgxRB33Q00021P9G",
+      "asn": 202105,
+      "network": "Wafai Net",
+      "firstByte": 86,
+      "cf_ray": "a5209c74386ffa41-MRS"
+     },
+     {
+      "mid": "2oAyyZLPIMgxRB33Q00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 107,
+      "cf_ray": "a5209c73987de22e-MRS"
+     },
+     {
+      "mid": "2oZwEX9SJDchpxYhX00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 121,
+      "cf_ray": "a5209c7c68f41f90-MRS"
+     },
+     {
+      "mid": "2oZwEX9SJDchpxYhX00021P9G",
+      "asn": 202105,
+      "network": "Wafai Net",
+      "firstByte": 148,
+      "cf_ray": "a5209c7d0bd3e229-MRS"
+     },
+     {
+      "mid": "2oZwEX9SJDchpxYhX00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 108,
+      "cf_ray": "a5209c7c8895d746-MRS"
+     },
+     {
+      "mid": "2P8clIvndkLoShgVv00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 110,
+      "cf_ray": "a5209c84f82ac84f-MRS"
+     },
+     {
+      "mid": "2P8clIvndkLoShgVv00021P9G",
+      "asn": 202105,
+      "network": "Wafai Net",
+      "firstByte": 107,
+      "cf_ray": "a5209c857f9be1c1-MRS"
+     },
+     {
+      "mid": "2P8clIvndkLoShgVv00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 106,
+      "cf_ray": "a5209c84dcec3d70-MRS"
+     },
+     {
+      "mid": "2RskJyQQM7OZrCb9G00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 92,
+      "cf_ray": "a5209c8eab4bae33-MRS"
+     },
+     {
+      "mid": "2RskJyQQM7OZrCb9G00021P9G",
+      "asn": 202105,
+      "network": "Wafai Net",
+      "firstByte": 88,
+      "cf_ray": "a5209c8e3f06cdbb-MRS"
+     },
+     {
+      "mid": "2RskJyQQM7OZrCb9G00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 102,
+      "cf_ray": "a5209c8d8f82e1e5-MRS"
+     },
+     {
+      "mid": "2RqP40OzGZQIZ7OEy00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 93,
+      "cf_ray": "a5209c965a23e1f0-MRS"
+     },
+     {
+      "mid": "2RqP40OzGZQIZ7OEy00021P9G",
+      "asn": 202105,
+      "network": "Wafai Net",
+      "firstByte": 105,
+      "cf_ray": "a5209c971f635412-MRS"
+     },
+     {
+      "mid": "2RqP40OzGZQIZ7OEy00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 101,
+      "cf_ray": "a5209c965cf1e1fc-MRS"
+     },
+     {
+      "mid": "2grrGh2bwvxyG3qbs00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 130,
+      "cf_ray": "a5209ca05b8483c5-MRS"
+     },
+     {
+      "mid": "2grrGh2bwvxyG3qbs00021P9G",
+      "asn": 202105,
+      "network": "Wafai Net",
+      "firstByte": 124,
+      "cf_ray": "a5209ca0f93ae15e-MRS"
+     },
+     {
+      "mid": "2grrGh2bwvxyG3qbs00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 110,
+      "cf_ray": "a5209ca07ce75014-MRS"
+     },
+     {
+      "mid": "2JE2Emxa2sV7qO4Tl00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 109,
+      "cf_ray": "a5209ca92e5a83cc-MRS"
+     },
+     {
+      "mid": "2JE2Emxa2sV7qO4Tl00021P9G",
+      "asn": 202105,
+      "network": "Wafai Net",
+      "firstByte": 109,
+      "cf_ray": "a5209ca9cd6d5611-MRS"
+     },
+     {
+      "mid": "2JE2Emxa2sV7qO4Tl00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 125,
+      "cf_ray": "a5209ca93dbab93b-MRS"
+     },
+     {
+      "mid": "2qTOp0Feuxu0qD2jZ00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 86,
+      "cf_ray": "a5209cb1d9f0e162-MRS"
+     },
+     {
+      "mid": "2qTOp0Feuxu0qD2jZ00021P9G",
+      "asn": 202105,
+      "network": "Wafai Net",
+      "firstByte": 95,
+      "cf_ray": "a5209cb27aece22c-MRS"
+     },
+     {
+      "mid": "2qTOp0Feuxu0qD2jZ00021P9G",
+      "asn": 136907,
+      "network": "HUAWEI CLOUDS",
+      "firstByte": 103,
+      "cf_ray": "a5209cb1cff4b93b-MRS"
+     }
+    ]
+   },
+   "dubai": {
+    "n": 27,
+    "p50": 147,
+    "p75": 178.0,
+    "max": 281,
+    "samples": [
+     {
+      "mid": "2HNVOyVnPaROpuR8d00021P9G",
+      "asn": 9009,
+      "network": "M247",
+      "firstByte": 168,
+      "cf_ray": "a5209cbc3a280cd2-MRS"
+     },
+     {
+      "mid": "2HNVOyVnPaROpuR8d00021P9G",
+      "asn": 136258,
+      "network": "BrainStorm Network",
+      "firstByte": 204,
+      "cf_ray": "a5209cbc5a6d66de-AMS"
+     },
+     {
+      "mid": "2HNVOyVnPaROpuR8d00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 163,
+      "cf_ray": "a5209cbb8c5812ac-MRS"
+     },
+     {
+      "mid": "2xvW7uEypEfjNBxfA00021P9G",
+      "asn": 9009,
+      "network": "M247",
+      "firstByte": 150,
+      "cf_ray": "a5209cc46cd8e1fc-MRS"
+     },
+     {
+      "mid": "2xvW7uEypEfjNBxfA00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 233,
+      "cf_ray": "a5209cc58f393e9e-MRS"
+     },
+     {
+      "mid": "2xvW7uEypEfjNBxfA00021P9G",
+      "asn": 207847,
+      "network": "CloudBlast",
+      "firstByte": 38,
+      "cf_ray": "a5209cc2bff2fc3b-LHR"
+     },
+     {
+      "mid": "2X7IODhZCkT0TRtqB00021P9G",
+      "asn": 9009,
+      "network": "M247",
+      "firstByte": 49,
+      "cf_ray": "a5209ccb5da0d1e4-MCT"
+     },
+     {
+      "mid": "2X7IODhZCkT0TRtqB00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 167,
+      "cf_ray": "a5209ccd3ac03aba-AMS"
+     },
+     {
+      "mid": "2X7IODhZCkT0TRtqB00021P9G",
+      "asn": 136258,
+      "network": "BrainStorm Network",
+      "firstByte": 137,
+      "cf_ray": "a5209ccdbe0cda75-MRS"
+     },
+     {
+      "mid": "20yhkyvZJJYiIY57K00021P9G",
+      "asn": 9009,
+      "network": "M247",
+      "firstByte": 32,
+      "cf_ray": "a5209cd44924f9e3-MCT"
+     },
+     {
+      "mid": "20yhkyvZJJYiIY57K00021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 200,
+      "cf_ray": "a5209cd61b2d663e-AMS"
+     },
+     {
+      "mid": "20yhkyvZJJYiIY57K00021P9G",
+      "asn": 136258,
+      "network": "BrainStorm Network",
+      "firstByte": 167,
+      "cf_ray": "a5209cd68eda667f-AMS"
+     },
+     {
+      "mid": "2kW94eO8rqhHT2lXg00021P9G",
+      "asn": 9009,
+      "network": "M247",
+      "firstByte": 39,
+      "cf_ray": "a5209cdd2e07f9e9-MCT"
+     },
+     {
+      "mid": "2kW94eO8rqhHT2lXg00021P9G",
+      "asn": 136258,
+      "network": "BrainStorm Network",
+      "firstByte": 147,
+      "cf_ray": "a5209cdf2b53127e-MRS"
+     },
+     {
+      "mid": "2kW94eO8rqhHT2lXg00021P9G",
+      "asn": 207847,
+      "network": "CloudBlast",
+      "firstByte": 44,
+      "cf_ray": "a5209cdcc980e839-LHR"
+     },
+     {
+      "mid": "2cEApFcErgfI1WLq200021P9G",
+      "asn": 9009,
+      "network": "M247",
+      "firstByte": 39,
+      "cf_ray": "a5209ce5fcb7f9db-MCT"
+     },
+     {
+      "mid": "2cEApFcErgfI1WLq200021P9G",
+      "asn": 136258,
+      "network": "BrainStorm Network",
+      "firstByte": 153,
+      "cf_ray": "a5209ce85bebafa0-AMS"
+     },
+     {
+      "mid": "2cEApFcErgfI1WLq200021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 229,
+      "cf_ray": "a5209ce8dc1288ed-MRS"
+     },
+     {
+      "mid": "2qrtOcFFH5fVKAII900021P9G",
+      "asn": 9009,
+      "network": "M247",
+      "firstByte": 249,
+      "cf_ray": "a5209cf1b938e232-MRS"
+     },
+     {
+      "mid": "2qrtOcFFH5fVKAII900021P9G",
+      "asn": 136258,
+      "network": "BrainStorm Network",
+      "firstByte": 120,
+      "cf_ray": "a5209cf05e40e237-MRS"
+     },
+     {
+      "mid": "2qrtOcFFH5fVKAII900021P9G",
+      "asn": 154177,
+      "network": "LIGHT NODE",
+      "firstByte": 281,
+      "cf_ray": "a5209cf05c1bdbb7-FRA"
+     },
+     {
+      "mid": "2AyuhUIbTRLzlsYPF00021P9G",
+      "asn": 9009,
+      "network": "M247",
+      "firstByte": 132,
+      "cf_ray": "a5209cfa5a7fe1d5-MRS"
+     },
+     {
+      "mid": "2AyuhUIbTRLzlsYPF00021P9G",
+      "asn": 207847,
+      "network": "CloudBlast",
+      "firstByte": 38,
+      "cf_ray": "a5209cf7ca48ccf4-LHR"
+     },
+     {
+      "mid": "2AyuhUIbTRLzlsYPF00021P9G",
+      "asn": 136258,
+      "network": "BrainStorm Network",
+      "firstByte": 147,
+      "cf_ray": "a5209cf9bc4ac611-MRS"
+     },
+     {
+      "mid": "2AKrh2ZgI9fmsmhnP00021P9G",
+      "asn": 9009,
+      "network": "M247",
+      "firstByte": 146,
+      "cf_ray": "a5209d0339a21988-MRS"
+     },
+     {
+      "mid": "2AKrh2ZgI9fmsmhnP00021P9G",
+      "asn": 207847,
+      "network": "CloudBlast",
+      "firstByte": 30,
+      "cf_ray": "a5209d008a03d8b6-LHR"
+     },
+     {
+      "mid": "2AKrh2ZgI9fmsmhnP00021P9G",
+      "asn": 136258,
+      "network": "BrainStorm Network",
+      "firstByte": 188,
+      "cf_ray": "a5209d03398c0b83-AMS"
+     }
+    ]
+   }
+  }
+ },
+ "dubai_local_host_ttfb_after_tls_ms": {
+  "asn": 15802,
+  "n": 30,
+  "p50": 171,
+  "p75": 183,
+  "p95": 202
+ },
+ "lighthouse": {
+  "version": "13.5.0",
+  "profile": "mobile simulated slow 4G, Dubai host AS15802",
+  "runs": [
+   {
+    "run": 1,
+    "fetchTime": "2026-10-29T07:53:10.631Z",
+    "lcp_ms": 6075,
+    "tbt_ms": 356,
+    "fcp_ms": 1646,
+    "scripts": 45,
+    "script_transfer_kb": 627.9,
+    "benchmarkIndex": 2423
+   },
+   {
+    "run": 2,
+    "fetchTime": "2026-10-29T07:53:25.385Z",
+    "lcp_ms": 6107,
+    "tbt_ms": 290,
+    "fcp_ms": 1621,
+    "scripts": 45,
+    "script_transfer_kb": 627.9,
+    "benchmarkIndex": 2971.5
+   },
+   {
+    "run": 3,
+    "fetchTime": "2026-10-29T07:53:40.541Z",
+    "lcp_ms": 6256,
+    "tbt_ms": 374,
+    "fcp_ms": 2380,
+    "scripts": 45,
+    "script_transfer_kb": 627.9,
+    "benchmarkIndex": 2953
+   },
+   {
+    "run": 4,
+    "fetchTime": "2026-10-29T07:53:54.587Z",
+    "lcp_ms": 6110,
+    "tbt_ms": 210,
+    "fcp_ms": 2340,
+    "scripts": 45,
+    "script_transfer_kb": 627.9,
+    "benchmarkIndex": 3270
+   },
+   {
+    "run": 5,
+    "fetchTime": "2026-10-29T07:54:09.448Z",
+    "lcp_ms": 6183,
+    "tbt_ms": 298,
+    "fcp_ms": 2359,
+    "scripts": 45,
+    "script_transfer_kb": 628.0,
+    "benchmarkIndex": 2799.5
+   }
+  ],
+  "lcp_median": 6110,
+  "tbt_median": 298
+ },
+ "js_gate_main": {
+  "sha": "11ebad82ee",
+  "run": 40827805041,
+  "kb_gz": 555.3,
+  "scripts": 42,
+  "kb_gz_excl_nomodule": 516.7,
+  "source": "t_48672c49 / timeway#217"
+ },
+ "slot_api": {
+  "measured_at": "2026-10-29T07:53:43.186Z",
+  "origin": "https://timeway.co",
+  "event": "ahmedwasfie/30min",
+  "tz": "Asia/Dubai",
+  "range": {
+   "startTime": "2026-09-30T20:00:00.000Z",
+   "endTime": "2026-11-30T19:59:59.999Z"
+  },
+  "budget_ms": 800,
+  "gated": "warm",
+  "warm": {
+   "n": 30,
+   "p50": 339,
+   "p95": 478,
+   "max": 901,
+   "statuses": [
+    "200"
+   ],
+   "total_ms": [
+    477,
+    901,
+    456,
+    412,
+    430,
+    373,
+    339,
+    386,
+    398,
+    332,
+    341,
+    478,
+    330,
+    333,
+    324,
+    341,
+    322,
+    272,
+    307,
+    318,
+    329,
+    413,
+    371,
+    359,
+    316,
+    336,
+    361,
+    334,
+    321,
+    329
+   ],
+   "reused_connection": true
+  },
+  "cold": {
+   "n": 30,
+   "p50": 640,
+   "p95": 772,
+   "max": 1007,
+   "statuses": [
+    "200"
+   ],
+   "total_ms": [
+    673,
+    658,
+    623,
+    624,
+    772,
+    1007,
+    640,
+    654,
+    707,
+    672,
+    599,
+    644,
+    667,
+    617,
+    622,
+    642,
+    715,
+    657,
+    621,
+    612,
+    597,
+    624,
+    628,
+    617,
+    637,
+    628,
+    640,
+    604,
+    728,
+    684
+   ],
+   "handshake_p50_ms": 295
+  },
+  "pass": true
+ },
+ "plausible_7d_site1": [
+  {
+   "name": "booking_page_view",
+   "org": "27eb38bb-0de9-447a-809b-7edd21bbfc78",
+   "events": 4,
+   "visitors": 1
+  },
+  {
+   "name": "pageview",
+   "org": "27eb38bb-0de9-447a-809b-7edd21bbfc78",
+   "events": 4,
+   "visitors": 1
+  },
+  {
+   "name": "engagement",
+   "org": "27eb38bb-0de9-447a-809b-7edd21bbfc78",
+   "events": 2,
+   "visitors": 1
+  },
+  {
+   "name": "slot_selected",
+   "org": "27eb38bb-0de9-447a-809b-7edd21bbfc78",
+   "events": 1,
+   "visitors": 1
+  },
+  {
+   "name": "booking_confirmed",
+   "org": "27eb38bb-0de9-447a-809b-7edd21bbfc78",
+   "events": 1,
+   "visitors": 1
+  },
+  {
+   "name": "first_external_booking",
+   "org": "27eb38bb-0de9-447a-809b-7edd21bbfc78",
+   "events": 1,
+   "visitors": 1
+  }
+ ],
+ "inp_rum": "no INP/web-vital event is emitted by the booking page; Plausible has no INP data",
+ "pass": "r3"
+}
