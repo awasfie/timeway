@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import { CalendarCacheEventRepository } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventRepository";
 import { CalendarCacheEventService } from "@calcom/features/calendar-subscription/lib/cache/CalendarCacheEventService";
 import { prisma } from "@calcom/prisma";
@@ -35,4 +36,5 @@ async function getHandler(request: NextRequest) {
   }
 }
 
-export const GET = defaultResponderForAppDir(getHandler);
+// TW-T9.2b3: cross-org job, platform scope "calendar-subscriptions-cleanup".
+export const GET = defaultResponderForAppDir(withTwPlatformJob("calendar-subscriptions-cleanup", getHandler));

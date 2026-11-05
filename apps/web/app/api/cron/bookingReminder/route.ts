@@ -2,6 +2,7 @@ import { defaultResponderForAppDir } from "app/api/defaultResponderForAppDir";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import dayjs from "@calcom/dayjs";
 import { sendOrganizerRequestReminderEmail } from "@calcom/emails/email-manager";
 import { getCalEventResponses } from "@calcom/features/bookings/lib/getCalEventResponses";
@@ -156,4 +157,5 @@ async function postHandler(request: NextRequest) {
   return NextResponse.json({ notificationsSent });
 }
 
-export const POST = defaultResponderForAppDir(postHandler);
+// TW-T9.2b3: cross-org job, platform scope "bookingReminder".
+export const POST = defaultResponderForAppDir(withTwPlatformJob("bookingReminder", postHandler));
