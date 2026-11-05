@@ -25,7 +25,7 @@ import { getTokenObjectFromCredential } from "../../_utils/oauth/getTokenObjectF
 import { OAuthManager } from "../../_utils/oauth/OAuthManager";
 import { oAuthManagerHelper } from "../../_utils/oauth/oAuthManagerHelper";
 import metadata from "../_metadata";
-import { getOfficeAppKeys } from "./getOfficeAppKeys";
+import { getOfficeKeysForCredential } from "./getOfficeCredentialKeys";
 
 interface IRequest {
   method: string;
@@ -181,7 +181,7 @@ class Office365CalendarService implements Calendar {
       return { client_id, client_secret };
     }
 
-    return getOfficeAppKeys();
+    return getOfficeKeysForCredential(this.credential?.id);
   }
 
   private async getAzureUserId(credential: CredentialForCalendarServiceWithTenantId) {
