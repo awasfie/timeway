@@ -17,8 +17,8 @@ vi.mock("../../_utils/oauth/oAuthManagerHelper", () => ({
     updateTokenObject: vi.fn(),
   },
 }));
-vi.mock("./getOfficeAppKeys", () => ({
-  getOfficeAppKeys: vi.fn().mockResolvedValue({ client_id: "cid", client_secret: "cs" }),
+vi.mock("./getOfficeCredentialKeys", () => ({
+  getOfficeKeysForCredential: vi.fn().mockResolvedValue({ client_id: "cid", client_secret: "cs" }),
 }));
 
 import { getOffice365AccessToken } from "./getOffice365AccessToken";
