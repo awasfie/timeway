@@ -1,5 +1,3 @@
-import { FeatureProvider } from "@calcom/features/flags/context/provider";
-import { useFlags } from "@calcom/web/modules/feature-flags/hooks/useFlags";
 import type { PageWrapperProps } from "@components/PageWrapperAppDir";
 import useIsBookingPage from "@lib/hooks/useIsBookingPage";
 import useIsThemeSupported from "@lib/hooks/useIsThemeSupported";
@@ -82,11 +80,6 @@ const CalcomThemeProvider = (props: CalcomThemeProps) => {
   );
 };
 
-function FeatureFlagsProvider({ children }: { children: React.ReactNode }) {
-  const flags = useFlags();
-  return <FeatureProvider value={flags}>{children}</FeatureProvider>;
-}
-
 function OrgBrandProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
@@ -104,9 +97,9 @@ const AppProviders = (props: PageWrapperProps) => {
           nonce={props.nonce}
           isThemeSupported={isThemeSupported}
           isBookingPage={props.isBookingPage || isBookingPage}>
-          <FeatureFlagsProvider>
-            <OrgBrandProvider>{props.children}</OrgBrandProvider>
-          </FeatureFlagsProvider>
+          {/* WC-TW-6n-4c: FeatureFlagsProvider (tRPC viewer.features.map) moved to
+              (use-page-wrapper)/AppShellProviders; only the signed-in app reads useFlagMap. */}
+          <OrgBrandProvider>{props.children}</OrgBrandProvider>
         </CalcomThemeProvider>
       </TooltipProvider>
     </>

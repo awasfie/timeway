@@ -60,12 +60,12 @@ const ServerPage = async ({ params, searchParams }: PageProps) => {
     const translations = await loadTranslations(eventLocale, ns);
     return (
       <CustomI18nProvider translations={translations} locale={eventLocale} ns={ns}>
-        <LegacyPage {...props} />
+        <LegacyPage {...props} shellNow={Date.now()} />
       </CustomI18nProvider>
     );
   }
 
-  return <LegacyPage {...props} />;
+  return <LegacyPage {...props} shellNow={Date.now()} />;
 };
 
 export default ServerPage;

@@ -25,12 +25,12 @@ const ServerPage = async ({ params, searchParams }: PageProps): Promise<JSX.Elem
     const translations = await loadTranslations(locale, ns);
     return (
       <CustomI18nProvider translations={translations} locale={locale} ns={ns}>
-        <LegacyPage {...props} />
+        <LegacyPage {...props} shellNow={Date.now()} />
       </CustomI18nProvider>
     );
   }
 
-  return <LegacyPage {...props} />;
+  return <LegacyPage {...props} shellNow={Date.now()} />;
 };
 
 export const generateMetadata = async ({ params, searchParams }: PageProps): Promise<Metadata> => {
