@@ -236,7 +236,7 @@ export default function Login({
                 {/* Divider */}
                 <div className="my-6 flex items-center gap-4">
                   <Separator className="flex-1" />
-                  <span className="text-sm text-zinc-400">{t("or").toLowerCase()}</span>
+                  <span className="text-sm text-subtle">{t("or").toLowerCase()}</span>
                   <Separator className="flex-1" />
                 </div>
               </>
