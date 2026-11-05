@@ -1,6 +1,6 @@
 -- TW-T9.2b2f (WC-PE-6 timeway, expand step): two more pre-tenant lookups.
 -- Additive and idempotent: two new functions, no table, policy or row is touched.
--- Same contract as 20261014120000_tw_t9_2a_pre_tenant_lookups: SECURITY DEFINER,
+-- Same contract as 20261105120000_tw_t9_2a_pre_tenant_lookups: SECURITY DEFINER,
 -- search_path pinned, owned by timeway_owner, ids and org only, EXECUTE for
 -- timeway_app only.
 --
