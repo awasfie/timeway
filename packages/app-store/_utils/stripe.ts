@@ -1,3 +1,4 @@
+import { gateStripe } from "@calcom/features/tw-identity/stripeGate";
 import Stripe from "stripe";
 
 import { HttpError } from "@calcom/lib/http-error";
@@ -67,6 +68,8 @@ export async function getStripeCustomerId(user: UserType): Promise<string> {
 }
 
 const stripePrivateKey = process.env.STRIPE_PRIVATE_KEY || "";
-export const stripe = new Stripe(stripePrivateKey, {
-  apiVersion: "2020-08-27",
-});
+export const stripe = gateStripe(
+  new Stripe(stripePrivateKey, {
+    apiVersion: "2020-08-27",
+  })
+);
