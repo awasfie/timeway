@@ -9,7 +9,7 @@ import { useInitializeWeekStart } from "@calcom/features/bookings/hooks/useIniti
 import { WEBAPP_URL } from "@calcom/lib/constants";
 import { formatDateTime } from "@calcom/lib/dateTimeFormatter";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { BookerLayouts } from "@calcom/prisma/zod-utils";
+import { BookerLayouts } from "@calcom/prisma/booker-layouts";
 import { Button } from "@calcom/ui/components/button";
 import { ButtonGroup } from "@calcom/ui/components/buttonGroup";
 import { ToggleGroup } from "@calcom/ui/components/form";
