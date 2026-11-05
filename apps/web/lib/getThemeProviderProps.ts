@@ -1,5 +1,4 @@
 import type { ReadonlyURLSearchParams } from "next/navigation";
-import { z } from "zod";
 
 import { EmbedTheme } from "@calcom/features/embed/lib/constants";
 
@@ -96,8 +95,9 @@ export function getThemeProviderProps({
       : ThemeSupport.App;
 
   const themeQueryParam = searchParams?.get("theme") ?? "";
-  const themeParsed = z.enum(["light", "dark", "system", "auto"]).safeParse(themeQueryParam);
-  const isWrongThemeValue = themeQueryParam.length > 0 && !themeParsed.success;
+  // Plain list check instead of a zod enum: this runs on the booking first load (WC-TW-6n-4a).
+  const isWrongThemeValue =
+    themeQueryParam.length > 0 && !["light", "dark", "system", "auto"].includes(themeQueryParam);
   const forcedTheme = themeSupport === ThemeSupport.None || isWrongThemeValue ? "light" : undefined;
   if (forcedTheme) {
     return {

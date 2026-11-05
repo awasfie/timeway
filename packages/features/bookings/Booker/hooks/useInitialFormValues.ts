@@ -3,7 +3,6 @@ import type { z } from "zod";
 
 import { useBookerStore } from "@calcom/features/bookings/Booker/store";
 import type getBookingResponsesSchema from "@calcom/features/bookings/lib/getBookingResponsesSchema";
-import { getBookingResponsesPartialSchema } from "@calcom/features/bookings/lib/getBookingResponsesSchema";
 import type { BookerEvent } from "@calcom/features/bookings/types";
 
 export type useInitialFormValuesReturnType = ReturnType<typeof useInitialFormValues>;
@@ -97,6 +96,7 @@ export function useInitialFormValues({
       if (!eventType?.bookingFields) {
         return {};
       }
+      const { getBookingResponsesPartialSchema } = await import("../lib/bookingFormValidation");
       const querySchema = getBookingResponsesPartialSchema({
         bookingFields: eventType.bookingFields,
         view: rescheduleUid ? "reschedule" : "booking",
