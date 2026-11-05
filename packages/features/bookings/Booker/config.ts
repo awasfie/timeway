@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { BookerLayouts } from "@calcom/prisma/zod-utils";
+import { BookerLayouts } from "@calcom/prisma/booker-layouts";
 
 import type { BookerLayout, BookerState } from "./types";
 

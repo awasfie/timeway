@@ -1,9 +1,6 @@
-import type {
-  DefaultEventLocationType,
-  EventLocationTypeFromApp,
-  LocationObject,
-} from "@calcom/app-store/locations";
-import { getLocationByType, getTranslatedLocation } from "@calcom/app-store/locations";
+import type { BookerLocationDisplay } from "@calcom/app-store/bookerLocationDisplay";
+import { getBookerLocationByType, getBookerTranslatedLocation } from "@calcom/app-store/bookerLocationDisplay";
+import type { LocationObject } from "@calcom/app-store/locations";
 import { useIsPlatform } from "@calcom/atoms/hooks/useIsPlatform";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import invertLogoOnDark from "@calcom/lib/invertLogoOnDark";
@@ -17,7 +14,7 @@ function RenderIcon({
   eventLocationType,
   isTooltip,
 }: {
-  eventLocationType: DefaultEventLocationType | EventLocationTypeFromApp;
+  eventLocationType: BookerLocationDisplay;
   isTooltip: boolean;
 }) {
   const isPlatform = useIsPlatform();
@@ -43,12 +40,12 @@ function RenderLocationTooltip({ locations }: { locations: LocationObject[] }) {
             Omit<LocationObject, "link" | "address">,
           index: number
         ) => {
-          const eventLocationType = getLocationByType(location.type);
+          const eventLocationType = getBookerLocationByType(location.type);
           if (!eventLocationType) {
             return null;
           }
           const translatedLocation =
-            location.customLabel || getTranslatedLocation(location, eventLocationType, t);
+            location.customLabel || getBookerTranslatedLocation(location, eventLocationType, t);
           return (
             <div key={`${location.type}-${index}`} className="font-sm flex flex-row items-center">
               <RenderIcon eventLocationType={eventLocationType} isTooltip />
@@ -70,13 +67,13 @@ export function AvailableEventLocations({ locations }: { locations: LocationObje
       location: Pick<Partial<LocationObject>, "link" | "address"> & Omit<LocationObject, "link" | "address">,
       index: number
     ) => {
-      const eventLocationType = getLocationByType(location.type);
+      const eventLocationType = getBookerLocationByType(location.type);
       if (!eventLocationType) {
         // It's possible that the location app got uninstalled
         return null;
       }
 
-      const locationName = location?.customLabel || getTranslatedLocation(location, eventLocationType, t);
+      const locationName = location?.customLabel || getBookerTranslatedLocation(location, eventLocationType, t);
 
       return (
         <div key={`${location.type}-${index}`} className="flex flex-row items-center text-sm font-medium">
