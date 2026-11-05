@@ -1,6 +1,6 @@
 {
   "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200. Since WC-TW-6n-1 the total excludes <script noModule> (Next's legacy polyfills.js), reported separately.",
-  "total_kb_gz": 186.3,
+  "total_kb_gz": 173.7,
   "tolerance_kb": 5,
-  "source": "WC-TW-6n-4c local production build on #265 + this PR (15 scripts, 186.3 KB gz; booker first paint is the server-rendered BookerFirstPaintShell (event meta + month), the interactive booker with TrpcProvider (tRPC client, react-query, superjson) loads as a lazy chunk after hydration; TrpcProvider and FeatureFlagsProvider left the root layout for (use-page-wrapper)/AppShellProviders; noModule polyfills not counted)"
+  "source": "WC-TW-6n-4d local production build on #267 + this PR (13 scripts, 173.7 KB gz; BookingPageErrorBoundary loads ErrorPage (Button/Icon/Tooltip, tailwind-merge) on demand, getBookerWrapperClasses is a plain string; react-hook-form and tailwind-merge FORBID markers 0 hits; noModule polyfills not counted)"
 }
