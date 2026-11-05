@@ -45,7 +45,6 @@ import { DatePicker } from "./DatePicker";
 import { DryRunMessage } from "./DryRunMessage";
 import { EventMeta } from "./EventMeta";
 import { HavingTroubleFindingTime } from "./HavingTroubleFindingTime";
-import { LargeCalendar } from "./LargeCalendar";
 import { OverlayCalendar } from "./OverlayCalendar/OverlayCalendar";
 import { SlotSelectionModalHeader } from "./SlotSelectionModalHeader";
 import { NotFound } from "./Unavailable";
@@ -67,6 +66,8 @@ const BookingPageTagManager = dynamic(() => import("@calcom/app-store/BookingPag
   ssr: false,
 });
 const Toaster = dynamic(() => import("sonner").then((mod) => mod.Toaster), { ssr: false });
+// WC-TW-6n-3: the weekly calendar only renders in week_view; keep it off the month/column first load.
+const LargeCalendar = dynamic(() => import("./LargeCalendar").then((mod) => mod.LargeCalendar));
 
 const BookerComponent = ({
   username,
