@@ -129,6 +129,7 @@ export const DatePicker = ({
   });
   moveToNextMonthOnNoAvailability();
 
+  const numberFormat = new Intl.NumberFormat(i18n.language);
   const isCompact = layout !== "month_view" && layout !== "mobile";
 
   const periodData: PeriodData = {
@@ -211,7 +212,8 @@ export const DatePicker = ({
           cellContent={(date) => {
             const daySlots = slots[date.toString()] ?? [];
             const allAway = daySlots.length > 0 && daySlots.every((slot) => slot.away);
-            if (!allAway) return undefined;
+            // The day hook sits on the cell span; e2e finds the number as a descendant of it, so always nest it.
+            if (!allAway) return <span>{numberFormat.format(date.day)}</span>;
             return <span data-testid="away-emoji">{daySlots.find((slot) => slot.away)?.emoji}</span>;
           }}
           // Two/three-letter headers (So Mo Di / dom lun mar) as the previous grid; e2e checks them.
