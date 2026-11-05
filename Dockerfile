@@ -102,7 +102,7 @@ FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d
 
 RUN apt-get update \
   && apt-get upgrade -y \
-  && apt-get install -y --no-install-recommends netcat-openbsd wget openssl ca-certificates \
+  && apt-get install -y --no-install-recommends netcat-openbsd wget curl openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
@@ -135,6 +135,6 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=30s --retries=5 \
-  CMD wget --spider http://localhost:3000 || exit 1
+  CMD wget -q -O /dev/null http://localhost:3000/api/health || exit 1
 
 CMD ["/calcom/scripts/start.sh"]
