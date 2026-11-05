@@ -1,14 +1,14 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-
-import { type TraceContext } from "@calcom/lib/tracing";
+import process from "node:process";
+import type { TraceContext } from "@calcom/lib/tracing";
 import { TracedError } from "@calcom/lib/tracing/error";
 import { distributedTracing } from "@calcom/lib/tracing/factory";
-
+import type { NextApiRequest, NextApiResponse } from "next";
 import { HttpError } from "../http-error";
 import { safeStringify } from "../safeStringify";
 import { getServerErrorFromUnknown } from "./getServerErrorFromUnknown";
 import { performance } from "./perfObserver";
 import { getHTTPStatusCodeFromTRPCErrorLike, isTRPCErrorLike } from "./trpcErrorUtils";
+import { withSessionTwOrg } from "./tw-org-scope/session";
 
 export interface TracedRequest extends NextApiRequest {
   traceContext: TraceContext;
@@ -18,10 +18,12 @@ type Handle<T> = (req: TracedRequest, res: NextApiResponse) => Promise<T>;
 
 /** Allows us to get type inference from API handler responses */
 export function defaultResponder<T>(
-  f: Handle<T>,
+  handle: Handle<T>,
   /** If set we will wrap the handle with sentry tracing */
   endpointRoute?: string
 ) {
+  // TW-T9.2b1: the handler runs in the session's org scope (signed cookie only).
+  const f: Handle<T> = withSessionTwOrg(handle);
   return async (req: NextApiRequest, res: NextApiResponse) => {
     let ok = false;
     const operation = endpointRoute ? endpointRoute.replace(/^\//, "").replace(/\//g, "_") : "api_request";

@@ -17,6 +17,7 @@ import { UrlencodedBodyMiddleware } from "@/middleware/body/urlencoded.body.midd
 import { ResponseInterceptor } from "@/middleware/request-ids/request-id.interceptor";
 import { RequestIdMiddleware } from "@/middleware/request-ids/request-id.middleware";
 import { AuthModule } from "@/modules/auth/auth.module";
+import { TwOrgScopeInterceptor } from "@/modules/auth/tw-org-scope/tw-org-scope.interceptor";
 import { EndpointsModule } from "@/modules/endpoints.module";
 import { JwtModule } from "@/modules/jwt/jwt.module";
 import { PrismaModule } from "@/modules/prisma/prisma.module";
@@ -76,6 +77,10 @@ import { VercelWebhookController } from "@/vercel-webhook.controller";
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TwOrgScopeInterceptor,
     },
     {
       provide: APP_GUARD,

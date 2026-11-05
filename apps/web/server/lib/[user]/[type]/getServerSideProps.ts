@@ -6,6 +6,7 @@ import type { getPublicEvent } from "@calcom/features/eventtypes/lib/getPublicEv
 import { EventRepository } from "@calcom/features/eventtypes/repositories/EventRepository";
 import { shouldHideBrandingForUserEvent } from "@calcom/features/profile/lib/hideBranding";
 import { UserRepository } from "@calcom/features/users/repositories/UserRepository";
+import { runSsrWithPublicTwOrg } from "@calcom/lib/server/tw-org-scope/public";
 import slugify from "@calcom/lib/slugify";
 import { prisma } from "@calcom/prisma";
 import { BookingStatus, RedirectType } from "@calcom/prisma/enums";
@@ -311,9 +312,12 @@ const paramsSchema = z.object({
 
 // Booker page fetches a tiny bit of data server side, to determine early
 // whether the page should show an away state or dynamic booking not allowed.
+// TW-T9.2b2: every username in the link (dynamic groups too) must resolve to the same org.
 export const getServerSideProps = async (context: GetServerSidePropsContext) => {
   const { user } = paramsSchema.parse(context.params);
   const isDynamicGroup = user.length > 1;
 
-  return isDynamicGroup ? await getDynamicGroupPageProps(context) : await getUserPageProps(context);
+  return runSsrWithPublicTwOrg(prisma, { resolver: "user_slug", keys: user }, () =>
+    isDynamicGroup ? getDynamicGroupPageProps(context) : getUserPageProps(context)
+  );
 };

@@ -2,7 +2,11 @@ import { SchedulingType } from "@calcom/prisma/enums";
 import type { GetServerSidePropsContext } from "next";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const ORG = "6f1c2b1e-3c4d-4e5f-8a9b-0c1d2e3f4a5b";
+
 const prismaMock = vi.hoisted(() => ({
+  // TW-T9.2b2: runSsrWithPublicTwOrg resolves the org via tw_resolve_org_for_team_slug.
+  $queryRaw: vi.fn(),
   team: { findFirst: vi.fn() },
   eventType: { findUniqueOrThrow: vi.fn() },
 }));
@@ -54,7 +58,25 @@ const team = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe("team/[slug]/[type] getServerSideProps", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMock.$queryRaw.mockResolvedValue([{ id: 1, twOrgId: ORG }]);
+  });
+
+  it("returns notFound without reading the team when the slug resolves to no org", async () => {
+    prismaMock.$queryRaw.mockResolvedValue([]);
+    expect(await getServerSideProps(ctx())).toEqual({ notFound: true });
+    expect(prismaMock.team.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("resolves the org from the team slug through the definer function", async () => {
+    prismaMock.team.findFirst.mockResolvedValue(null);
+    await getServerSideProps(ctx());
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(1);
+    const [strings, key] = prismaMock.$queryRaw.mock.calls[0];
+    expect((strings as string[]).join("?")).toContain("public.tw_resolve_org_for_team_slug(");
+    expect(key).toBe("awstreams");
+  });
 
   it("returns notFound when the team or event type does not exist", async () => {
     prismaMock.team.findFirst.mockResolvedValue(null);
