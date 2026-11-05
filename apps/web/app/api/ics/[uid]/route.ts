@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid
   const { uid } = await params;
   if (!uid || uid.length < 10) return NextResponse.json({ message: "Not found" }, { status: 404 });
   // TW-T9.2b4: the org is the booking's, resolved from its uid; unresolved is not found.
-  const twOrgId = await resolvePublicTwOrgFirst(prisma, publicLookupsForBookingUid(uid));
+  const twOrgId = await resolvePublicTwOrgFirst(prisma, await publicLookupsForBookingUid(prisma, uid));
   if (!twOrgId) return NextResponse.json({ message: "Not found" }, { status: 404 });
   const booking = await runWithTwOrg(twOrgId, () =>
     prisma.booking.findUnique({
