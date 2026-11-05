@@ -2,14 +2,14 @@
 
 import process from "node:process";
 import { toAnalyticsLocale } from "@calcom/lib/analytics/locale";
-import { useSession } from "next-auth/react";
+import { useLazySession } from "@lib/hooks/useLazySession";
 import { useEffect } from "react";
 import { identify, init } from "../../../../vendor/analytics/src/index";
 import { useGeo } from "../../app/GeoContext";
 
 /** WC-DX-3c-2: init the vendored client (same-origin /ingest) and identify after the session loads. */
 export function AnalyticsIdentify() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useLazySession();
   const { country } = useGeo();
 
   useEffect(() => {
