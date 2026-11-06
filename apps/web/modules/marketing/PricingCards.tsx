@@ -1,12 +1,15 @@
 import Link from "next/link";
-import { MARKETING_PLANS, TAX_NOTICE, TRIAL_NOTICE } from "./plans";
+import type { FrontLocale } from "./i18n";
+import { ft } from "./i18n";
+import { marketingPlans, taxNotice, trialNotice } from "./plans";
 
-// L8-6-TW: CM.3 tier cards, yearly shown beside monthly (CM.1 pricing preview).
-export function PricingCards() {
+// L8-6-TW / FRONT-DOOR-timeway: CM.3 tier cards from price-map.md, yearly beside monthly, EN or AR.
+export function PricingCards({ locale = "en" }: { locale?: FrontLocale }) {
+  const l = locale;
   return (
     <div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {MARKETING_PLANS.map((plan) => (
+        {marketingPlans(l).map((plan) => (
           <section
             key={plan.id}
             className={`flex flex-col rounded-brand-md border bg-brand-surface-alt p-6 ${
@@ -14,14 +17,16 @@ export function PricingCards() {
             }`}>
             <h3 className="font-semibold text-lg">{plan.name}</h3>
             <p className="mt-3">
-              <span className="font-semibold text-3xl text-brand-primary">{plan.monthly}</span>
+              <span className="font-semibold text-3xl text-brand-primary" dir="ltr">
+                {plan.monthly}
+              </span>
               <span className="text-brand-ink-muted text-sm">
                 {" "}
-                /{plan.id === "free" ? "month" : "user/month"}
+                /{plan.id === "free" ? ft(l, "perMonthFree") : ft(l, "perUserMonth")}
               </span>
             </p>
             <p className="mt-1 text-brand-ink-muted text-sm">
-              {plan.yearly ? `or ${plan.yearly} per user/year` : plan.unit}
+              {plan.yearly ? ft(l, "orYearly", { amount: plan.yearly }) : plan.unit}
             </p>
             <ul className="mt-4 flex-1 space-y-2 text-sm">
               {plan.highlights.map((h) => (
@@ -41,8 +46,8 @@ export function PricingCards() {
           </section>
         ))}
       </div>
-      <p className="mt-6 text-brand-ink-muted text-sm">{TRIAL_NOTICE}</p>
-      <p className="mt-1 text-brand-ink-muted text-sm">{TAX_NOTICE}</p>
+      <p className="mt-6 text-brand-ink-muted text-sm">{trialNotice(l)}</p>
+      <p className="mt-1 text-brand-ink-muted text-sm">{taxNotice(l)}</p>
     </div>
   );
 }
