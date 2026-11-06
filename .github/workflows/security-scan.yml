@@ -54,7 +54,7 @@ jobs:
       - name: trivy config Dockerfile (report only)
         run: |
           docker run --rm -v "$PWD:/src:ro" "$TRIVY_IMAGE" config --severity HIGH,CRITICAL \
-            --exit-code 0 --no-progress /src/Dockerfile
+            --exit-code 0 /src/Dockerfile
 
   trivy-image:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
