@@ -3,12 +3,13 @@ name: CodeQL
 # Public repos upload SARIF to the Security tab; private repos without GitHub Code Security keep
 # the SARIF as a run artifact (upload to code scanning needs that licence) and fail on analysis errors.
 on:
-  push:
-    branches: [main]
+  # CI-COST-4 (t_25c20e17): nightly on main plus PRs that touch code; no per-commit run on main (main is covered by the
+  # nightly run and by the PR run of every merged change).
   pull_request:
     branches: [main]
+    paths-ignore: ['docs/**', '**.md']
   schedule:
-    - cron: '17 4 * * 1'
+    - cron: '17 4 * * *'
   workflow_dispatch:
 
 permissions:
