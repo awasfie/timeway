@@ -117,7 +117,11 @@ export const decryptSecret = ({ envelope, aad }: { envelope: SecretEnvelopeV1; a
   const tag = unb64url(envelope.tag);
   const aadBuf = aadToBuffer(aad);
 
-  const decipher = createDecipheriv("aes-256-gcm", key, nonce);
+  // Pin the GCM tag to the 16 bytes encrypt() writes: a shorter tag would weaken authentication.
+  if (tag.length !== 16) {
+    throw new Error("Invalid envelope tag length");
+  }
+  const decipher = createDecipheriv("aes-256-gcm", key, nonce, { authTagLength: 16 });
   decipher.setAAD(aadBuf);
   decipher.setAuthTag(tag);
 

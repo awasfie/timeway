@@ -226,6 +226,8 @@ const nextConfig = (phase: string): NextConfig => {
 
   return {
     output: process.env.BUILD_STANDALONE === "true" ? "standalone" : undefined,
+    // t_52034498: the production type check runs without test files (see tsconfig.build.json).
+    typescript: { tsconfigPath: "tsconfig.build.json" },
     serverExternalPackages: [
       "deasync",
       "http-cookie-agent",

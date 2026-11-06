@@ -28,6 +28,8 @@ declare module "next-auth" {
       role: PrismaUser["role"];
     };
     belongsToActiveTeam?: boolean;
+    /** TW-T9.2b1: Timeway org (tw_organization.id) from the user's own row at sign-in. */
+    twOrgId?: string | null;
     org?: {
       id: number;
       name?: string;
@@ -77,6 +79,8 @@ declare module "next-auth/jwt" {
     };
     orgAwareUsername?: PrismaUser["username"];
     organizationId?: number | null;
+    /** TW-T9.2b1: signed into the JWT at sign-in; the only source of the session's org scope. */
+    twOrgId?: string | null;
     locale?: string;
   }
 }
