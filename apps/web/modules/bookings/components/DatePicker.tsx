@@ -155,7 +155,9 @@ export const DatePicker = ({
   });
   const isBookingInPast = bookingData ? new Date(bookingData.endTime) < new Date() : false;
 
-  const selectDate = (date: Dayjs | null, omitUpdatingParams?: boolean) => {
+  // `byUser` is false for the auto-selection below: only a real pick may open the embed's
+  // two-step slot modal (onDateChange), or it covers the month nav before the visitor acts.
+  const selectDate = (date: Dayjs | null, omitUpdatingParams?: boolean, byUser = true) => {
     const newDate = date === null ? null : date.format("YYYY-MM-DD");
     const dateChanged = newDate !== selectedDate;
     setSelectedDate({
@@ -163,7 +165,7 @@ export const DatePicker = ({
       omitUpdatingParams,
       preventMonthSwitching: !isCompact, // Prevent month switching when in monthly view
     });
-    if (dateChanged) onDateChange?.();
+    if (dateChanged && byUser) onDateChange?.();
   };
 
   // Keeps a bookable date selected in the browsing month, as the previous month grid did.
@@ -172,14 +174,14 @@ export const DatePicker = ({
     const selected = selectedDate ? dayjs(selectedDate) : null;
     const selectedKey = selected?.isValid() ? selected.format("YYYY-MM-DD") : null;
     if (selectedKey && availableDates.includes(selectedKey)) {
-      selectDate(dayjs(selectedKey), true);
+      selectDate(dayjs(selectedKey), true, false);
       return;
     }
     if (availableDates.length) {
-      selectDate(dayjs(availableDates[0]), !selected?.isValid());
+      selectDate(dayjs(availableDates[0]), !selected?.isValid(), false);
       return;
     }
-    selectDate(null);
+    selectDate(null, undefined, false);
     // availableDates is derived from month + slots; listing it would re-run on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, month, nonEmptyScheduleDays, slotsViewOnSmallScreen]);
