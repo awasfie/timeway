@@ -35,12 +35,15 @@ Anything else must be listed in `scripts/tw-t9/entrypoint-allowlist.json` with a
 | 13 | API v2 `PrismaReadService` / `PrismaWriteService` | authed | carries rows 11-12 to the DB (`withTwOrgScope()`) |
 | 14 | `/[user]/[type]` (+embed, dynamic groups): `apps/web/server/lib/[user]/[type]/getServerSideProps.ts` | public | resolver fn `tw_resolve_org_for_user_slug` (every username, one org) |
 | 15 | `/team/[slug]/[type]` (+embed): `apps/web/lib/team/[slug]/[type]/getServerSideProps.tsx` | public | resolver fn `tw_resolve_org_for_team_slug` |
-| 16 | `/booking/[uid]` (+embed): `apps/web/modules/bookings/views/bookings-single-view.getServerSideProps.tsx` | public | resolver fn `tw_resolve_org_for_booking_uid` (uid, then the seat's booking uid) |
-| 17 | `/reschedule/[uid]` (+embed): `apps/web/lib/reschedule/[uid]/getServerSideProps.ts` | public | resolver fn `tw_resolve_org_for_booking_uid` |
+| 16 | `/booking/[uid]` (+embed): `apps/web/modules/bookings/views/bookings-single-view.getServerSideProps.tsx` | public | resolver fns `tw_resolve_org_for_booking_uid`, then `tw_resolve_org_for_seat_reference` (`publicLookupsForBookingUid`; seat referenceUid added by TW-T9.2b2f) |
+| 17 | `/reschedule/[uid]` (+embed): `apps/web/lib/reschedule/[uid]/getServerSideProps.ts` | public | resolver fns `tw_resolve_org_for_booking_uid`, then `tw_resolve_org_for_seat_reference` (as row 16) |
 | 18 | `apps/web/app/api/cancel/route.ts` (POST, DELETE) | public | resolver fn `tw_resolve_org_for_booking_uid` |
 | 19 | `apps/web/pages/api/book/event.ts` | public | resolver fn `tw_resolve_org_for_user_slug`; a single key falls back to `tw_resolve_org_for_team_slug` |
 | 20 | `apps/web/pages/api/book/recurring-event.ts` | public | resolver fn, as row 19 (first slot body) |
 | 21 | tRPC `slots.getSchedule` (`packages/trpc/server/routers/viewer/slots/_router.tsx`) | public | resolver fn `tw_resolve_org_for_team_slug` if `isTeamEvent`, else `tw_resolve_org_for_user_slug` |
+| 21a | tRPC `slots.reserveSlot` (same router) | public | resolver fn `tw_resolve_org_for_event_type_id` (`input.eventTypeId`; TW-T9.2b2f) |
+| 21b | tRPC `slots.isAvailable` (same router) | public | resolver fn `tw_resolve_org_for_event_type_id` (`input.eventTypeId`; TW-T9.2b2f) |
+| 21c | tRPC `slots.removeSelectedSlotMark` (same router) | public | resolver fn `tw_resolve_org_for_event_type_id` over the event types of the reservation's `SelectedSlots` rows (read unscoped: no twOrgId, not in the 2d RLS set); all must give one org, else NOT_FOUND; no rows returns without work (TW-T9.2b2f) |
 | 22 | `apps/web/app/api/camv/booking-window/[uid]/route.ts` (Camv server-to-server, shared-secret header) | public | resolver fn `tw_resolve_org_for_booking_uid` (added by this card; it was unscoped) |
 | 23 | `apps/web/app/api/cron/bookingReminder/route.ts` | unattended | platform:'bookingReminder' |
 | 24 | `apps/web/app/api/cron/calendar-subscriptions/route.ts` | unattended | platform:'calendar-subscriptions' |
@@ -59,12 +62,14 @@ Anything else must be listed in `scripts/tw-t9/entrypoint-allowlist.json` with a
 | 37 | `packages/app-store/paypal/api/webhook.ts` (via `apps/web/pages/api/integrations/paypal/webhook.ts`) | unattended | platform:'paypal-webhook' |
 | 38 | `packages/app-store/vital/api/webhook.ts` | unattended | platform:'vital-webhook' |
 | 39 | `apps/web/pages/api/stripe/webhook.ts`, `apps/web/pages/api/integrations/stripepayment/webhook.ts` | unattended | none needed: community-edition 404 stubs with no DB access |
-| 40 | `apps/web/app/api/ics/[uid]/route.ts` | public | resolver fn `tw_resolve_org_for_booking_uid` (uid, then the seat's booking uid; first match) |
+| 40 | `apps/web/app/api/ics/[uid]/route.ts` | public | resolver fns `tw_resolve_org_for_booking_uid`, then `tw_resolve_org_for_seat_reference` (as row 16) |
 | 41 | `apps/web/app/api/internal/custom-domain/approve/route.ts` (shared-secret header) | unattended | platform:'custom-domain-approve' |
 | 42 | `apps/web/app/api/internal/custom-domain/resolve/route.ts` (shared-secret header) | unattended | platform:'custom-domain-resolve' |
 | 43 | `apps/web/app/api/metrics/calendar-sync/route.ts` (secret-gated) | unattended | platform:'calendar-sync-metrics' |
 | 44 | `apps/web/app/api/health/route.ts` (Coolify readiness probe) | public | none: allowlisted in `scripts/tw-t9/entrypoint-allowlist.json`; runs only `SELECT 1`, touches no table |
 
-Known gaps (fail closed once RLS is on; tracked on t_6674115f, a parent of the RLS card t_c7fb086a):
-- `slots.reserveSlot`, `slots.isAvailable` and `slots.removeSelectedSlotMark` take only an eventTypeId or reservation uid, and no resolver exists for those yet.
-- A seat `referenceUid` link resolves only through its booking uid.
+Booking-uid resolution (rows 16, 17, 40, intended): all three call `publicLookupsForBookingUid` and resolve first-match (`resolvePublicTwOrgFirst`, also inside `runSsrWithPublicTwOrg`). The booking-uid resolver is tried first; the seat-reference resolver only when the booking uid gives no single org. Each resolver fails closed on its own: a key that gives zero orgs or two orgs is not found from that resolver. A value that is both a booking uid in one org and a seat referenceUid in another resolves to the booking's org; both are random UUIDs, so that collision is not a reachable case.
+
+Known gaps (fail closed once RLS is on):
+- `slots.getSchedule` called with an eventTypeId and no usernameList has no resolver and returns NOT_FOUND. TW-T9.2d is held on it.
+- The slot procedures (rows 21a-21c) and seat referenceUid links (rows 16, 17, 40) were gaps until TW-T9.2b2f (t_6674115f); they are closed.
