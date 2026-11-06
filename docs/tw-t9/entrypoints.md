@@ -16,7 +16,7 @@ CI enforcement: `packages/lib/server/tw-org-scope/entrypoints.test.ts` runs in t
 - it goes through `defaultResponder` / `defaultResponderForAppDir` (both wrap with `withSessionTwOrg`);
 - it is a v2 controller (global interceptor);
 - it is an app-store handler reached only via `integrations/[...args]`.
-Anything else must be listed in `scripts/tw-t9/entrypoint-allowlist.json` with a reason. Unlisted files and stale entries both fail the test. The allowlist is currently empty.
+Anything else must be listed in `scripts/tw-t9/entrypoint-allowlist.json` with a reason. Unlisted files and stale entries both fail the test. The allowlist has one entry: `apps/web/app/api/health/route.ts` (row 44).
 
 | # | Entry point (path) | Surface | Context source |
 |---|---|---|---|
@@ -59,6 +59,11 @@ Anything else must be listed in `scripts/tw-t9/entrypoint-allowlist.json` with a
 | 37 | `packages/app-store/paypal/api/webhook.ts` (via `apps/web/pages/api/integrations/paypal/webhook.ts`) | unattended | platform:'paypal-webhook' |
 | 38 | `packages/app-store/vital/api/webhook.ts` | unattended | platform:'vital-webhook' |
 | 39 | `apps/web/pages/api/stripe/webhook.ts`, `apps/web/pages/api/integrations/stripepayment/webhook.ts` | unattended | none needed: community-edition 404 stubs with no DB access |
+| 40 | `apps/web/app/api/ics/[uid]/route.ts` | public | resolver fn `tw_resolve_org_for_booking_uid` (uid, then the seat's booking uid; first match) |
+| 41 | `apps/web/app/api/internal/custom-domain/approve/route.ts` (shared-secret header) | unattended | platform:'custom-domain-approve' |
+| 42 | `apps/web/app/api/internal/custom-domain/resolve/route.ts` (shared-secret header) | unattended | platform:'custom-domain-resolve' |
+| 43 | `apps/web/app/api/metrics/calendar-sync/route.ts` (secret-gated) | unattended | platform:'calendar-sync-metrics' |
+| 44 | `apps/web/app/api/health/route.ts` (Coolify readiness probe) | public | none: allowlisted in `scripts/tw-t9/entrypoint-allowlist.json`; runs only `SELECT 1`, touches no table |
 
 Known gaps (fail closed once RLS is on; tracked on t_6674115f, a parent of the RLS card t_c7fb086a):
 - `slots.reserveSlot`, `slots.isAvailable` and `slots.removeSelectedSlotMark` take only an eventTypeId or reservation uid, and no resolver exists for those yet.
