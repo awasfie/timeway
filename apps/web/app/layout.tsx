@@ -2,6 +2,7 @@ import { getLocale } from "@calcom/features/auth/lib/getLocale";
 import { loadTranslations } from "@calcom/i18n/server";
 import { IconSprites } from "@calcom/ui/components/icon";
 import { buildLegacyRequest } from "@lib/buildLegacyCtx";
+import { frontLocaleFromPath } from "~/marketing/frontPaths";
 import { getBookingPageLocale } from "@lib/i18n/getBookingPageLocale";
 import { PATHNAME_HEADER } from "@lib/i18n/pathnameHeader";
 import { RumBeacon } from "@lib/telemetry/rum-client";
@@ -87,7 +88,9 @@ const getInitialProps = async () => {
   const embedColorScheme = h.get("x-embedColorScheme");
   // A booking page whose event type pins interfaceLanguage renders in that language for every visitor,
   // so <html lang/dir> must follow it in the SSR HTML, not the visitor's Accept-Language (TW-AWS-3).
-  const eventLocale = await getBookingPageLocale(h.get(PATHNAME_HEADER));
+  // FRONT-DOOR-timeway: /ar and /ar/pricing are Arabic whatever the visitor's Accept-Language says.
+  const eventLocale =
+    frontLocaleFromPath(h.get(PATHNAME_HEADER)) ?? (await getBookingPageLocale(h.get(PATHNAME_HEADER)));
   const newLocale =
     eventLocale ?? (await getLocale(buildLegacyRequest(await headers(), await cookies()))) ?? "en";
   const direction = dir(newLocale) ?? "ltr";

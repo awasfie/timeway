@@ -6,6 +6,7 @@ import {
 } from "@calcom/lib/domainManager/customHostnames/proxyGate";
 import { getCspHeader, getCspNonce } from "@lib/csp";
 import { PATHNAME_HEADER } from "@lib/i18n/pathnameHeader";
+import { AR_FRONT_PATHS } from "~/marketing/frontPaths";
 import { get } from "@vercel/edge-config";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -79,6 +80,8 @@ const isLegacyMatchedPath = (pathname: string) =>
   ) ||
   pathname.endsWith("/embed") ||
   pathname === "/team" ||
+  // FRONT-DOOR-timeway: AR front door; PATHNAME_HEADER carries /ar past next.config's locale rewrite.
+  (AR_FRONT_PATHS as readonly string[]).includes(pathname) ||
   pathname.startsWith("/team/");
 
 const resolveCustomHost = createHttpResolver();
@@ -208,6 +211,8 @@ export const config = {
     "/team/:path*",
     "/availability",
     "/api/auth/signup",
+    "/ar",
+    "/ar/pricing",
     // WC-TW-12c2: every page on a customer host. Static assets are skipped; platform hosts are
     // excluded here and again in isLegacyMatchedPath.
     {
