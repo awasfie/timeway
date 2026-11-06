@@ -1,0 +1,8 @@
+{
+  /* t_52034498: `next build` type-checks with this file (next.config.ts typescript.tsconfigPath).
+     Test files are left out: the Docker builder stage copies only apps/web, apps/api/v2, packages and vendor,
+     so a test that imports repo tooling (scripts/front-door/gen.mjs) cannot resolve there.
+     CI check-types still uses tsconfig.json, which includes the tests. */
+  "extends": "./tsconfig.json",
+  "exclude": ["**/node_modules/**", ".next", "playwright", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
+}
