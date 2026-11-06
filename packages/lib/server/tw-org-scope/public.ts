@@ -22,7 +22,7 @@ type RawQueryClient = {
   $queryRaw(query: TemplateStringsArray, ...values: unknown[]): PromiseLike<unknown>;
 };
 
-export type TwPublicResolver = "user_slug" | "team_slug" | "booking_uid";
+export type TwPublicResolver = "user_slug" | "team_slug" | "booking_uid" | "seat_reference" | "event_type_id";
 
 export type TwPublicLookup = { resolver: TwPublicResolver; keys: readonly string[] };
 
@@ -43,6 +43,16 @@ function queryResolver(
     case "booking_uid":
       return client.$queryRaw`
         select id, "twOrgId" from public.tw_resolve_org_for_booking_uid(${key})`;
+    case "seat_reference":
+      return client.$queryRaw`
+        select id, "twOrgId" from public.tw_resolve_org_for_seat_reference(${key})`;
+    case "event_type_id": {
+      // A key that is not a positive int32 never reaches SQL: it resolves to no row.
+      const id = Number(key);
+      if (!/^[1-9][0-9]*$/.test(key) || id > 2147483647) return Promise.resolve([]);
+      return client.$queryRaw`
+        select id, "twOrgId" from public.tw_resolve_org_for_event_type_id(${id}::int)`;
+    }
   }
 }
 
@@ -147,35 +157,25 @@ export function publicLookupsForBookingBody(body: unknown): TwPublicLookup[] {
   return lookups;
 }
 
-type SeatLookupClient = {
-  bookingSeat: {
-    findUnique(args: {
-      where: { referenceUid: string };
-      select: { booking: { select: { uid: true } } };
-    }): PromiseLike<{ booking: { uid: string } | null } | null>;
-  };
-};
-
 /**
  * Booking pages accept a booking uid or a seat referenceUid. BookingSeat carries no
- * twOrgId; the seat's booking uid then goes through the booking resolver. Once RLS is
- * on, that join is empty outside a scope, so a seat link is not found until a seat
- * resolver exists (follow-up on the card), which is the fail-closed direction.
+ * twOrgId and the seat -> booking join is empty for timeway_app under RLS, so a seat
+ * reference goes through its own definer function (the org of the seat's booking).
  */
-export async function publicLookupsForBookingUid(
-  client: SeatLookupClient,
-  uid: string | null | undefined
-): Promise<TwPublicLookup[]> {
+export function publicLookupsForBookingUid(uid: string | null | undefined): TwPublicLookup[] {
   if (!uid) return [];
-  const lookups: TwPublicLookup[] = [{ resolver: "booking_uid", keys: [uid] }];
-  const seat = await client.bookingSeat.findUnique({
-    where: { referenceUid: uid },
-    select: { booking: { select: { uid: true } } },
-  });
-  if (seat?.booking?.uid && seat.booking.uid !== uid) {
-    lookups.push({ resolver: "booking_uid", keys: [seat.booking.uid] });
-  }
-  return lookups;
+  return [
+    { resolver: "booking_uid", keys: [uid] },
+    { resolver: "seat_reference", keys: [uid] },
+  ];
+}
+
+/** Slot procedures (reserveSlot, isAvailable, removeSelectedSlotMark) carry an eventTypeId only. */
+export function publicLookupForEventTypeIds(
+  ids: readonly (number | null | undefined)[]
+): TwPublicLookup | null {
+  const keys = ids.filter((id): id is number => typeof id === "number" && Number.isInteger(id)).map(String);
+  return keys.length === 0 ? null : { resolver: "event_type_id", keys };
 }
 
 /** slots.getSchedule: usernameList is team slug when isTeamEvent; orgSlug is ignored. */

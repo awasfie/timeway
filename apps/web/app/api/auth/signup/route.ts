@@ -14,6 +14,7 @@ import { piiHasher } from "@calcom/lib/server/PiiHasher";
 import { checkCfTurnstileToken } from "@calcom/lib/server/checkCfTurnstileToken";
 import { prisma } from "@calcom/prisma";
 import { signupSchema } from "@calcom/prisma/zod-utils";
+import { runSignupProvision } from "@calcom/lib/server/tw-org-scope/provision";
 
 async function ensureSignupIsEnabled(body: Record<string, string>) {
   const { token } = signupSchema
@@ -62,11 +63,14 @@ async function handler(req: NextRequest) {
      * TODO: (SEAN) - Extract a lot of the logic from calcomHandler into a separate file and import it into both handlers.
      * @zomars: We need to be able to test this with E2E. They way it's done RN it will never run on CI.
      */
+    // TW-T9 (t_9824b7a7): signup has no session and no org yet. Email and username are unique
+    // across orgs and the new row is inserted before its org exists, so the handler runs in the
+    // reviewed "signup-provision" platform scope; the handler gives the user an org before it returns.
     if (IS_PREMIUM_USERNAME_ENABLED) {
-      return await calcomSignupHandler(body, query);
+      return await runSignupProvision(() => calcomSignupHandler(body, query));
     }
 
-    return await selfHostedSignupHandler(body);
+    return await runSignupProvision(() => selfHostedSignupHandler(body));
   } catch (e) {
     if (e instanceof HttpError) {
       return NextResponse.json({ message: e.message }, { status: e.statusCode });

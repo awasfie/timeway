@@ -26,7 +26,7 @@ const querySchema = z.object({
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const parsed = querySchema.safeParse(context.query);
   if (!parsed.success) return { notFound: true } as const;
-  const lookups = await publicLookupsForBookingUid(prisma, parsed.data.uid);
+  const lookups = publicLookupsForBookingUid(parsed.data.uid);
   return runSsrWithPublicTwOrg(prisma, lookups, () => getReschedulePageProps(context));
 }
 

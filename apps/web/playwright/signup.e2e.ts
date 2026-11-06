@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import process from "node:process";
 import { APP_NAME, IS_MAILHOG_ENABLED } from "@calcom/lib/constants";
 import prisma from "@calcom/prisma";
+import { withTwOrg, withTwPlatform } from "@calcom/prisma/tw-org-context";
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 import { IS_GOOGLE_LOGIN_ENABLED } from "../server/lib/constants";
@@ -139,6 +140,45 @@ test.describe("Email Signup Flow Test", async () => {
     const dbUser = await prisma.user.findUnique({ where: { email: userToCreate.email } });
     // Verify that the username is the same as the one provided and isn't accidentally changed to email derived username - That happens only for organization member signup
     expect(dbUser?.username).toBe(userToCreate.username);
+  });
+
+  test("TW-T9: a fresh signup lands with a personal tw org it owns", async ({ page, users }) => {
+    const userToCreate = users.buildForSignup({
+      username: `tw-org-${Date.now()}`,
+      password: "Password99!",
+      email: `tworg${Math.random()}-${Date.now()}@example.com`,
+    });
+    await page.goto("/signup");
+    await preventFlakyTest(page);
+    await page.getByTestId("continue-with-email-button").click();
+    await page.locator('input[name="username"]').fill(userToCreate.username);
+    await page.locator('input[name="email"]').fill(userToCreate.email);
+    await page.locator('input[name="password"]').fill(userToCreate.password);
+    await page.getByTestId("signup-submit-button").click();
+    await page.waitForURL("/auth/verify-email**");
+
+    // Read in a platform scope: users and tw_organization_member are FORCE RLS.
+    const rows = await withTwPlatform(prisma, "e2e fixture", (tx) =>
+      tx.$queryRaw<{ id: number; twOrgId: string | null; role: string | null; slug: string | null }[]>`
+        select u.id, u."twOrgId"::text as "twOrgId", m.role::text as role, o.slug
+        from users u
+        left join tw_organization_member m on m."userId" = u.id and m."orgId" = u."twOrgId"
+        left join tw_organization o on o.id = u."twOrgId"
+        where u.email = ${userToCreate.email}`
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].twOrgId).toBeTruthy();
+    expect(rows[0].role).toBe("owner");
+    expect(rows[0].slug).toBe(`personal-${rows[0].id}`);
+
+    // An event type created in that org's scope takes the org (column default from app.tw_org_id).
+    const et = await withTwOrg(prisma, rows[0].twOrgId as string, (tx) =>
+      tx.$queryRaw<{ twOrgId: string }[]>`
+        insert into "EventType" (title, slug, length, "userId")
+        values ('TW signup proof', ${`tw-proof-${rows[0].id}`}, 30, ${rows[0].id})
+        returning "twOrgId"::text as "twOrgId"`
+    );
+    expect(et[0].twOrgId).toBe(rows[0].twOrgId);
   });
 
   test("Signup fields prefilled with query params", async ({ page, users: _users }) => {
