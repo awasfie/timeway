@@ -103,6 +103,35 @@ describe("Booker DatePicker on @family/ui Calendar", () => {
     );
   });
 
+  test("auto-selection alone does not call onDateChange", () => {
+    const day = dayjs().add(1, "month").date(15);
+    const onDateChange = vi.fn();
+    const { mockStore } = render(
+      <DatePicker event={{}} slots={slotsFor(day)} isLoading={false} onDateChange={onDateChange} />,
+      { mockStore: { month: day.format("YYYY-MM") } }
+    );
+    expect(mockStore.getState().setSelectedDate).toHaveBeenCalledWith(
+      expect.objectContaining({ date: day.format("YYYY-MM-DD") })
+    );
+    expect(onDateChange).not.toHaveBeenCalled();
+  });
+
+  test("clicking the auto-selected date calls onDateChange once", () => {
+    const day = dayjs().add(1, "month").date(15);
+    const onDateChange = vi.fn();
+    render(<DatePicker event={{}} slots={slotsFor(day)} isLoading={false} onDateChange={onDateChange} />, {
+      mockStore: { month: day.format("YYYY-MM"), selectedDate: day.format("YYYY-MM-DD") },
+    });
+    expect(onDateChange).not.toHaveBeenCalled();
+    const cell = screen
+      .getAllByRole("button")
+      .find((b) => b.closest("td") && b.textContent?.startsWith(String(day.date())));
+    act(() => {
+      fireEvent.click(cell as HTMLElement);
+    });
+    expect(onDateChange).toHaveBeenCalledTimes(1);
+  });
+
   test("SA org: dual Gregorian + Hijri (umalqura) day numbers are shown by default", () => {
     // 1 Ramadan 1448 = 2027-02-08 (umalqura)
     render(<DatePicker event={saEvent} slots={slotsFor(dayjs("2027-02-08"))} isLoading={false} />, {

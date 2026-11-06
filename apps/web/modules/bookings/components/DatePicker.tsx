@@ -157,15 +157,15 @@ export const DatePicker = ({
 
   // `byUser` is false for the auto-selection below: only a real pick may open the embed's
   // two-step slot modal (onDateChange), or it covers the month nav before the visitor acts.
+  // A real pick fires it even when the date equals the auto-selected one: the visitor tapping
+  // the pre-selected first date must still get the modal.
   const selectDate = (date: Dayjs | null, omitUpdatingParams?: boolean, byUser = true) => {
-    const newDate = date === null ? null : date.format("YYYY-MM-DD");
-    const dateChanged = newDate !== selectedDate;
     setSelectedDate({
-      date: newDate,
+      date: date === null ? null : date.format("YYYY-MM-DD"),
       omitUpdatingParams,
       preventMonthSwitching: !isCompact, // Prevent month switching when in monthly view
     });
-    if (dateChanged && byUser) onDateChange?.();
+    if (byUser) onDateChange?.();
   };
 
   // Keeps a bookable date selected in the browsing month, as the previous month grid did.
