@@ -1,14 +1,42 @@
-# WC-TW-1: advisory alerts + security updates. Version-update PRs are capped; security PRs are not.
+# R-104 rule 3 (Ahmed 2026-11-06, card t_d1e92810): one group per ecosystem for version updates,
+# weekly on Monday, 3-day cooldown, max 5 open PRs. Security updates are not grouped and not
+# cooled down (groups use applies-to: version-updates; cooldown covers version updates only),
+# so they still open immediately and are not capped by open-pull-requests-limit.
 version: 2
 updates:
-  - package-ecosystem: npm
-    directory: "/"
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    labels: ["dependencies", "security"]
-  - package-ecosystem: github-actions
-    directory: "/"
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 3
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule: {interval: weekly, day: monday}
+  cooldown: {default-days: 3}
+  open-pull-requests-limit: 5
+  groups:
+    github-actions-weekly:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels: [dependencies, security]
+- package-ecosystem: npm
+  directory: "/"
+  schedule: {interval: weekly, day: monday}
+  cooldown: {default-days: 3}
+  open-pull-requests-limit: 5
+  groups:
+    npm-weekly:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels: [dependencies, security]
+- package-ecosystem: docker
+  directories:
+  - "/"
+  - "/apps/api/v2"
+  - "/packages/conformance"
+  schedule: {interval: weekly, day: monday}
+  cooldown: {default-days: 3}
+  open-pull-requests-limit: 5
+  groups:
+    docker-weekly:
+      applies-to: version-updates
+      patterns:
+      - "*"
+  labels: [dependencies, security]

@@ -1,4 +1,12 @@
-import { sha256Hash, isApiKey, stripApiKey } from "@/lib/api-key";
+import { INVALID_ACCESS_TOKEN, X_CAL_CLIENT_ID, X_CAL_SECRET_KEY } from "@calcom/platform-constants";
+import { Injectable, InternalServerErrorException, Logger, UnauthorizedException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { PassportStrategy } from "@nestjs/passport";
+import type { Request } from "express";
+import { getToken } from "next-auth/jwt";
+import type { AllowedAuthMethod } from "../../decorators/api-auth-guard-only-allow.decorator";
+import { inAuthPrincipalScope } from "../../tw-org-scope/auth-principal-scope";
+import { isApiKey, sha256Hash, stripApiKey } from "@/lib/api-key";
 import { AuthMethods } from "@/lib/enums/auth-methods";
 import { isOriginAllowed } from "@/lib/is-origin-allowed/is-origin-allowed";
 import { BaseStrategy } from "@/lib/passport/strategies/types";
@@ -9,17 +17,7 @@ import { OAuthFlowService } from "@/modules/oauth-clients/services/oauth-flow.se
 import { TokensRepository } from "@/modules/tokens/tokens.repository";
 import { TokensService } from "@/modules/tokens/tokens.service";
 import { UsersService } from "@/modules/users/services/users.service";
-import { UserWithProfile, UsersRepository } from "@/modules/users/users.repository";
-import { Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
-import { Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { PassportStrategy } from "@nestjs/passport";
-import type { Request } from "express";
-import { getToken } from "next-auth/jwt";
-
-import { INVALID_ACCESS_TOKEN, X_CAL_CLIENT_ID, X_CAL_SECRET_KEY } from "@calcom/platform-constants";
-
-import type { AllowedAuthMethod } from "../../decorators/api-auth-guard-only-allow.decorator";
+import { UsersRepository, UserWithProfile } from "@/modules/users/users.repository";
 
 export type ApiAuthGuardUser = UserWithProfile & { isSystemAdmin: boolean };
 export type ApiAuthGuardRequest = Request & {
@@ -77,7 +75,9 @@ export class ApiAuthStrategy extends PassportStrategy(BaseStrategy, "api-auth") 
       if (bearerToken) {
         if (!apiKeyAllowed && !accessTokenAllowed && thirdPartyAccessTokenAllowed) {
           request.authMethod = AuthMethods["THIRD_PARTY_ACCESS_TOKEN"];
-          const result = await this.validateThirdPartyAccessToken(bearerToken, request);
+          const result = await inAuthPrincipalScope(() =>
+            this.validateThirdPartyAccessToken(bearerToken, request)
+          );
           if (result.success) {
             return this.success(this.getSuccessUser(result.data));
           }
@@ -94,7 +94,9 @@ export class ApiAuthStrategy extends PassportStrategy(BaseStrategy, "api-auth") 
             // failed to validate access token, try to validate third party token
             if (thirdPartyAccessTokenAllowed && request.authMethod === AuthMethods["ACCESS_TOKEN"]) {
               request.authMethod = AuthMethods["THIRD_PARTY_ACCESS_TOKEN"];
-              const result = await this.validateThirdPartyAccessToken(bearerToken, request);
+              const result = await inAuthPrincipalScope(() =>
+                this.validateThirdPartyAccessToken(bearerToken, request)
+              );
 
               if (result.success) {
                 return this.success(this.getSuccessUser(result.data));
@@ -155,7 +157,7 @@ export class ApiAuthStrategy extends PassportStrategy(BaseStrategy, "api-auth") 
     token: { email?: string | null; sub?: string | null },
     request: ApiAuthGuardRequest
   ) {
-    const user = await this.nextAuthStrategy(token, request);
+    const user = await inAuthPrincipalScope(() => this.nextAuthStrategy(token, request));
     return this.success(this.getSuccessUser(user));
   }
 
@@ -171,7 +173,9 @@ export class ApiAuthStrategy extends PassportStrategy(BaseStrategy, "api-auth") 
     oAuthClientSecret: string,
     request: ApiAuthGuardRequest
   ) {
-    const user = await this.oAuthClientStrategy(oAuthClientId, oAuthClientSecret, request);
+    const user = await inAuthPrincipalScope(() =>
+      this.oAuthClientStrategy(oAuthClientId, oAuthClientSecret, request)
+    );
     return this.success(this.getSuccessUser(user));
   }
 
@@ -217,9 +221,11 @@ export class ApiAuthStrategy extends PassportStrategy(BaseStrategy, "api-auth") 
     requestOrigin: string | undefined
   ) {
     try {
-      const user = isApiKey(authString, this.config.get<string>("api.apiKeyPrefix") ?? "cal_")
-        ? await this.apiKeyStrategy(authString, request)
-        : await this.accessTokenStrategy(authString, request, requestOrigin);
+      const user = await inAuthPrincipalScope(() =>
+        isApiKey(authString, this.config.get<string>("api.apiKeyPrefix") ?? "cal_")
+          ? this.apiKeyStrategy(authString, request)
+          : this.accessTokenStrategy(authString, request, requestOrigin)
+      );
 
       if (!user) {
         throw new UnauthorizedException(

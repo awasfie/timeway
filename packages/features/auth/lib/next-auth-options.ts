@@ -31,11 +31,17 @@ import logger from "@calcom/lib/logger";
 import { randomString } from "@calcom/lib/random";
 import { safeStringify } from "@calcom/lib/safeStringify";
 import { hashEmail } from "@calcom/lib/server/PiiHasher";
+import {
+  resolveLoginPrincipal,
+  runWithSessionTwOrg,
+  twOrgIdOf,
+} from "@calcom/lib/server/tw-org-scope/session";
 import slugify from "@calcom/lib/slugify";
 import type { TrackingData } from "@calcom/lib/tracking";
 import prisma from "@calcom/prisma";
 import type { Membership, Team } from "@calcom/prisma/client";
 import { CreationSource, IdentityProvider, MembershipRole, UserPermissionRole } from "@calcom/prisma/enums";
+import { runWithTwPlatform } from "@calcom/prisma/tw-org-context";
 import { teamMetadataSchema, userMetadata } from "@calcom/prisma/zod-utils";
 import type { UserProfile } from "@calcom/types/UserProfile";
 import { calendar_v3 } from "@googleapis/calendar";
@@ -184,6 +190,16 @@ export async function authorizeCredentials(
     throw new Error(ErrorCode.InternalServerError);
   }
 
+  // TW-T9.2b1: the org is found before any tenant read, via the SECURITY DEFINER lookup.
+  const principal = await resolveLoginPrincipal(prisma, credentials.email);
+  const twOrgId = principal?.twOrgId ?? null;
+  const user = await runWithSessionTwOrg(twOrgId, () => authorizeCredentialsInOrg(credentials));
+  return user ? { ...user, twOrgId } : user;
+}
+
+async function authorizeCredentialsInOrg(
+  credentials: Record<"email" | "password" | "totpCode" | "backupCode", string>
+): Promise<User | null> {
   const userRepo = new UserRepository(prisma);
   const user = await userRepo.findByEmailAndIncludeProfilesAndPassword({
     email: credentials.email,
@@ -396,17 +412,144 @@ function isNumber(n: string) {
   return !Number.isNaN(parseFloat(n)) && !Number.isNaN(+n);
 }
 
-const calcomAdapter = CalComAdapter(prisma);
+/**
+ * TW-T9.2b1: NextAuth calls the adapter before any callback (OAuth/email sign-in), so each
+ * method opens its own scope. Email lookups use the SECURITY DEFINER resolver; lookups by
+ * user id or IdP account read twOrgId only, in the reviewed platform read
+ * 'nextauth-oauth-link', then run the real query in that org.
+ */
+async function twOrgIdForUserId(id: string | number | undefined): Promise<string | null> {
+  const userId = typeof id === "number" ? id : Number.parseInt(String(id ?? ""), 10);
+  if (!Number.isInteger(userId) || userId <= 0) return null;
+  const row = await runWithTwPlatform("nextauth-oauth-link", () =>
+    prisma.user.findUnique({ where: { id: userId }, select: { twOrgId: true } })
+  );
+  return twOrgIdOf(row);
+}
 
-export const getOptions = ({
-  getDubId,
-  getTrackingData,
-}: {
+async function twOrgIdForAccount(provider: string, providerAccountId: string): Promise<string | null> {
+  const linked = await runWithTwPlatform("nextauth-oauth-link", () =>
+    prisma.account.findUnique({
+      where: { provider_providerAccountId: { provider, providerAccountId } },
+      select: { user: { select: { twOrgId: true } } },
+    })
+  );
+  if (linked?.user) return twOrgIdOf(linked.user);
+  const idP = getIdentityProvider(provider);
+  if (!idP) return null;
+  const legacy = await runWithTwPlatform("nextauth-oauth-link", () =>
+    prisma.user.findFirst({
+      where: {
+        identityProvider: idP,
+        identityProviderId: { equals: providerAccountId, mode: "insensitive" },
+      },
+      select: { twOrgId: true },
+    })
+  );
+  return twOrgIdOf(legacy);
+}
+
+type CalAdapter = ReturnType<typeof CalComAdapter>;
+
+function scopedAdapterMethod<A extends unknown[], R>(
+  fn: (...args: A) => R | PromiseLike<R>,
+  orgOf: (...args: A) => Promise<string | null>
+): (...args: A) => Promise<R> {
+  return async (...args: A) => runWithSessionTwOrg<R>(await orgOf(...args), () => fn(...args));
+}
+
+function withTwOrgAdapter(adapter: CalAdapter): CalAdapter {
+  const { getUser, getUserByEmail, getUserByAccount, updateUser, linkAccount } = adapter;
+  if (!getUser || !getUserByEmail || !getUserByAccount || !updateUser || !linkAccount) return adapter;
+  return {
+    ...adapter,
+    getUser: scopedAdapterMethod(getUser, (id) => twOrgIdForUserId(id)),
+    getUserByEmail: scopedAdapterMethod(
+      getUserByEmail,
+      async (email) => (await resolveLoginPrincipal(prisma, email))?.twOrgId ?? null
+    ),
+    getUserByAccount: scopedAdapterMethod(getUserByAccount, (a) =>
+      twOrgIdForAccount(a.provider, a.providerAccountId)
+    ),
+    updateUser: scopedAdapterMethod(updateUser, (user) => twOrgIdForUserId(user.id)),
+    linkAccount: scopedAdapterMethod(linkAccount, (account: { userId: string | number }) =>
+      twOrgIdForUserId(account.userId)
+    ),
+  };
+}
+
+const calcomAdapter = withTwOrgAdapter(CalComAdapter(prisma));
+
+type GetOptionsDeps = {
   /** so we can extract the Dub cookie in both pages and app routers */
   getDubId: () => string | undefined;
   /** Ad tracking data for Stripe customer metadata */
   getTrackingData: () => TrackingData;
-}): AuthOptions => ({
+};
+
+/**
+ * TW-T9.2b1: org of the person signing in, found before any tenant read. Email first
+ * (SECURITY DEFINER lookup); an OAuth user whose IdP email no longer matches their row
+ * is found by IdP id in the one reviewed platform read 'nextauth-oauth-link', which
+ * selects twOrgId only.
+ */
+export async function resolveSignInTwOrgId(
+  user: { email?: string | null; twOrgId?: unknown } | null | undefined,
+  account: { type?: string; provider?: string; providerAccountId?: string } | null | undefined
+): Promise<string | null> {
+  const fromAuthorize = twOrgIdOf(user);
+  if (fromAuthorize) return fromAuthorize;
+  const principal = await resolveLoginPrincipal(prisma, user?.email);
+  if (principal?.twOrgId) return principal.twOrgId;
+  if (account?.type !== "oauth" || !account.provider || !account.providerAccountId) return null;
+  return twOrgIdForAccount(account.provider, account.providerAccountId);
+}
+
+/** Runs every DB-touching NextAuth callback in the signing-in user's org scope. */
+export function withTwOrgCallbacks(options: AuthOptions): AuthOptions {
+  const callbacks = options.callbacks ?? {};
+  const { jwt, session, signIn } = callbacks;
+  const encode = options.jwt?.encode;
+  return {
+    ...options,
+    jwt: options.jwt && {
+      ...options.jwt,
+      ...(encode && {
+        encode: (params) => runWithSessionTwOrg(twOrgIdOf(params.token), () => encode(params)),
+      }),
+    },
+    callbacks: {
+      ...callbacks,
+      ...(jwt && {
+        jwt: async (params) => {
+          // The org is taken from the user row at sign-in, else from the signed token; never from update() data.
+          const twOrgId = params.user
+            ? await resolveSignInTwOrgId(params.user, params.account)
+            : twOrgIdOf(params.token);
+          const next = await runWithSessionTwOrg(twOrgId, () => jwt(params));
+          return next && typeof next === "object" ? { ...next, twOrgId } : next;
+        },
+      }),
+      ...(session && {
+        session: async (params) => {
+          const twOrgId = twOrgIdOf(params.token);
+          const next = await runWithSessionTwOrg(twOrgId, () => session(params));
+          return next?.user ? { ...next, user: { ...next.user, twOrgId } } : next;
+        },
+      }),
+      ...(signIn && {
+        signIn: async (params) => {
+          const twOrgId = await resolveSignInTwOrgId(params.user, params.account);
+          return runWithSessionTwOrg(twOrgId, () => signIn(params));
+        },
+      }),
+    },
+  };
+}
+
+export const getOptions = (deps: GetOptionsDeps): AuthOptions => withTwOrgCallbacks(buildOptions(deps));
+
+const buildOptions = ({ getDubId, getTrackingData }: GetOptionsDeps): AuthOptions => ({
   adapter: calcomAdapter,
   session: {
     strategy: "jwt",

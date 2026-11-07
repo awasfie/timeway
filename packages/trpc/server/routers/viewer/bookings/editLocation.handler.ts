@@ -2,6 +2,7 @@ import { getUsersCredentialsIncludeServiceAccountKey } from "@calcom/app-store/d
 import { getLocationByType, OrganizerDefaultConferencingAppType } from "@calcom/app-store/locations";
 import { getAppFromSlug } from "@calcom/app-store/utils";
 import { sendLocationChangeEmailsAndSMS } from "@calcom/emails/email-manager";
+import getNextICalSequence from "@calcom/emails/lib/getICalSequence";
 import EventManager from "@calcom/features/bookings/lib/EventManager";
 import { BookingRepository } from "@calcom/features/bookings/repositories/BookingRepository";
 import { CredentialRepository } from "@calcom/features/credentials/repositories/CredentialRepository";
@@ -118,7 +119,7 @@ async function updateBookingLocationInDb({
       },
       referencesToCreate,
       ...(!isSeatedEvent ? { responses } : {}),
-      iCalSequence: (evt.iCalSequence || 0) + 1,
+      iCalSequence: evt.iCalSequence ?? 0,
     },
   });
   return { updatedLocation: evt.location };
@@ -275,13 +276,15 @@ export async function editLocationHandler({ ctx, input, actionSource }: EditLoca
     loggedInUserTranslate: await getTranslation(loggedInUser.locale ?? "en", "common"),
   });
 
-  const evt = await buildCalEventFromBooking({
+  const builtEvt = await buildCalEventFromBooking({
     booking,
     organizer,
     location: newLocationInEvtFormat,
     conferenceCredentialId,
     organizationId,
   });
+  // The location-change invite is a new revision: the mail and the stored row must carry the same bumped SEQUENCE.
+  const evt = { ...builtEvt, iCalSequence: getNextICalSequence(builtEvt.iCalSequence) };
 
   const eventManager = new EventManager({
     ...ctx.user,

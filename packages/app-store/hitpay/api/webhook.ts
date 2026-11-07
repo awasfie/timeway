@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 import type z from "zod";
 
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import { handlePaymentSuccess } from "@calcom/app-store/_utils/payments/handlePaymentSuccess";
 import { distributedTracing } from "@calcom/lib/tracing/factory";
 import { IS_PRODUCTION } from "@calcom/lib/constants";
@@ -44,7 +45,7 @@ function generateSignatureArray<T>(secret: string, vals: T) {
   return signed;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method !== "POST") {
       throw new HttpCode({ statusCode: 405, message: "Method Not Allowed" });
@@ -129,3 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 }
+
+// TW-T9.2b3: the event names a payment / provider id, not a booking uid or credential id;
+// lookups run in platform scope "hitpay-webhook". Signature checks inside the handler are unchanged.
+export default withTwPlatformJob("hitpay-webhook", handler);

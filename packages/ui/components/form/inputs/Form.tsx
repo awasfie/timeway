@@ -5,7 +5,10 @@ import { FormProvider } from "react-hook-form";
 
 import { getErrorFromUnknown } from "@calcom/lib/errors";
 
-import { showToast } from "../../toast";
+// Toast code (sonner + its CSS) loads only when a submit fails, so it is not in the booking
+// page's first-load JS (WC-TW-6n-2).
+const showErrorToast = (message: string) =>
+  void import("../../toast").then(({ showToast }) => showToast(message, "error")).catch(() => undefined);
 
 type FormProps<T extends object> = { form: UseFormReturn<T>; handleSubmit: SubmitHandler<T> } & Omit<
   JSX.IntrinsicElements["form"],
@@ -27,7 +30,7 @@ const PlainForm = <T extends FieldValues>(props: FormProps<T>, ref: Ref<HTMLForm
             .handleSubmit(handleSubmit)(event)
             .catch((err) => {
               // FIXME: Booking Pages don't have toast, so this error is never shown
-              showToast(`${getErrorFromUnknown(err).message}`, "error");
+              showErrorToast(`${getErrorFromUnknown(err).message}`);
             });
         }}
         {...passThrough}>

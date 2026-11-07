@@ -5,6 +5,7 @@ import { v5 as uuidv5 } from "uuid";
 import _dayjs from "@calcom/dayjs";
 import { prisma } from "@calcom/prisma";
 import type { Booking, Prisma } from "@calcom/prisma/client";
+import { twOrgIdForBooking } from "./twOrg";
 
 const translator = short();
 
@@ -65,6 +66,8 @@ export const createBookingsFixture = (page: Page, workerInfo: WorkerInfo) => {
           paid,
           status,
           iCalUID: `${uid}@cal.com`,
+          // TW-T9.2b2-e2e: booking uid pages resolve the org from this row.
+          twOrgId: await twOrgIdForBooking(userId, eventTypeId),
         },
       });
       const bookingFixture = createBookingFixture(booking, store.page);

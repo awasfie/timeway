@@ -1,4 +1,5 @@
 import type { IEventTypesRepository } from "@calcom/features/eventtypes/eventtypes.repository.interface";
+import { RoleBasedPermissionCheckService as PermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import { EventTypeRepository } from "@calcom/features/eventtypes/repositories/eventTypeRepository";
 import { UsersRepository } from "@calcom/features/users/users.repository";
 import type { IUsersRepository } from "@calcom/features/users/users.repository.interface";
@@ -19,12 +20,6 @@ import type {
 import { parseWebhookVersion } from "../interface/IWebhookRepository";
 import type { GetSubscribersOptions } from "./types";
 
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
 
 // Type for raw query results from the database
 interface WebhookQueryResult {
@@ -388,7 +383,7 @@ export class WebhookRepository implements IWebhookRepository {
     }
 
     // Use permission service which handles both PBAC and role-based fallbacks
-    const permissionService = new PermissionCheckService();
+    const permissionService = new PermissionCheckService(this.prisma);
 
     // Build webhook groups with proper permissions
     const webhookGroups: WebhookGroup[] = [];
@@ -538,7 +533,7 @@ export class WebhookRepository implements IWebhookRepository {
       }
     } else {
       // No eventTypeId - filter by user and their allowed teams
-      const permissionService = new PermissionCheckService();
+      const permissionService = new PermissionCheckService(this.prisma);
       const teamIds = user?.teams?.map((m) => m.teamId) ?? [];
 
       const allowedTeamIds = (

@@ -42,7 +42,7 @@ import { AvailableTimeSlots } from "./AvailableTimeSlots";
 import { BookFormAsModal } from "./BookEventForm/BookFormAsModal";
 import { FormSkeleton } from "./BookEventForm/Skeleton";
 import { BookerSsrShell } from "./BookerSsrShell";
-import { DatePicker } from "./DatePicker";
+import { DatePickerSkeleton } from "./DatePickerSkeleton";
 import { DryRunMessage } from "./DryRunMessage";
 import { EventMeta } from "./EventMeta";
 import { HavingTroubleFindingTime } from "./HavingTroubleFindingTime";
@@ -68,6 +68,13 @@ const BookingPageTagManager = dynamic(() => import("@calcom/app-store/BookingPag
   ssr: false,
 });
 const Toaster = dynamic(() => import("sonner").then((mod) => mod.Toaster), { ssr: false });
+
+// WC-DX-7d-2d: the month picker pulls react-aria-components + @internationalized/date (~70 KB gz).
+// The server paints BookerSsrShell, not the picker, so it gets its own chunk, requested as soon as
+// this module runs on the client; the skeleton holds the picker's footprint until it lands.
+const loadDatePicker = () => import("./DatePicker").then((mod) => mod.DatePicker);
+if (typeof window !== "undefined") void loadDatePicker();
+const DatePicker = dynamic(loadDatePicker, { ssr: false, loading: () => <DatePickerSkeleton /> });
 
 const BookerComponent = ({
   username,

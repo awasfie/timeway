@@ -83,6 +83,17 @@ const _createBooking = async ({
     tracking,
   });
 
+  // TW-T9.2b2: a dynamic group booking has no event type; it takes the organizer's org
+  // (the backfill's Booking <- user rule), else its success/cancel pages are not found.
+  // The public booking path already refused a group whose users span two orgs.
+  if (!eventType.id && !bookingAndAssociatedData.newBookingData.twOrgId) {
+    const organizer = await prisma.user.findUnique({
+      where: { id: eventType.organizerUser.id },
+      select: { twOrgId: true },
+    });
+    bookingAndAssociatedData.newBookingData.twOrgId = organizer?.twOrgId ?? undefined;
+  }
+
   return await saveBooking(
     bookingAndAssociatedData,
     originalRescheduledBooking,
@@ -147,9 +158,12 @@ async function saveBooking(
   });
 }
 
-export function getEventTypeTwOrgId(eventTypeData: NewBookingEventType | undefined): string | null {
-  if (!eventTypeData || !("twOrgId" in eventTypeData)) return null;
-  return eventTypeData.twOrgId ?? null;
+// An explicit NULL would override the column default (the request's app.tw_org_id), and a
+// NULL row is invisible under RLS: dynamic bookings 404'd on their own success page (#58).
+// Returning undefined leaves the default in charge; with no org scope that is still NULL.
+export function getEventTypeTwOrgId(eventTypeData: NewBookingEventType | undefined): string | undefined {
+  if (!eventTypeData || !("twOrgId" in eventTypeData)) return undefined;
+  return eventTypeData.twOrgId ?? undefined;
 }
 
 function getEventTypeRel(eventTypeId: EventTypeId) {
@@ -222,8 +236,8 @@ function buildNewBookingData(params: CreateBookingParams) {
         : undefined,
     creationSource,
     tracking: tracking ? { create: tracking } : undefined,
-    // TW-ORGID-INS: always the booked event type's org, never the request's org context;
-    // the public booking path has none. Dynamic (no event type) bookings stay NULL.
+    // TW-ORGID-INS: the booked event type's org wins over the request's org context.
+    // Dynamic bookings: the organizer's org (_createBooking), else the column default.
     twOrgId: getEventTypeTwOrgId(eventType.eventTypeData),
   };
 

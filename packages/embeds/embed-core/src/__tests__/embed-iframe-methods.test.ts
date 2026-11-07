@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeCurrentDocumentUrl, nextTick } from "../embed-iframe/__tests__/test-utils";
 
 describe("embed-iframe.methods", async () => {
-    let methods: typeof import("../embed-iframe").methods;
+    let methods: typeof import("../embed-iframe/runtime").methods;
     let embedStore: typeof import("../embed-iframe/lib/embedStore").embedStore;
     let isLinkReadyMock: ReturnType<typeof vi.fn> | undefined;
     let isBookerReadyMock: ReturnType<typeof vi.fn> | undefined;
@@ -40,7 +40,7 @@ describe("embed-iframe.methods", async () => {
                 stopEnsuringQueryParamsInUrl: vi.fn(),
             };
         });
-        ({ methods } = await import("../embed-iframe"));
+        ({ methods } = await import("../embed-iframe/runtime"));
         ({ embedStore } = await import("../embed-iframe/lib/embedStore"));
     });
     afterEach(() => {

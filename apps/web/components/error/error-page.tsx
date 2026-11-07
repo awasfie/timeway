@@ -2,7 +2,7 @@
 
 import { useLayoutEffect } from "react";
 
-import "@calcom/embed-core/src/embed-iframe";
+import "@calcom/embed-core/src/embed-iframe/loader";
 import { SUPPORT_MAIL_ADDRESS } from "@calcom/lib/constants";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { HttpError } from "@calcom/lib/http-error";

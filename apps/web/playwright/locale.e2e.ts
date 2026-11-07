@@ -10,7 +10,7 @@ test.describe("unauthorized user sees correct translations (de)", async () => {
   });
 
   test("should use correct translations and html attributes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/auth/login");
     // we dont need to wait for styles and images, only for dom
     await page.waitForLoadState("domcontentloaded");
 
@@ -31,7 +31,7 @@ test.describe("unauthorized user sees correct translations (ar)", async () => {
   });
 
   test("should use correct translations and html attributes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/auth/login");
     await page.waitForLoadState("domcontentloaded");
 
     await page.locator("html[lang=ar]").waitFor({ state: "attached" });
@@ -51,7 +51,7 @@ test.describe("unauthorized user sees correct translations (zh)", async () => {
   });
 
   test("should use correct translations and html attributes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/auth/login");
     await page.waitForLoadState("domcontentloaded");
 
     await page.locator("html[lang=zh]").waitFor({ state: "attached" });
@@ -71,7 +71,7 @@ test.describe("unauthorized user sees correct translations (zh-CN)", async () =>
   });
 
   test("should use correct translations and html attributes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/auth/login");
     await page.waitForLoadState("domcontentloaded");
 
     await page.locator("html[lang=zh-CN]").waitFor({ state: "attached" });
@@ -91,7 +91,7 @@ test.describe("unauthorized user sees correct translations (zh-TW)", async () =>
   });
 
   test("should use correct translations and html attributes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/auth/login");
     await page.waitForLoadState("domcontentloaded");
 
     await page.locator("html[lang=zh-TW]").waitFor({ state: "attached" });
@@ -111,7 +111,7 @@ test.describe("unauthorized user sees correct translations (pt)", async () => {
   });
 
   test("should use correct translations and html attributes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/auth/login");
     await page.waitForLoadState("domcontentloaded");
 
     await page.locator("html[lang=pt]").waitFor({ state: "attached" });
@@ -131,7 +131,7 @@ test.describe("unauthorized user sees correct translations (pt-br)", async () =>
   });
 
   test("should use correct translations and html attributes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/auth/login");
     await page.waitForLoadState("domcontentloaded");
 
     await page.locator("html[lang=pt-BR]").waitFor({ state: "attached" });
@@ -151,7 +151,7 @@ test.describe("unauthorized user sees correct translations (es-419)", async () =
   });
 
   test("should use correct translations and html attributes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/auth/login");
     await page.waitForLoadState("domcontentloaded");
 
     // es-419 is disabled in i18n config, so es should be used as fallback

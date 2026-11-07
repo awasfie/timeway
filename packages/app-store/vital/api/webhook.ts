@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import queue from "queue";
 
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import dayjs from "@calcom/dayjs";
 import { IS_PRODUCTION } from "@calcom/lib/constants";
 import { HttpError as HttpCode } from "@calcom/lib/http-error";
@@ -37,7 +38,7 @@ const getOuraSleepScore = async (user_id: string, bedtime_start: Date) => {
  * @param req
  * @param res
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method !== "POST") {
       throw new HttpCode({ statusCode: 405, message: "Method Not Allowed" });
@@ -164,3 +165,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 }
+
+// TW-T9.2b3: the event names a payment / provider id, not a booking uid or credential id;
+// lookups run in platform scope "vital-webhook". Signature checks inside the handler are unchanged.
+export default withTwPlatformJob("vital-webhook", handler);

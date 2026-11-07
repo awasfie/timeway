@@ -648,6 +648,8 @@ describe("Middleware Matcher Configuration", () => {
       "/team/:path*",
       "/availability",
       "/api/auth/signup",
+      "/ar",
+      "/ar/pricing",
     ]);
   });
 
