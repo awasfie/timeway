@@ -24,6 +24,7 @@ import { NextResponse } from "next/server";
 import { getUserRepository } from "@calcom/features/di/containers/UserRepository";
 import { CreationSource } from "@calcom/prisma/enums";
 
+import { ensureUserTwOrg } from "@calcom/lib/server/tw-org-scope/provision";
 import { installDefaultConferencingApp } from "../utils/installDefaultConferencingApp";
 
 export default async function handler(body: Record<string, string>) {
@@ -154,6 +155,9 @@ export default async function handler(body: Record<string, string>) {
           org: team.parent,
         });
       }
+
+      // TW-T9 (t_9824b7a7): inherit the team's single tw org, else a personal one; stamps the rows above.
+      await ensureUserTwOrg(user.id);
     }
 
     // Cleanup token after use
@@ -190,6 +194,9 @@ export default async function handler(body: Record<string, string>) {
     }
 
     await installDefaultConferencingApp(createdUser.id);
+
+    // TW-T9 (t_9824b7a7): personal tw org + owner membership; stamps the user and the credential above.
+    await ensureUserTwOrg(createdUser.id);
 
     if (process.env.AVATARAPI_USERNAME && process.env.AVATARAPI_PASSWORD) {
       await prefillAvatar({ email: userEmail });

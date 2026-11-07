@@ -36,6 +36,7 @@ import {
   WatchlistType,
 } from "@calcom/prisma/enums";
 import { signupSchema } from "@calcom/prisma/zod-utils";
+import { ensureUserTwOrg } from "@calcom/lib/server/tw-org-scope/provision";
 import { buildLegacyRequest } from "@calcom/web/lib/buildLegacyCtx";
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -243,6 +244,9 @@ const handler: CustomNextApiHandler = async (body, usernameStatus, query) => {
           org: team.parent,
         });
       }
+
+      // TW-T9 (t_9824b7a7): inherit the team's single tw org, else a personal one; stamps the rows above.
+      await ensureUserTwOrg(user.id);
     }
 
     // Cleanup token after use
@@ -253,8 +257,9 @@ const handler: CustomNextApiHandler = async (body, usernameStatus, query) => {
     });
   } else {
     // Create the user
+    let createdUser: { id: number };
     try {
-      await userRepository.create({
+      createdUser = await userRepository.create({
         username,
         email,
         hashedPassword,
@@ -277,6 +282,8 @@ const handler: CustomNextApiHandler = async (body, usernameStatus, query) => {
       }
       throw error;
     }
+    // TW-T9 (t_9824b7a7): personal tw org + owner membership.
+    await ensureUserTwOrg(createdUser.id);
     if (process.env.AVATARAPI_USERNAME && process.env.AVATARAPI_PASSWORD) {
       await prefillAvatar({ email });
     }
