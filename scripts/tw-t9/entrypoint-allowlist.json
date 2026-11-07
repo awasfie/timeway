@@ -1,0 +1,9 @@
+{
+  "$comment": "TW-T9.2b4: DB-reaching entry points that run without a tw org scope, each with a reason. Checked by packages/lib/server/tw-org-scope/entrypoints.test.ts (fails on unlisted files and stale entries).",
+  "entries": [
+    {
+      "path": "apps/web/app/api/health/route.ts",
+      "reason": "Coolify readiness probe (DEPLOY-1, main #247): runs only SELECT 1, touches no table, so no org scope applies; unauthenticated by design."
+    }
+  ]
+}
