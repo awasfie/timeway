@@ -1,14 +1,14 @@
+import process from "node:process";
+import { HttpError } from "@calcom/lib/http-error";
+import { getServerErrorFromUnknown } from "@calcom/lib/server/getServerErrorFromUnknown";
+import { performance } from "@calcom/lib/server/perfObserver";
+import { withSessionTwOrg } from "@calcom/lib/server/tw-org-scope/session";
+import { TRPCError } from "@trpc/server";
+import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import type { Params } from "app/_types";
 import { ApiError } from "next/dist/server/api-utils";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-import { HttpError } from "@calcom/lib/http-error";
-import { getServerErrorFromUnknown } from "@calcom/lib/server/getServerErrorFromUnknown";
-import { performance } from "@calcom/lib/server/perfObserver";
-
-import { TRPCError } from "@trpc/server";
-import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 
 type Handler<T extends NextResponse | Response = NextResponse> = (
   req: NextRequest,
@@ -16,9 +16,11 @@ type Handler<T extends NextResponse | Response = NextResponse> = (
 ) => Promise<T>;
 
 export const defaultResponderForAppDir = <T extends NextResponse | Response = NextResponse>(
-  handler: Handler<T>,
+  routeHandler: Handler<T>,
   endpointRoute?: string
 ) => {
+  // TW-T9.2b1: the handler runs in the session's org scope (signed cookie only).
+  const handler: Handler<T> = withSessionTwOrg(routeHandler);
   return async (req: NextRequest, { params }: { params: Promise<Params> }) => {
     let ok = false;
     try {

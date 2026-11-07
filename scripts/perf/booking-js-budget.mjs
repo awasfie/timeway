@@ -4,7 +4,9 @@
 // number is what a browser actually downloads and stays valid across webpack/Turbopack builds.
 // Usage: node scripts/perf/booking-js-budget.mjs --url http://localhost:3000/pro/30min \
 //          [--static-dir apps/web/.next/static] [--budget-kb 200] [--baseline perf/js-baseline.json] \
-//          [--out perf/js-budget.json]
+//          [--out perf/js-budget.json] [--forbid "label=marker;label=marker"]
+// --forbid: modules that must stay off the first load, each identified by a string literal only
+// that module ships (chunk names are hashes, so the bytes are the only stable evidence).
 // Two verdicts: RATCHET (enforced) — total must not exceed the committed baseline + tolerance;
 // BUDGET (absolute) — always reported, enforced only once the baseline itself is within budget.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -29,6 +31,13 @@ const budgetKb = Number(args["budget-kb"] ?? process.env.BOOKING_JS_BUDGET_KB ??
 const out = args.out ?? "perf/js-budget.json";
 const region = args.region ?? "gh-runner";
 const baselinePath = args.baseline ?? "perf/js-baseline.json";
+const forbidden = (args.forbid ?? "")
+  .split(";")
+  .filter(Boolean)
+  .map((pair) => {
+    const at = pair.indexOf("=");
+    return { label: pair.slice(0, at), marker: pair.slice(at + 1) };
+  });
 if (!existsSync(baselinePath)) {
   console.error(`::error::JS baseline ${baselinePath} missing; the ratchet cannot run`);
   process.exit(1);
@@ -41,9 +50,22 @@ if (!Number.isFinite(baselineKb) || baselineKb <= 0) {
   process.exit(1);
 }
 
+// WC-TW-6n-1: <script noModule> (Next's core-js polyfills.js) is fetched only by browsers without ES
+// module support, so it is not part of a modern first load. It is reported on its own line instead.
+export function noModuleSrcs(html) {
+  const srcs = new Set();
+  for (const m of html.matchAll(/<script\b[^>]*>/gi)) {
+    if (!/\bnomodule\b/i.test(m[0])) continue;
+    const src = m[0].match(/\bsrc="([^"]+\.js[^"]*)"/);
+    if (src) srcs.add(src[1]);
+  }
+  return [...srcs];
+}
+
 export function scriptSrcs(html) {
   const srcs = new Set();
-  for (const m of html.matchAll(/<script\b[^>]*\bsrc="([^"]+\.js[^"]*)"/g)) srcs.add(m[1]);
+  const legacy = new Set(noModuleSrcs(html));
+  for (const m of html.matchAll(/<script\b[^>]*\bsrc="([^"]+\.js[^"]*)"/g)) if (!legacy.has(m[1])) srcs.add(m[1]);
   // Turbopack/app-router preloads chunks with <link rel="preload" as="script"> before the tags.
   for (const m of html.matchAll(/<link\b[^>]*\bas="script"[^>]*\bhref="([^"]+\.js[^"]*)"/g)) srcs.add(m[1]);
   for (const m of html.matchAll(/<link\b[^>]*\bhref="([^"]+\.js[^"]*)"[^>]*\bas="script"/g)) srcs.add(m[1]);
@@ -73,10 +95,19 @@ async function main() {
   if (srcs.length === 0) throw new Error(`No <script src> found on ${url}; refusing to report 0 KB`);
 
   const files = [];
+  const forbidHits = forbidden.map((f) => ({ ...f, found_in: [] }));
   for (const src of srcs) {
     const { bytes, from } = await loadBytes(src);
     files.push({ src, raw: bytes.length, gz: gzipSync(bytes, { level: 9 }).length, from });
+    const text = bytes.toString("utf8");
+    for (const hit of forbidHits) if (text.includes(hit.marker)) hit.found_in.push(src.split("?")[0]);
   }
+  const legacyFiles = [];
+  for (const src of noModuleSrcs(html)) {
+    const { bytes, from } = await loadBytes(src);
+    legacyFiles.push({ src, raw: bytes.length, gz: gzipSync(bytes, { level: 9 }).length, from });
+  }
+  const forbidOk = forbidHits.every((h) => h.found_in.length === 0);
   files.sort((a, b) => b.gz - a.gz);
   const totalGz = files.reduce((s, f) => s + f.gz, 0);
   const totalRaw = files.reduce((s, f) => s + f.raw, 0);
@@ -85,7 +116,7 @@ async function main() {
   const ratchetMaxKb = baselineKb + toleranceKb;
   const ratchetOk = totalKb <= ratchetMaxKb;
   const budgetEnforced = baselineKb <= budgetKb;
-  const pass = ratchetOk && (budgetOk || !budgetEnforced);
+  const pass = ratchetOk && (budgetOk || !budgetEnforced) && forbidOk;
 
   const result = {
     gate: "booking-js-budget",
@@ -105,8 +136,14 @@ async function main() {
     budget: { budget_kb_gz: budgetKb, status: budgetOk ? "ok" : "breach", enforced: budgetEnforced },
     total_kb_raw: Number((totalRaw / 1024).toFixed(1)),
     scripts: files.length,
+    forbidden: forbidHits,
     pass,
     files,
+    nomodule: {
+      note: "legacy <script noModule>, not fetched by browsers with ES module support; outside the total",
+      total_kb_gz: Number((legacyFiles.reduce((s, f) => s + f.gz, 0) / 1024).toFixed(1)),
+      files: legacyFiles,
+    },
   };
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(result, null, 2)}\n`);
@@ -121,11 +158,16 @@ async function main() {
     "| --- | ---: | --- | --- |",
     `| ratchet (baseline ${baselineKb} + ${toleranceKb} KB) | ${ratchetMaxKb.toFixed(1)} KB | ${ratchetOk ? "ok" : "breach"} (${totalKb - baselineKb >= 0 ? "+" : ""}${(totalKb - baselineKb).toFixed(1)} KB) | yes |`,
     `| budget | ${budgetKb} KB | ${budgetOk ? "ok" : "breach"} | ${budgetEnforced ? "yes" : "no, until baseline <= budget"} |`,
+    ...forbidHits.map((h) => {
+      const status = h.found_in.length === 0 ? "ok" : `breach (${h.found_in.join(", ")})`;
+      return `| off first load: ${h.label} | 0 chunks | ${status} | yes |`;
+    }),
     "",
     "| script | gz KB | raw KB |",
     "| --- | ---: | ---: |",
     ...files.map((f) => `| \`${f.src.split("?")[0]}\` | ${kb(f.gz)} | ${kb(f.raw)} |`),
     `| **total (${files.length})** | **${kb(totalGz)}** | ${kb(totalRaw)} |`,
+    ...legacyFiles.map((f) => `| not counted, noModule: \`${f.src.split("?")[0]}\` | ${kb(f.gz)} | ${kb(f.raw)} |`),
     "",
   ];
   console.log(lines.join("\n"));
@@ -142,6 +184,8 @@ async function main() {
       `::error::Booking route JS grew to ${totalKb.toFixed(1)} KB gz, over the ratchet ${ratchetMaxKb.toFixed(1)} KB (baseline ${baselineKb} + ${toleranceKb}) in ${baselinePath}`
     );
   }
+  for (const h of forbidHits.filter((x) => x.found_in.length))
+    console.error(`::error::${h.label} is back on the booking first load: ${h.found_in.join(", ")}`);
   if (!pass) process.exit(1);
 }
 

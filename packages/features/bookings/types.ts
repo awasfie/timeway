@@ -34,6 +34,7 @@ export type { Slots };
 export type BookerEvent = Pick<
   PublicEvent,
   | "id"
+  | "twOrgId"
   | "length"
   | "slug"
   | "schedulingType"

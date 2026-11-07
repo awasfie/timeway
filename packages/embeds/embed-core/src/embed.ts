@@ -6,7 +6,7 @@ import {
   EMBED_MODAL_PRERENDER_PREVENT_THRESHOLD_MS,
 } from "./constants";
 import css from "./embed.css?inline";
-import type { InterfaceWithParent, interfaceWithParent } from "./embed-iframe";
+import type { InterfaceWithParent, interfaceWithParent } from "./embed-iframe/runtime";
 import { FloatingButton } from "./FloatingButton/FloatingButton";
 import { Inline } from "./Inline/inline";
 import { getScrollableAncestor } from "./lib/domUtils";

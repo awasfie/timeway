@@ -27,9 +27,13 @@ ARG CAMV_INTERNAL_SECRET
 ARG NEXT_PUBLIC_POSTHOG_KEY
 ARG POSTHOG_INTERNAL_HOST=https://ph.awstreams.co
 
+## WC-TW-9a: the self-hosted Plausible origin is baked into the /js/pa.js + /api/pa/event rewrites at build time
+ARG PLAUSIBLE_HOST=https://stats.timeway.co
+
 ENV NEXT_PUBLIC_WEBAPP_URL=http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER \
   NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY \
   POSTHOG_INTERNAL_HOST=$POSTHOG_INTERNAL_HOST \
+  PLAUSIBLE_HOST=$PLAUSIBLE_HOST \
   NEXT_PUBLIC_API_V2_URL=$NEXT_PUBLIC_API_V2_URL \
   NEXT_PUBLIC_LICENSE_CONSENT=$NEXT_PUBLIC_LICENSE_CONSENT \
   NEXT_PUBLIC_WEBSITE_TERMS_URL=$NEXT_PUBLIC_WEBSITE_TERMS_URL \
@@ -98,7 +102,7 @@ FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d
 
 RUN apt-get update \
   && apt-get upgrade -y \
-  && apt-get install -y --no-install-recommends netcat-openbsd wget openssl ca-certificates \
+  && apt-get install -y --no-install-recommends netcat-openbsd wget curl openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
@@ -130,7 +134,9 @@ ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
 ENV NODE_ENV=production
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=30s --retries=5 \
-  CMD wget --spider http://localhost:3000 || exit 1
+# HC-1a (t_7199c289): the probe is node itself (no curl/wget dependency) and hits /api/health, which is 200 only when
+# Postgres answers; exit 0 only on HTTP 2xx, 1 on any other status, refusal or timeout.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health',{signal:AbortSignal.timeout(5000)}).then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
 
 CMD ["/calcom/scripts/start.sh"]

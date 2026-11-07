@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+import type { EmbedStore } from "./embed-iframe/lib/embedStore";
+
 type Theme = "dark" | "light";
 export type EmbedThemeConfig = Theme | "auto";
 
@@ -36,12 +38,22 @@ export type UiConfig = {
   useSlotsViewOnSmallScreen?: boolean;
 };
 
+// Window globals of the embed iframe. They live here, not in ../embed-iframe.ts, because types.ts is reached by every
+// file that touches them (embed-iframe-init.ts, embed-iframe/runtime.ts, embed-iframe/lib/utils.ts) in every program
+// that type-checks embed-core, including embed-react's (WC-TW-6n-1b).
 declare global {
   interface Window {
     CalComPageStatus: string;
     isEmbed?: () => boolean;
     getEmbedNamespace: () => string | null;
     getEmbedTheme: () => EmbedThemeConfig | null;
+    CalEmbed: {
+      __logQueue?: unknown[];
+      embedStore: EmbedStore;
+      applyCssVars: (cssVarsPerTheme: UiConfig["cssVarsPerTheme"]) => void;
+    };
+    // Marks that Booker has moved to some non-"loading" state
+    _embedBookerState?: EmbedBookerState;
   }
 }
 

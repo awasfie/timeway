@@ -1,6 +1,7 @@
 import { getDefaultLocations } from "@calcom/app-store/_utils/getDefaultLocations";
 import { DailyLocationType } from "@calcom/app-store/constants";
 import { EventTypeRepository } from "@calcom/features/eventtypes/repositories/eventTypeRepository";
+import { RoleBasedPermissionCheckService } from "@calcom/features/membership/services/RoleBasedPermissionCheckService";
 import { onEventTypeVisible } from "@calcom/features/tw-activation/activation";
 import type { PrismaClient } from "@calcom/prisma";
 import { Prisma } from "@calcom/prisma/client";
@@ -10,13 +11,6 @@ import { TRPCError } from "@trpc/server";
 import type { z } from "zod";
 import type { TrpcSessionUser } from "../../../../types";
 import type { TCreateInputSchema } from "./create.schema";
-
-class PermissionCheckService {
-  constructor(_prisma?: unknown) {}
-  async checkPermission(..._args: unknown[]) { return true; }
-  async hasPermission(..._args: unknown[]) { return true; }
-  async getTeamIdsWithPermission(..._args: unknown[]): Promise<number[]> { return []; }
-}
 
 type EventTypeLocation = z.infer<typeof eventTypeLocations>[number];
 
@@ -58,7 +52,7 @@ export const createHandler = async ({ ctx, input }: CreateOptions) => {
   const isManagedEventType = schedulingType === SchedulingType.MANAGED;
   const isOrgAdmin = !!ctx.user?.organization?.isOrgAdmin;
 
-  const permissionService = new PermissionCheckService();
+  const permissionService = new RoleBasedPermissionCheckService(ctx.prisma);
   // Check if user has organization-level eventType.create permission (equivalent to org admin for event types)
   let hasOrgEventTypeCreatePermission = isOrgAdmin; // Default fallback
 
@@ -147,6 +141,11 @@ export const createHandler = async ({ ctx, input }: CreateOptions) => {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
   }
+
+  // TW-T9.2b2: the creator's org (read from the row, the session user does not carry it);
+  // a NULL-org event type is not found on its public page.
+  const creator = await ctx.prisma.user.findUnique({ where: { id: userId }, select: { twOrgId: true } });
+  data.twOrgId = creator?.twOrgId ?? null;
 
   const profile = ctx.user.profile;
   try {

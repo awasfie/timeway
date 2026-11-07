@@ -1,0 +1,14 @@
+# docs/launch/timeway.yaml: front-door copy for timeway (BATCH-1, t_7020056e).
+# Schema: packages/site-kit/src/launch-content.ts. NO prices here: amounts come only from passport price-map.md (PART CM).
+home:
+  hero:
+    title: { en: "Booking pages your clients finish in one minute.", ar: "صفحات حجز يُنهيها عملاؤك في دقيقة." }
+    sub: { en: "Share one link; clients pick a time, confirm, and get reminders, with no back-and-forth.", ar: "شارك رابطًا واحدًا؛ يختار العميل الوقت ويؤكد ويتلقى التذكيرات، دون مراسلات متكررة." }
+    cta: { en: "Create your page", ar: "أنشئ صفحتك" }
+  features:
+    - title: { en: "One-minute booking", ar: "حجز في دقيقة" }
+      body: { en: "A short form on any phone, in Arabic or English.", ar: "نموذج قصير على أي هاتف، بالعربية أو الإنجليزية." }
+    - title: { en: "Calendar sync", ar: "مزامنة التقويم" }
+      body: { en: "Connect Google Calendar so busy times never get booked.", ar: "اربط تقويم Google حتى لا تُحجز الأوقات المشغولة." }
+    - title: { en: "Reminders", ar: "تذكيرات" }
+      body: { en: "Email reminders cut no-shows before every appointment.", ar: "تذكيرات البريد الإلكتروني تقلّل حالات عدم الحضور قبل كل موعد." }

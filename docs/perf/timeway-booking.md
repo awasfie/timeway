@@ -178,6 +178,27 @@ Operate: `CLOUDFLARE_API_TOKEN=... python3 ops/cloudflare/worker.py plan|apply -
 goes straight to the origin at once (exercised 06:40Z: rollback -> page `DYNAMIC`, no `x-tw-edge`; re-apply -> `plan`
 shows no changes and the page is served from the edge again).
 
+## WC-TW-6h: booking page LCP (card t_2f74da73)
+
+Before, measured 2026-10-29 ~07:00Z on deploy `11ebad82ee` (Coolify `timeway-web` deployment `yr5zcntadk39dogzvwplpjya`,
+JS stack #125/#126/#127/#130/#154 + 6c-9c/9d on main), edge Worker in front (`x-tw-edge`), Lighthouse 13.5.0 mobile
+simulated slow 4G, 5 runs from the Dubai host (benchmarkIndex 3006-3379), 65 requests:
+
+| run | LCP | TBT | FCP | SI | server response |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1-5 | 5658-6016 ms, median **5982** | 191-219, median 200 | 1573-2364, median 2056 | 3666-5933 | 164-179 |
+
+Still **not met** (gate 2500 ms, target 1500). LCP element: the event title `h1[data-testid=event-title]`
+(lcp-breakdown run 3: TTFB 504 ms simulated, element render delay 1319 ms of observed time).
+
+Cause: the server HTML has an empty `<main>`. The Booker store starts in state `loading`, and `Booker` returns `null`
+while `loading`; the state only leaves `loading` in a client `useEffect`, so nothing of the booker (title included)
+paints until every first-load chunk has downloaded, executed and hydrated.
+
+Cut: while `loading`, `Booker` renders a server-renderable shell of the event meta (members line, title, duration)
+from the SSR event data, in the same grid position. It depends only on props, so server and first client render
+match; the full booker replaces it after hydration.
+
 ## Re-run
 
 1. Region TTFB: `GLOBALPING_TOKEN=... node scripts/perf/region-ttfb.mjs --url https://timeway.co/ahmedwasfie/30min --samples 9 --probes 3 --enforce false --out perf/out/region-ttfb.json`
@@ -186,3 +207,111 @@ shows no changes and the page is served from the edge again).
 3. Prod Lighthouse: `lighthouse https://timeway.co/ahmedwasfie/30min --only-categories=performance --form-factor=mobile --throttling-method=simulate --output=json` x 5, median.
 4. Slot API: `node scripts/perf/slot-api.mjs --month <YYYY-MM> --samples 30`.
 5. Record the new row set here with its deploy SHA; a row passes only on a measured number.
+
+## WC-TW-6j: TBT on 819bf85549 (card t_84384338, 2026-10-29 09:45-09:52Z)
+
+Lighthouse 13.5.0 mobile simulated, Dubai host, `https://timeway.co/ahmedwasfie/30min`, deploy 819bf85549
+(container `poyzdsncp9jsvc3gr4hkitaf:819bf855498a…`, healthy). timeway#218 (6h SSR shell) not yet merged.
+
+| batch | TBT runs (ms) | median |
+|---|---|---|
+| A | 238, 184.5, 202, 191, 193 | 193 |
+| B | 298, 208, 177, 190, 212 | 208 |
+| all 10 | | 197.5 |
+
+Gate < 200 ms sits inside run-to-run noise. Long tasks (trace run, TBT 260): 249 ms in `25sq9vkyrxchr.js`
+(react-dom) at ~5.06 s, then 68/68/65/65/56/54 ms. CPU profile of the 249 ms task: one synchronous React commit
+(the store flip `loading -> selecting_date` mounts the full booker), not a single heavy library; non-React self time
+is small (BookingPageTagManager `sdkActionManager.on("*")` listener 5.7 ms, dayjs ~2 ms).
+
+Slice in this PR: `Booker.tsx` gates the first full render on `useDeferredValue(bookerState)` so the mount renders at
+transition priority and yields, splitting the 249 ms task. After-numbers: pending deploy (x5, same host).
+
+## WC-TW-6k: lazy BookingPageTagManager + sonner Toaster (card t_4e55324f, 2026-10-29)
+
+Independent of timeway#220 (6j); rebased onto main a2a4be43c8 (6c-9). Long tasks on the 819bf85549 trace after the
+249 ms booker mount: 68 ms `1jqzwlrakf1on.js`, 68 ms `1rjb0jhn20356.js` (sonner / react-query). Slice: `Booker.tsx`
+loads `BookingPageTagManager` (analytics `<Script>` tags, app-store metadata) and the sonner `Toaster` (empty portal
+until a toast fires) through `next/dynamic` with `ssr: false`, so both leave the first booker mount and its chunk.
+`showToast` callers still import `sonner`'s `toast` directly; booker toasts fire only on visitor actions (booking
+errors, copy link), which come after the Toaster chunk has loaded.
+After-numbers: pending deploy (Lighthouse mobile x5 x2 batches, Dubai host, same command as the 6j baseline).
+
+## WC-TW-6l-3: booking JS requested after first paint (card t_3ca67500, 2026-10-31)
+
+Simulated LCP gate **met before deploy** (emulated): Lighthouse 13.5.0 mobile simulated, 10 runs per variant, interleaved,
+same Dubai host, prod `bab281bb77` behind the live edge (HIT 8 / STALE 2 in each variant). Raw rows:
+`evidence/2026-10-31-wc-tw-6l-3.json`.
+
+| variant | LCP median | LCP p75 | scripts before observed LCP | TBT median | perf median |
+|---------|-----------:|--------:|-----------------------------|-----------:|------------:|
+| base (prod) | 5795.5 ms | 5986 ms | 41-49 (518-629 KB) | 392.5 ms | 63.5 |
+| fix (defer-js) | 1970 ms | 1972 ms | 0 | 309.5 ms | 80 |
+
+Why: the shell h1 already paints early in a real browser (observed LCP well under 1.5 s), but Lantern puts every request
+started before observed LCP into the LCP graph, and the App Router head starts ~40 async chunk scripts plus a script
+preload before the h1 (WC-TW-6l-2 finding).
+
+Change (`ops/cloudflare/worker/defer-js.mjs`, called from `toStored` in `booking-edge.mjs`, so it runs once per origin
+fetch and HIT/STALE serve the stored result): async `/_next/static/chunks/*.js` scripts become inert
+`<script type="text/tw-deferred" data-tw-src>` placeholders, `<link rel=preload as=script>` is dropped, and a loader at
+the end of the body re-adds them as async scripts in the task after `first-contentful-paint` (PerformanceObserver;
+immediately for a hidden tab; 3 s cap). The `noModule` polyfill and inline flight data stay where they were. Logged-in
+(BYPASS) HTML is not touched. `timeway-worker.json` gains the module; a unit test checks every imported module is uploaded.
+
+Method: Chrome resolves timeway.co to a local HTTP/2 proxy that forwards everything to the real edge; for the fix
+variant only the document goes through `deferChunkScripts` (the committed code) and is re-encoded brotli q5.
+Functional check on the fix variant: FCP 748 ms, first JS request 749 ms, all 49 scripts loaded, 0 placeholders left,
+21 enabled days, 16 slots after a day click, 0 page errors. CLS is about the same in both variants (median 0.229 /
+0.239) and above 0.1 in both; that is a pre-existing hydration shift for a separate card.
+
+Next: Gosi deploys with `python3 ops/cloudflare/worker.py plan|apply`. Stored copies made by the old bundle age out
+within MAX_STALE_S (300 s; `purge` does not reach the Worker's internal Cache API keys), so measure at least 5 min after
+apply. To back out: set `DEFER_JS = false` and apply, or `rollback`. Proof card t_762bea7b re-measures on the deployed edge.
+
+## WC-TW-6m: TBT from the getSchedule commit (cards t_7022411d, t_68154bec, 2026-10-31)
+
+Step 1 (t_7022411d), host noise ruled out: prod x10, Lighthouse 13.5.0 mobile simulated, `https://timeway.co/ahmedwasfie/30min`,
+host load 1.74-2.09, benchmarkIndex 3640-3733 (median 3714, ~30% faster than r7's ~2800), edge HIT 8 / STALE 1 / MISS 1.
+
+| batch | TBT median | TBT range | LCP median |
+|---|---:|---|---:|
+| 6m step 1 (main 1a3cb0bbb2 era deploy) | 261.5 ms | 186-565 ms | ~2000 ms |
+| r7 | 258.25 ms | | |
+| tw6l2 base | 261.75 ms | | |
+| tw6l1b | 253.5 ms | | |
+
+The page sits at ~255-260 ms on its own code. Top long task (70-389 ms): a `TimerFire` from react-query's
+`notifyManager.batch` (setTimeout 0) 1 ms after `/api/trpc/slots/getSchedule` resolves; 87% of its samples are one
+react-dom commit, and deletions (`commitMutationEffects`) take 148 of 328 self samples. That commit removes the
+`SkeletonText` day grid (calendars `DatePicker.tsx`) and `AvailableTimesSkeleton` columns and mounts the real calendar
+and slots. `useDeferredValue(bookerState)` from 6j does not cover this flip.
+
+Slice (t_68154bec):
+1. `Booker.tsx` defers `{isPending, slots}` of the schedule query as one value (`useDeferredValue`), so the
+   loading -> data re-render of DatePicker / AvailableTimeSlots / LargeCalendar runs at transition priority and yields.
+   Going into loading stays urgent (`schedule.isPending || deferred.isPending`); DatePicker never sees loaded=true with
+   the old slots, so the no-availability month skip cannot fire early.
+2. calendars `DatePicker.tsx` keeps the real `Day` buttons mounted while loading (disabled, dimmed with
+   `animate-pulse opacity-60`, `aria-busy`) instead of swapping in a skeleton button per cell, so the commit updates the
+   ~42 cells in place instead of deleting and recreating them.
+
+After-numbers (t_9fd48d6e, 2026-10-31 ~17:45Z): prod on efcebac374 (#234 squash, container
+`poyzdsncp9jsvc3gr4hkitaf:efcebac3748b`, deployed 17:24Z, runs started > 5 min later). Same harness (`lhp.mjs`,
+Lighthouse 13.5.0 mobile simulated, Chrome 156), x10 kept with host 1-min load 1.67-2.03 (3 runs at 2.24-2.85 dropped
+and re-run), benchmarkIndex 3597-3858 (median 3821), edge HIT 8 / STALE 2.
+
+| batch | TBT median | TBT range | LCP median | perf median |
+|---|---:|---|---:|---:|
+| 6m step 1 (1a3cb0bbb2) | 261.5 ms | 186-565 ms | ~2000 ms | |
+| 6m-3 after (efcebac374) | **186.5 ms** | 102-226 ms | 1994.5 ms | 80 |
+
+An ungated x10 taken first (load 1.73-3.45) gave TBT median 177 ms (101-286); it was not used because of the load.
+
+Trace (two runs, TBT 191 / 156.5): the getSchedule commit is no longer the top long task. Its 70 ms
+`TimerFire` (step-1 trace) is now a 20 ms `TimerFire` plus a separate 25-29 ms scheduler-task commit (`commitMutationEffects`
+still the main self cost). In the Lighthouse long-tasks audit, the step-1 top task (222-354 ms simulated in 10/10 runs)
+appears in 1/10 runs, at 94 ms. The remaining TBT comes from three ~105-116 ms simulated tasks (25-30 ms observed), about 60 ms of TBT each:
+the first booker render (react-dom chunk, react-query `useBaseQuery` mount), the deferred getSchedule commit, and the
+Next runtime chunk evaluation (`41-*.js`, `ErrorBoundary`/app-router bootstrap). WC-TW-6 TBT bar (< 200 ms) is met on the
+deployed SHA; no further slice is needed for it.

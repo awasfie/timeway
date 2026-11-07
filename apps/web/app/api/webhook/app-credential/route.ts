@@ -7,6 +7,7 @@ import { appStoreMetadata } from "@calcom/app-store/appStoreMetaData";
 import { CREDENTIAL_SYNC_SECRET, CREDENTIAL_SYNC_SECRET_HEADER_NAME } from "@calcom/lib/constants";
 import { APP_CREDENTIAL_SHARING_ENABLED } from "@calcom/lib/constants";
 import { symmetricDecrypt } from "@calcom/lib/crypto";
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import prisma from "@calcom/prisma";
 
 const appCredentialWebhookRequestBodySchema = z.object({
@@ -103,4 +104,5 @@ async function postHandler(request: NextRequest) {
   }
 }
 
-export const POST = defaultResponderForAppDir(postHandler);
+// TW-T9.2b3: the event names a user, not a credential or booking: platform "app-credential-webhook".
+export const POST = defaultResponderForAppDir(withTwPlatformJob("app-credential-webhook", postHandler));

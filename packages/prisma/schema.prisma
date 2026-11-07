@@ -156,7 +156,7 @@ enum CancellationReasonRequirement {
 model EventType {
   id                Int     @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId           String? @db.Uuid
+  twOrgId           String? @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   /// @zod.string.min(1)
   title             String
   /// @zod.import(["import { eventTypeSlug } from '../../zod-utils'"]).custom.use(eventTypeSlug)
@@ -311,7 +311,7 @@ model EventType {
 model Credential {
   id           Int     @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId      String? @db.Uuid
+  twOrgId      String? @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   // @@type is deprecated
   type         String
   key          Json
@@ -407,7 +407,7 @@ model TravelSchedule {
 model User {
   id                  Int                  @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Distinct from upstream Int `organizationId` (Team). Nullable until the contract slice.
-  twOrgId             String?              @db.Uuid
+  twOrgId             String?              @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   uuid                String               @unique @default(uuid()) @db.Uuid
   username            String?
   name                String?
@@ -867,7 +867,7 @@ enum BookingStatus {
 model Booking {
   id                     Int                        @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId                String?                    @db.Uuid
+  twOrgId                String?                    @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   uid                    String                     @unique
   // (optional) UID based on slot start/end time & email against duplicates
   idempotencyKey         String?                    @unique
@@ -964,7 +964,7 @@ model Tracking {
 model Schedule {
   id                   Int            @id @default(autoincrement())
   /// TW-T9 slice 3 (expand): Timeway org (tw_organization.id). Nullable until the contract slice.
-  twOrgId              String?        @db.Uuid
+  twOrgId              String?        @default(dbgenerated("(NULLIF(current_setting('app.tw_org_id'::text, true), ''::text))::uuid")) @db.Uuid
   user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId               Int
   eventType            EventType[]
@@ -2906,6 +2906,12 @@ enum TwBillingAttribution {
   parent
 }
 
+/// WC-TW-10b: which WhatsApp number sends an org's reminders.
+enum TwWaSenderMode {
+  shared
+  own
+}
+
 model Organization {
   id           String                   @id @default(uuid()) @db.Uuid
   slug         String                   @unique
@@ -2928,6 +2934,15 @@ model Organization {
   billingAttribution TwBillingAttribution @default(self)
   /// WC-TW-14a (E7): developer sandbox; emits no usage lines (nor do its sub-orgs).
   isSandbox          Boolean              @default(false)
+
+  /// WC-TW-10b (expand): WhatsApp reminder sender. NULL or `shared` = the platform's shared number.
+  waSenderMode          TwWaSenderMode?
+  /// Whatsaff WhatsappPhoneNumber id of the org's own number (the add-on); used only while mode = own and verified.
+  waSenderPhoneNumberId String?
+  /// Display number captured at verification, for the settings UI and support.
+  waSenderDisplayNumber String?
+  /// Set when Whatsaff listed the number as active for our account; cleared when it stops being listed.
+  waSenderVerifiedAt    DateTime?
 
   members          OrganizationMember[]
   apiKeys          OrgApiKey[]

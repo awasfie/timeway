@@ -373,6 +373,47 @@ test.describe("pro user", () => {
   });
 });
 
+// WC-TW-6c-9: BookEventForm and VerifyCodeDialog are lazy chunks, so both paths must still mount after a slot pick.
+test.describe("lazy booking form", () => {
+  test("form mounts only after a slot pick and the booking succeeds", async ({ page, users }) => {
+    const user = await users.create();
+    await page.goto(`/${user.username}`);
+    await page.locator('[data-testid="event-type-link"]').first().click();
+    await page.getByTestId("incrementMonth").waitFor();
+    await expect(page.locator('[name="email"]')).toHaveCount(0);
+
+    await selectFirstAvailableTimeSlotNextMonth(page);
+    await expect(page.locator('[name="email"]')).toBeVisible();
+    await bookTimeSlot(page);
+    await expect(page.locator("[data-testid=success-page]")).toBeVisible();
+  });
+
+  test("verify-code dialog opens when the event requires booker email verification", async ({
+    page,
+    users,
+    prisma,
+  }) => {
+    const user = await users.create();
+    const [eventType] = user.eventTypes;
+    await prisma.eventType.update({
+      where: { id: eventType.id },
+      data: { requiresBookerEmailVerification: true },
+    });
+    await page.goto(`/${user.username}/${eventType.slug}`);
+    await selectFirstAvailableTimeSlotNextMonth(page);
+    await page.fill('[name="name"]', testName);
+    await page.fill('[name="email"]', `verify-${randomString(4)}@example.com`);
+
+    const sendCode = page.waitForResponse((r) => r.url().includes("sendVerifyEmailCode"));
+    await page.locator('[data-testid="confirm-book-button"]').click();
+    expect((await sendCode).status()).toBe(200);
+    // WC-TW-6k: the booker's sonner Toaster is a next/dynamic chunk; the "email sent" toast must still render.
+    await expect(page.getByTestId("toast-success").first()).toBeVisible();
+    await expect(page.locator('input[name="2fa1"]')).toBeVisible();
+    await expect(page.locator('input[name="2fa6"]')).toBeVisible();
+  });
+});
+
 test.describe("prefill", () => {
   test("logged in", async ({ page, users }) => {
     const prefill = await users.create({ name: "Prefill User" });
@@ -477,6 +518,32 @@ test.describe("Booking on different layouts", () => {
 
     // expect page to be booking page
     await expect(page.locator("[data-testid=success-page]")).toBeVisible();
+  });
+
+  // WC-TW-6c-8: the grid layout moved from framer-motion to inline styles + CSS animations.
+  test("Layout switch applies the grid and honours prefers-reduced-motion", async ({ page }, testInfo) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.locator('[data-testid="event-type-link"]').first().click();
+    const booker = page.locator('[data-testid="booker-container"]');
+    const gridAreas = (): Promise<string> => booker.evaluate((el) => (el as HTMLElement).style.gridTemplateAreas);
+
+    await expect.poll(gridAreas).toContain("meta main");
+    await testInfo.attach("month_view", { body: await page.screenshot(), contentType: "image/png" });
+
+    for (const layout of ["week_view", "column_view"]) {
+      await page.click(`[data-testid="toggle-group-item-${layout}"]`);
+      await expect.poll(gridAreas).toContain("meta header header");
+      await expect(booker).toHaveCSS("min-height", /px$/);
+      await testInfo.attach(layout, { body: await page.screenshot(), contentType: "image/png" });
+    }
+
+    await page.click('[data-testid="toggle-group-item-month_view"]');
+    await expect.poll(gridAreas).not.toContain("header");
+
+    const animated = booker.locator(".animate-in").first();
+    await expect(animated).toHaveCSS("animation-name", "none");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(animated).not.toHaveCSS("animation-name", "none");
   });
 
   test("Book on column layout", async ({ page }) => {

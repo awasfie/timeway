@@ -1,18 +1,16 @@
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
-import { fadeInUp } from "@calcom/features/bookings/Booker/config";
+import { fadeInUpClassName } from "@calcom/features/bookings/Booker/config";
 import { useBookerTime } from "@calcom/features/bookings/Booker/hooks/useBookerTime";
 import type { Timezone } from "@calcom/features/bookings/Booker/types";
 import { FromToTime } from "@calcom/features/bookings/Booker/utils/dates";
 import { useTimePreferences } from "@calcom/features/bookings/lib";
 import type { BookerEvent } from "@calcom/features/bookings/types";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { sanitizeSafeHtmlClient } from "@calcom/lib/safeHtmlClient";
 import { CURRENT_TIMEZONE } from "@calcom/lib/timezoneConstants";
 import type { EventTypeTranslation } from "@calcom/prisma/client";
 import { EventTypeAutoTranslatedField } from "@calcom/prisma/enums";
 import { EventMetaBlock } from "@calcom/web/modules/bookings/components/event-meta/Details";
 import { SeatsAvailabilityText } from "@calcom/web/modules/bookings/components/SeatsAvailabilityText";
-import { m } from "framer-motion";
 import { useEffect } from "react";
 import { shallow } from "zustand/shallow";
 import i18nConfigration from "../../../../../i18n.json";
@@ -146,12 +144,12 @@ export const EventMeta = ({
   return (
     <div className={`${classNames?.eventMetaContainer || ""} relative z-10 p-6`} data-testid="event-meta">
       {isPending && (
-        <m.div {...fadeInUp} initial="visible" layout>
+        <div>
           <EventMetaSkeleton />
-        </m.div>
+        </div>
       )}
       {!isPending && !!event && (
-        <m.div {...fadeInUp} layout transition={{ ...fadeInUp.transition, delay: 0.3 }}>
+        <div className={fadeInUpClassName}>
           <EventMembers
             schedulingType={event.schedulingType}
             users={event.subsetOfUsers}
@@ -169,10 +167,10 @@ export const EventMeta = ({
               <ScrollableWithGradients
                 className="wrap-break-word scroll-bar max-h-[180px] max-w-full overflow-y-auto pr-4"
                 ariaLabel={t("description")}>
-                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: rendered by markdownToSafeHTML in getPublicEvent, re-sanitized with DOMPurify */}
+                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: description and its translations are sanitised by markdownToSafeHTML / descriptionTranslationsToSafeHTML in getPublicEvent (all three return paths, SSR props and the tRPC refetch). No client DOMPurify pass: it kept ~10 KB gz of dompurify in every booking page's first load (WC-TW-6n-2); the label path (FormBuilderField) still re-sanitises inside the lazy form chunk. */}
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: sanitizeSafeHtmlClient(translatedDescription ?? event.description),
+                    __html: translatedDescription ?? event.description ?? "",
                   }}
                 />
               </ScrollableWithGradients>
@@ -261,7 +259,7 @@ export const EventMeta = ({
             ) : null}
           </div>
           {children && <div className={classNames?.eventMetaChildren}>{children}</div>}
-        </m.div>
+        </div>
       )}
     </div>
   );

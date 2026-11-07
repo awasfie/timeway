@@ -2,7 +2,7 @@
 
 import { useLayoutEffect } from "react";
 
-import "@calcom/embed-core/src/embed-iframe";
+import "@calcom/embed-core/src/embed-iframe/loader";
 import { HttpError } from "@calcom/lib/http-error";
 import { Button } from "@calcom/ui/components/button";
 

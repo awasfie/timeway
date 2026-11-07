@@ -4,6 +4,7 @@ import { getBrandingForEventType } from "@calcom/features/profile/lib/getBrandin
 import { shouldHideBrandingForTeamEvent } from "@calcom/features/profile/lib/hideBranding";
 import { getPlaceholderAvatar } from "@calcom/lib/defaultAvatarImage";
 import logger from "@calcom/lib/logger";
+import { runSsrWithPublicTwOrg } from "@calcom/lib/server/tw-org-scope/public";
 import slugify from "@calcom/lib/slugify";
 import { prisma } from "@calcom/prisma";
 import type { User } from "@calcom/prisma/client";
@@ -18,7 +19,15 @@ const paramsSchema = z.object({
   slug: z.string().transform((s) => slugify(s)),
 });
 
+// TW-T9.2b2: the team slug resolves the org; orgSlug/orgId params are never read for it.
 export const getServerSideProps = async (context: GetServerSidePropsContext) => {
+  const { slug } = paramsSchema.parse(context.params);
+  return runSsrWithPublicTwOrg(prisma, { resolver: "team_slug", keys: [slug] }, () =>
+    getTeamTypePageProps(context)
+  );
+};
+
+const getTeamTypePageProps = async (context: GetServerSidePropsContext) => {
   const { req, params, query } = context;
   const { slug: teamSlug, type: meetingSlug } = paramsSchema.parse(params);
   const { rescheduleUid, bookingUid } = query;

@@ -3,18 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ErrorCode } from "./ErrorCode";
 
 // Mock dependencies
-vi.mock("@calcom/prisma", () => ({
-  prisma: {
-    user: {
-      update: vi.fn(),
-    },
-  },
-  default: {
-    user: {
-      update: vi.fn(),
-    },
-  },
-}));
+// TW-T9.2b1: login resolves the org via $queryRaw (tw_resolve_user_for_login) and OAuth
+// links via account/user lookups; empty results keep these tests unscoped.
+vi.mock("@calcom/prisma", () => {
+  const client = () => ({
+    $queryRaw: vi.fn(async () => []),
+    account: { findUnique: vi.fn(async () => null) },
+    user: { update: vi.fn(), findUnique: vi.fn(async () => null), findFirst: vi.fn(async () => null) },
+  });
+  return { prisma: client(), default: client() };
+});
 
 const mockFindByEmailAndIncludeProfilesAndPassword = vi.fn();
 
@@ -762,6 +760,7 @@ describe("Azure AD signIn callback", () => {
     it("CAL user with verified email converts to AZUREAD on Azure AD login", async () => {
       // No existing user with AZUREAD identity
       mockPrismaUserFindFirst
+        .mockResolvedValueOnce(null) // TW-T9.2b1: signIn org lookup by IdP id (nextauth-oauth-link)
         .mockResolvedValueOnce(null) // First call: lookup by identityProvider + providerAccountId
         .mockResolvedValueOnce(null) // Legacy lookup
         .mockResolvedValueOnce({
@@ -839,6 +838,7 @@ describe("Azure AD signIn callback", () => {
 
     it("unverified CAL account blocks Azure AD linking (anti-hijack)", async () => {
       mockPrismaUserFindFirst
+        .mockResolvedValueOnce(null) // TW-T9.2b1: signIn org lookup by IdP id
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({

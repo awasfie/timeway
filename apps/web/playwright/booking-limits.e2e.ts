@@ -16,6 +16,7 @@ import {
   bookTimeSlot,
   confirmReschedule,
   createUserWithLimits,
+  expectBookerDaysLoaded,
   expectSlotNotAllowedToBook,
 } from "./lib/testUtils";
 
@@ -99,6 +100,7 @@ test.describe("Booking limits", () => {
 
       // finish rendering days before counting
       await expect(bookingDay).toBeVisible({ timeout: 10_000 });
+      await expectBookerDaysLoaded(page);
       const availableDaysBefore = await availableDays.count();
 
       let latestRescheduleUrl: string | null = null;
@@ -129,7 +131,7 @@ test.describe("Booking limits", () => {
 
       await test.step("but not over", async () => {
         // should already have navigated to monthUrl - just ensure days are rendered
-        await expect(page.getByTestId("day").nth(0)).toBeVisible();
+        await expectBookerDaysLoaded(page);
 
         // ensure the day we just booked is now blocked
         await expect(bookingDay).toBeHidden({ timeout: 10_000 });
@@ -198,7 +200,7 @@ test.describe("Booking limits", () => {
         await page.goto(getLastEventUrlWithMonth(user, firstMondayInBookingMonth.add(1, "month")));
 
         // finish rendering days before counting
-        await expect(page.getByTestId("day").nth(0)).toBeVisible({ timeout: 10_000 });
+        await expectBookerDaysLoaded(page);
 
         // the month after we made bookings should have availability unless we hit a yearly limit
         await expect((await availableDays.count()) === 0).toBe(limitUnit === "year");
@@ -228,6 +230,7 @@ test.describe("Booking limits", () => {
 
       // finish rendering days before counting
       await expect(bookingDay).toBeVisible({ timeout: 10_000 });
+      await expectBookerDaysLoaded(page);
       const availableDaysBefore = await availableDays.count();
 
       let slotUrl = "";
@@ -249,7 +252,7 @@ test.describe("Booking limits", () => {
 
       await test.step("but not over", async () => {
         // should already have navigated to monthUrl - just ensure days are rendered
-        await expect(page.getByTestId("day").nth(0)).toBeVisible();
+        await expectBookerDaysLoaded(page);
 
         // ensure the day we just booked is now blocked
         await expect(bookingDay).toBeHidden({ timeout: 10_000 });
@@ -302,6 +305,7 @@ test.describe("Booking limits", () => {
 
       // finish rendering days before counting
       await expect(bookingDay).toBeVisible({ timeout: 10_000 });
+      await expectBookerDaysLoaded(page);
       const availableDaysBefore = await availableDays.count();
 
       let slotUrl = "";
@@ -323,7 +327,7 @@ test.describe("Booking limits", () => {
 
       await test.step("but not over", async () => {
         // should already have navigated to monthUrl - just ensure days are rendered
-        await expect(page.getByTestId("day").nth(0)).toBeVisible();
+        await expectBookerDaysLoaded(page);
 
         // ensure the day we just booked is now blocked
         await expect(bookingDay).toBeHidden({ timeout: 10_000 });
@@ -383,6 +387,7 @@ test.describe("Booking limits", () => {
 
       // finish rendering days before counting
       await expect(bookingDay).toBeVisible({ timeout: 10_000 });
+      await expectBookerDaysLoaded(page);
       const availableDaysBefore = await availableDays.count();
 
       let slotUrl = "";
@@ -404,7 +409,7 @@ test.describe("Booking limits", () => {
 
       await test.step("but not over", async () => {
         // should already have navigated to monthUrl - just ensure days are rendered
-        await expect(page.getByTestId("day").nth(0)).toBeVisible();
+        await expectBookerDaysLoaded(page);
 
         // ensure the day we just booked is now blocked
         await expect(bookingDay).toBeHidden({ timeout: 10_000 });
@@ -467,6 +472,7 @@ test.describe("Booking limits", () => {
 
       // finish rendering days before counting
       await expect(bookingDay).toBeVisible({ timeout: 10_000 });
+      await expectBookerDaysLoaded(page);
       const availableDaysBefore = await availableDays.count();
 
       let slotUrl = "";
@@ -488,7 +494,7 @@ test.describe("Booking limits", () => {
 
       await test.step("but not over", async () => {
         // should already have navigated to monthUrl - just ensure days are rendered
-        await expect(page.getByTestId("day").nth(0)).toBeVisible();
+        await expectBookerDaysLoaded(page);
 
         // ensure the day we just booked is now blocked
         await expect(bookingDay).toBeHidden({ timeout: 10_000 });

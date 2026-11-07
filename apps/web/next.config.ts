@@ -13,6 +13,7 @@ import {
   orgUserTypeEmbedRoutePath,
   orgUserTypeRoutePath,
 } from "./pagesAndRewritePaths";
+import { getPlausibleRewrites } from "./plausibleRewrites";
 import { TRIGGER_VERSION } from "./trigger.version"; // adjust path as needed
 
 dotenvConfig({ path: "../../.env" });
@@ -225,6 +226,8 @@ const nextConfig = (phase: string): NextConfig => {
 
   return {
     output: process.env.BUILD_STANDALONE === "true" ? "standalone" : undefined,
+    // t_52034498: the production type check runs without test files (see tsconfig.build.json).
+    typescript: { tsconfigPath: "tsconfig.build.json" },
     serverExternalPackages: [
       "deasync",
       "http-cookie-agent",
@@ -260,7 +263,12 @@ const nextConfig = (phase: string): NextConfig => {
     images: {
       unoptimized: true,
     },
-    turbopack: {},
+    turbopack: {
+      // Client bundles get a console-only tslog (packages/lib/tslog.browser.ts); servers keep the real one.
+      resolveAlias: {
+        tslog: { browser: "@calcom/lib/tslog.browser" },
+      },
+    },
     async rewrites() {
       const { orgSlug } = nextJsOrgRewriteConfig;
       const beforeFiles = [
@@ -308,6 +316,7 @@ const nextConfig = (phase: string): NextConfig => {
           source: "/login",
           destination: "/auth/login",
         },
+        ...getPlausibleRewrites(process.env.PLAUSIBLE_HOST),
         ...(isOrganizationsEnabled
           ? [
               orgDomainMatcherConfig.root

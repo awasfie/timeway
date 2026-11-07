@@ -3,7 +3,7 @@ import { getTokenObjectFromCredential } from "../../_utils/oauth/getTokenObjectF
 import { OAuthManager } from "../../_utils/oauth/OAuthManager";
 import { oAuthManagerHelper } from "../../_utils/oauth/oAuthManagerHelper";
 import metadata from "../_metadata";
-import { getOfficeAppKeys } from "./getOfficeAppKeys";
+import { getOfficeKeysForCredential } from "./getOfficeCredentialKeys";
 
 const TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
@@ -28,7 +28,7 @@ export async function getOffice365AccessToken(credential: CredentialForCalendarS
     currentTokenObject: getTokenObjectFromCredential(credential),
     fetchNewTokenObject: async ({ refreshToken }: { refreshToken: string | null }) => {
       if (!refreshToken) return null;
-      const { client_id, client_secret } = await getOfficeAppKeys();
+      const { client_id, client_secret } = await getOfficeKeysForCredential(credential.id);
       return fetch(TOKEN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },

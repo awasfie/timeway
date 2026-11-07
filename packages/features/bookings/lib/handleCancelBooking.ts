@@ -3,6 +3,7 @@ import { FAKE_DAILY_CREDENTIAL } from "@calcom/app-store/dailyvideo/lib/VideoApi
 import { eventTypeMetaDataSchemaWithTypedApps } from "@calcom/app-store/zod-utils";
 import dayjs from "@calcom/dayjs";
 import { sendCancelledEmailsAndSMS } from "@calcom/emails/email-manager";
+import getNextICalSequence from "@calcom/emails/lib/getICalSequence";
 import { BookingReferenceRepository } from "@calcom/features/bookingReference/repositories/BookingReferenceRepository";
 import EventManager from "@calcom/features/bookings/lib/EventManager";
 import { getCalEventResponses } from "@calcom/features/bookings/lib/getCalEventResponses";
@@ -276,7 +277,7 @@ async function handler(input: CancelBookingInput, dependencies?: Dependencies) {
     seatsPerTimeSlot: bookingToDelete.eventType?.seatsPerTimeSlot,
     seatsShowAttendees: bookingToDelete.eventType?.seatsShowAttendees,
     iCalUID: bookingToDelete.iCalUID,
-    iCalSequence: bookingToDelete.iCalSequence + 1,
+    iCalSequence: getNextICalSequence(bookingToDelete.iCalSequence),
     platformClientId,
     platformRescheduleUrl,
     platformCancelUrl,
@@ -399,8 +400,7 @@ async function handler(input: CancelBookingInput, dependencies?: Dependencies) {
         status: BookingStatus.CANCELLED,
         cancellationReason: cancellationReason,
         cancelledBy: cancelledBy,
-        // Assume that canceling the booking is the last action
-        iCalSequence: evt.iCalSequence || 100,
+        iCalSequence: evt.iCalSequence ?? getNextICalSequence(bookingToDelete.iCalSequence),
       },
     });
 

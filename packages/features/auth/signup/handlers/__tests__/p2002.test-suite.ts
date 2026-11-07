@@ -18,7 +18,8 @@ type CallHandler = (body: SignupBody) => Promise<MockResponse>;
 export function runP2002TestSuite(
   handlerName: string,
   callHandler: CallHandler,
-  setupMocks: () => void
+  setupMocks: () => void,
+  mockFoundTokenIdentifier: (identifier: string) => void
 ): void {
   describe(`${handlerName} – signup P2002 contract`, () => {
     describe("P2002 Error Handling (non-token flow)", () => {
@@ -129,6 +130,37 @@ export function runP2002TestSuite(
         prismaMock.user.upsert.mockResolvedValue(createMockUser() as never);
 
         const response = await callHandler(createSignupBody({ token: "valid-token" }));
+
+        expect(response.status).toBe(201);
+      });
+
+      it("returns 403 and creates nothing when the token was minted for a different email (CC13-D2)", async () => {
+        const response = await callHandler(
+          createSignupBody({ email: "intruder@example.com", token: "valid-token" })
+        );
+
+        expect(response.status).toBe(403);
+        expect(prismaMock.user.upsert).not.toHaveBeenCalled();
+        expect(prismaMock.verificationToken.delete).not.toHaveBeenCalled();
+      });
+
+      it("accepts the token when the signup email differs from the identifier only by case", async () => {
+        prismaMock.user.findUnique.mockResolvedValue(null as never);
+        prismaMock.user.findFirst.mockResolvedValue(null as never);
+        prismaMock.user.upsert.mockResolvedValue(createMockUser() as never);
+
+        const response = await callHandler(createSignupBody({ email: "Test@Example.com", token: "valid-token" }));
+
+        expect(response.status).toBe(201);
+      });
+
+      it("keeps invite-by-link tokens (non-email identifier) redeemable by any email", async () => {
+        mockFoundTokenIdentifier("invite-link-for-team-1");
+        prismaMock.user.findUnique.mockResolvedValue(null as never);
+        prismaMock.user.findFirst.mockResolvedValue(null as never);
+        prismaMock.user.upsert.mockResolvedValue(createMockUser() as never);
+
+        const response = await callHandler(createSignupBody({ email: "anyone@example.com", token: "valid-token" }));
 
         expect(response.status).toBe(201);
       });
