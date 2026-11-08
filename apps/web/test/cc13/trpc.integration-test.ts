@@ -506,4 +506,68 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
       }
     });
   });
+
+  describe("unprobed-gap models (WC-TW-7b-5)", () => {
+    it("viewer.filterSegments: router is not mounted, so B has no tRPC path to FilterSegment", async () => {
+      // packages/trpc/server/routers/viewer/filterSegments/_router.tsx exists but no router imports it
+      // (grep 2026-11-08). The caller must have no such namespace; mounting it later fails this probe.
+      expect(Object.keys(viewerB)).not.toContain("filterSegments");
+      expect((viewerB as unknown as Record<string, unknown>).filterSegments).toBeUndefined();
+    });
+
+    it("viewer.bookings.reportBooking: B cannot report (or cancel) A's booking", async () => {
+      const b = await mkBooking(seed.A);
+      const read = async () => ({
+        booking: await prisma.booking.findUnique({
+          where: { id: b.id },
+          select: { status: true, userId: true, twOrgId: true },
+        }),
+        reports: await prisma.bookingReport.count({ where: { bookingUid: b.uid } }),
+      });
+      await expectUnchanged(read, async () => {
+        expectDenied(
+          await attempt(() =>
+            viewerB.bookings.reportBooking({ bookingUid: b.uid, reason: "SPAM", description: "cc13" } as never)
+          )
+        );
+      });
+      expect((await read()).reports).toBe(0);
+    });
+
+    it("viewer.loggedInViewerRouter.connectAndJoin: B cannot claim A's instant-meeting token", async () => {
+      const b = await mkBooking(seed.A, BookingStatus.AWAITING_HOST);
+      const live = await prisma.instantMeetingToken.create({
+        data: {
+          token: `${tag(seed.A)}-imt${++n}-${randomUUID()}`,
+          expires: new Date(Date.now() + 3_600_000),
+          teamId: seed.A.team.id,
+          bookingId: b.id,
+        },
+        select: { token: true },
+      });
+      const read = () =>
+        prisma.booking.findUnique({ where: { id: b.id }, select: { status: true, userId: true } });
+      await expectUnchanged(read, async () => {
+        const o = await attempt(() => viewerB.loggedInViewerRouter.connectAndJoin({ token: live.token }));
+        // The handler hides the team-membership filter behind BAD_REQUEST token_not_found.
+        expectDenied(o, undefined, { code: "BAD_REQUEST", message: /^token_not_found$/ });
+      });
+      // Control: A's owner passes the membership filter (expired token: stops before any write).
+      const b2 = await mkBooking(seed.A, BookingStatus.AWAITING_HOST);
+      const expired = await prisma.instantMeetingToken.create({
+        data: {
+          token: `${tag(seed.A)}-imt${++n}-${randomUUID()}`,
+          expires: new Date(Date.now() - 60_000),
+          teamId: seed.A.team.id,
+          bookingId: b2.id,
+        },
+        select: { token: true },
+      });
+      const viewerA = await viewerFor(seed.A.owner.id);
+      const a = await attempt(() => viewerA.loggedInViewerRouter.connectAndJoin({ token: expired.token }));
+      expect(a).toMatchObject({ kind: "threw", message: "token_invalid_expired" });
+      const bExpired = await attempt(() => viewerB.loggedInViewerRouter.connectAndJoin({ token: expired.token }));
+      expect(bExpired).toMatchObject({ kind: "threw", message: "token_not_found" });
+    });
+  });
 });
