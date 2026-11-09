@@ -5,19 +5,22 @@ import { bookingIdempotencyKeyExtension } from "./extensions/booking-idempotency
 import { disallowUndefinedDeleteUpdateManyExtension } from "./extensions/disallow-undefined-delete-update-many";
 import { excludeLockedUsersExtension } from "./extensions/exclude-locked-users";
 import { excludePendingPaymentsExtension } from "./extensions/exclude-pending-payment-teams";
+import { twOrgContextExtension, withTwOrgTransactions } from "./extensions/tw-org-context";
 import { PrismaClient, type Prisma } from "./generated/prisma/client";
 
 const connectionString = process.env.DATABASE_URL || "";
+// TW-T9.2a: the RLS pool spec pins one backend (DATABASE_POOL_MAX=1) to prove context does not leak on reuse.
+const poolMax = Number.parseInt(process.env.DATABASE_POOL_MAX ?? "", 10) || undefined;
 const pool =
   process.env.USE_POOL === "true" || process.env.USE_POOL === "1"
     ? new Pool({
         connectionString: connectionString,
-        max: 5,
+        max: poolMax ?? 5,
         idleTimeoutMillis: 300000,
       })
     : undefined;
 
-const adapter = pool ? new PrismaPg(pool) : new PrismaPg({ connectionString });
+const adapter = pool ? new PrismaPg(pool) : new PrismaPg({ connectionString, max: poolMax });
 const prismaOptions: Prisma.PrismaClientOptions = {
   adapter,
 };
@@ -64,11 +67,14 @@ export const customPrisma = (options?: Prisma.PrismaClientOptions) => {
     finalOptions = { ...prismaOptions, ...options };
   }
 
-  return new PrismaClient(finalOptions)
-    .$extends(excludeLockedUsersExtension())
-    .$extends(excludePendingPaymentsExtension())
-    .$extends(bookingIdempotencyKeyExtension())
-    .$extends(disallowUndefinedDeleteUpdateManyExtension()) as unknown as PrismaClient;
+  return withTwOrgTransactions(
+    new PrismaClient(finalOptions)
+      .$extends(excludeLockedUsersExtension())
+      .$extends(excludePendingPaymentsExtension())
+      .$extends(bookingIdempotencyKeyExtension())
+      .$extends(disallowUndefinedDeleteUpdateManyExtension())
+      .$extends(twOrgContextExtension())
+  ) as unknown as PrismaClient;
 };
 
 // FIXME: Due to some reason, there are types failing in certain places due to the $extends. Fix it and then enable it
@@ -76,11 +82,14 @@ export const customPrisma = (options?: Prisma.PrismaClientOptions) => {
 
 // Explanation why we cast as PrismaClient. When we leave Prisma to its devices it tries to infer logic based on the extensions, but this is not a simple extends.
 // this makes the PrismaClient export type-hint impossible and it also is a massive hit on Prisma type hinting performance.
-export const prisma: PrismaClient = baseClient
-  .$extends(excludeLockedUsersExtension())
-  .$extends(excludePendingPaymentsExtension())
-  .$extends(bookingIdempotencyKeyExtension())
-  .$extends(disallowUndefinedDeleteUpdateManyExtension()) as unknown as PrismaClient;
+export const prisma: PrismaClient = withTwOrgTransactions(
+  baseClient
+    .$extends(excludeLockedUsersExtension())
+    .$extends(excludePendingPaymentsExtension())
+    .$extends(bookingIdempotencyKeyExtension())
+    .$extends(disallowUndefinedDeleteUpdateManyExtension())
+    .$extends(twOrgContextExtension())
+) as unknown as PrismaClient;
 
 // This prisma instance is meant to be used only for READ operations.
 // If self hosting, feel free to leave INSIGHTS_DATABASE_URL as empty and `readonlyPrisma` will default to `prisma`.

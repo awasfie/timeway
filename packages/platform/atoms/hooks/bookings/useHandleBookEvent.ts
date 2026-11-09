@@ -6,10 +6,15 @@ import { mapBookingToMutationInput, mapRecurringBookingToMutationInput } from "@
 import type { BookingCreateBody } from "@calcom/features/bookings/lib/bookingCreateBodySchema";
 import type { BookerEvent } from "@calcom/features/bookings/types";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { showToast } from "@calcom/ui/components/toast";
 import { useSearchParams } from "next/navigation";
 import { getUtmTrackingParameters } from "../../lib/getUtmTrackingParameters";
 import type { UseCreateBookingInput } from "./useCreateBooking";
+
+// Loaded on demand so sonner stays out of the booking page's first-load JS (WC-TW-6n-2).
+const showToast = (message: string, variant: "success" | "error") =>
+  void import("@calcom/ui/components/toast")
+    .then((m) => m.showToast(message, variant))
+    .catch(() => undefined);
 
 type Callbacks = { onSuccess?: () => void; onError?: (err: unknown) => void };
 type UseHandleBookingProps = {

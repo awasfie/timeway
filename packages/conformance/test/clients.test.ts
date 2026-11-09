@@ -160,6 +160,14 @@ describe("GoogleCalendarClient", () => {
 describe("GraphCalendarClient", () => {
   const oauth = { clientId: "cid", clientSecret: "sec", refreshToken: "rt" };
 
+  it("sends no client_secret for a public client (SOAK_MS_CLIENT_SECRET unset)", async () => {
+    const { fetch, calls } = scripted([() => json(200, { access_token: "at", expires_in: 3600 }), () => json(200, { value: [] })]);
+    const m = new GraphCalendarClient({ clientId: "cid", refreshToken: "rt" }, { fetch, sleep: noSleep });
+    await m.listEvents("CAL=", { start: "2026-11-02T00:00:00Z", end: "2026-11-03T00:00:00Z" });
+    expect(String(calls[0].init.body)).not.toContain("client_secret");
+    expect(String(calls[0].init.body)).toContain("client_id=cid");
+  });
+
   it("uses the consumers authority, reports a rotated refresh token, and inserts a busy event in UTC", async () => {
     const rotated = vi.fn();
     const { fetch, calls } = scripted([

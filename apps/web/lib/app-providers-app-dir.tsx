@@ -3,7 +3,6 @@ import { useFlags } from "@calcom/web/modules/feature-flags/hooks/useFlags";
 import type { PageWrapperProps } from "@components/PageWrapperAppDir";
 import useIsBookingPage from "@lib/hooks/useIsBookingPage";
 import useIsThemeSupported from "@lib/hooks/useIsThemeSupported";
-import { useNuqsParams } from "@lib/hooks/useNuqsParams";
 import type { WithLocaleProps } from "@lib/withLocale";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type { AppProps as NextAppProps } from "next/app";
@@ -12,7 +11,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import type { Session } from "next-auth";
 import { useSession } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { useEffect } from "react";
 import { getThemeProviderProps } from "./getThemeProviderProps";
 
 // Workaround for https://github.com/vercel/next.js/issues/8592
@@ -65,20 +64,20 @@ const CalcomThemeProvider = (props: CalcomThemeProps) => {
     searchParams,
   });
 
+  // WC-TW-6n-1: injected from an effect instead of styled-jsx, which kept its runtime on the booking
+  // first load. Client-only, like the old `typeof window` guard, without a hydration mismatch.
+  useEffect(() => {
+    if (isEmbedMode) return;
+    const style = document.createElement("style");
+    style.textContent = ".dark { color-scheme: dark; }";
+    document.head.appendChild(style);
+    return () => style.remove();
+  }, [isEmbedMode]);
+
   return (
     <ThemeProvider key={key} {...themeProviderProps}>
       {/* Embed Mode can be detected reliably only on client side here as there can be static generated pages as well which can't determine if it's embed mode at backend */}
       {/* color-scheme makes background:transparent not work in iframe which is required by embed. */}
-      {typeof window !== "undefined" && !isEmbedMode && (
-        //eslint-disable-next-line react/no-unknown-property
-        <style jsx global>
-          {`
-            .dark {
-              color-scheme: dark;
-            }
-          `}
-        </style>
-      )}
       {props.children}
     </ThemeProvider>
   );
@@ -97,7 +96,6 @@ const AppProviders = (props: PageWrapperProps) => {
   // No need to have intercom on public pages - Good for Page Performance
   const isBookingPage = useIsBookingPage();
   const isThemeSupported = useIsThemeSupported();
-  const nuqsParams = useNuqsParams();
 
   const RemainingProviders = (
     <>
@@ -107,11 +105,9 @@ const AppProviders = (props: PageWrapperProps) => {
           nonce={props.nonce}
           isThemeSupported={isThemeSupported}
           isBookingPage={props.isBookingPage || isBookingPage}>
-          <NuqsAdapter {...nuqsParams}>
-            <FeatureFlagsProvider>
-              <OrgBrandProvider>{props.children}</OrgBrandProvider>
-            </FeatureFlagsProvider>
-          </NuqsAdapter>
+          <FeatureFlagsProvider>
+            <OrgBrandProvider>{props.children}</OrgBrandProvider>
+          </FeatureFlagsProvider>
         </CalcomThemeProvider>
       </TooltipProvider>
     </>

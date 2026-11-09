@@ -1,0 +1,53 @@
+name: CodeQL
+# t_4f6feb36 BATCH-4 security baseline: code scanning on PR, main and weekly.
+# Public repos upload SARIF to the Security tab; private repos without GitHub Code Security keep
+# the SARIF as a run artifact (upload to code scanning needs that licence) and fail on analysis errors.
+on:
+  # CI-COST-4 (t_25c20e17): nightly on main plus PRs that touch code; no per-commit run on main (main is covered by the
+  # nightly run and by the PR run of every merged change).
+  pull_request:
+    branches: [main]
+    paths-ignore: ['docs/**', '**.md']
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  analyze:
+    name: analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["javascript-typescript", "actions"]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: github/codeql-action/init@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@9418214df1f2c4b8128c770156c409013b07d6b9 # v3
+        with:
+          category: /language:${{ matrix.language }}
+          upload: ${{ github.event.repository.private && 'never' || 'always' }}
+          output: sarif-results
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: codeql-sarif-${{ matrix.language }}
+          path: sarif-results
+          retention-days: 30
+          if-no-files-found: ignore

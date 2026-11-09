@@ -10,11 +10,16 @@
 -- Run as timeway_owner (table owner). tw_organization_member has FORCE RLS,
 -- so the session sets app.tw_platform = 'on' to read memberships.
 --
--- Idempotent: every UPDATE is restricted to rows WHERE "twOrgId" IS NULL;
--- a second run changes 0 rows. No DELETE, no DDL on real tables, no NOT NULL / FK
+-- Idempotent: every UPDATE is restricted to rows WHERE "twOrgId" IS NULL and the
+-- member INSERT to users with no member row; a second run changes 0 rows. No DELETE, no DDL on real tables, no NOT NULL / FK
 -- (that is the contract slice).
 --
--- Derivation (decided on t_bb79259a, do not re-open):
+-- Derivation (decided on t_bb79259a, do not re-open; inherit step L8-7a-4b t_96c0a301):
+--   member     a user with no tw_organization_member row whose accepted team
+--              memberships put them beside accepted co-members holding exactly one
+--              org (via tw_organization_member) gets a member row (role member) for
+--              that org. Co-members with no org do not count; >1 distinct org =
+--              report, skip. Repeated until no new row, so a re-run inserts 0.
 --   users      <- its tw_organization_member org (exactly one; >1 = report, skip)
 --   Schedule   <- owning user's twOrgId
 --   Credential <- owning user's twOrgId (team credentials without userId stay NULL)
@@ -66,6 +71,22 @@ UNION ALL SELECT 'Booking',    count(*), count(*) FILTER (WHERE "twOrgId" IS NUL
 
 -- Derivation views (temp, read-only). Each yields (id, org) for rows that are
 -- NULL now and have exactly one derivable org.
+
+-- Org-less users and the distinct orgs held by accepted co-members of their
+-- accepted teams.
+CREATE TEMP VIEW tw_team_coorgs AS
+  SELECT me."userId" AS user_id,
+         count(DISTINCT om."orgId")             AS candidate_orgs,
+         min(om."orgId"::text)::uuid            AS org
+  FROM "Membership" me
+  JOIN "Membership" co ON co."teamId" = me."teamId" AND co.accepted AND co."userId" <> me."userId"
+  LEFT JOIN "tw_organization_member" om ON om."userId" = co."userId"
+  WHERE me.accepted
+    AND NOT EXISTS (SELECT 1 FROM "tw_organization_member" x WHERE x."userId" = me."userId")
+  GROUP BY me."userId";
+
+CREATE TEMP VIEW tw_d_member_inherit AS
+  SELECT user_id AS id, org FROM tw_team_coorgs WHERE candidate_orgs = 1;
 CREATE TEMP VIEW tw_d_users AS
   SELECT u.id, min(m."orgId"::text)::uuid AS org
   FROM "users" u JOIN "tw_organization_member" m ON m."userId" = u.id
@@ -105,6 +126,12 @@ CREATE TEMP VIEW tw_d_eventtype_team AS
   WHERE e."twOrgId" IS NULL AND e."userId" IS NULL
     AND t.distinct_orgs = 1;
 
+\echo '== org-less users with team co-members (inherit step)'
+SELECT user_id, candidate_orgs,
+       CASE WHEN candidate_orgs = 1 THEN 'inherit ' || org ELSE 'skip' END AS action
+FROM tw_team_coorgs
+ORDER BY 1;
+
 \echo '== team orgs before backfill (teams with NULL team event types)'
 SELECT t.team_id, t.accepted_members, t.members_without_org, t.distinct_orgs,
        CASE WHEN t.distinct_orgs = 1 THEN 'derive' ELSE 'skip' END AS action
@@ -134,6 +161,21 @@ DECLARE
     'Booking:tw_d_booking'];
   s text; tbl text; src text; n integer; b integer;
 BEGIN
+  -- Member rows first so the users step below picks them up. Loop to a fixpoint
+  -- (a newly inherited org can resolve a further co-member).
+  b := 0;
+  LOOP
+    b := b + 1;
+    INSERT INTO "tw_organization_member" (id, "orgId", "userId", role)
+    SELECT gen_random_uuid(), d.org, d.id, 'member'::"OrganizationMemberRole"
+    FROM (SELECT id, org FROM pg_temp.tw_d_member_inherit ORDER BY id LIMIT p_batch) d
+    ON CONFLICT ("orgId", "userId") DO NOTHING;
+    GET DIAGNOSTICS n = ROW_COUNT;
+    INSERT INTO tw_backfill_log(step, batch, rows) VALUES ('tw_d_member_inherit', b, n);
+    IF p_commit THEN COMMIT; END IF;
+    EXIT WHEN n = 0;
+  END LOOP;
+
   FOREACH s IN ARRAY steps LOOP
     tbl := split_part(s, ':', 1);
     src := split_part(s, ':', 2);
@@ -181,9 +223,14 @@ ORDER BY 1;
 
 \echo '== residual NULL rows (ids only; platform-only after RLS)'
 SELECT 'users' AS tbl, u.id,
-       CASE WHEN count(m.id) = 0 THEN 'no tw_organization_member row'
+       CASE WHEN count(m.id) = 0 AND max(c.candidate_orgs) > 1
+              THEN 'no tw_organization_member row; team co-members hold ' || max(c.candidate_orgs) || ' orgs'
+            WHEN count(m.id) = 0 AND max(c.user_id) IS NOT NULL
+              THEN 'no tw_organization_member row; team co-members hold no org'
+            WHEN count(m.id) = 0 THEN 'no tw_organization_member row; no accepted team co-members'
             ELSE 'member of ' || count(DISTINCT m."orgId") || ' orgs' END AS reason
 FROM "users" u LEFT JOIN "tw_organization_member" m ON m."userId" = u.id
+LEFT JOIN tw_team_coorgs c ON c.user_id = u.id
 WHERE u."twOrgId" IS NULL GROUP BY u.id
 UNION ALL
 SELECT 'Schedule', s.id,

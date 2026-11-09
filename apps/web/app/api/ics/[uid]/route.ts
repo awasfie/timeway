@@ -1,30 +1,36 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-
 import { metadata as camvMetadata } from "@calcom/app-store/livekitvideo/_metadata";
-import generateIcsString from "@calcom/emails/lib/generateIcsString";
-import prisma from "@calcom/prisma";
 import type { ICSCalendarEvent } from "@calcom/emails/lib/generateIcsString";
+import generateIcsString from "@calcom/emails/lib/generateIcsString";
+import { publicLookupsForBookingUid, resolvePublicTwOrgFirst } from "@calcom/lib/server/tw-org-scope/public";
+import prisma from "@calcom/prisma";
+import { runWithTwOrg } from "@calcom/prisma/tw-org-context";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 /** Public .ics download keyed by the unguessable booking uid (TW-MAIL-2, Apple/.ics link). */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
   const { uid } = await params;
   if (!uid || uid.length < 10) return NextResponse.json({ message: "Not found" }, { status: 404 });
-  const booking = await prisma.booking.findUnique({
-    where: { uid },
-    select: {
-      uid: true,
-      iCalUID: true,
-      title: true,
-      startTime: true,
-      endTime: true,
-      location: true,
-      status: true,
-      references: { select: { type: true, meetingUrl: true } },
-      user: { select: { name: true, email: true, timeZone: true } },
-      attendees: { select: { name: true, email: true, timeZone: true } },
-    },
-  });
+  // TW-T9.2b4: the org is the booking's, resolved from its uid; unresolved is not found.
+  const twOrgId = await resolvePublicTwOrgFirst(prisma, publicLookupsForBookingUid(uid));
+  if (!twOrgId) return NextResponse.json({ message: "Not found" }, { status: 404 });
+  const booking = await runWithTwOrg(twOrgId, () =>
+    prisma.booking.findUnique({
+      where: { uid },
+      select: {
+        uid: true,
+        iCalUID: true,
+        title: true,
+        startTime: true,
+        endTime: true,
+        location: true,
+        status: true,
+        references: { select: { type: true, meetingUrl: true } },
+        user: { select: { name: true, email: true, timeZone: true } },
+        attendees: { select: { name: true, email: true, timeZone: true } },
+      },
+    })
+  );
   if (!booking || !booking.user || booking.status === "CANCELLED" || booking.status === "REJECTED") {
     return NextResponse.json({ message: "Not found" }, { status: 404 });
   }

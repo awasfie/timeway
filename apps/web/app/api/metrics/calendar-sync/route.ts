@@ -4,6 +4,7 @@ import type { CalendarSubscriptionProvider } from "@calcom/features/calendar-sub
 import { STALE_AFTER_MS } from "@calcom/features/calendar-subscription/lib/reconcile/CalendarReconciliationService";
 import { renderSyncMetrics } from "@calcom/features/calendar-subscription/lib/telemetry/syncMetrics";
 import { SelectedCalendarRepository } from "@calcom/features/selectedCalendar/repositories/SelectedCalendarRepository";
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import { prisma } from "@calcom/prisma";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -27,7 +28,7 @@ function authorized(request: NextRequest): boolean {
  * WC-TW-3 step 3: Prometheus scrape target for the calendar sync dashboard.
  * Closed (404) unless TIMEWAY_METRICS_TOKEN is set and sent as a bearer token.
  */
-export async function GET(request: NextRequest) {
+async function handler(request: NextRequest) {
   if (!authorized(request)) {
     return NextResponse.json({ message: "Not found" }, { status: 404 });
   }
@@ -57,3 +58,6 @@ export async function GET(request: NextRequest) {
     headers: { "content-type": "text/plain; version=0.0.4; charset=utf-8", "cache-control": "no-store" },
   });
 }
+
+// TW-T9.2b4: secret-gated, reads across orgs, so it runs under a named platform scope.
+export const GET = withTwPlatformJob("calendar-sync-metrics", handler);

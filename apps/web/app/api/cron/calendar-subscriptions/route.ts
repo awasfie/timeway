@@ -9,6 +9,7 @@ import { getTeamFeatureRepository } from "@calcom/features/di/containers/TeamFea
 import { getUserFeatureRepository } from "@calcom/features/di/containers/UserFeatureRepository";
 import { SelectedCalendarRepository } from "@calcom/features/selectedCalendar/repositories/SelectedCalendarRepository";
 import { isCronAuthorized } from "@calcom/lib/server/cronAuth";
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import { prisma } from "@calcom/prisma";
 import { defaultResponderForAppDir } from "@calcom/web/app/api/defaultResponderForAppDir";
 import type { NextRequest } from "next/server";
@@ -65,4 +66,5 @@ async function getHandler(request: NextRequest) {
   }
 }
 
-export const GET = defaultResponderForAppDir(getHandler);
+// TW-T9.2b3: cross-org job, platform scope "calendar-subscriptions".
+export const GET = defaultResponderForAppDir(withTwPlatformJob("calendar-subscriptions", getHandler));

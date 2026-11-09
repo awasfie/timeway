@@ -6,6 +6,7 @@ import {
   APPROVE_SECRET_HEADER,
   isCustomDomainsEnabled,
 } from "@calcom/lib/domainManager/customHostnames/service";
+import { withTwPlatformJob } from "@calcom/lib/server/tw-org-scope/unattended";
 import { prisma } from "@calcom/prisma";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -19,7 +20,7 @@ const empty = (status: number) =>
  * WC-TW-12c2: proxy.ts asks here (it must not load Prisma) whether a customer host is ACTIVE and
  * whether the requested user/team slugs are wholly that org's. 200 {orgSlug} or 404. Read-only.
  */
-export async function GET(req: NextRequest) {
+async function handler(req: NextRequest) {
   if (!isCustomDomainsEnabled()) return empty(404);
 
   const expected = process.env.TW_DOMAIN_APPROVE_SECRET;
@@ -38,3 +39,6 @@ export async function GET(req: NextRequest) {
   if (!result.ok) return empty(404);
   return NextResponse.json({ orgSlug: result.orgSlug }, { headers: { "cache-control": "no-store" } });
 }
+
+// TW-T9.2b4: secret-gated, reads users/teams across orgs, so it runs under a named platform scope.
+export const GET = withTwPlatformJob("custom-domain-resolve", handler);

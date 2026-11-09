@@ -1,0 +1,13 @@
+{
+  "$comment": "TW-T9.2b4: DB-reaching entry points that run without a tw org scope, each with a reason. Checked by packages/lib/server/tw-org-scope/entrypoints.test.ts (fails on unlisted files and stale entries).",
+  "entries": [
+    {
+      "path": "apps/web/app/api/health/route.ts",
+      "reason": "Coolify readiness probe (DEPLOY-1, main #247): runs only SELECT 1, touches no table, so no org scope applies; unauthenticated by design."
+    },
+    {
+      "path": "apps/web/app/api/webhooks/sendgrid/events/route.ts",
+      "reason": "WC-TW-8c SendGrid Event Webhook (#99): unauthenticated by session but verifies the SendGrid ECDSA signature before any DB work; writes only tw_email_event, which has no tenant column and no RLS policy by design (see scripts/tw-t9/rls-audit/targets.json exempt entry)."
+    }
+  ]
+}
