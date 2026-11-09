@@ -4,6 +4,10 @@
     {
       "path": "apps/web/app/api/health/route.ts",
       "reason": "Coolify readiness probe (DEPLOY-1, main #247): runs only SELECT 1, touches no table, so no org scope applies; unauthenticated by design."
+    },
+    {
+      "path": "apps/web/app/api/webhooks/sendgrid/events/route.ts",
+      "reason": "WC-TW-8c SendGrid Event Webhook (signed, ECDSA-verified before any DB write): writes only the global tw_email_event ledger (no tenant column, RLS-exempt in scripts/tw-t9/rls-audit/targets.json); no session and no tenant row read or written, so no org scope applies."
     }
   ]
 }
