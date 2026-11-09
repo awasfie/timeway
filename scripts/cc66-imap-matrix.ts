@@ -426,7 +426,8 @@ function parseInvite(imapUid: number, raw: string): Invite {
   const ics = cal[0]?.text ?? "";
   const authRaw = header(top.headers, "authentication-results")[0] ?? "";
   // The trailing guard stops a lookalike such as notify.timeway.co.example.net from aligning.
-  const dom = `${EXPECT_DOMAIN.replace(/\./g, "\\.")}(?![\\w-]|\\.\\w)`;
+  // Escape every regex metacharacter (backslash included) so the domain is matched literally.
+  const dom = `${EXPECT_DOMAIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w-]|\\.\\w)`;
   const organizer = icsProp(ics, "ORGANIZER")
     ?.replace(/^mailto:/i, "")
     .toLowerCase();
@@ -657,7 +658,7 @@ function markdown(runId: string, cells: Cell[], rows: Row[], skipped: string[]):
     "|---|---|---|---|---|",
     ...rows.map(
       (r) =>
-        `| ${r.provider} | ${r.locale.toUpperCase()} | ${r.check} | ${r.pass ? "PASS" : "FAIL"} | ${r.detail.replace(/\|/g, "\\|")} |`
+        `| ${r.provider} | ${r.locale.toUpperCase()} | ${r.check} | ${r.pass ? "PASS" : "FAIL"} | ${r.detail.replace(/\\/g, "\\\\").replace(/\|/g, "\\|")} |`
     ),
     "",
     "## Bookings and messages",
