@@ -1,0 +1,87 @@
+{
+  "card": "t_762bea7b",
+  "measured_at": "2026-10-28T06:50Z",
+  "url": "https://timeway.co/ahmedwasfie/30min",
+  "host": "Dubai, AS15802",
+  "edge": "x-tw-edge HIT, cf-ray AMS",
+  "lighthouse_mobile_simulate": [
+    {
+      "run": 1,
+      "fetchTime": "2026-10-28T06:50:24.536Z",
+      "lighthouse": "13.5.0",
+      "lcp_ms": 7016,
+      "tbt_ms": 303,
+      "server_response_ms": 235
+    },
+    {
+      "run": 2,
+      "fetchTime": "2026-10-28T06:50:41.024Z",
+      "lighthouse": "13.5.0",
+      "lcp_ms": 7038,
+      "tbt_ms": 210,
+      "server_response_ms": 216
+    },
+    {
+      "run": 3,
+      "fetchTime": "2026-10-28T06:50:56.585Z",
+      "lighthouse": "13.5.0",
+      "lcp_ms": 7012,
+      "tbt_ms": 220,
+      "server_response_ms": 230
+    },
+    {
+      "run": 4,
+      "fetchTime": "2026-10-28T06:51:12.041Z",
+      "lighthouse": "13.5.0",
+      "lcp_ms": 7086,
+      "tbt_ms": 205,
+      "server_response_ms": 238
+    },
+    {
+      "run": 5,
+      "fetchTime": "2026-10-28T06:51:27.957Z",
+      "lighthouse": "13.5.0",
+      "lcp_ms": 6981,
+      "tbt_ms": 255,
+      "server_response_ms": 207
+    }
+  ],
+  "ttfb_after_tls_ms": [
+    250,
+    259,
+    224,
+    225,
+    207,
+    219,
+    222,
+    237,
+    223,
+    218,
+    211,
+    210,
+    225,
+    232,
+    259,
+    219,
+    222,
+    265,
+    219,
+    218,
+    209,
+    217,
+    243,
+    228,
+    206,
+    223,
+    212,
+    252,
+    245,
+    243
+  ],
+  "scripts": {
+    "count": 49,
+    "transfer_kb": 837
+  },
+  "plausible_in_html": false,
+  "globalping": "429 rate_limit_exceeded (anonymous IP quota used by WC-TW-6g run); TTFB rows cite 6g pooled evidence"
+}
