@@ -4,6 +4,7 @@ import { HttpError } from "../../http-error";
 import {
   publicLookupForEventTypeIds,
   publicLookupForSchedule,
+  publicLookupsForEventInput,
   publicLookupsForBookingBody,
   publicLookupsForBookingUid,
   resolvePublicTwOrg,
@@ -238,5 +239,22 @@ describe("TW-T9.2b2f event type id resolver", () => {
       expect(await resolvePublicTwOrg(client, { resolver: "event_type_id", keys: [key] })).toBeNull();
     }
     expect(calls).toEqual([]);
+  });
+});
+
+describe("publicLookupsForEventInput", () => {
+  it("team event resolves by team slug only", () => {
+    expect(publicLookupsForEventInput({ username: "awstreams", isTeamEvent: true })).toEqual([
+      { resolver: "team_slug", keys: ["awstreams"] },
+    ]);
+  });
+  it("user event tries user slugs then team slug", () => {
+    expect(publicLookupsForEventInput({ username: "a+b" })).toEqual([
+      { resolver: "user_slug", keys: ["a", "b"] },
+      { resolver: "team_slug", keys: ["a+b"] },
+    ]);
+  });
+  it("empty username resolves nothing", () => {
+    expect(publicLookupsForEventInput({ username: "" })).toEqual([]);
   });
 });
