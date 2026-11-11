@@ -11,6 +11,7 @@
  */
 
 import logger from "@calcom/lib/logger";
+import slugify from "@calcom/lib/slugify";
 import { runWithTwOrg } from "@calcom/prisma/tw-org-context";
 import { HttpError } from "../../http-error";
 
@@ -176,6 +177,26 @@ export function publicLookupForEventTypeIds(
 ): TwPublicLookup | null {
   const keys = ids.filter((id): id is number => typeof id === "number" && Number.isInteger(id)).map(String);
   return keys.length === 0 ? null : { resolver: "event_type_id", keys };
+}
+
+/**
+ * TW-BOOKING-404: tRPC `viewer.public.event` (the booker's client-side event fetch). `username`
+ * is the team slug when isTeamEvent, else one username or a dynamic group "a+b" (every member
+ * must resolve to the same org). The `org` input is ignored (CC-13).
+ */
+export function publicLookupForPublicEvent(input: {
+  username?: string | null;
+  isTeamEvent?: boolean | null;
+}): TwPublicLookup | null {
+  const keys = (input.username ?? "")
+    .replace(/( |%20|%2b)/gi, "+")
+    .split("+")
+    .map((k) => slugify(k))
+    .filter(Boolean);
+  if (keys.length === 0) return null;
+  return input.isTeamEvent
+    ? { resolver: "team_slug", keys: keys.slice(0, 1) }
+    : { resolver: "user_slug", keys: Array.from(new Set(keys)) };
 }
 
 /** slots.getSchedule: usernameList is team slug when isTeamEvent; orgSlug is ignored. */
