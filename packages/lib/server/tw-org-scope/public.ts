@@ -189,3 +189,17 @@ export function publicLookupForSchedule(input: {
     ? { resolver: "team_slug", keys: keys.slice(0, 1) }
     : { resolver: "user_slug", keys };
 }
+
+/**
+ * publicViewer.event (public team/user booking page): org from the team slug for team
+ * events, else username(s) then team slug. org / orgSlug in the input is ignored (CC-13).
+ */
+export function publicLookupsForEventInput(input: {
+  username: string;
+  isTeamEvent?: boolean;
+}): TwPublicLookup[] {
+  const users = input.username.split("+").filter(Boolean);
+  if (users.length === 0) return [];
+  const team: TwPublicLookup = { resolver: "team_slug", keys: [input.username] };
+  return input.isTeamEvent ? [team] : [{ resolver: "user_slug", keys: users }, team];
+}
