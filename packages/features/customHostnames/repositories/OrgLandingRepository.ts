@@ -24,49 +24,60 @@ export class OrgLandingRepository implements OrgLandingPort {
     return row ?? null;
   }
 
+  // TW-BOOKING-404: users and EventType are forced-RLS too; with no session org these reads
+  // returned [] and the page said "No public booking pages yet". Platform context (not org
+  // context) keeps the cross-org checks in loadOrgLanding meaningful: they must see other orgs' rows.
   async listOrgUsers(orgId: string) {
-    return this.prisma.user.findMany({
-      where: { twOrgId: orgId },
-      select: { id: true, username: true, name: true, locked: true },
-      orderBy: [{ name: "asc" }, { id: "asc" }],
-      take: ORG_LANDING_MAX_MEMBERS * 2,
-    });
+    return withTwPlatform(this.prisma, "tw-booking-404 org landing: org members", (tx) =>
+      tx.user.findMany({
+        where: { twOrgId: orgId },
+        select: { id: true, username: true, name: true, locked: true },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+        take: ORG_LANDING_MAX_MEMBERS * 2,
+      })
+    );
   }
 
   async listUsersByUsername(usernames: string[]) {
-    const rows = await this.prisma.user.findMany({
-      where: { username: { in: usernames, mode: "insensitive" } },
-      select: { username: true, twOrgId: true },
-      take: 500,
-    });
+    const rows = await withTwPlatform(this.prisma, "tw-booking-404 org landing: username ownership", (tx) =>
+      tx.user.findMany({
+        where: { username: { in: usernames, mode: "insensitive" } },
+        select: { username: true, twOrgId: true },
+        take: 500,
+      })
+    );
     return rows.flatMap((r) => (r.username ? [{ username: r.username, twOrgId: r.twOrgId }] : []));
   }
 
   async listPublicEventTypes(userIds: number[]) {
-    const rows = await this.prisma.eventType.findMany({
-      where: { userId: { in: userIds }, teamId: null, hidden: false },
-      select: { userId: true, slug: true, title: true, length: true, twOrgId: true },
-      orderBy: [{ position: "desc" }, { id: "asc" }],
-      take: 500,
-    });
+    const rows = await withTwPlatform(this.prisma, "tw-booking-404 org landing: member event types", (tx) =>
+      tx.eventType.findMany({
+        where: { userId: { in: userIds }, teamId: null, hidden: false },
+        select: { userId: true, slug: true, title: true, length: true, twOrgId: true },
+        orderBy: [{ position: "desc" }, { id: "asc" }],
+        take: 500,
+      })
+    );
     return rows.flatMap((r) => (r.userId === null ? [] : [{ ...r, userId: r.userId }]));
   }
 
   async listTeamEventTypesBySlug(slug: string) {
-    const rows = await this.prisma.eventType.findMany({
-      where: { team: { slug: { equals: slug, mode: "insensitive" } }, hidden: false },
-      select: {
-        teamId: true,
-        slug: true,
-        title: true,
-        length: true,
-        twOrgId: true,
-        schedulingType: true,
-        team: { select: { slug: true } },
-      },
-      orderBy: [{ position: "desc" }, { id: "asc" }],
-      take: 200,
-    });
+    const rows = await withTwPlatform(this.prisma, "tw-booking-404 org landing: team event types", (tx) =>
+      tx.eventType.findMany({
+        where: { team: { slug: { equals: slug, mode: "insensitive" } }, hidden: false },
+        select: {
+          teamId: true,
+          slug: true,
+          title: true,
+          length: true,
+          twOrgId: true,
+          schedulingType: true,
+          team: { select: { slug: true } },
+        },
+        orderBy: [{ position: "desc" }, { id: "asc" }],
+        take: 200,
+      })
+    );
     return rows.flatMap((r) =>
       r.teamId === null
         ? []

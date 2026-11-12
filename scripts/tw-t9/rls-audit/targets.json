@@ -112,7 +112,8 @@
         "_PlatformOAuthClientToUser": "child of RLS-scoped users (FK); no twOrgId column yet, reached through the scoped parent; own policy in the TW-T9 contract slice",
         "_prisma_migrations": "migration bookkeeping, no tenant data",
         "_user_eventtype": "child of RLS-scoped EventType, users (FK); no twOrgId column yet, reached through the scoped parent; own policy in the TW-T9 contract slice",
-        "avatars": "public avatar blobs served by objectKey on unauthenticated image routes"
+        "avatars": "public avatar blobs served by objectKey on unauthenticated image routes",
+        "tw_email_event": "WC-TW-8c SendGrid event ledger (migration 20261105120000): no tenant column, no RLS policy by design; written by the signed webhook route and read by scripts/email-deliverability.ts only"
       },
       "write_probe": {
         "table": "tw_organization_member",
