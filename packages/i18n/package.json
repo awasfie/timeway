@@ -9,6 +9,7 @@
   "exports": {
     "./server": "./server.ts",
     "./next-i18next.config": "./next-i18next.config.js",
+    "./booker-keys.json": "./booker-keys.json",
     "./locales/*": "./locales/*"
   },
   "dependencies": {

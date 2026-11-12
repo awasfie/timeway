@@ -1,4 +1,4 @@
-import { loadTranslations } from "@calcom/i18n/server";
+import { loadTranslationSubset } from "@calcom/i18n/server";
 import { buildLegacyCtx } from "@lib/buildLegacyCtx";
 import { getServerSideProps } from "@lib/team/[slug]/[type]/getServerSideProps";
 import type { PageProps as ServerPageProps } from "app/_types";
@@ -25,9 +25,9 @@ const ServerPage = async ({ params, searchParams }: ServerPageProps) => {
   const eventLocale = props.eventData?.interfaceLanguage;
   if (eventLocale) {
     const ns = "common";
-    const translations = await loadTranslations(eventLocale, ns);
+    const translations = await loadTranslationSubset(eventLocale, ns);
     return (
-      <CustomI18nProvider translations={translations} locale={eventLocale} ns={ns}>
+      <CustomI18nProvider translations={translations} locale={eventLocale} ns={ns} isSubset>
         <TypePage {...props} />
       </CustomI18nProvider>
     );
