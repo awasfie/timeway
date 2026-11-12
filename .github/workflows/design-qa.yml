@@ -101,6 +101,13 @@ jobs:
         env:
           LHCI_OUT_DIR: out/lhci
         run: |
+          # UX.13.3-1: unrecorded warm-up, 2 requests per surface, so the cold first render of a fresh
+          # `next start` (TBT 3-10x runs 2-5 in run 43320245511) is not one of the 5 samples.
+          for p in $(node -e 'for (const s of require("./surfaces.json").surfaces) console.log(s.ci_path)'); do
+            for i in 1 2; do
+              curl -s -o /dev/null -w "warm-up $p #$i %{http_code} %{time_total}s\n" "$DESIGN_QA_BASE_URL$p" || true
+            done
+          done
           npx lhci collect --config=./lighthouserc.cjs
           npx lhci upload --config=./lighthouserc.cjs
           node lhci-medians.mjs .lighthouseci out/lhci-medians.json

@@ -1,5 +1,5 @@
 {
-  "_comment": "UX.13.3 ratchet (CC-56): per target and surface, the median of 5 Lighthouse runs at one SHA. While a median is over its UX.13.3 budget the gate is baseline x (1 + tolerance) and the budget is a warning; a surface absent here asserts the budget outright. Lower these in every reduction PR; never raise them without a ruling.",
+  "_comment": "UX.13.3 ratchet (CC-56): per target and surface, the median of 5 Lighthouse runs at one SHA. While a median is over its UX.13.3 budget the gate is baseline x (1 + tolerance) and the budget is a warning; a surface absent here asserts the budget outright. Lower these in every reduction PR; never raise them without a ruling. A metric already at or under its budget is omitted (the budget asserts outright).",
   "tolerance": {
     "lcp_ms": 0.1,
     "tbt_ms": 1.0,
@@ -10,31 +10,27 @@
   "ci": {
     "marketing-home": {
       "lcp_ms": 4331,
-      "tbt_ms": 160,
       "cls": 0.17,
       "js_kb": 280,
-      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912)"
+      "source": "Design QA run 43320245511 (5-run median, main 8815f0e9f1)"
     },
     "app-login": {
-      "lcp_ms": 4849,
-      "tbt_ms": 285,
-      "cls": 0,
+      "lcp_ms": 4616,
       "js_kb": 380,
-      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912)"
+      "source": "Design QA run 43320245511 (5-run median, main 8815f0e9f1)"
     },
     "app-signup": {
-      "lcp_ms": 6209,
-      "tbt_ms": 369,
-      "cls": 0,
+      "lcp_ms": 6199,
+      "tbt_ms": 229,
       "js_kb": 483,
-      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912)"
+      "source": "Design QA run 43320245511 (5-run median, main 8815f0e9f1)"
     },
     "booking-page": {
-      "lcp_ms": 7183,
-      "tbt_ms": 981,
+      "lcp_ms": 6557,
+      "tbt_ms": 504,
       "cls": 0.2,
-      "js_kb": 650,
-      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912)"
+      "js_kb": 555,
+      "source": "Design QA run 43320245511 (5-run median, main 8815f0e9f1)"
     }
   },
   "deployed": {}
