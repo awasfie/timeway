@@ -14,6 +14,8 @@
  * change: update PART CM / the ops-log in the same PR.
  */
 
+import { privacyContentAr, termsContentAr } from "./content.ar";
+
 export const LEGAL_ENTITY = {
   name: "AWSTREAMS DMCC",
   address: "Office 1308, 13th floor, Tiffany Tower, Cluster W, Dubai, United Arab Emirates",
@@ -22,6 +24,13 @@ export const LEGAL_ENTITY = {
 } as const;
 
 export const LEGAL_LAST_UPDATED = "25 September 2026";
+const LEGAL_LAST_UPDATED_AR = "25 سبتمبر 2026";
+
+export const isArabicLocale = (locale: string | null | undefined): boolean =>
+  (locale ?? "").toLowerCase().split("-")[0] === "ar";
+
+export const legalLastUpdated = (locale: string | null | undefined): string =>
+  isArabicLocale(locale) ? LEGAL_LAST_UPDATED_AR : LEGAL_LAST_UPDATED;
 
 export type LegalSection = { id: string; heading: string; paragraphs: string[]; bullets?: string[] };
 export type LegalDocumentContent = { title: string; intro: string; sections: LegalSection[] };
@@ -29,8 +38,10 @@ export type LegalDocumentContent = { title: string; intro: string; sections: Leg
 export function termsContent(
   appName: string,
   supportEmail: string,
-  websiteUrl: string
+  websiteUrl: string,
+  locale?: string | null
 ): LegalDocumentContent {
+  if (isArabicLocale(locale)) return termsContentAr(appName, supportEmail, websiteUrl);
   return {
     title: "Terms of Service",
     intro: `These terms are an agreement between you and ${LEGAL_ENTITY.name} ("we", "us"), the company that operates ${appName} at ${websiteUrl}. By creating an account or booking through ${appName}, you agree to them. If you use ${appName} for an organization, you confirm you may accept these terms on its behalf.`,
@@ -144,7 +155,12 @@ export function termsContent(
   };
 }
 
-export function privacyContent(appName: string, supportEmail: string): LegalDocumentContent {
+export function privacyContent(
+  appName: string,
+  supportEmail: string,
+  locale?: string | null
+): LegalDocumentContent {
+  if (isArabicLocale(locale)) return privacyContentAr(appName, supportEmail);
   return {
     title: "Privacy Policy",
     intro: `This policy explains what personal data ${appName} collects, why, who we share it with and the choices you have. ${appName} is operated by ${LEGAL_ENTITY.name} (${LEGAL_ENTITY.country}).`,

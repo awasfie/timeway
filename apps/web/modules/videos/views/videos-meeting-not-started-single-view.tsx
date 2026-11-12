@@ -5,9 +5,8 @@ import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { detectBrowserTimeFormat } from "@calcom/lib/timeFormat";
 import type { inferSSRProps } from "@calcom/types/inferSSRProps";
 import { Button } from "@calcom/ui/components/button";
-import { CalendarIcon } from "@coss/ui/icons";
 import { EmptyScreen } from "@calcom/ui/components/empty-screen";
-
+import { CalendarIcon } from "@coss/ui/icons";
 import type { getServerSideProps } from "@lib/video/meeting-not-started/[uid]/getServerSideProps";
 
 export type PageProps = inferSSRProps<typeof getServerSideProps>;
@@ -24,7 +23,7 @@ export default function MeetingNotStarted(props: PageProps) {
             <>
               <h2 className="mb-2 text-center font-medium">{props.booking.title}</h2>
               <p className="text-subtle text-center">
-                <CalendarIcon className="-mt-1 mr-1 inline-block h-4 w-4" />
+                <CalendarIcon className="-mt-1 me-1 inline-block h-4 w-4" />
                 {dayjs(props.booking.startTime).format(`${detectBrowserTimeFormat}, dddd DD MMMM YYYY`)}
               </p>
             </>
