@@ -2,17 +2,24 @@
 
 import { WEBAPP_URL } from "@calcom/lib/constants";
 import { clearCustomHostCache } from "@calcom/lib/domainManager/customHostnames/proxyGate";
+// We'll test the wrapped proxy as it would be used in production
+import { deferredFrontDoor } from "@lib/frontDoorDefer";
 import { get as edgeConfigGet } from "@vercel/edge-config";
 import { NextRequest, NextResponse } from "next/server";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-// We'll test the wrapped proxy as it would be used in production
 import proxy, { config } from "./proxy";
 
 // Mock dependencies at module level
 vi.mock("@vercel/edge-config", () => ({
   get: vi.fn(),
 }));
+
+// UX.13.3-3f: the loopback render is unit-tested in lib/frontDoorDefer.test.ts; here only the branch.
+vi.mock("@lib/frontDoorDefer", async () => {
+  const actual = await vi.importActual<typeof import("@lib/frontDoorDefer")>("@lib/frontDoorDefer");
+  return { ...actual, deferredFrontDoor: vi.fn(async () => null) };
+});
 
 // Mock NextResponse.json since it's not available in test environment
 vi.mock("next/server", async () => {
@@ -612,6 +619,71 @@ describe("Custom host routing (WC-TW-12c2)", () => {
     vi.stubEnv("TW_CUSTOM_DOMAINS_ENABLED", "false");
     expectNotFound(await callProxy(hostRequest("book.acme.com", "/")));
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("Front door post-paint hydration (UX.13.3-3f)", () => {
+  const deferMock = deferredFrontDoor as unknown as Mock;
+  const html = { accept: "text/html,application/xhtml+xml" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearCustomHostCache();
+    vi.stubEnv("NEXT_PUBLIC_WEBAPP_URL", WEBAPP_URL);
+    deferMock.mockResolvedValue(null);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("serves the deferred document for a signed-out GET / on the platform host", async () => {
+    const deferred = new Response("<html>deferred</html>", {
+      status: 200,
+      headers: { "x-tw-front-door": "deferred" },
+    });
+    deferMock.mockResolvedValue(deferred);
+    const res = await callProxy(createTestRequest({ url: `${WEBAPP_URL}/`, headers: html }));
+    expect(deferMock).toHaveBeenCalledTimes(1);
+    expect(res).toBe(deferred);
+  });
+
+  it("falls back to NextResponse.next() when the deferred render returns null", async () => {
+    const res = await callProxy(createTestRequest({ url: `${WEBAPP_URL}/`, headers: html }));
+    expect(deferMock).toHaveBeenCalledTimes(1);
+    expectStatus(res, 200);
+    expect(getHeader(res, "x-middleware-next")).toBe("1");
+  });
+
+  it("does not touch a signed-in / or another platform path", async () => {
+    await callProxy(
+      createTestRequest({ url: `${WEBAPP_URL}/`, headers: html, cookies: { "next-auth.session-token": "x" } })
+    );
+    await callProxy(createTestRequest({ url: `${WEBAPP_URL}/pricing`, headers: html }));
+    expect(deferMock).not.toHaveBeenCalled();
+  });
+
+  it("leaves / on a customer host untouched (rewrite to the org page, no loopback)", async () => {
+    vi.stubEnv("TW_CUSTOM_DOMAINS_ENABLED", "true");
+    vi.stubEnv("TW_DOMAIN_APPROVE_SECRET", "s");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ orgSlug: "acme" }), { status: 200 }))
+    );
+    const res = await callProxy(
+      createTestRequest({ url: "https://book.acme.com/", headers: { ...html, host: "book.acme.com" } })
+    );
+    expect(deferMock).not.toHaveBeenCalled();
+    expect(new URL(getHeader(res, "x-middleware-rewrite") ?? "").pathname).toBe("/team/acme");
+  });
+
+  it("leaves / on an unknown host untouched when custom domains are off (404, no loopback)", async () => {
+    vi.stubEnv("TW_CUSTOM_DOMAINS_ENABLED", "false");
+    const res = await callProxy(
+      createTestRequest({ url: "https://book.acme.com/", headers: { ...html, host: "book.acme.com" } })
+    );
+    expect(deferMock).not.toHaveBeenCalled();
+    expectStatus(res, 404);
   });
 });
 

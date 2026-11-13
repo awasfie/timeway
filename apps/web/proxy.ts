@@ -99,6 +99,8 @@ const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
   );
   if (customHost.action === "notFound") return notFound();
   // UX.13.3-3f (t_66e18c15): signed-out GET / requests its hydration chunks after the first paint.
+  // Platform/marketing host only: action "next" is returned for own hosts alone, so a customer
+  // host's "/" (rewrite to its org page, or 404) never reaches the loopback render.
   if (customHost.action === "next" && shouldDeferFrontDoor(req)) {
     return (await deferredFrontDoor(req, req.headers)) ?? NextResponse.next();
   }

@@ -104,14 +104,25 @@ export function shouldDeferFrontDoor(req: NextRequest): boolean {
 
 type Raw = { status: number; headers: http.IncomingHttpHeaders; body: string };
 
-function renderOverLoopback(req: NextRequest, headers: Headers): Promise<Raw> {
-  const port = Number(process.env.PORT || 3000);
-  const outHeaders: Record<string, string> = {};
+/** Loopback target and timeout; tests override them, production uses PORT and 15 s. */
+export type LoopbackOptions = { port?: number; timeoutMs?: number };
+
+export const LOOPBACK_TIMEOUT_MS = 15000;
+
+/** Request headers for the loopback render: everything but hop-by-hop, plus the raw marker. */
+export function loopbackRequestHeaders(headers: Headers): Record<string, string> {
+  const out: Record<string, string> = {};
   headers.forEach((value, name) => {
-    if (!HOP_BY_HOP.has(name.toLowerCase())) outHeaders[name] = value;
+    if (!HOP_BY_HOP.has(name.toLowerCase())) out[name] = value;
   });
-  outHeaders[FRONT_DOOR_RAW_HEADER] = "raw";
-  outHeaders["accept-encoding"] = "identity";
+  out[FRONT_DOOR_RAW_HEADER] = "raw";
+  out["accept-encoding"] = "identity";
+  return out;
+}
+
+function renderOverLoopback(req: NextRequest, headers: Headers, opts: LoopbackOptions): Promise<Raw> {
+  const port = opts.port ?? Number(process.env.PORT || 3000);
+  const timeoutMs = opts.timeoutMs ?? LOOPBACK_TIMEOUT_MS;
   return new Promise((resolve, reject) => {
     const r = http.request(
       {
@@ -119,7 +130,7 @@ function renderOverLoopback(req: NextRequest, headers: Headers): Promise<Raw> {
         port,
         path: `${req.nextUrl.pathname}${req.nextUrl.search}`,
         method: "GET",
-        headers: outHeaders,
+        headers: loopbackRequestHeaders(headers),
       },
       (res) => {
         let body = "";
@@ -131,7 +142,7 @@ function renderOverLoopback(req: NextRequest, headers: Headers): Promise<Raw> {
         res.on("error", reject);
       }
     );
-    r.setTimeout(15000, () => r.destroy(new Error("front-door loopback timeout")));
+    r.setTimeout(timeoutMs, () => r.destroy(new Error("front-door loopback timeout")));
     r.on("error", reject);
     r.end();
   });
@@ -146,19 +157,37 @@ const DROP_RESPONSE_HEADERS: Set<string> = new Set([
 ]);
 
 /**
+ * Every fallback is logged on one greppable line, so a permanent silent fallback (the normal render
+ * on every request, i.e. the LCP win lost) shows up in the container log. The deferred response
+ * carries `x-tw-front-door: deferred` so a curl shows which path served it.
+ */
+function fallback(reason: string): null {
+  console.warn(`[front-door-defer] fallback reason=${reason}`);
+  return null;
+}
+
+/**
  * Render / over loopback and return it with deferred chunks; null means "serve normally".
  * `headers` are the request headers the normal path would forward (CSP nonce, pathname header).
+ * Cost: a deferred GET / renders the page twice inside this process (once for the proxy request,
+ * once over loopback), bounded by the loopback timeout.
  */
-export async function deferredFrontDoor(req: NextRequest, headers: Headers): Promise<NextResponse | null> {
+export async function deferredFrontDoor(
+  req: NextRequest,
+  headers: Headers,
+  opts: LoopbackOptions = {}
+): Promise<NextResponse | null> {
   let raw: Raw;
   try {
-    raw = await renderOverLoopback(req, headers);
-  } catch {
-    return null;
+    raw = await renderOverLoopback(req, headers, opts);
+  } catch (e) {
+    if (e instanceof Error && /timeout/.test(e.message)) return fallback("timeout");
+    return fallback("error");
   }
-  if (raw.status !== 200 || !String(raw.headers["content-type"] ?? "").includes("text/html")) return null;
+  if (raw.status !== 200) return fallback(`status-${raw.status}`);
+  if (!String(raw.headers["content-type"] ?? "").includes("text/html")) return fallback("not-html");
   const html = deferHydrationChunks(raw.body);
-  if (html === null) return null;
+  if (html === null) return fallback("no-chunks");
   const out = new Headers();
   for (const [name, value] of Object.entries(raw.headers)) {
     if (value === undefined || DROP_RESPONSE_HEADERS.has(name)) continue;
@@ -168,6 +197,7 @@ export async function deferredFrontDoor(req: NextRequest, headers: Headers): Pro
       out.set(name, value);
     }
   }
+  out.set(FRONT_DOOR_RAW_HEADER, "deferred");
   return new NextResponse(html, { status: 200, headers: out });
 }
 
