@@ -1,10 +1,16 @@
+import type { DB } from "@calcom/kysely/types";
+import { twOrgKyselyOnReserve } from "@calcom/prisma/tw-org-kysely";
 import type { OnModuleDestroy } from "@nestjs/common";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { DeduplicateJoinsPlugin, Kysely, ParseJSONResultsPlugin, PostgresDialect } from "kysely";
+import {
+  CompiledQuery,
+  DeduplicateJoinsPlugin,
+  Kysely,
+  ParseJSONResultsPlugin,
+  PostgresDialect,
+} from "kysely";
 import { Pool } from "pg";
-
-import type { DB } from "@calcom/kysely/types";
 
 @Injectable()
 export class KyselyReadService implements OnModuleDestroy {
@@ -19,6 +25,8 @@ export class KyselyReadService implements OnModuleDestroy {
     // 3. Create the Dialect, passing the configured pool instance
     const dialect = new PostgresDialect({
       pool: pool, // Use the pool instance created above
+      // t_1952224a: org scope (TwOrgScopeInterceptor ALS) onto every reserved connection; RLS needs it.
+      onReserveConnection: twOrgKyselyOnReserve(CompiledQuery.raw),
     });
     this.kysely = new Kysely<DB>({
       dialect,
