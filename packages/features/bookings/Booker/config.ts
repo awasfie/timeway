@@ -1,7 +1,6 @@
-import { useEffect, useRef } from "react";
-
+import { useIsomorphicLayoutEffect } from "@calcom/lib/hooks/useIsomorphicLayoutEffect";
 import { BookerLayouts } from "@calcom/prisma/booker-layouts";
-
+import { useRef } from "react";
 import type { BookerLayout, BookerState } from "./types";
 
 // CSS enter animations (tw-animate-css) replacing the former framer-motion variants, so the booker
@@ -138,7 +137,8 @@ export const getBookerSizeClassNames = (
 export const useBookerResizeAnimation = (layout: BookerLayout, state: BookerState) => {
   const animationScope = useRef<HTMLDivElement>(null);
   const isEmbed = typeof window !== "undefined" && window?.isEmbed?.();
-  useEffect(() => {
+  // UX.13.3 CLS: applied before paint, so the grid never paints without its template (layout shift).
+  useIsomorphicLayoutEffect(() => {
     const animationConfig = resizeAnimationConfig[layout][state] || resizeAnimationConfig[layout].default;
     const element = animationScope.current;
     if (!element) return;
