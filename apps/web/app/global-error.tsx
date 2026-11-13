@@ -1,11 +1,13 @@
 "use client";
 
 import { type NextPage } from "next";
+import dynamic from "next/dynamic";
 import { useEffect } from "react";
 
-import CustomError from "./error";
-import type { ErrorProps } from "./error";
-import "../styles/app.css";
+import type { ErrorProps } from "./errorBody";
+
+// WC-TW-6n-3: lazy error UI, see error.tsx.
+const CustomError = dynamic(() => import("./errorBody"));
 
 export const GlobalError: NextPage<ErrorProps> = (props) => {
   useEffect(() => {
