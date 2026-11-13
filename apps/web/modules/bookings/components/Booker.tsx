@@ -407,6 +407,11 @@ const BookerComponent = ({
           // In a popup embed, if someone clicks outside the main(having main class or main tag), it closes the embed
           "main",
           "text-default flex min-h-full w-full flex-col items-center",
+          // UX.13.3 CLS: the page <main> centres this box vertically, so a box shorter than the viewport
+          // jumps up as the slots arrive and it grows (Lighthouse CLS 0.2 on /pro/30min, mobile). Keep
+          // the same box as the server shells (BookerFirstPaintShell/BookerSsrShell): full viewport
+          // height on mobile, natural height from md.
+          !isEmbed && "min-h-[100dvh] md:min-h-0",
           layout === BookerLayouts.MONTH_VIEW && !isEmbed && "my-20 ",
           layout === BookerLayouts.MONTH_VIEW ? "overflow-visible" : "overflow-clip",
           `${customClassNames?.bookerWrapper}`
