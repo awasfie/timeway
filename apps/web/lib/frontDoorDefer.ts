@@ -59,7 +59,8 @@ export function deferHydrationChunks(html: string): string | null {
   // Match-and-slice rather than String#replace: the chunk tags are cut out of the html by position.
   const kept: string[] = [];
   let last = 0;
-  for (const m of html.matchAll(SCRIPT_OPEN_TAG)) {
+  // Array.from: the web tsconfig targets es5, where for-of over a RegExp iterator fails TS2802.
+  for (const m of Array.from(html.matchAll(SCRIPT_OPEN_TAG))) {
     const attrs = m[1];
     const at = m.index ?? 0;
     const end = emptyScriptEnd(html, at + m[0].length);
