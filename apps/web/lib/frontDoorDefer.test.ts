@@ -44,6 +44,15 @@ describe("deferHydrationChunks", () => {
     expect(deferHydrationChunks(html)).toContain('<script nonce="abc123" data-tw-defer="">');
   });
 
+  it("matches closing tags with whitespace before the >", () => {
+    const html =
+      '<html><head><script src="/_next/static/chunks/a1.js" async=""></script ></head><body><h1>Hi</h1></body></html>';
+    const out = deferHydrationChunks(html);
+    expect(out).not.toContain("/_next/static/chunks/a1.js\" async");
+    expect(out).toContain("/_next/static/chunks/a1.js");
+    expect(out).toContain("<h1>Hi</h1>");
+  });
+
   it("returns null when there is nothing to defer", () => {
     expect(deferHydrationChunks("<html><body>x</body></html>")).toBeNull();
     expect(deferHydrationChunks('<script src="/_next/static/x.js" async=""></script>')).toBeNull();

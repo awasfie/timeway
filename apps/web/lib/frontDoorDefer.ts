@@ -33,7 +33,7 @@ const HOP_BY_HOP: Set<string> = new Set([
   "content-length",
 ]);
 
-const ASYNC_CHUNK_TAG = /<script\b([^>]*)><\/script>/g;
+const ASYNC_CHUNK_TAG = /<script\b([^>]*)><\/script\s*>/g;
 const SRC_ATTR = /\bsrc="(\/_next\/static\/[^"]+)"/;
 const ASYNC_ATTR = /\basync(?:="")?(?=[\s>]|$)/;
 const NONCE_ATTR = /\bnonce="([^"]+)"/;
@@ -47,15 +47,23 @@ export function deferHydrationChunks(html: string): string | null {
   if (bodyEnd === -1) return null;
   const srcs: string[] = [];
   let nonce = "";
-  const out = html.replace(ASYNC_CHUNK_TAG, (tag, attrs: string) => {
+  // Match-and-slice rather than String#replace: the chunk tags are cut out of the html by position.
+  const kept: string[] = [];
+  let last = 0;
+  for (const m of html.matchAll(ASYNC_CHUNK_TAG)) {
+    const attrs = m[1];
+    const at = m.index ?? 0;
     const src = SRC_ATTR.exec(attrs);
-    if (!src || !ASYNC_ATTR.test(attrs) || /\bnomodule\b/i.test(attrs)) return tag;
+    if (!src || !ASYNC_ATTR.test(attrs) || /\bnomodule\b/i.test(attrs)) continue;
     srcs.push(src[1]);
     const n = NONCE_ATTR.exec(attrs);
     if (n && !nonce) nonce = n[1];
-    return "";
-  });
+    kept.push(html.slice(last, at));
+    last = at + m[0].length;
+  }
   if (srcs.length === 0) return null;
+  kept.push(html.slice(last));
+  const out = kept.join("");
   if (!nonce) {
     const n = NONCE_ATTR.exec(html);
     if (n) nonce = n[1];
