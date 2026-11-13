@@ -7,6 +7,7 @@
 @import "../../../packages/config/theme/tokens.css";
 @import "../../../packages/config/theme/brand-timeway.css";
 @import "../../../packages/coss-ui/src/styles/globals.css";
+@import "./stack-utilities.css";
 
 @source "../app/*.tsx";
 @source "../app/{pricing,privacy,terms,brand-preview}/**/*.tsx";
@@ -101,34 +102,6 @@ html.todesktop.dark {
   .no-scrollbar {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
-  }
-}
-
-/**
- * Legacy space-y-* utilities for Tailwind v4 compatibility
- *
- * Tailwind v4 changed the selector used by space-x-* and space-y-* utilities to address
- * performance issues on large pages. The selector changed from:
- *
- *   .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
- *
- * to:
- *
- *   .space-y-4 > :not(:last-child) { margin-bottom: 1rem; }
- *
- * These `.stack-y-*` utilities recreate the pre-v4 behavior using the old selector pattern
- * (`:not([hidden]) ~ :not([hidden])` with `margin-top`) for cases where the new behavior
- * causes layout issues.
- *
- * Usage: <div class="stack-y-4"> or <div class="lg:stack-y-6">
- * Supports all spacing values: stack-y-0, stack-y-0.5, stack-y-1, stack-y-1.5, stack-y-2, etc.
- *
- * Reference: https://tailwindcss.com/docs/upgrade-guide#space-between-selector
- */
-@utility stack-y-* {
-  & > :not([hidden]) ~ :not([hidden]) {
-    margin-top: --spacing(--value(integer));
-    margin-top: --value([length]);
   }
 }
 
