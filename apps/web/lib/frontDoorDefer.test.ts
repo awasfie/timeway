@@ -48,9 +48,19 @@ describe("deferHydrationChunks", () => {
     const html =
       '<html><head><script src="/_next/static/chunks/a1.js" async=""></script ></head><body><h1>Hi</h1></body></html>';
     const out = deferHydrationChunks(html);
-    expect(out).not.toContain("/_next/static/chunks/a1.js\" async");
+    expect(out).not.toContain('/_next/static/chunks/a1.js" async');
     expect(out).toContain("/_next/static/chunks/a1.js");
     expect(out).toContain("<h1>Hi</h1>");
+  });
+
+  it("matches upper-case and attribute-bearing end tags, leaves scripts with a body alone", () => {
+    const html =
+      '<html><head><script src="/_next/static/chunks/a1.js" async=""></SCRIPT foo="bar"></head>' +
+      '<body><script src="/_next/static/chunks/b2.js" async="">x()</script><h1>Hi</h1></body></html>';
+    const out = deferHydrationChunks(html) ?? "";
+    expect(out).not.toContain("</SCRIPT");
+    expect(out).toContain('<script src="/_next/static/chunks/b2.js" async="">x()</script>');
+    expect(out).toContain('["/_next/static/chunks/a1.js"]');
   });
 
   it("returns null when there is nothing to defer", () => {
