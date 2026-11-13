@@ -1,21 +1,15 @@
-import { getLocale } from "@calcom/features/auth/lib/getLocale";
-import { loadTranslations } from "@calcom/i18n/server";
 import { IconSprites } from "@calcom/ui/components/icon";
-import { buildLegacyRequest } from "@lib/buildLegacyCtx";
-import { frontLocaleFromPath } from "~/marketing/frontPaths";
-import { getBookingPageLocale } from "@lib/i18n/getBookingPageLocale";
-import { PATHNAME_HEADER } from "@lib/i18n/pathnameHeader";
 import { RumBeacon } from "@lib/telemetry/rum-client";
-import { dir } from "i18next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import Script from "next/script";
 import type React from "react";
 
 import "../styles/globals.css";
-import { AppRouterI18nProvider } from "./AppRouterI18nProvider";
-import { Providers } from "./providers";
+import process from "node:process";
+import { AnalyticsInit } from "./AnalyticsInit";
+import { getRequestLocale } from "./requestLocale";
 import { SpeculationRules } from "./SpeculationRules";
 
 // UX.13.3-2: no font is preloaded from the root layout. The marketing pages render DMSans (brand-timeway.css
@@ -87,37 +81,11 @@ export const metadata = {
   },
 };
 
-const getInitialProps = async () => {
-  const h = await headers();
-  const isEmbed = h.get("x-isEmbed") === "true";
-  const embedColorScheme = h.get("x-embedColorScheme");
-  // A booking page whose event type pins interfaceLanguage renders in that language for every visitor,
-  // so <html lang/dir> must follow it in the SSR HTML, not the visitor's Accept-Language (TW-AWS-3).
-  // FRONT-DOOR-timeway: /ar and /ar/pricing are Arabic whatever the visitor's Accept-Language says.
-  const eventLocale =
-    frontLocaleFromPath(h.get(PATHNAME_HEADER)) ?? (await getBookingPageLocale(h.get(PATHNAME_HEADER)));
-  const newLocale =
-    eventLocale ?? (await getLocale(buildLegacyRequest(await headers(), await cookies()))) ?? "en";
-  const direction = dir(newLocale) ?? "ltr";
-
-  return {
-    isEmbed,
-    embedColorScheme,
-    locale: newLocale,
-    direction,
-  };
-};
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const h = await headers();
   const nonce = h.get("x-csp-nonce") ?? "";
 
-  const country = h.get("cf-ipcountry") || h.get("x-vercel-ip-country") || "Unknown";
-
-  const { locale, direction, isEmbed, embedColorScheme } = await getInitialProps();
-
-  const ns = "common";
-  const translations = await loadTranslations(locale, ns);
+  const { locale, direction, isEmbed, embedColorScheme } = await getRequestLocale();
 
   return (
     <html
@@ -131,8 +99,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head nonce={nonce}>
         <style>{`
           :root {
-            --font-sans: ${interFont.style.fontFamily.replace(/\'/g, "")}, system-ui;
-            --font-cal: ${calFont.style.fontFamily.replace(/\'/g, "")};
+            --font-sans: ${interFont.style.fontFamily.replace(/'/g, "")}, system-ui;
+            --font-cal: ${calFont.style.fontFamily.replace(/'/g, "")};
           }
         `}</style>
         {process.env.NODE_ENV === "development" && (
@@ -167,20 +135,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <RumBeacon />
         <SpeculationRules
           // URLs In Navigation
-          prerenderPathsOnHover={[
-            "/event-types",
-            "/availability",
-            "/bookings/upcoming",
-            "/teams",
-            "/apps",
-          ]}
+          prerenderPathsOnHover={["/event-types", "/availability", "/bookings/upcoming", "/teams", "/apps"]}
         />
 
-        <Providers isEmbed={isEmbed} nonce={nonce} country={country}>
-          <AppRouterI18nProvider translations={translations} locale={locale} ns={ns}>
-            {children}
-          </AppRouterI18nProvider>
-        </Providers>
+        <AnalyticsInit />
+        {/* UX.13.3-3b: app providers + translations live in AppProvidersServer (route-group layouts). */}
+        {children}
       </body>
     </html>
   );

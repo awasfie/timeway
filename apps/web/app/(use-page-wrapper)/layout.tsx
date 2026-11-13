@@ -1,8 +1,9 @@
+import process from "node:process";
+import PageWrapper from "@components/PageWrapperAppDir";
 import { headers } from "next/headers";
 import Script from "next/script";
-
-import PageWrapper from "@components/PageWrapperAppDir";
-
+import { AppProviders } from "../AppProviders";
+import { getAppProviderProps } from "../AppProvidersServer";
 import { AppShellProviders } from "./AppShellProviders";
 import "../../styles/app.css";
 
@@ -23,8 +24,10 @@ export default async function PageWrapperLayout({ children }: { children: React.
     },
   ].filter((script): script is { id: string; script: string } => !!script.script);
 
+  const appProviderProps = await getAppProviderProps();
+
   return (
-    <>
+    <AppProviders {...appProviderProps}>
       <PageWrapper requiresLicense={false} nonce={nonce}>
         <AppShellProviders isEmbed={h.get("x-isEmbed") === "true"}>{children}</AppShellProviders>
         {scripts.map((script) => (
@@ -39,6 +42,6 @@ export default async function PageWrapperLayout({ children }: { children: React.
           />
         ))}
       </PageWrapper>
-    </>
+    </AppProviders>
   );
 }
