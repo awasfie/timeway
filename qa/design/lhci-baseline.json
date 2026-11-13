@@ -13,6 +13,10 @@
     "note": "Lighthouse benchmarkIndex, median over a surface's collected runs. The class picks the TBT baseline only (lighthouserc.cjs runnerClass). Surface medians seen: slow 2204-2663, mid 2722 (Design QA 43360989289 attempt 2, booking TBT 595 > the fast limit 528), fast 2908-3056 and 3878-4208 (runs 43320245511-43360989289). 2850 sits under every fast median; a mid-band runner is judged as slow."
   },
   "ci": {
+    "marketing-home": {
+      "lcp_ms": 2027,
+      "source": "UX.13.3-3d (t_67885034): root not-found passes only its 14 strings, / HTML 359131 -> 36568 bytes. Design QA 43373014341 (head 485f06f1, slow runner bi 2415) 5-run median LCP 2027 (1874/2027/2273/2316/1866), TBT 46, CLS 0, JS 153; was 2921. Observed FCP = observed LCP = 105 ms; the simulated gap is the JS chunks that finish before first paint (Lantern LCP graph). TBT, CLS and JS assert outright."
+    },
     "app-login": {
       "lcp_ms": 4363,
       "tbt_ms": 245,
