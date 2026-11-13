@@ -1,9 +1,13 @@
 /* App stylesheet (UX.13.3-2, t_4591ad56): the full utility set for the app shell, booker, routing forms
    and embed, plus the app-only component CSS. Imported by the (use-page-wrapper) and
-   (booking-page-wrapper) layouts, not-found, error and the icons page; theme, tokens and base come from
-   globals.css, which the root layout always loads first. */
-@reference "./globals.css";
+   (booking-page-wrapper) layouts, not-found, error and the icons page; it carries its own copy of the theme
+   (tailwind theme, tokens, brand, coss) so every var its utilities use is defined here; preflight and
+   the root base rules come from globals.css, which the root layout always loads first. */
+@import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
+@import "../../../packages/config/theme/tokens.css";
+@import "../../../packages/config/theme/brand-timeway.css";
+@import "../../../packages/coss-ui/src/styles/globals.css";
 @import "../../../packages/config/theme/shared-sources.css";
 @import "./raqb.css";
 @import "./family-ui.css";
