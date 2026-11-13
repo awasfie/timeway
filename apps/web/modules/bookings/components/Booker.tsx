@@ -407,6 +407,11 @@ const BookerComponent = ({
           // In a popup embed, if someone clicks outside the main(having main class or main tag), it closes the embed
           "main",
           "text-default flex min-h-full w-full flex-col items-center",
+          // UX.13.3 CLS: the page <main> centres this box vertically, so a box shorter than the viewport
+          // jumps up as the slots arrive and it grows (Lighthouse CLS 0.2 on /pro/30min, mobile). Keep
+          // the same box as the server shells (BookerFirstPaintShell/BookerSsrShell): full viewport
+          // height below md only. Desktop keeps min-h-full (main's behaviour), so 1440px is unchanged.
+          !isEmbed && "max-md:min-h-[100dvh]",
           layout === BookerLayouts.MONTH_VIEW && !isEmbed && "my-20 ",
           layout === BookerLayouts.MONTH_VIEW ? "overflow-visible" : "overflow-clip",
           `${customClassNames?.bookerWrapper}`
@@ -420,6 +425,9 @@ const BookerComponent = ({
             // We remove border only when the content covers entire viewport. Because in embed, it can almost never be the case that it covers entire viewport, we show the border there
             (layout === BookerLayouts.MONTH_VIEW || isEmbed) && "border-subtle rounded-md",
             !isEmbed && "sm:transition-[width] sm:duration-300",
+            // UX.13.3 CLS: below md the shells are full width; keep the grid full width too so it cannot
+            // re-centre as content widens it (run 43351994617: CLS 0.125 left on this node).
+            !isEmbed && "max-md:w-full",
             isEmbed && layout === BookerLayouts.MONTH_VIEW && "border-booker sm:border-booker-width",
             !isEmbed && layout === BookerLayouts.MONTH_VIEW && `border-subtle border`,
             `${customClassNames?.bookerContainer}`
