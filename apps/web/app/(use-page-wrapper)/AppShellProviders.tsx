@@ -3,6 +3,7 @@
 import { NotificationSoundHandler } from "@calcom/web/components/notification-sound-handler";
 import { WebPushProvider } from "@calcom/web/modules/notifications/components/WebPushContext";
 import { useNuqsParams } from "@lib/hooks/useNuqsParams";
+import { SessionProvider } from "next-auth/react";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import CacheProvider from "react-inlinesvg/provider";
 import { ToastProvider } from "@coss/ui/components/toast";
@@ -12,8 +13,10 @@ import { ToastProvider } from "@coss/ui/components/toast";
 // booking route's first load. The booking route group renders without them.
 export function AppShellProviders({ isEmbed, children }: { isEmbed: boolean; children: React.ReactNode }) {
   const nuqsParams = useNuqsParams();
+  // WC-TW-6n-4b: SessionProvider lives here (not the root layout) so next-auth/react stays off the
+  // public booking route group.
   return (
-    <>
+    <SessionProvider>
       {!isEmbed && <NotificationSoundHandler />}
       {/* @ts-expect-error react-inlinesvg/provider is incompatible with @types/react@18.0.26. Remove when these types are compatible. */}
       <CacheProvider>
@@ -23,6 +26,6 @@ export function AppShellProviders({ isEmbed, children }: { isEmbed: boolean; chi
           </WebPushProvider>
         </NuqsAdapter>
       </CacheProvider>
-    </>
+    </SessionProvider>
   );
 }

@@ -1,6 +1,6 @@
 {
   "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200. Since WC-TW-6n-1 the total excludes <script noModule> (Next's legacy polyfills.js), reported separately.",
-  "total_kb_gz": 334.7,
+  "total_kb_gz": 311.7,
   "tolerance_kb": 5,
-  "source": "WC-TW-6n-4a local production build on #256 + this PR (25 scripts, 334.7 KB gz; zod, @hookform/resolvers and the booking-responses schemas load on first validation, booker reads a display-only location map instead of app-store locations metadata; noModule polyfills 38.5 KB gz not counted)"
+  "source": "WC-TW-6n-4b local production build on #264 + this PR (24 scripts, 311.7 KB gz; booker translates server-passed strings with packages/lib/i18n/lightI18n instead of i18next/react-i18next, next-auth SessionProvider moved to (use-page-wrapper)/AppShellProviders and the booker reads the session via useLazySession; noModule polyfills 38.5 KB gz not counted)"
 }
