@@ -52,6 +52,20 @@ describe("deliverabilityRates", () => {
     expect(r.complaintOk).toBe(false);
   });
 
+  it("falls back to delivered + bounce + dropped when no processed events arrive", () => {
+    const r = deliverabilityRates({ delivered: 182, dropped: 61 });
+    expect(r.processed).toBe(243);
+    expect(r.bouncePct).toBe(25.1);
+    expect(r.bounceOk).toBe(false);
+    const clean = deliverabilityRates({ delivered: 182 });
+    expect(clean.bouncePct).toBe(0);
+    expect(clean.bounceOk).toBe(true);
+  });
+
+  it("prefers processed when present", () => {
+    expect(deliverabilityRates({ processed: 200, delivered: 100, dropped: 2 }).processed).toBe(200);
+  });
+
   it("reports no data rather than 0% when nothing was sent", () => {
     const r = deliverabilityRates({});
     expect(r.bouncePct).toBeNull();

@@ -11,10 +11,20 @@ export class EmailEventRepository {
     return result.count;
   }
 
-  async countByEventSince(since: Date): Promise<Partial<Record<LedgerEvent, number>>> {
+  async countByEventSince(
+    since: Date,
+    opts: { excludeDomains?: readonly string[] } = {}
+  ): Promise<Partial<Record<LedgerEvent, number>>> {
+    const exclude = opts.excludeDomains ?? [];
     const groups = await this.prisma.emailEvent.groupBy({
       by: ["event"],
-      where: { occurredAt: { gte: since } },
+      where: {
+        occurredAt: { gte: since },
+        // recipientDomain is nullable: NOT IN alone would drop NULL rows, so keep them explicitly.
+        ...(exclude.length > 0
+          ? { OR: [{ recipientDomain: null }, { recipientDomain: { notIn: [...exclude] } }] }
+          : {}),
+      },
       _count: { _all: true },
     });
     const counts: Partial<Record<LedgerEvent, number>> = {};
