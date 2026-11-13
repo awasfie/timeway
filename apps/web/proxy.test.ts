@@ -648,6 +648,14 @@ describe("Front door post-paint hydration (UX.13.3-3f)", () => {
     expect(res).toBe(deferred);
   });
 
+  it("hands the loopback render this request's CSP nonce and pathname header", async () => {
+    vi.stubEnv("CSP_POLICY", "non-strict");
+    await callProxy(createTestRequest({ url: `${WEBAPP_URL}/`, headers: html }));
+    const headers = deferMock.mock.calls[0][1] as Headers;
+    expect(headers.get("x-csp-nonce")).toMatch(/^[A-Za-z0-9+/=]+$/);
+    expect(headers.get("x-tw-pathname")).toBe("/");
+  });
+
   it("falls back to NextResponse.next() when the deferred render returns null", async () => {
     const res = await callProxy(createTestRequest({ url: `${WEBAPP_URL}/`, headers: html }));
     expect(deferMock).toHaveBeenCalledTimes(1);

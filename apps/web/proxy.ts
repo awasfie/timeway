@@ -102,7 +102,14 @@ const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
   // Platform/marketing host only: action "next" is returned for own hosts alone, so a customer
   // host's "/" (rewrite to its org page, or 404) never reaches the loopback render.
   if (customHost.action === "next" && shouldDeferFrontDoor(req)) {
-    return (await deferredFrontDoor(req, req.headers)) ?? NextResponse.next();
+    // Same request enrichment as the normal path, so the loopback render gets this request's CSP
+    // nonce (lib/csp.ts) and the loader carries it; the response gets the same CSP headers.
+    const deferReq = enrichRequestWithHeaders({ req });
+    const deferHeaders = new Headers(deferReq.headers);
+    deferHeaders.set(PATHNAME_HEADER, url.pathname);
+    const deferred = await deferredFrontDoor(req, sanitizeRequestHeaders(deferHeaders));
+    if (deferred) return responseWithHeaders({ url, res: deferred, req: deferReq });
+    return NextResponse.next();
   }
   if (customHost.action === "next" && !isLegacyMatchedPath(url.pathname)) return NextResponse.next();
 
