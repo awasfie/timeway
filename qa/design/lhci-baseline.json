@@ -9,8 +9,8 @@
   },
   "tolerance_note": "tbt_ms 1.0 as perf/lhci-baseline.json (WC-TW-6c-12): GH runners come in two CPU classes and TBT swings 1.35-1.61x at the same code.",
   "runner_class": {
-    "slow_below": 2700,
-    "note": "Lighthouse benchmarkIndex, median over a surface's collected runs. Observed slow class 2178-2663, fast class 2790-3090 and 3878-4208 (Design QA runs 43320245511-43356108037). The class picks the TBT baseline only (lighthouserc.cjs runnerClass)."
+    "slow_below": 2850,
+    "note": "Lighthouse benchmarkIndex, median over a surface's collected runs. The class picks the TBT baseline only (lighthouserc.cjs runnerClass). Surface medians seen: slow 2204-2663, mid 2722 (Design QA 43360989289 attempt 2, booking TBT 595 > the fast limit 528), fast 2908-3056 and 3878-4208 (runs 43320245511-43360989289). 2850 sits under every fast median; a mid-band runner is judged as slow."
   },
   "ci": {
     "marketing-home": {

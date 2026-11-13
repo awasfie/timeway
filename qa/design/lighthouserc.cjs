@@ -76,7 +76,10 @@ for (const surface of surfaces) {
   const warnings = {};
   for (const [metric, m] of Object.entries(METRICS)) {
     const { error, warn } = limitFor(surface, metric);
-    const opts = m.median ? { aggregationMethod: "median-run" } : {};
+    // "median" = the median of the metric over the runs, as lhci-medians.mjs computes the baselines.
+    // "median-run" asserted the metric of the run with median FCP/TTI, which in Design QA 43360989289
+    // attempt 2 was the cold first booking run (TBT 1324 against a 595 median) (t_24fe7849).
+    const opts = m.median ? { aggregationMethod: "median" } : {};
     const scale = m.scale ?? 1;
     errors[m.audit] = ["error", { maxNumericValue: error * scale, ...opts }];
     if (warn !== null) warnings[m.audit] = ["warn", { maxNumericValue: warn * scale, ...opts }];
