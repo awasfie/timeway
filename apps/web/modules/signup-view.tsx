@@ -738,7 +738,7 @@ export default function Signup({
                   <div className="flex flex-col text-sm">
                     <div className="flex gap-1">
                       <p className="text-subtle">{t("already_have_account")}</p>
-                      <Link href="/auth/login" className="text-emphasis hover:underline">
+                      <Link href="/auth/login" className="inline-flex min-h-6 items-center text-emphasis hover:underline">
                         {t("sign_in")}
                       </Link>
                     </div>
@@ -843,7 +843,7 @@ export default function Signup({
                     <Icon name={feature.icon} className="mb-1 h-4 w-4" />
                     <span className="font-medium text-sm">{t(feature.title)}</span>
                   </div>
-                  <div className="text-sm text-subtle">
+                  <div className="text-sm text-default">
                     <p>
                       {t(
                         feature.description,

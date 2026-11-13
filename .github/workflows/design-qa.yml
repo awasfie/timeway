@@ -1,0 +1,131 @@
+name: Design QA (axe, screenshots, LHCI budgets)
+# DESIGN-QA-CI (t_3fe2e86d). UX.13.3 budgets through Lighthouse CI (CC-56 as corrected by
+# UX.13.10-2: lab TBT for INP), axe WCAG 2.2 AA with zero serious/critical violations (CC-55 item 19,
+# UX.13.4), and the UX.13.10-5 render set (EN/AR x 1440/390) diffed against qa/design/tests/__screens__.
+# Runs against a seeded production build of the PR on the runner (DESIGN_QA_TARGET=ci). Every check is
+# a hard step; none is skippable, and the verdict step fails if any of them did not succeed.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "**.md"] # CI-COST-3
+  workflow_dispatch:
+    inputs:
+      update_screens:
+        description: "Write missing/changed screenshot baselines and upload them as an artifact (never commits)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: design-qa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  design-qa:
+    name: axe + screenshot diff + Lighthouse UX.13.3
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: calendso
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      # CI-only public dummies (same values as booking-perf.yml / e2e.yml); the DB is this job's service.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/calendso
+      DATABASE_DIRECT_URL: postgresql://postgres:postgres@localhost:5432/calendso
+      CALENDSO_ENCRYPTION_KEY: 0zfLtY99wjeLnsM7qsa8xsT+Q0oSgnOL
+      NEXTAUTH_SECRET: EI4qqDpcfdvf4A+0aQEEx8JjHxHSy4uWiZw/F32K+pA=
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_WEBAPP_URL: http://localhost:3000
+      NEXT_PUBLIC_WEBSITE_URL: http://localhost:3000
+      ALLOWED_HOSTNAMES: '"cal.local:3000","localhost:3000"'
+      NEXT_TELEMETRY_DISABLED: "1"
+      DESIGN_QA_TARGET: ci
+      DESIGN_QA_BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: ./.github/actions/cache-checkout
+      - uses: ./.github/actions/yarn-install
+      - run: yarn prisma generate
+      - uses: ./.github/actions/cache-db
+      - uses: ./.github/actions/cache-build
+      - name: Start production server
+        run: |
+          (cd apps/web && nohup npx next start -p 3000 > "$RUNNER_TEMP/next.log" 2>&1 &)
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/pro/30min || true)
+            [ "$code" = "200" ] && echo "server up after ${i}x2s" && exit 0
+            sleep 2
+          done
+          echo "::error::server never returned 200 (last $code)"; tail -100 "$RUNNER_TEMP/next.log"; exit 1
+      - name: Install design-qa tools
+        working-directory: qa/design
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: axe (WCAG 2.2 AA, zero serious/critical)
+        id: axe
+        continue-on-error: true
+        working-directory: qa/design
+        run: npx playwright test --grep axe
+      - name: Screenshot diff (EN/AR x 1440/390)
+        id: screens
+        continue-on-error: true
+        working-directory: qa/design
+        run: |
+          if [ "${{ inputs.update_screens }}" = "true" ]; then
+            npx playwright test --grep screens --update-snapshots=all
+          else
+            npx playwright test --grep screens
+          fi
+      - name: Lighthouse CI, UX.13.3 budgets, 5 runs median
+        id: lhci
+        continue-on-error: true
+        working-directory: qa/design
+        env:
+          LHCI_OUT_DIR: out/lhci
+        run: |
+          # UX.13.3-1: unrecorded warm-up, 2 requests per surface, so the cold first render of a fresh
+          # `next start` (TBT 3-10x runs 2-5 in run 43320245511) is not one of the 5 samples.
+          for p in $(node -e 'for (const s of require("./surfaces.json").surfaces) console.log(s.ci_path)'); do
+            for i in 1 2; do
+              curl -s -o /dev/null -w "warm-up $p #$i %{http_code} %{time_total}s\n" "$DESIGN_QA_BASE_URL$p" || true
+            done
+          done
+          npx lhci collect --config=./lighthouserc.cjs
+          npx lhci upload --config=./lighthouserc.cjs
+          node lhci-medians.mjs .lighthouseci out/lhci-medians.json
+          {
+            echo "### UX.13.3 medians (target=ci)"; echo '```json'; cat out/lhci-medians.json; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          npx lhci assert --config=./lighthouserc.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: design-qa
+          path: |
+            qa/design/out/
+            qa/design/tests/__screens__/
+          if-no-files-found: error
+      - name: Gate verdict
+        if: always()
+        run: |
+          echo "axe=${{ steps.axe.outcome }} screens=${{ steps.screens.outcome }} lhci=${{ steps.lhci.outcome }}"
+          [ "${{ inputs.update_screens }}" != "true" ] || { echo "::error::baseline-update run, not a gate"; exit 1; }
+          [ "${{ steps.axe.outcome }}" = "success" ] && [ "${{ steps.screens.outcome }}" = "success" ] && [ "${{ steps.lhci.outcome }}" = "success" ]
