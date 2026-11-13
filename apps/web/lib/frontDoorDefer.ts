@@ -34,7 +34,7 @@ const HOP_BY_HOP: Set<string> = new Set([
 ]);
 
 /** Opening <script ...> tag; the matching end tag is checked by position (see emptyScriptEnd). */
-const SCRIPT_OPEN_TAG = /<script\b([^>]*)>/g;
+const SCRIPT_OPEN_TAG = /<script\b([^>]*)>/gi;
 const SCRIPT_END = "</script";
 
 /** End offset of an empty script element whose opening tag ends at `from`, or -1 if it has a body. */

@@ -63,6 +63,15 @@ describe("deferHydrationChunks", () => {
     expect(out).toContain('["/_next/static/chunks/a1.js"]');
   });
 
+  it("matches upper-case opening tags", () => {
+    const html =
+      '<html><head><SCRIPT src="/_next/static/chunks/c3.js" async=""></script></head>' +
+      "<body><h1>Hi</h1></body></html>";
+    const out = deferHydrationChunks(html) ?? "";
+    expect(out).not.toContain("<SCRIPT");
+    expect(out).toContain('["/_next/static/chunks/c3.js"]');
+  });
+
   it("returns null when there is nothing to defer", () => {
     expect(deferHydrationChunks("<html><body>x</body></html>")).toBeNull();
     expect(deferHydrationChunks('<script src="/_next/static/x.js" async=""></script>')).toBeNull();
