@@ -8,6 +8,7 @@ import logger from "@calcom/lib/logger";
 import { redactError } from "@calcom/lib/redactError";
 
 import { ErrorPage } from "@components/error/error-page";
+import "../styles/app.css";
 
 const log = logger.getSubLogger({ prefix: ["[error]"] });
 

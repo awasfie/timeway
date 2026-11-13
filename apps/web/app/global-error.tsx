@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import CustomError from "./error";
 import type { ErrorProps } from "./error";
+import "../styles/app.css";
 
 export const GlobalError: NextPage<ErrorProps> = (props) => {
   useEffect(() => {

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import PageWrapper from "@components/PageWrapperAppDir";
 
 import { NotFound } from "./notFoundClient";
+import "../styles/app.css";
 
 export const generateMetadata = async () => {
   const metadata = await _generateMetadata(

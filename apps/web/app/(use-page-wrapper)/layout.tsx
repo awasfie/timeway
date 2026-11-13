@@ -4,6 +4,7 @@ import Script from "next/script";
 import PageWrapper from "@components/PageWrapperAppDir";
 
 import { AppShellProviders } from "./AppShellProviders";
+import "../../styles/app.css";
 
 export default async function PageWrapperLayout({ children }: { children: React.ReactNode }) {
   const h = await headers();
