@@ -650,6 +650,7 @@ describe("Middleware Matcher Configuration", () => {
       "/api/auth/signup",
       "/ar",
       "/ar/pricing",
+      "/",
     ]);
   });
 

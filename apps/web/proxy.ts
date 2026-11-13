@@ -5,6 +5,7 @@ import {
   readGateEnv,
 } from "@calcom/lib/domainManager/customHostnames/proxyGate";
 import { getCspHeader, getCspNonce } from "@lib/csp";
+import { deferredFrontDoor, shouldDeferFrontDoor } from "@lib/frontDoorDefer";
 import { PATHNAME_HEADER } from "@lib/i18n/pathnameHeader";
 import { AR_FRONT_PATHS } from "~/marketing/frontPaths";
 import { get } from "@vercel/edge-config";
@@ -97,6 +98,10 @@ const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
     resolveCustomHost
   );
   if (customHost.action === "notFound") return notFound();
+  // UX.13.3-3f (t_66e18c15): signed-out GET / requests its hydration chunks after the first paint.
+  if (customHost.action === "next" && shouldDeferFrontDoor(req)) {
+    return (await deferredFrontDoor(req, req.headers)) ?? NextResponse.next();
+  }
   if (customHost.action === "next" && !isLegacyMatchedPath(url.pathname)) return NextResponse.next();
 
   const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });
@@ -213,6 +218,8 @@ export const config = {
     "/api/auth/signup",
     "/ar",
     "/ar/pricing",
+    // UX.13.3-3f: the front door, for the post-paint hydration loader (lib/frontDoorDefer.ts).
+    "/",
     // WC-TW-12c2: every page on a customer host. Static assets are skipped; platform hosts are
     // excluded here and again in isLegacyMatchedPath.
     {
