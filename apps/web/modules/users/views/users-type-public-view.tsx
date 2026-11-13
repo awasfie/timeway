@@ -3,7 +3,7 @@
 import type { EmbedProps } from "app/WithEmbedSSR";
 import { useSearchParams } from "next/navigation";
 
-import { BookerWebWrapper as Booker } from "@calcom/web/modules/bookings/components/BookerWebWrapper";
+import { BookerWebWrapperLazy as Booker } from "@calcom/web/modules/bookings/components/BookerWebWrapperLazy";
 import { getBookerWrapperClasses } from "@calcom/features/bookings/Booker/utils/getBookerWrapperClasses";
 
 import type { inferSSRProps } from "@lib/types/inferSSRProps";
@@ -24,13 +24,15 @@ export const getMultipleDurationValue = (
   return defaultValue;
 };
 
-function Type({ slug, user, isEmbed, booking, isBrandingHidden, eventData, orgBannerUrl }: PageProps) {
+function Type({ slug, user, isEmbed, booking, isBrandingHidden, eventData, orgBannerUrl, shellNow }: PageProps & { shellNow?: number }) {
   const searchParams = useSearchParams();
 
   return (
     <BookingPageErrorBoundary>
       <main className={getBookerWrapperClasses({ isEmbed: !!isEmbed })}>
         <Booker
+          isEmbed={!!isEmbed}
+          shellNow={shellNow}
           username={user}
           eventSlug={slug}
           bookingData={booking}
