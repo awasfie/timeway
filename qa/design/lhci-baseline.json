@@ -9,11 +9,11 @@
   "tolerance_note": "tbt_ms 1.0 as perf/lhci-baseline.json (WC-TW-6c-12): GH runners come in two CPU classes and TBT swings 1.35-1.61x at the same code.",
   "ci": {
     "marketing-home": {
-      "lcp_ms": 4364,
+      "lcp_ms": 4331,
       "tbt_ms": 160,
       "cls": 0,
       "js_kb": 280,
-      "source": "Design QA run 43341227199 (5-run median, PR #288 head dc7991382a; CLS 0.17 -> 0, TBT/LCP/JS unchanged within noise)"
+      "source": "Design QA run 43341227199 (5-run median, PR #288 head dc7991382a; CLS 0.17 -> 0; LCP 4364, TBT, JS unchanged within noise, kept)"
     },
     "app-login": {
       "lcp_ms": 4849,
