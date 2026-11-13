@@ -30,11 +30,11 @@
       "source": "Design QA run 43300247360 (5-run median, head 8d65a60912)"
     },
     "booking-page": {
-      "lcp_ms": 7183,
-      "tbt_ms": 981,
+      "lcp_ms": 6046,
+      "tbt_ms": 264,
       "cls": 0.2,
-      "js_kb": 650,
-      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912)"
+      "js_kb": 494,
+      "source": "Design QA run 43345748004 (5-run median, head f64ae5bf50 = WC-TW-6n-3 on main 8815f0e9)"
     }
   },
   "deployed": {}
