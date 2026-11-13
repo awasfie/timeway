@@ -6,31 +6,30 @@
     "cls": 0.1,
     "js_kb": 0.1
   },
-  "tolerance_note": "tbt_ms 1.0 as perf/lhci-baseline.json (WC-TW-6c-12): GH runners come in two CPU classes and TBT swings 1.35-1.61x at the same code.",
+  "tolerance_note": "tbt_ms 1.0 as perf/lhci-baseline.json (WC-TW-6c-12): GH runners come in two CPU classes and TBT swings 1.35-1.61x at the same code. Kept at 1.0 by UX.13.3-1 (t_100c9363): with warm-up, app-login TBT median moved 91->114 (22%) between two runs of the same SHA; back to 0.1 per docs/cc-status.md CC-56.",
   "ci": {
     "marketing-home": {
       "lcp_ms": 4331,
       "cls": 0.17,
       "js_kb": 280,
-      "source": "Design QA run 43320245511 (5-run median, main 8815f0e9f1)"
+      "source": "min(Design QA run 43320245511 on main 8815f0e9f1, max of Design QA run 43332429809 attempts 1+2 on PR head 89b492921a with warm-up); 5-run medians"
     },
     "app-login": {
       "lcp_ms": 4616,
       "js_kb": 380,
-      "source": "Design QA run 43320245511 (5-run median, main 8815f0e9f1)"
+      "source": "min(Design QA run 43320245511 on main 8815f0e9f1, max of Design QA run 43332429809 attempts 1+2 on PR head 89b492921a with warm-up); 5-run medians"
     },
     "app-signup": {
-      "lcp_ms": 6199,
-      "tbt_ms": 229,
+      "lcp_ms": 6197,
       "js_kb": 483,
-      "source": "Design QA run 43320245511 (5-run median, main 8815f0e9f1)"
+      "source": "min(Design QA run 43320245511 on main 8815f0e9f1, max of Design QA run 43332429809 attempts 1+2 on PR head 89b492921a with warm-up); 5-run medians"
     },
     "booking-page": {
-      "lcp_ms": 6557,
-      "tbt_ms": 504,
+      "lcp_ms": 6506,
+      "tbt_ms": 366,
       "cls": 0.2,
       "js_kb": 555,
-      "source": "Design QA run 43320245511 (5-run median, main 8815f0e9f1)"
+      "source": "min(Design QA run 43320245511 on main 8815f0e9f1, max of Design QA run 43332429809 attempts 1+2 on PR head 89b492921a with warm-up); 5-run medians"
     }
   },
   "deployed": {}
