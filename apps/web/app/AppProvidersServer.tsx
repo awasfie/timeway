@@ -1,8 +1,5 @@
 import { loadTranslations } from "@calcom/i18n/server";
 import { headers } from "next/headers";
-import type React from "react";
-import { AppRouterI18nProvider } from "./AppRouterI18nProvider";
-import { Providers } from "./providers";
 import { getRequestLocale } from "./requestLocale";
 
 /**
@@ -24,20 +21,4 @@ export async function getAppProviderProps() {
 
 export type AppProviderProps = Awaited<ReturnType<typeof getAppProviderProps>>;
 
-export function AppProviders({
-  children,
-  nonce,
-  country,
-  locale,
-  isEmbed,
-  ns,
-  translations,
-}: AppProviderProps & { children: React.ReactNode }) {
-  return (
-    <Providers isEmbed={isEmbed} nonce={nonce} country={country}>
-      <AppRouterI18nProvider translations={translations} locale={locale} ns={ns}>
-        {children}
-      </AppRouterI18nProvider>
-    </Providers>
-  );
-}
+export { AppProviders } from "./AppProviders";
