@@ -33,6 +33,7 @@ import classNames from "@calcom/ui/classNames";
 import { Alert } from "@calcom/ui/components/alert";
 import { Button } from "@calcom/ui/components/button";
 import { CheckboxField, Form, PasswordField, TextField } from "@calcom/ui/components/form";
+import type { SelectField as SelectFieldType } from "@calcom/ui/components/form";
 import { Icon } from "@calcom/ui/components/icon";
 import { showToast } from "@calcom/ui/components/toast";
 import { InfoIcon, ShieldCheckIcon, StarIcon } from "@coss/ui/icons";
@@ -56,9 +57,10 @@ const signupSchema = apiSignupSchema.extend({
 
 // UX13.3-4: react-select (+emotion), Dub analytics, Stripe.js, posthog-js and dayjs were on the
 // /signup first load although they only run on cal.com, on submit, or never (no posthog key).
+// next/dynamic drops SelectField's generic props; cast back to the real component type.
 const SelectField = dynamic(() => import("@calcom/ui/components/form").then((m) => m.SelectField), {
   ssr: false,
-});
+}) as typeof SelectFieldType;
 const DubAnalytics = dynamic(() => import("@dub/analytics/react").then((m) => m.Analytics), { ssr: false });
 
 // Same answer as dayjs.tz.guess() (which reads Intl) without putting dayjs on this route.
