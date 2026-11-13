@@ -1,12 +1,17 @@
 {
-  "_comment": "UX.13.3 ratchet (CC-56): per target and surface, the median of 5 Lighthouse runs at one SHA. While a median is over its UX.13.3 budget the gate is baseline x (1 + tolerance) and the budget is a warning; a surface absent here asserts the budget outright. Lower these in every reduction PR; never raise them without a ruling.",
+  "_comment": "UX.13.3 ratchet (CC-56): per target and surface, the median of 5 Lighthouse runs at one SHA. While a median is over its UX.13.3 budget the gate is baseline x (1 + tolerance) and the budget is a warning; a surface absent here asserts the budget outright. Lower these in every reduction PR; never raise them without a ruling. tbt_ms_slow (t_24fe7849, CC-56): the TBT baseline on the slow runner class, picked when the collected runs' median Lighthouse benchmarkIndex is below runner_class.slow_below; tbt_ms stays the fast-class baseline. Same ratchet: lower, never raise without a ruling.",
   "tolerance": {
     "lcp_ms": 0.1,
     "tbt_ms": 1.0,
     "cls": 0.1,
-    "js_kb": 0.1
+    "js_kb": 0.1,
+    "tbt_ms_slow": 0.25
   },
   "tolerance_note": "tbt_ms 1.0 as perf/lhci-baseline.json (WC-TW-6c-12): GH runners come in two CPU classes and TBT swings 1.35-1.61x at the same code.",
+  "runner_class": {
+    "slow_below": 2850,
+    "note": "Lighthouse benchmarkIndex, median over a surface's collected runs. The class picks the TBT baseline only (lighthouserc.cjs runnerClass). Surface medians seen: slow 2204-2663, mid 2722 (Design QA 43360989289 attempt 2, booking TBT 595 > the fast limit 528), fast 2908-3056 and 3878-4208 (runs 43320245511-43360989289). 2850 sits under every fast median; a mid-band runner is judged as slow."
+  },
   "ci": {
     "marketing-home": {
       "lcp_ms": 4331,
@@ -32,9 +37,10 @@
     "booking-page": {
       "lcp_ms": 6046,
       "tbt_ms": 264,
+      "tbt_ms_slow": 691,
       "cls": 0.2,
       "js_kb": 494,
-      "source": "Design QA run 43345748004 (5-run median, head f64ae5bf50 = WC-TW-6n-3 on main 8815f0e9)"
+      "source": "Design QA run 43345748004 (5-run median, head f64ae5bf50 = WC-TW-6n-3 on main 8815f0e9); tbt_ms_slow 691 (t_24fe7849): slow-class median of Design QA run 43350503096 on main a2337ef3c0 (per-run benchmarkIndex 2204-2378, TBT 1249/691/636/631/745); slow-class medians of later main-based heads 615-712 (43342646325, 43345318230, 43353810740, 43356108037); tbt_ms 264 kept as the fast-class baseline (fast-class main medians 418 on f97f667e76 run 43355052638, 445 on 4dd62065f1)"
     }
   },
   "deployed": {}

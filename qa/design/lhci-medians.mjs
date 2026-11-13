@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const [dir = ".lighthouseci", out = "out/lhci-medians.json"] = process.argv.slice(2);
-const { surfaces, target } = await import("./lighthouserc.cjs").then((m) => m.default);
+const { surfaces, target, runnerClass, limits } = await import("./lighthouserc.cjs").then((m) => m.default);
 const median = (xs) => {
   const s = [...xs].sort((a, b) => a - b);
   return s.length ? s[Math.floor(s.length / 2)] : null;
@@ -19,6 +19,8 @@ for (const s of surfaces) {
   const mine = runs.filter((r) => new URL(r.requestedUrl).pathname.replace(/\/$/, "") === p.replace(/\/$/, ""));
   const scriptKb = (r) => (r.audits["resource-summary"]?.details?.items ?? []).find((i) => i.resourceType === "script")?.transferSize / 1024;
   result[s.id] = {
+    // Runner class from the median benchmarkIndex and the TBT error limit it selected (t_24fe7849).
+    runner: { ...runnerClass(s.id), tbt_limit_ms: limits[s.id].tbt_ms.error },
     runs: mine.length,
     lcp_ms: Math.round(median(mine.map((r) => r.audits["largest-contentful-paint"].numericValue))),
     tbt_ms: Math.round(median(mine.map((r) => r.audits["total-blocking-time"].numericValue))),
