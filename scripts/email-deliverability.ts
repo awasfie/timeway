@@ -9,6 +9,7 @@ import process from "node:process";
 import {
   BOUNCE_TARGET_PCT,
   COMPLAINT_TARGET_PCT,
+  TEST_RECIPIENT_DOMAINS,
   deliverabilityRates,
 } from "@calcom/features/email-events/lib/deliverabilityRates";
 import { EmailEventRepository } from "@calcom/features/email-events/repositories/EmailEventRepository";
@@ -22,10 +23,15 @@ async function main() {
   if (!Number.isInteger(days) || days < 1 || days > 90)
     throw new Error(`days must be 1..90, got ${process.argv[2]}`);
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-  const counts = await new EmailEventRepository(prisma).countByEventSince(since);
+  const repo = new EmailEventRepository(prisma);
+  const rawCounts = await repo.countByEventSince(since);
+  const counts = await repo.countByEventSince(since, { excludeDomains: TEST_RECIPIENT_DOMAINS });
+  const raw = deliverabilityRates(rawCounts);
   const r = deliverabilityRates(counts);
   console.log(`email deliverability ${days}d since ${since.toISOString()}`);
-  console.log(`events ${JSON.stringify(counts)}`);
+  console.log(`events (all) ${JSON.stringify(rawCounts)}`);
+  console.log(`bounce RAW ${fmt(raw.bouncePct)} (${raw.bounced}/${raw.processed}) ${verdict(raw.bounceOk)}`);
+  console.log(`events (excl. test domains ${TEST_RECIPIENT_DOMAINS.join(",")}) ${JSON.stringify(counts)}`);
   console.log(
     `bounce ${fmt(r.bouncePct)} (${r.bounced}/${r.processed}, target < ${BOUNCE_TARGET_PCT}%) ${verdict(r.bounceOk)}`
   );
