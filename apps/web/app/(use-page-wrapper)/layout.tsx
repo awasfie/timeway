@@ -2,7 +2,8 @@ import process from "node:process";
 import PageWrapper from "@components/PageWrapperAppDir";
 import { headers } from "next/headers";
 import Script from "next/script";
-import { AppProviders, getAppProviderProps } from "../AppProvidersServer";
+import { AppProviders } from "../AppProviders";
+import { getAppProviderProps } from "../AppProvidersServer";
 import { AppShellProviders } from "./AppShellProviders";
 
 export default async function PageWrapperLayout({ children }: { children: React.ReactNode }) {

@@ -4,7 +4,8 @@ import PageWrapper from "@components/PageWrapperAppDir";
 import { headers } from "next/headers";
 import Script from "next/script";
 import { PLAUSIBLE_EVENT_PATH, PLAUSIBLE_SCRIPT_PATH } from "../../plausibleRewrites";
-import { AppProviders, getAppProviderProps } from "../AppProvidersServer";
+import { AppProviders } from "../AppProviders";
+import { getAppProviderProps } from "../AppProvidersServer";
 
 export default async function BookingPageWrapperLayout({ children }: { children: React.ReactNode }) {
   const h = await headers();

@@ -20,5 +20,3 @@ export async function getAppProviderProps() {
 }
 
 export type AppProviderProps = Awaited<ReturnType<typeof getAppProviderProps>>;
-
-export { AppProviders } from "./AppProviders";
