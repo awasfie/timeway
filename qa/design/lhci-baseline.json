@@ -12,22 +12,22 @@
       "lcp_ms": 4331,
       "tbt_ms": 160,
       "cls": 0,
-      "js_kb": 280,
-      "source": "Design QA run 43341227199 (5-run median, PR #288 head dc7991382a; CLS 0.17 -> 0; LCP 4364, TBT, JS unchanged within noise, kept)"
+      "js_kb": 193,
+      "source": "Design QA run 43341227199 (5-run median, PR #288 head dc7991382a; CLS 0.17 -> 0; LCP 4364, TBT, JS unchanged within noise, kept); js_kb 193 = Design QA run 43349375745 median (root error/not-found lazy, same change as #256; was 280)"
     },
     "app-login": {
       "lcp_ms": 4849,
       "tbt_ms": 285,
       "cls": 0,
-      "js_kb": 380,
-      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912)"
+      "js_kb": 349,
+      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912); js_kb 349 = Design QA run 43349375745 median (root error/not-found lazy, same change as #256; was 380)"
     },
     "app-signup": {
       "lcp_ms": 6209,
       "tbt_ms": 369,
       "cls": 0,
-      "js_kb": 483,
-      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912)"
+      "js_kb": 452,
+      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912); js_kb 452 = Design QA run 43349375745 median (root error/not-found lazy, same change as #256; was 483)"
     },
     "booking-page": {
       "lcp_ms": 6046,
