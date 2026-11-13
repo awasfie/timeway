@@ -11,8 +11,6 @@ import { Icon } from "@calcom/ui/components/icon";
 import { Logo } from "@calcom/ui/components/logo";
 import { LastUsed, useLastUsed } from "@calcom/web/modules/auth/hooks/useLastUsed";
 import AddToHomescreen from "@components/AddToHomescreen";
-import BackupCode from "@components/auth/BackupCode";
-import TwoFactor from "@components/auth/TwoFactor";
 import { Button } from "@coss/ui/components/button";
 import { Field, FieldLabel } from "@coss/ui/components/field";
 import { Input } from "@coss/ui/components/input";
@@ -22,12 +20,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { inferSSRProps } from "@lib/types/inferSSRProps";
 import type { getServerSideProps } from "@server/lib/auth/login/getServerSideProps";
 import { Eye, EyeOff } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
+
+// UX13.3-4: the 2FA inputs (react-digit-input) render only after a password step asks for a code.
+const TwoFactor = dynamic(() => import("@components/auth/TwoFactor"));
+const BackupCode = dynamic(() => import("@components/auth/BackupCode"));
 
 interface LoginValues {
   email: string;

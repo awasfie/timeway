@@ -1,6 +1,5 @@
 "use client";
 
-import getStripe from "@calcom/app-store/stripepayment/lib/client";
 import { getPremiumPlanPriceValue } from "@calcom/app-store/stripepayment/lib/utils";
 import {
   fetchSignup,
@@ -9,6 +8,7 @@ import {
   isUserAlreadyExistsError,
 } from "@calcom/features/auth/signup/lib/fetchSignup";
 import { getOrgUsernameFromEmail } from "@calcom/features/auth/signup/utils/getOrgUsernameFromEmail";
+import { captureEvent } from "@calcom/lib/analytics/posthogCapture";
 import ServerTrans from "@calcom/lib/components/ServerTrans";
 import {
   APP_NAME,
@@ -27,17 +27,15 @@ import { useCompatSearchParams } from "@calcom/lib/hooks/useCompatSearchParams";
 import { useDebounce } from "@calcom/lib/hooks/useDebounce";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { INVALID_CLOUDFLARE_TOKEN_ERROR } from "@calcom/lib/server/checkCfTurnstileToken";
-import { IS_EUROPE } from "@calcom/lib/timezoneConstants";
 import { signupSchema as apiSignupSchema } from "@calcom/prisma/zod-utils";
 import type { inferSSRProps } from "@calcom/types/inferSSRProps";
 import classNames from "@calcom/ui/classNames";
 import { Alert } from "@calcom/ui/components/alert";
 import { Button } from "@calcom/ui/components/button";
-import { CheckboxField, Form, PasswordField, SelectField, TextField } from "@calcom/ui/components/form";
+import { CheckboxField, Form, PasswordField, TextField } from "@calcom/ui/components/form";
 import { Icon } from "@calcom/ui/components/icon";
 import { showToast } from "@calcom/ui/components/toast";
 import { InfoIcon, ShieldCheckIcon, StarIcon } from "@coss/ui/icons";
-import { Analytics as DubAnalytics } from "@dub/analytics/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { getServerSideProps } from "@lib/signup/getServerSideProps";
 import dynamic from "next/dynamic";
@@ -45,7 +43,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { signIn } from "next-auth/react";
-import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm, useFormContext } from "react-hook-form";
@@ -56,6 +53,17 @@ const signupSchema = apiSignupSchema.extend({
   apiError: z.string().optional(), // Needed to display API errors doesn't get passed to the API
   cfToken: z.string().optional(),
 });
+
+// UX13.3-4: react-select (+emotion), Dub analytics, Stripe.js, posthog-js and dayjs were on the
+// /signup first load although they only run on cal.com, on submit, or never (no posthog key).
+const SelectField = dynamic(() => import("@calcom/ui/components/form").then((m) => m.SelectField), {
+  ssr: false,
+});
+const DubAnalytics = dynamic(() => import("@dub/analytics/react").then((m) => m.Analytics), { ssr: false });
+
+// Same answer as dayjs.tz.guess() (which reads Intl) without putting dayjs on this route.
+const IS_EUROPE =
+  typeof Intl !== "undefined" && (Intl.DateTimeFormat().resolvedOptions().timeZone ?? "").startsWith("Europe");
 
 const TurnstileCaptcha = dynamic(() => import("@calcom/web/modules/auth/components/Turnstile"), {
   ssr: false,
@@ -240,7 +248,7 @@ export default function Signup({
   const signUp: SubmitHandler<FormValues> = async (_data) => {
     const { cfToken, ...data } = _data;
 
-    posthog.capture("signup_form_submitted", {
+    captureEvent("signup_form_submitted", {
       has_token: !!token,
       is_org_invite: isOrgInviteByLink,
       org_slug: orgSlug,
@@ -269,6 +277,7 @@ export default function Signup({
         }
 
         if (hasCheckoutSession(result)) {
+          const { default: getStripe } = await import("@calcom/app-store/stripepayment/lib/client");
           const stripe = await getStripe();
           if (stripe) {
             const { error } = await stripe.redirectToCheckout({
@@ -323,7 +332,7 @@ export default function Signup({
         return;
       }
 
-      posthog.capture("signup_form_submit_error", {
+      captureEvent("signup_form_submit_error", {
         has_token: !!token,
         is_org_invite: isOrgInviteByLink,
         org_slug: orgSlug,
@@ -620,7 +629,7 @@ export default function Signup({
                           className={classNames("w-full justify-center rounded-md text-center")}
                           data-testid="continue-with-google-button"
                           onClick={async () => {
-                            posthog.capture("signup_google_button_clicked", {
+                            captureEvent("signup_google_button_clicked", {
                               has_token: !!token,
                               is_org_invite: isOrgInviteByLink,
                               org_slug: orgSlug,
@@ -671,7 +680,7 @@ export default function Signup({
                           className={classNames("w-full justify-center rounded-md text-center")}
                           data-testid="continue-with-microsoft-button"
                           onClick={async () => {
-                            posthog.capture("signup_microsoft_button_clicked", {
+                            captureEvent("signup_microsoft_button_clicked", {
                               has_token: !!token,
                               is_org_invite: isOrgInviteByLink,
                               org_slug: orgSlug,
@@ -719,7 +728,7 @@ export default function Signup({
                         disabled={isGoogleLoading || isMicrosoftLoading}
                         className={classNames("w-full justify-center rounded-md text-center")}
                         onClick={() => {
-                          posthog.capture("signup_email_button_clicked", {
+                          captureEvent("signup_email_button_clicked", {
                             has_token: !!token,
                             is_org_invite: isOrgInviteByLink,
                             org_slug: orgSlug,
@@ -828,12 +837,21 @@ export default function Signup({
               </>
             )}
             <div className="hidden rounded-tl-2xl rounded-br-none rounded-bl-2xl border border-default border-r-0 border-dashed bg-black/3 lg:block lg:py-[6px] lg:pl-[6px] dark:bg-white/5">
-              <img className="block dark:hidden" src="/mock-event-type-list.svg" alt="Cal.diy Booking Page" />
+              {/* UX13.3-4: lazy, so only the visible theme's mock is fetched, and none below lg (hidden). */}
+              <img
+                className="block dark:hidden"
+                src="/mock-event-type-list.svg"
+                alt="Cal.diy Booking Page"
+                loading="lazy"
+                decoding="async"
+              />
               {/* eslint-disable @next/next/no-img-element */}
               <img
                 className="hidden dark:block"
                 src="/mock-event-type-list-dark.svg"
                 alt="Cal.diy Booking Page"
+                loading="lazy"
+                decoding="async"
               />
             </div>
             <div className="mt-8 mr-12 hidden h-full w-full grid-cols-3 gap-4 overflow-hidden lg:grid">
