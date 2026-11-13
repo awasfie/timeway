@@ -1,6 +1,6 @@
 import { _generateMetadata } from "app/_utils";
 import { headers } from "next/headers";
-
+import { AppProviders, getAppProviderProps } from "./AppProvidersServer";
 import { NotFoundLazy } from "./notFoundLazy";
 
 export const generateMetadata = async () => {
@@ -22,8 +22,12 @@ const ServerPage = async () => {
   const nonce = h.get("x-csp-nonce") ?? undefined;
   const host = h.get("x-forwarded-host") ?? "";
 
+  const appProviderProps = await getAppProviderProps();
+
   return (
-    <NotFoundLazy nonce={nonce} host={host} />
+    <AppProviders {...appProviderProps}>
+      <NotFoundLazy nonce={nonce} host={host} />
+    </AppProviders>
   );
 };
 export default ServerPage;
