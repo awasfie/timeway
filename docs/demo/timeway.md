@@ -15,6 +15,6 @@ Webhook: team 7 → `https://api.spenai.net/webhooks/timeway` (BOOKING_CREATED /
 | 6 | Reschedule link → https://timeway.co/team/demo-timeway/showroom-visit?rescheduleUid=&lt;uid&gt; | "Plans change — the visitor moves it themselves." | Same calendar with "Original booking" shown; pick new slot, add reason, click Reschedule. |
 | 7 | https://timeway.co/booking/&lt;new uid&gt; | "New time confirmed; old link now says rescheduled." | "This meeting is scheduled", Reschedule reason, Original booking struck through; second email "…has been rescheduled to …". |
 | 8 | SalesOS side (no screen) | "Every booking change is pushed to SalesOS, signed." | SalesOS logs accept the signed delivery (202 `unmatched` for bookings SalesOS did not create itself). |
-| 9 | https://timeway.co/auth/login → /bookings/upcoming | "The host sees their day." | KNOWN ISSUE: list currently empty for every user (bookings/get runs without org context under RLS) — child card filed; skip this step until fixed. |
+| 9 | https://timeway.co/auth/login → /bookings/upcoming | "The host sees their day." | Upcoming tab lists 4 bookings, including the rescheduled one (the new time); Past tab lists 2; Cancelled tab lists 2, including the original the reschedule replaced. |
 
 AR: use https://timeway.co/team/demo-timeway/showroom-visit-ar for the Arabic event (title and description in Arabic, form labels bilingual).
