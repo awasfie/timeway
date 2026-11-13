@@ -12,12 +12,17 @@ import { AnalyticsInit } from "./AnalyticsInit";
 import { getRequestLocale } from "./requestLocale";
 import { SpeculationRules } from "./SpeculationRules";
 
-const interFont = Inter({ subsets: ["latin"], variable: "--font-sans", preload: true, display: "swap" });
+// UX.13.3-2: no font is preloaded from the root layout. The marketing pages render DMSans (brand-timeway.css
+// @font-face), so preloading Inter and CalSans here made every signed-out visit fetch ~88 KB of fonts it
+// never paints. App pages still get both faces, fetched on first use, and
+// CalSans swaps against a metric-adjusted fallback instead of blocking text (display "block" hid headings).
+const interFont = Inter({ subsets: ["latin"], variable: "--font-sans", preload: false, display: "swap" });
 const calFont = localFont({
   src: "../fonts/CalSans-SemiBold.woff2",
   variable: "--font-cal",
-  preload: true,
-  display: "block",
+  preload: false,
+  display: "swap",
+  adjustFontFallback: "Arial",
   weight: "600",
 });
 

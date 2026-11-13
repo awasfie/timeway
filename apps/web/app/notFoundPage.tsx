@@ -3,6 +3,7 @@
 import PageWrapper from "@components/PageWrapperAppDir";
 import { AppProviders, type AppProvidersValue } from "./AppProviders";
 import { NotFound } from "./notFoundClient";
+import "../styles/app.css";
 
 export default function NotFoundPage({
   nonce,

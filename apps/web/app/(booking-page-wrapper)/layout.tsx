@@ -4,6 +4,7 @@ import PageWrapper from "@components/PageWrapperAppDir";
 import { headers } from "next/headers";
 import Script from "next/script";
 import { PLAUSIBLE_EVENT_PATH, PLAUSIBLE_SCRIPT_PATH } from "../../plausibleRewrites";
+import "../../styles/app.css";
 import { AppProviders } from "../AppProviders";
 import { getAppProviderProps } from "../AppProvidersServer";
 

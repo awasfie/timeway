@@ -26,6 +26,14 @@ for (const s of surfaces) {
     tbt_ms: Math.round(median(mine.map((r) => r.audits["total-blocking-time"].numericValue))),
     cls: Number(median(mine.map((r) => r.audits["cumulative-layout-shift"].numericValue)).toFixed(3)),
     js_kb: Math.round(median(mine.map(scriptKb))),
+    // Runner CPU class per run, in collect order (UX.13.3-1): TBT is only comparable across like indexes.
+    per_run: [...mine]
+      .sort((a, b) => String(a.fetchTime).localeCompare(String(b.fetchTime)))
+      .map((r) => ({
+        benchmark_index: r.environment?.benchmarkIndex ?? null,
+        tbt_ms: Math.round(r.audits["total-blocking-time"].numericValue),
+        lcp_ms: Math.round(r.audits["largest-contentful-paint"].numericValue),
+      })),
     budget: s.budget,
   };
 }
