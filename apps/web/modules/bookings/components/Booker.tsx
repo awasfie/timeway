@@ -410,8 +410,8 @@ const BookerComponent = ({
           // UX.13.3 CLS: the page <main> centres this box vertically, so a box shorter than the viewport
           // jumps up as the slots arrive and it grows (Lighthouse CLS 0.2 on /pro/30min, mobile). Keep
           // the same box as the server shells (BookerFirstPaintShell/BookerSsrShell): full viewport
-          // height on mobile, natural height from md.
-          !isEmbed && "min-h-[100dvh] md:min-h-0",
+          // height below md only. Desktop keeps min-h-full (main's behaviour), so 1440px is unchanged.
+          !isEmbed && "max-md:min-h-[100dvh]",
           layout === BookerLayouts.MONTH_VIEW && !isEmbed && "my-20 ",
           layout === BookerLayouts.MONTH_VIEW ? "overflow-visible" : "overflow-clip",
           `${customClassNames?.bookerWrapper}`
