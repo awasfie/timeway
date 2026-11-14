@@ -1,4 +1,7 @@
 import dayjs from "@calcom/dayjs";
+// dayjs falls back to English silently when a locale was never registered; SMS bodies must not depend on
+// another module having loaded the locales first.
+import "@calcom/dayjs/locales";
 import isSmsCalEmail from "@calcom/lib/isSmsCalEmail";
 import { piiHasher } from "@calcom/lib/server/PiiHasher";
 import { checkSMSRateLimit } from "@calcom/lib/smsLockState";

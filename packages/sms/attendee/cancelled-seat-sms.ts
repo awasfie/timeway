@@ -1,5 +1,4 @@
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
-
 import SMSManager from "../sms-manager";
 
 export default class CancelledSeatSMS extends SMSManager {
@@ -13,7 +12,7 @@ export default class CancelledSeatSMS extends SMSManager {
     const messageText = `${t("no_longer_attending", {
       name: attendee.name,
     })}\n\n${t("event_no_longer_attending_subject", {
-      name: this.calEvent.team?.name || this.calEvent.organizer.name,
+      title: this.calEvent.title,
       date: this.getFormattedDate(attendee.timeZone, attendee.language.locale),
       interpolation: { escapeValue: false },
     })} `;

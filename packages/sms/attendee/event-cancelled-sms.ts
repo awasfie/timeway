@@ -1,6 +1,5 @@
 import { WEBAPP_URL } from "@calcom/lib/constants";
 import type { CalendarEvent, Person } from "@calcom/types/Calendar";
-
 import SMSManager from "../sms-manager";
 
 export default class EventCancelledSMS extends SMSManager {
@@ -15,7 +14,7 @@ export default class EventCancelledSMS extends SMSManager {
     const messageText = `${t("hey_there")} ${attendee.name}, ${t("event_request_cancelled")}\n\n${t(
       "event_cancelled_subject",
       {
-        title: typeof this.calEvent.title === "string" ? this.calEvent.title : "Untitled Event",
+        title: typeof this.calEvent.title === "string" ? this.calEvent.title : t("untitled"),
         date: this.getFormattedDate(attendee.timeZone, attendee.language.locale),
         interpolation: { escapeValue: false },
       }
