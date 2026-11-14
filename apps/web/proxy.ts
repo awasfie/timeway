@@ -5,6 +5,7 @@ import {
   readGateEnv,
 } from "@calcom/lib/domainManager/customHostnames/proxyGate";
 import { getCspHeader, getCspNonce } from "@lib/csp";
+import { deferredFrontDoor, shouldDeferFrontDoor } from "@lib/frontDoorDefer";
 import { PATHNAME_HEADER } from "@lib/i18n/pathnameHeader";
 import { AR_FRONT_PATHS } from "~/marketing/frontPaths";
 import { get } from "@vercel/edge-config";
@@ -97,6 +98,19 @@ const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
     resolveCustomHost
   );
   if (customHost.action === "notFound") return notFound();
+  // UX.13.3-3f (t_66e18c15): signed-out GET / requests its hydration chunks after the first paint.
+  // Platform/marketing host only: action "next" is returned for own hosts alone, so a customer
+  // host's "/" (rewrite to its org page, or 404) never reaches the loopback render.
+  if (customHost.action === "next" && shouldDeferFrontDoor(req)) {
+    // Same request enrichment as the normal path, so the loopback render gets this request's CSP
+    // nonce (lib/csp.ts) and the loader carries it; the response gets the same CSP headers.
+    const deferReq = enrichRequestWithHeaders({ req });
+    const deferHeaders = new Headers(deferReq.headers);
+    deferHeaders.set(PATHNAME_HEADER, url.pathname);
+    const deferred = await deferredFrontDoor(req, sanitizeRequestHeaders(deferHeaders));
+    if (deferred) return responseWithHeaders({ url, res: deferred, req: deferReq });
+    return NextResponse.next();
+  }
   if (customHost.action === "next" && !isLegacyMatchedPath(url.pathname)) return NextResponse.next();
 
   const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });
@@ -213,6 +227,8 @@ export const config = {
     "/api/auth/signup",
     "/ar",
     "/ar/pricing",
+    // UX.13.3-3f: the front door, for the post-paint hydration loader (lib/frontDoorDefer.ts).
+    "/",
     // WC-TW-12c2: every page on a customer host. Static assets are skipped; platform hosts are
     // excluded here and again in isLegacyMatchedPath.
     {
