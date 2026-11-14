@@ -63,6 +63,7 @@ export const manifest: Record<string, ModelCoverage> = {
   Membership: pending(),
   MonthlyProration: pending(),
   OrgApiKey: pending(),
+  OrgEntitlementOverride: pending(),
   Organization: pending(),
   OrganizationBilling: pending(),
   OrganizationMember: pending(),

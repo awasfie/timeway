@@ -2924,6 +2924,8 @@ model Organization {
   externalRef  String?                  @unique
   createdAt    DateTime                 @default(now())
   updatedAt    DateTime                 @updatedAt
+  /// TW-T12
+  entitlementOverride OrgEntitlementOverride?
 
   /// WC-TW-14a (E1/E2): agency parent; one level only (service-enforced). RESTRICT: a parent with sub-orgs cannot be deleted.
   parentOrgId        String?              @db.Uuid
@@ -3011,6 +3013,20 @@ model OrgApiKey {
 
   @@index([orgId])
   @@map("tw_org_api_key")
+}
+
+/// TW-T12: per-org entitlement override (seats bought / Spenai bundle size, plus ad-hoc limit overrides).
+model OrgEntitlementOverride {
+  id        String       @id @default(uuid()) @db.Uuid
+  orgId     String       @unique @db.Uuid
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  seats     Int?
+  overrides Json?
+  source    String       @default("manual")
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("tw_org_entitlement_override")
 }
 
 /// WC-TW-9b: the three activation milestones (WC-9 step 2). First occurrence per org wins.
