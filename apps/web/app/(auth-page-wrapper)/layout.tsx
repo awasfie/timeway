@@ -3,8 +3,12 @@ import Script from "next/script";
 
 import PageWrapper from "@components/PageWrapperAppDir";
 
+import { AppProviders } from "../AppProviders";
+import { getAppProviderProps } from "../AppProvidersServer";
+import "../../styles/app.css";
+
 // UX13.3-4: /auth/login and /signup are signed-out pages. They render the same PageWrapper as
-// (use-page-wrapper) but without AppShellProviders (web push + its service worker, nuqs, the coss
+// (use-page-wrapper), including AppProviders (session, tRPC, i18n: both forms need them), but without AppShellProviders (web push + its service worker, nuqs, the coss
 // toast manager, notification sounds, react-inlinesvg cache), which neither form uses and which
 // put ~80 KB of route JS on their first load. URLs are unchanged: route groups do not add segments.
 export default async function AuthPageWrapperLayout({ children }: { children: React.ReactNode }) {
@@ -18,20 +22,24 @@ export default async function AuthPageWrapperLayout({ children }: { children: Re
     { id: "injected-body-script", script: bodyScript ?? "" },
   ].filter((script): script is { id: string; script: string } => !!script.script);
 
+  const appProviderProps = await getAppProviderProps();
+
   return (
-    <PageWrapper requiresLicense={false} nonce={nonce}>
-      {children}
-      {scripts.map((script) => (
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: Injected scripts from env vars
-        <Script
-          key={script.id}
-          nonce={nonce}
-          id={script.id}
-          dangerouslySetInnerHTML={{
-            __html: script.script,
-          }}
-        />
-      ))}
-    </PageWrapper>
+    <AppProviders {...appProviderProps}>
+      <PageWrapper requiresLicense={false} nonce={nonce}>
+        {children}
+        {scripts.map((script) => (
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Injected scripts from env vars
+          <Script
+            key={script.id}
+            nonce={nonce}
+            id={script.id}
+            dangerouslySetInnerHTML={{
+              __html: script.script,
+            }}
+          />
+        ))}
+      </PageWrapper>
+    </AppProviders>
   );
 }
