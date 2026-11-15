@@ -8,6 +8,10 @@ import { randomUUID } from "node:crypto";
 import process from "node:process";
 import { BookingStatus, WebhookTriggerEvents } from "@calcom/prisma/enums";
 import { withTwPlatform } from "@calcom/prisma/tw-org-context";
+import { appRouter } from "@calcom/trpc/server/routers/_app";
+import { deleteFilterSegmentHandler } from "@calcom/trpc/server/routers/viewer/filterSegments/delete.handler";
+import { listHandler } from "@calcom/trpc/server/routers/viewer/filterSegments/list.handler";
+import { updateFilterSegmentHandler } from "@calcom/trpc/server/routers/viewer/filterSegments/update.handler";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Cc13Seed, SeededTenant } from "./seed";
 import { seedCc13Tenants } from "./seed";
@@ -508,11 +512,54 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
   });
 
   describe("unprobed-gap models (WC-TW-7b-5)", () => {
-    it("viewer.filterSegments: router is not mounted, so B has no tRPC path to FilterSegment", async () => {
-      // packages/trpc/server/routers/viewer/filterSegments/_router.tsx exists but no router imports it
-      // (grep 2026-11-08). The caller must have no such namespace; mounting it later fails this probe.
-      expect(Object.keys(viewerB)).not.toContain("filterSegments");
-      expect((viewerB as unknown as Record<string, unknown>).filterSegments).toBeUndefined();
+    it("viewer.filterSegments: B cannot list, update or delete A's filter segments", async () => {
+      // viewer/filterSegments/_router.tsx is mounted by no router (grep 2026-11-16): appRouter has no
+      // filterSegments procedure. The handlers still exist, so they are probed directly with B's ctx.
+      const procs = Object.keys(appRouter._def.procedures as Record<string, unknown>);
+      expect(procs.filter((p) => p.includes("filterSegments"))).toEqual([]);
+
+      const tableIdentifier = `${tag(seed.A)}-table${++n}`;
+      const mkSegment = (scope: "USER" | "TEAM") =>
+        prisma.filterSegment.create({
+          data: {
+            name: `${tag(seed.A)} seg${++n}`,
+            tableIdentifier,
+            scope,
+            perPage: 10,
+            userId: seed.A.owner.id,
+            teamId: scope === "TEAM" ? seed.A.team.id : null,
+          },
+          select: { id: true },
+        });
+      const userSeg = await mkSegment("USER");
+      const teamSeg = await mkSegment("TEAM");
+      const ctxB = { user: { id: seed.B.owner.id } } as never;
+      const read = () =>
+        prisma.filterSegment.findMany({
+          where: { id: { in: [userSeg.id, teamSeg.id] } },
+          select: { id: true, name: true, perPage: true, userId: true, teamId: true },
+          orderBy: { id: "asc" },
+        });
+
+      const listed = await listHandler({ ctx: ctxB, input: { tableIdentifier } });
+      expect(listed.segments.map((s) => s.id)).toEqual([]);
+      await expectUnchanged(read, async () => {
+        const upd = (id: number, scope: "USER" | "TEAM") =>
+          attempt(() =>
+            updateFilterSegmentHandler({
+              ctx: ctxB,
+              input: { id, scope, teamId: scope === "TEAM" ? seed.A.team.id : undefined, name: "cc13-b" } as never,
+            })
+          );
+        expectDenied(await upd(userSeg.id, "USER"));
+        expectDenied(await upd(teamSeg.id, "TEAM"));
+        expectDenied(await attempt(() => deleteFilterSegmentHandler({ ctx: ctxB, input: { id: userSeg.id } })));
+        expectDenied(await attempt(() => deleteFilterSegmentHandler({ ctx: ctxB, input: { id: teamSeg.id } })));
+      });
+      // Control: A's owner sees both.
+      const own = await listHandler({ ctx: { user: { id: seed.A.owner.id } } as never, input: { tableIdentifier } });
+      expect(own.segments.map((s) => s.id).sort()).toEqual([userSeg.id, teamSeg.id].sort());
+      await prisma.filterSegment.deleteMany({ where: { tableIdentifier } });
     });
 
     it("viewer.bookings.reportBooking: B cannot report (or cancel) A's booking", async () => {
@@ -545,10 +592,19 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
         },
         select: { token: true },
       });
+      // connectAndJoin requires an org profile (upId prof-<uid>); usr-<id> sessions carry none.
+      const orgViewer = async (t: SeededTenant) => {
+        const uid = `${tag(t)}-prof${++n}`;
+        await prisma.profile.create({
+          data: { uid, userId: t.owner.id, organizationId: t.team.id, username: t.owner.username },
+        });
+        return viewerFor(t.owner.id, `prof-${uid}`);
+      };
+      const viewerBOrg = await orgViewer(seed.B);
       const read = () =>
         prisma.booking.findUnique({ where: { id: b.id }, select: { status: true, userId: true } });
       await expectUnchanged(read, async () => {
-        const o = await attempt(() => viewerB.loggedInViewerRouter.connectAndJoin({ token: live.token }));
+        const o = await attempt(() => viewerBOrg.loggedInViewerRouter.connectAndJoin({ token: live.token }));
         // The handler hides the team-membership filter behind BAD_REQUEST token_not_found.
         expectDenied(o, undefined, { code: "BAD_REQUEST", message: /^token_not_found$/ });
       });
@@ -563,10 +619,10 @@ describe("CC-13 tRPC: tenant B vs tenant A (WC-TW-7b)", () => {
         },
         select: { token: true },
       });
-      const viewerA = await viewerFor(seed.A.owner.id);
+      const viewerA = await orgViewer(seed.A);
       const a = await attempt(() => viewerA.loggedInViewerRouter.connectAndJoin({ token: expired.token }));
       expect(a).toMatchObject({ kind: "threw", message: "token_invalid_expired" });
-      const bExpired = await attempt(() => viewerB.loggedInViewerRouter.connectAndJoin({ token: expired.token }));
+      const bExpired = await attempt(() => viewerBOrg.loggedInViewerRouter.connectAndJoin({ token: expired.token }));
       expect(bExpired).toMatchObject({ kind: "threw", message: "token_not_found" });
     });
   });
