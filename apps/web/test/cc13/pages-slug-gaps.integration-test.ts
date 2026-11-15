@@ -301,7 +301,7 @@ describe("CC-13 gap probes: pages and publicSlug (WC-TW-7b-5 part 2)", () => {
 
     it("org landing: members list leaves out locked, hidden-only and cross-org-username members", async () => {
       const out = await render(seed.A.twOrg.slug);
-      const landing = (out as { landing: { members: { username: string; links: { href: string }[] }[] } })
+      const landing = (out as unknown as { landing: { members: { username: string; links: { href: string }[] }[] } })
         .landing;
       const names = landing.members.map((m) => m.username);
       expect(names).toContain(fx.aPublicUser.username);
@@ -313,7 +313,7 @@ describe("CC-13 gap probes: pages and publicSlug (WC-TW-7b-5 part 2)", () => {
         for (const l of m.links) expect(l.href).not.toContain(fx.aHiddenEvent);
       }
       const b = await render(seed.B.twOrg.slug);
-      const bNames = (b as { landing: { members: { username: string }[] } }).landing.members.map(
+      const bNames = (b as unknown as { landing: { members: { username: string }[] } }).landing.members.map(
         (m) => m.username
       );
       for (const u of [fx.aPublicUser.username, fx.aLockedUser.username, fx.aHiddenUser.username])
