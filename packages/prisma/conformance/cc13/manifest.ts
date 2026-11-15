@@ -124,9 +124,7 @@ export const manifest: Record<string, ModelCoverage> = {
     pages: {
       none: "no page loader under apps/web/{app,modules,lib,server/lib,pages} reads BookingReport (accessor scan, 2026-11-07)",
     },
-    trpc: {
-      none: "unprobed gap, follow-up card WC-TW-7b-5: viewer/bookings/reportBooking.handler.ts reads it; no probe yet",
-    },
+    trpc: "apps/web/test/cc13/trpc.integration-test.ts > viewer.bookings.reportBooking: B cannot report (or cancel) A's booking",
     publicSlug: {
       none: "/[user]/[type] and /team/[slug]/[type] loaders do not read BookingReport (accessor scan, 2026-11-07)",
     },
@@ -228,9 +226,7 @@ export const manifest: Record<string, ModelCoverage> = {
     pages: {
       none: "no page loader under apps/web/{app,modules,lib,server/lib,pages} reads FilterSegment (accessor scan, 2026-11-07)",
     },
-    trpc: {
-      none: "unprobed gap, follow-up card WC-TW-7b-5: viewer/filterSegments/{list,create,update,delete}.handler.ts read it (keyed by ctx.user.id); no probe yet",
-    },
+    trpc: "apps/web/test/cc13/trpc.integration-test.ts > viewer.filterSegments: B cannot list, update or delete A's filter segments",
     publicSlug: {
       none: "/[user]/[type] and /team/[slug]/[type] loaders do not read FilterSegment (accessor scan, 2026-11-07)",
     },
@@ -239,9 +235,7 @@ export const manifest: Record<string, ModelCoverage> = {
     pages: {
       none: "no page loader under apps/web/{app,modules,lib,server/lib,pages} reads InstantMeetingToken (accessor scan, 2026-11-07)",
     },
-    trpc: {
-      none: "unprobed gap, follow-up card WC-TW-7b-5: loggedInViewer/connectAndJoin.handler.ts reads it; no probe yet",
-    },
+    trpc: "apps/web/test/cc13/trpc.integration-test.ts > viewer.loggedInViewerRouter.connectAndJoin: B cannot claim A's instant-meeting token",
     publicSlug: {
       none: "/[user]/[type] and /team/[slug]/[type] loaders do not read InstantMeetingToken (accessor scan, 2026-11-07)",
     },

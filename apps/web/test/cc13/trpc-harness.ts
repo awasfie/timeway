@@ -8,11 +8,11 @@ import { appRouter } from "@calcom/trpc/server/routers/_app";
 import { createCallerFactory } from "@calcom/trpc/server/trpc";
 import { expect } from "vitest";
 
-export async function viewerFor(userId: number) {
+export async function viewerFor(userId: number, upId = `usr-${userId}`) {
   const ctx = await createContextInner({
     locale: "en",
     sourceIp: "127.0.0.1",
-    session: { user: { id: userId }, upId: `usr-${userId}`, hasValidLicense: true, expires: "2099-01-01" },
+    session: { user: { id: userId }, upId, hasValidLicense: true, expires: "2099-01-01" },
   } as never);
   return createCallerFactory(appRouter)(ctx).viewer;
 }
