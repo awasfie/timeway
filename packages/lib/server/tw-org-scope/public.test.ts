@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpError } from "../../http-error";
 import {
   publicLookupForEventTypeIds,
+  publicLookupForPublicEvent,
   publicLookupForSchedule,
   publicLookupsForBookingBody,
   publicLookupsForBookingUid,
@@ -238,5 +239,36 @@ describe("TW-T9.2b2f event type id resolver", () => {
       expect(await resolvePublicTwOrg(client, { resolver: "event_type_id", keys: [key] })).toBeNull();
     }
     expect(calls).toEqual([]);
+  });
+});
+
+describe("TW-BOOKING-404 public.event lookup", () => {
+  it("team event: team slug through the team resolver; org input ignored", async () => {
+    const lookup = publicLookupForPublicEvent({ username: "AWstreams", isTeamEvent: true });
+    expect(lookup).toEqual({ resolver: "team_slug", keys: ["awstreams"] });
+    const { client, calls } = fakeClient({
+      "tw_resolve_org_for_team_slug:awstreams": [{ id: 2, twOrgId: ORG }],
+    });
+    expect(await resolvePublicTwOrg(client, lookup)).toBe(ORG);
+    expect(calls.map((c) => c.fn)).toEqual(["tw_resolve_org_for_team_slug"]);
+  });
+
+  it("personal and dynamic-group events: every username through the user resolver, one org", async () => {
+    expect(publicLookupForPublicEvent({ username: "alice", isTeamEvent: false })).toEqual({
+      resolver: "user_slug",
+      keys: ["alice"],
+    });
+    const group = publicLookupForPublicEvent({ username: "alice+bob" });
+    expect(group).toEqual({ resolver: "user_slug", keys: ["alice", "bob"] });
+    const split = fakeClient({
+      "tw_resolve_org_for_user_slug:alice": [{ id: 1, twOrgId: ORG }],
+      "tw_resolve_org_for_user_slug:bob": [{ id: 2, twOrgId: OTHER_ORG }],
+    });
+    expect(await resolvePublicTwOrg(split.client, group)).toBeNull();
+  });
+
+  it("empty username has no lookup (procedure returns null, booker shows not found)", () => {
+    expect(publicLookupForPublicEvent({ username: "", isTeamEvent: true })).toBeNull();
+    expect(publicLookupForPublicEvent({ username: null })).toBeNull();
   });
 });

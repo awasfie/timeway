@@ -1,61 +1,15 @@
 "use client";
 
-import React from "react";
+import dynamic from "next/dynamic";
 
-import { getErrorFromUnknown } from "@calcom/lib/errors";
-import { HttpError } from "@calcom/lib/http-error";
-import logger from "@calcom/lib/logger";
-import { redactError } from "@calcom/lib/redactError";
+import type { ErrorProps } from "./errorBody";
 
-import { ErrorPage } from "@components/error/error-page";
+export type { ErrorProps } from "./errorBody";
 
-const log = logger.getSubLogger({ prefix: ["[error]"] });
+// WC-TW-6n-3: the root error boundary is part of every route's first-load entry set. Keep the
+// boundary itself thin and load the real UI (ErrorPage, error codes, logger) only when it renders.
+const ErrorBody = dynamic(() => import("./errorBody"));
 
-export type ErrorProps = {
-  error: Error;
-  reset?: () => void;
-};
-
-export default function Error({ error, reset }: ErrorProps) {
-  React.useEffect(() => {
-    log.error(error);
-
-    // Log the error to Sentry
-    void import("@sentry/nextjs")
-      .then(({ captureException }) => captureException(error))
-      .catch(() => undefined);
-  }, [error]);
-
-  const processedError = React.useMemo(() => {
-    const err = getErrorFromUnknown(error);
-
-    if (err instanceof HttpError) {
-      const redactedError = redactError(err);
-      return {
-        statusCode: err.statusCode,
-        title: redactedError.name,
-        name: redactedError.name,
-        message: redactedError.message,
-        url: err.url,
-        method: err.method,
-        cause: err.cause,
-      };
-    }
-
-    return {
-      statusCode: 500,
-      title: "Internal Server Error",
-      name: "Internal Server Error",
-      message: "An unexpected error occurred.",
-    };
-  }, [error]);
-
-  return (
-    <ErrorPage
-      reset={reset}
-      statusCode={processedError.statusCode}
-      error={processedError}
-      message={processedError.message}
-    />
-  );
+export default function Error(props: ErrorProps) {
+  return <ErrorBody {...props} />;
 }

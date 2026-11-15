@@ -2,7 +2,6 @@ import process from "node:process";
 import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
 import { WEBSITE_URL } from "@calcom/lib/constants";
 import { getSafeRedirectUrl } from "@calcom/lib/getSafeRedirectUrl";
-import prisma from "@calcom/prisma";
 import { IS_GOOGLE_LOGIN_ENABLED } from "@server/lib/constants";
 import { jwtVerify } from "jose";
 import type { GetServerSidePropsContext } from "next";
@@ -74,16 +73,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const userExists = await prisma.user.findFirst({ select: { id: true } });
-  if (!userExists) {
-    // Proceed to new onboarding to create first admin user
-    return {
-      redirect: {
-        destination: "/auth/setup",
-        permanent: false,
-      },
-    };
-  }
+  // SEC (2026-11-10): no first-run admin redirect. Under forced RLS (TW-T9.2d) a pre-tenant
+  // `prisma.user.findFirst` sees zero rows, which sent every visitor to the public setup wizard.
+  // Admins are provisioned, never self-created from the web.
   return {
     props: {
       csrfToken: await getCsrfToken(context),

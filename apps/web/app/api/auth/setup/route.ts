@@ -26,6 +26,10 @@ const querySchema = z.object({
 });
 
 async function handler(req: NextRequest) {
+  // SEC (2026-11-10): first-run setup endpoint disabled unless explicitly enabled for a fresh install.
+  if (process.env.TW_ALLOW_FIRST_RUN_SETUP !== "1") {
+    throw new HttpError({ statusCode: 404, message: "Not found." });
+  }
   const userCount = await prisma.user.count();
   if (userCount !== 0) {
     throw new HttpError({ statusCode: 400, message: "No setup needed." });

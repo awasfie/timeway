@@ -10,6 +10,7 @@ import { trpc } from "@calcom/trpc/react";
 import type { AppProps } from "@lib/app-providers";
 
 import "../styles/globals.css";
+import "../styles/app.css";
 
 function MyApp(props: AppProps) {
   const { Component, pageProps } = props;

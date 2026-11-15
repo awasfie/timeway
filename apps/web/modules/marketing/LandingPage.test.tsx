@@ -23,6 +23,12 @@ describe("L8-6-TW landing page", () => {
     expect(html).toContain('href="/terms"');
   });
 
+  it("ships a metric-matched DM Sans fallback so the font swap does not shift the page (UX.13.3 CLS)", () => {
+    expect(html).toContain("<style>@font-face{font-family:DM Sans Fallback;src:local(Arial)");
+    expect(html).toContain("size-adjust:105.07%");
+    expect(html).toContain("font-family:&quot;DM Sans&quot;, &quot;DM Sans Fallback&quot;");
+  });
+
   it("renders all four CM.3 tiers on the pricing cards", () => {
     const cards = renderToStaticMarkup(<PricingCards />);
     for (const amount of ["$0", "$7", "$11", "$19", "$70", "$110", "$190"]) expect(cards).toContain(amount);

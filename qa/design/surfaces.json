@@ -1,0 +1,9 @@
+{
+  "_comment": "UX.13.3 surfaces under test. budget = the UX.13.3 row (LCP/TBT ms, CLS unitless, js_kb = gzip script transfer KB on first load). path is used against the deployed site; ci_path against the seeded CI build (DESIGN_QA_TARGET=ci).",
+  "surfaces": [
+    { "id": "marketing-home", "path": "/", "ci_path": "/", "kind": "marketing", "budget": { "lcp_ms": 1800, "tbt_ms": 200, "cls": 0.05, "js_kb": 180 } },
+    { "id": "app-login", "path": "/auth/login", "ci_path": "/auth/login", "kind": "app-shell", "budget": { "lcp_ms": 2000, "tbt_ms": 200, "cls": 0.05, "js_kb": 300 } },
+    { "id": "app-signup", "path": "/signup", "ci_path": "/signup", "kind": "app-shell", "budget": { "lcp_ms": 2000, "tbt_ms": 200, "cls": 0.05, "js_kb": 300 } },
+    { "id": "booking-page", "path": "/ahmedwasfie/30min", "ci_path": "/pro/30min", "kind": "booking", "budget": { "lcp_ms": 1500, "tbt_ms": 200, "cls": 0.05, "js_kb": 200 } }
+  ]
+}

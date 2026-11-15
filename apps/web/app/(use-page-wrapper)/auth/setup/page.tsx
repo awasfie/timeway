@@ -2,7 +2,7 @@ import { withAppDirSsr } from "app/WithAppDirSsr";
 import type { PageProps as ServerPageProps } from "app/_types";
 import { _generateMetadata } from "app/_utils";
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 
 import { buildLegacyCtx } from "@lib/buildLegacyCtx";
@@ -26,6 +26,8 @@ const getData = withAppDirSsr<ClientPageProps>(getServerSideProps);
 const stepSchema = z.enum(["1", "2", "3", "4"]);
 
 const ServerPage = async ({ params, searchParams: _searchParams }: ServerPageProps) => {
+  // SEC (2026-11-10): first-run wizard disabled on every deployment; admins are provisioned.
+  if (process.env.TW_ALLOW_FIRST_RUN_SETUP !== "1") notFound();
   const searchParams = await _searchParams;
   const stepResult = stepSchema.safeParse(searchParams?.step);
 

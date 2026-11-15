@@ -43,6 +43,7 @@ export function OverlayCalendarSwitch({ enabled, hasSession, onStateChange }: Ov
       <div className="flex items-center gap-2 pr-2">
         <Switch
           data-testid="overlay-calendar-switch"
+          aria-label={t("overlay_my_calendar")}
           checked={switchEnabled}
           id="overlayCalendar"
           onCheckedChange={(state) => {

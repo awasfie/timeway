@@ -1,0 +1,5 @@
+import { ActivityIcon as LucideActivityIcon } from "lucide-react";
+
+import { createIcon } from "./create-icon";
+
+export const ActivityIcon = /*#__PURE__*/ createIcon(LucideActivityIcon, "activity-icon");

@@ -1,6 +1,6 @@
 {
   "_comment": "WC-TW-6c ratchet: first-load gz JS of /[user]/[type] on the CI production build. Every JS reduction PR lowers this number to its measured value; the 200 KB budget is enforced once this is <= 200. Since WC-TW-6n-1 the total excludes <script noModule> (Next's legacy polyfills.js), reported separately.",
-  "total_kb_gz": 427.0,
+  "total_kb_gz": 367.3,
   "tolerance_kb": 5,
-  "source": "WC-TW-6n-2 local production build on #252 (rebased on main 220d49f2cd) + this PR (33 scripts, 427.0 KB gz; sonner, client DOMPurify and the coss toast provider off first load; noModule polyfills 38.5 KB gz not counted)"
+  "source": "WC-TW-6n-3 local production build on #254 + this PR (28 scripts, 367.3 KB gz; root error/not-found bodies lazy, radix hover-card lazy, LargeCalendar lazy, coss icons one module per icon, icon sprite without react-inlinesvg; noModule polyfills 38.5 KB gz not counted)"
 }

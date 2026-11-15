@@ -47,6 +47,8 @@ function getTestExclude() {
     "__checks__/**/*.spec.ts",
     // WC-TW-6g: Worker tests use node:test and run via `node --test ops/cloudflare/worker/booking-edge.test.mjs` in unit-tests.yml
     "ops/cloudflare/**",
+    // DESIGN-QA-CI t_3fe2e86d: qa/design holds Playwright specs run by design-qa.yml, not Vitest
+    "qa/**",
   ];
   if (isIntegrationMode || isTimezoneMode) {
     return [...baseExclude, "packages/embeds/**/*"];

@@ -10,6 +10,7 @@ import { decodeHTML } from "entities";
 import { z } from "zod";
 import { recipientDomains } from "../lib/maskRecipient";
 import { sanitizeDisplayName } from "../lib/sanitizeDisplayName";
+import { withBookingUidSmtpApi } from "../lib/smtpApiHeaders";
 
 type SentInfo = { messageId?: string; response?: string };
 
@@ -65,7 +66,7 @@ export default class BaseEmail {
 
     const parseSubject = z.string().safeParse(payload?.subject);
     const payloadWithUnEscapedSubject = {
-      headers: this.getMailerOptions().headers,
+      headers: withBookingUidSmtpApi(this.getMailerOptions().headers, this.getBookingUid()),
       ...payload,
       ...{
         from: sanitizedFrom,

@@ -8,6 +8,7 @@ import type { IconName } from "@calcom/ui/components/icon";
 
 import { lucideIconList } from "../../../../packages/ui/components/icon/icon-list.mjs";
 import { IconGrid } from "./IconGrid";
+import "../../styles/app.css";
 
 export const dynamic = "force-static";
 

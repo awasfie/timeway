@@ -18,7 +18,7 @@ export const topLevelRouteNamesWhitelistedForRewrite: string[] = [
  * to prevent conflicts with organization slug rewrites.
  */
 export const topLevelRoutesExcludedFromOrgRewrite: string[] = globSync(
-  "{pages,app,app/(booking-page-wrapper),app/(use-page-wrapper),app/(use-page-wrapper)/(main-nav)}/**/[^_]*.{tsx,js,ts}",
+  "{pages,app,app/(auth-page-wrapper),app/(booking-page-wrapper),app/(use-page-wrapper),app/(use-page-wrapper)/(main-nav)}/**/[^_]*.{tsx,js,ts}",
   {
     cwd: __dirname,
   }
@@ -27,7 +27,7 @@ export const topLevelRoutesExcludedFromOrgRewrite: string[] = globSync(
     filename
       // Remove the directory prefix (pages/, app/ and route group folders.)
       .replace(
-        /^(app\/\(use-page-wrapper\)\/\(main-nav\)|app\/\(use-page-wrapper\)|app\/\(booking-page-wrapper\)|pages|app)\//,
+        /^(app\/\(use-page-wrapper\)\/\(main-nav\)|app\/\(use-page-wrapper\)|app\/\(auth-page-wrapper\)|app\/\(booking-page-wrapper\)|pages|app)\//,
         ""
       )
       // Remove file extensions

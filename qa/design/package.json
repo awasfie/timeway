@@ -1,0 +1,16 @@
+{
+  "name": "timeway-design-qa",
+  "private": true,
+  "description": "DESIGN-QA-CI (UX.13.3 / CC-55 / CC-56): axe, screenshot diff and Lighthouse budgets against a Timeway URL. Standalone (not a yarn workspace) so CI installs only these three tools.",
+  "scripts": {
+    "axe": "playwright test --grep axe",
+    "screens": "playwright test --grep screens",
+    "screens:update": "playwright test --grep screens --update-snapshots",
+    "lhci": "lhci autorun --config=./lighthouserc.cjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
+    "@lhci/cli": "0.15.1",
+    "@playwright/test": "1.57.0"
+  }
+}

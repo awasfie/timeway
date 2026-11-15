@@ -45,7 +45,6 @@ import { DatePickerSkeleton } from "./DatePickerSkeleton";
 import { DryRunMessage } from "./DryRunMessage";
 import { EventMeta } from "./EventMeta";
 import { HavingTroubleFindingTime } from "./HavingTroubleFindingTime";
-import { LargeCalendar } from "./LargeCalendar";
 import { OverlayCalendar } from "./OverlayCalendar/OverlayCalendar";
 import { SlotSelectionModalHeader } from "./SlotSelectionModalHeader";
 import { NotFound } from "./Unavailable";
@@ -67,6 +66,8 @@ const BookingPageTagManager = dynamic(() => import("@calcom/app-store/BookingPag
   ssr: false,
 });
 const Toaster = dynamic(() => import("sonner").then((mod) => mod.Toaster), { ssr: false });
+// WC-TW-6n-3: the weekly calendar only renders in week_view; keep it off the month/column first load.
+const LargeCalendar = dynamic(() => import("./LargeCalendar").then((mod) => mod.LargeCalendar));
 
 // WC-DX-7d-2d: the month picker pulls react-aria-components + @internationalized/date (~70 KB gz).
 // The server paints BookerSsrShell, not the picker, so it gets its own chunk, requested as soon as

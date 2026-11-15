@@ -44,6 +44,7 @@ Anything else must be listed in `scripts/tw-t9/entrypoint-allowlist.json` with a
 | 21a | tRPC `slots.reserveSlot` (same router) | public | resolver fn `tw_resolve_org_for_event_type_id` (`input.eventTypeId`; TW-T9.2b2f) |
 | 21b | tRPC `slots.isAvailable` (same router) | public | resolver fn `tw_resolve_org_for_event_type_id` (`input.eventTypeId`; TW-T9.2b2f) |
 | 21c | tRPC `slots.removeSelectedSlotMark` (same router) | public | resolver fn `tw_resolve_org_for_event_type_id` over the event types of the reservation's `SelectedSlots` rows (read unscoped: no twOrgId, not in the 2d RLS set); all must give one org, else NOT_FOUND; no rows returns without work (TW-T9.2b2f) |
+| 21d | tRPC `public.event` (`packages/trpc/server/routers/publicViewer/procedures/event.ts`), the booker's client-side event fetch | public | resolver fn `tw_resolve_org_for_team_slug` if `isTeamEvent`, else `tw_resolve_org_for_user_slug` (every username of a group, one org); no org -> null (TW-BOOKING-404) |
 | 22 | `apps/web/app/api/camv/booking-window/[uid]/route.ts` (Camv server-to-server, shared-secret header) | public | resolver fn `tw_resolve_org_for_booking_uid` (added by this card; it was unscoped) |
 | 23 | `apps/web/app/api/cron/bookingReminder/route.ts` | unattended | platform:'bookingReminder' |
 | 24 | `apps/web/app/api/cron/calendar-subscriptions/route.ts` | unattended | platform:'calendar-subscriptions' |
@@ -67,6 +68,7 @@ Anything else must be listed in `scripts/tw-t9/entrypoint-allowlist.json` with a
 | 42 | `apps/web/app/api/internal/custom-domain/resolve/route.ts` (shared-secret header) | unattended | platform:'custom-domain-resolve' |
 | 43 | `apps/web/app/api/metrics/calendar-sync/route.ts` (secret-gated) | unattended | platform:'calendar-sync-metrics' |
 | 44 | `apps/web/app/api/health/route.ts` (Coolify readiness probe) | public | none: allowlisted in `scripts/tw-t9/entrypoint-allowlist.json`; runs only `SELECT 1`, touches no table |
+| 45 | `/team/[slug]` org landing (`apps/web/lib/team/[slug]/orgLandingPage.tsx`, `OrgLandingRepository`) | public | platform:'wc-tw-12f org landing' (org by slug) and platform:'tw-booking-404 org landing: *' (members, username ownership, event types); read-only, selects no contact field |
 
 Booking-uid resolution (rows 16, 17, 40, intended): all three call `publicLookupsForBookingUid` and resolve first-match (`resolvePublicTwOrgFirst`, also inside `runSsrWithPublicTwOrg`). The booking-uid resolver is tried first; the seat-reference resolver only when the booking uid gives no single org. Each resolver fails closed on its own: a key that gives zero orgs or two orgs is not found from that resolver. A value that is both a booking uid in one org and a seat referenceUid in another resolves to the booking's org; both are random UUIDs, so that collision is not a reachable case.
 
