@@ -98,9 +98,8 @@ export const manifest: Record<string, ModelCoverage> = {
     trpc: {
       none: "no router under packages/trpc/server/routers/{viewer,loggedInViewer,publicViewer} reads Avatar (import-graph and prisma-accessor scan, 2026-11-07)",
     },
-    publicSlug: {
-      none: "unprobed gap, follow-up card WC-TW-7b-5: api/avatar/[uuid] is public by uuid; no probe yet",
-    },
+    publicSlug:
+      "apps/web/test/cc13/pages-slug-gaps.integration-test.ts > avatar route: A's uuid returns only A's image, B's uuid only B's (uuid knowledge is the capability)",
   }),
   Booking: pending({
     pages:
@@ -163,9 +162,8 @@ export const manifest: Record<string, ModelCoverage> = {
     },
   }),
   Credential: pending({
-    pages: {
-      none: "unprobed gap, follow-up card WC-TW-7b-5: lib/apps/installation/[[...step]]/getServerSideProps.ts reads credentials; no probe yet",
-    },
+    pages:
+      "apps/web/test/cc13/pages-slug-gaps.integration-test.ts > installation page: B with ?teamId=A's team is redirected to /apps and gets none of A's credentials",
     trpc: "apps/web/test/cc13/trpc.integration-test.ts > viewer.credentials.delete: B cannot delete A's credential",
     publicSlug: {
       none: "/[user]/[type] and /team/[slug]/[type] loaders do not read Credential (accessor scan, 2026-11-07)",
@@ -297,9 +295,8 @@ export const manifest: Record<string, ModelCoverage> = {
     trpc: {
       none: "no router under packages/trpc/server/routers/{viewer,loggedInViewer,publicViewer} reads Organization (import-graph and prisma-accessor scan, 2026-11-07)",
     },
-    publicSlug: {
-      none: "unprobed gap, follow-up card WC-TW-7b-5: team/[slug]/orgLandingPage.tsx reads tw_organization via OrgLandingRepository; org landing is not covered by the slug probes",
-    },
+    publicSlug:
+      "apps/web/test/cc13/pages-slug-gaps.integration-test.ts > org landing: A's active landing exposes only public fields, none of B's data",
   }),
   OrganizationBilling: pending({
     pages: {
@@ -317,9 +314,8 @@ export const manifest: Record<string, ModelCoverage> = {
       none: "no page loader under apps/web/{app,modules,lib,server/lib,pages} reads OrganizationMember (accessor scan, 2026-11-07)",
     },
     trpc: "apps/web/test/cc13/trpc.integration-test.ts > viewer.organizations.customDomain.add and remove: B cannot change A's org custom hostname",
-    publicSlug: {
-      none: "unprobed gap, follow-up card WC-TW-7b-5: org landing and custom-host resolver read it (CustomHostnameRepository); not covered by the slug probes",
-    },
+    publicSlug:
+      "apps/web/test/cc13/pages-slug-gaps.integration-test.ts > org landing: members list leaves out locked, hidden-only and cross-org-username members",
   }),
   OrganizationOnboarding: pending({
     pages: {
@@ -423,9 +419,8 @@ export const manifest: Record<string, ModelCoverage> = {
       none: "no page loader under apps/web/{app,modules,lib,server/lib,pages} reads TwCustomHostname (accessor scan, 2026-11-07)",
     },
     trpc: "apps/web/test/cc13/trpc.integration-test.ts > viewer.organizations.customDomain.get: B cannot read A's org custom hostname",
-    publicSlug: {
-      none: "unprobed gap, follow-up card WC-TW-7b-5: CustomHostResolverRepository resolves a host to an org outside /[user]/[type] and /team/[slug]/[type]; not covered",
-    },
+    publicSlug:
+      "apps/web/test/cc13/pages-slug-gaps.integration-test.ts > custom host resolver: A's pending_dns and failed hostnames resolve to nothing, active resolves to A only",
   }),
   User: pending({
     pages: "apps/web/test/cc13/pages.integration-test.ts > B cannot open A's personal (userId) webhook",
