@@ -36,6 +36,11 @@ import {
   runWithSessionTwOrg,
   twOrgIdOf,
 } from "@calcom/lib/server/tw-org-scope/session";
+import {
+  ensureUserTwOrg,
+  provisionSignedInUser,
+  runOrglessLogin,
+} from "@calcom/lib/server/tw-org-scope/provision";
 import slugify from "@calcom/lib/slugify";
 import type { TrackingData } from "@calcom/lib/tracking";
 import prisma from "@calcom/prisma";
@@ -193,6 +198,14 @@ export async function authorizeCredentials(
   // TW-T9.2b1: the org is found before any tenant read, via the SECURITY DEFINER lookup.
   const principal = await resolveLoginPrincipal(prisma, credentials.email);
   const twOrgId = principal?.twOrgId ?? null;
+  if (principal && !twOrgId) {
+    // TW-T9 (t_9824b7a7): a user with no org yet (signed up before orgs, or a >1-org conflict)
+    // is checked in the reviewed provisioning scope; only after the password check passes is
+    // the org created, so a bare email never provisions anything.
+    const user = await runOrglessLogin(() => authorizeCredentialsInOrg(credentials));
+    if (!user) return user;
+    return { ...user, twOrgId: await ensureUserTwOrg(principal.id) };
+  }
   const user = await runWithSessionTwOrg(twOrgId, () => authorizeCredentialsInOrg(credentials));
   return user ? { ...user, twOrgId } : user;
 }
@@ -540,7 +553,13 @@ export function withTwOrgCallbacks(options: AuthOptions): AuthOptions {
       ...(signIn && {
         signIn: async (params) => {
           const twOrgId = await resolveSignInTwOrgId(params.user, params.account);
-          return runWithSessionTwOrg(twOrgId, () => signIn(params));
+          if (twOrgId) return runWithSessionTwOrg(twOrgId, () => signIn(params));
+          // TW-T9 (t_9824b7a7): no org yet = a new OAuth user (created inside signIn) or an
+          // org-less existing one. The IdP has verified them; signIn runs in the reviewed
+          // provisioning scope and the user gets an org before the JWT is written.
+          const allowed = await runOrglessLogin(() => signIn(params));
+          if (allowed === true) await provisionSignedInUser(params.user, params.account);
+          return allowed;
         },
       }),
     },
