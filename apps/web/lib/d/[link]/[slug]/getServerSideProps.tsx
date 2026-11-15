@@ -142,7 +142,7 @@ async function getUserPageProps(context: GetServerSidePropsContext) {
       booking,
       user: name,
       slug,
-      isBrandingHidden: hideBranding,
+      isBrandingHidden: (eventData as { twHideBranding?: boolean }).twHideBranding === true || hideBranding,
       // Sending the team event from the server, because this template file
       // is reused for both team and user events.
       isTeamEvent,

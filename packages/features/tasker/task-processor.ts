@@ -26,11 +26,16 @@ export class TaskProcessor {
         })
         .catch(async (error) => {
           console.info(`Retrying task ${task.id}: ${error}`);
+          const minRetryIntervalMins =
+            taskConfig && "retryIntervalMins" in taskConfig
+              ? taskConfig.retryIntervalMins(task.attempts + 1)
+              : taskConfig && "minRetryIntervalMins" in taskConfig
+                ? taskConfig.minRetryIntervalMins
+                : null;
           await Task.retry({
             taskId: task.id,
             lastError: error instanceof Error ? error.message : "Unknown error",
-            minRetryIntervalMins:
-              taskConfig && "minRetryIntervalMins" in taskConfig ? taskConfig.minRetryIntervalMins : null,
+            minRetryIntervalMins,
           });
         });
     });

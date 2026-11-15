@@ -5,6 +5,7 @@ import {
   type EventTypeBrandingData,
   getEventTypeService,
 } from "@calcom/features/eventtypes/di/EventTypeService.container";
+import { isEventTypeBrandingHidden } from "@calcom/features/tw-branding/branding";
 import { getTranslation } from "@calcom/i18n/server";
 import { HttpError as HttpCode } from "@calcom/lib/http-error";
 import { isPrismaObjOrUndefined } from "@calcom/lib/isPrismaObj";
@@ -221,6 +222,8 @@ export async function getBooking(bookingId: number) {
           },
         } satisfies EventTypeBrandingData)
       : false,
+    // WC-TW-14b: a Timeway org entitled to hideBranding overrides the cal.com result
+    ...((await isEventTypeBrandingHidden(prisma, booking.eventTypeId)) ? { hideBranding: true } : {}),
     disableCancelling: booking.eventType?.disableCancelling ?? false,
     disableRescheduling: booking.eventType?.disableRescheduling ?? false,
   };
