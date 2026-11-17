@@ -19,7 +19,7 @@ concurrency:
 jobs:
   welcome:
     name: Welcome new contributors
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     steps:
       - uses: actions/github-script@v7
         with:

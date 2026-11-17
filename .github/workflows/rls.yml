@@ -32,7 +32,7 @@ concurrency:
 jobs:
   rls:
     name: rls
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 20
     services:
       postgres:

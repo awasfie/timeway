@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   check-types:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     steps:
       - uses: actions/checkout@v4
         with:
