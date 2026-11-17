@@ -4,7 +4,7 @@ import Script from "next/script";
 import PageWrapper from "@components/PageWrapperAppDir";
 
 import { AppProviders } from "../AppProviders";
-import { getAppProviderProps } from "../AppProvidersServer";
+import { getAuthAppProviderProps } from "../AppProvidersServer";
 import "../../styles/app.css";
 
 // UX13.3-4: /auth/login and /signup are signed-out pages. They render the same PageWrapper as
@@ -22,7 +22,7 @@ export default async function AuthPageWrapperLayout({ children }: { children: Re
     { id: "injected-body-script", script: bodyScript ?? "" },
   ].filter((script): script is { id: string; script: string } => !!script.script);
 
-  const appProviderProps = await getAppProviderProps();
+  const appProviderProps = await getAuthAppProviderProps();
 
   return (
     <AppProviders {...appProviderProps}>

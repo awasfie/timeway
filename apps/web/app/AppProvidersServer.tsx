@@ -1,5 +1,6 @@
 import { loadTranslations } from "@calcom/i18n/server";
 import { headers } from "next/headers";
+import authKeys from "./auth-i18n/authKeys.json";
 import { getRequestLocale } from "./requestLocale";
 
 /**
@@ -17,6 +18,22 @@ export async function getAppProviderProps() {
   const ns = "common";
   const translations = await loadTranslations(locale, ns);
   return { nonce, country, locale, isEmbed, ns, translations };
+}
+
+/**
+ * UX13.3-4: the signed-out auth pages (/auth/login, /signup) ship only the keys they render
+ * (app/auth-i18n/authKeys.json, ~1.4 KB gz) instead of the whole common.json (~84 KB gz). The
+ * locale-merged table is subset, so non-English locales keep their English fallbacks.
+ * app/auth-i18n/authKeys.test.ts fails when the list no longer covers the pages' t("literal") keys.
+ */
+export async function getAuthAppProviderProps(): Promise<AppProviderProps> {
+  const props = await getAppProviderProps();
+  const translations: Record<string, string> = {};
+  for (const key of authKeys as string[]) {
+    const v = props.translations[key];
+    if (v !== undefined) translations[key] = v;
+  }
+  return { ...props, translations };
 }
 
 export type AppProviderProps = Awaited<ReturnType<typeof getAppProviderProps>>;
