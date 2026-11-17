@@ -18,7 +18,7 @@ const expected = () => {
   for (const l of all) {
     out[l.type] = {
       label: l.label,
-      iconUrl: l.iconUrl,
+      iconUrl: l.iconUrl ?? "",
       ...(l.defaultValueVariable ? { defaultValueVariable: l.defaultValueVariable } : {}),
     };
   }
