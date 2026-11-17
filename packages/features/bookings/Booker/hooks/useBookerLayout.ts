@@ -29,7 +29,9 @@ export const useBookerLayout = (
   const embedUiConfig = useEmbedUiConfig();
   // In Embed we give preference to embed configuration for the layout.If that's not set, we use the App configuration for the event layout
   // But if it's mobile view, there is only one layout supported which is 'mobile'
-  const layout = isEmbed ? (isMobile ? "mobile" : validateLayout(embedUiConfig.layout) || _layout) : _layout;
+  // UX.13.3 CLS: on a phone the layout is "mobile" in the same render, not after the store catches up
+  // (initializeStore re-sets month_view, which painted a narrow desktop grid for a frame).
+  const layout = isMobile ? "mobile" : isEmbed ? validateLayout(embedUiConfig.layout) || _layout : _layout;
   const extraDays = isTablet ? extraDaysConfig[layout].tablet : extraDaysConfig[layout].desktop;
   const embedType = useEmbedType();
   // Floating Button and Element Click both are modal and thus have dark background
