@@ -3,9 +3,9 @@
 import { ErrorCode } from "@calcom/features/auth/lib/ErrorCode";
 import { HOSTED_CAL_FEATURES, WEBAPP_URL, WEBSITE_URL } from "@calcom/lib/constants";
 import { emailRegex } from "@calcom/lib/emailSchema";
-import { getSafeRedirectUrl } from "@calcom/lib/getSafeRedirectUrl";
 import { useCompatSearchParams } from "@calcom/lib/hooks/useCompatSearchParams";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
+import { resolveLoginCallbackUrl } from "@calcom/lib/loginCallbackUrl";
 import { Alert } from "@calcom/ui/components/alert";
 import { Icon } from "@calcom/ui/components/icon";
 import { Logo } from "@calcom/ui/components/logo";
@@ -141,18 +141,8 @@ export default function Login({
     [ErrorCode.ThirdPartyIdentityProviderEnabled]: t("account_created_with_identity_provider"),
   };
 
-  let callbackUrl = searchParams?.get("callbackUrl") || "";
-
-  if (/"\//.test(callbackUrl)) callbackUrl = callbackUrl.substring(1);
-
-  // If not absolute URL, make it absolute
-  if (!/^https?:\/\//.test(callbackUrl)) {
-    callbackUrl = `${WEBAPP_URL}/${callbackUrl}`;
-  }
-
-  const safeCallbackUrl = getSafeRedirectUrl(callbackUrl);
-
-  callbackUrl = safeCallbackUrl || "";
+  // Never "/": it is the marketing site since the timeway.co path split; default landing is /event-types.
+  const callbackUrl = resolveLoginCallbackUrl(searchParams?.get("callbackUrl"));
 
   const onSubmit = async (values: LoginValues) => {
     setErrorMessage(null);
