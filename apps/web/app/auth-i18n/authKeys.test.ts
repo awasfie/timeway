@@ -1,11 +1,12 @@
 // @vitest-environment node
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import authKeys from "./authKeys.json";
-import { EXTRA_KEYS, scanKeys } from "./scanAuthKeys.mjs";
+import { EXTRA_KEYS, REPO_ROOT, scanKeys } from "./scanAuthKeys.mjs";
 
-const en = JSON.parse(readFileSync(new URL("../../../../packages/i18n/locales/en/common.json", import.meta.url), "utf8"));
+const en = JSON.parse(readFileSync(join(REPO_ROOT, "packages/i18n/locales/en/common.json"), "utf8"));
 
 describe("auth page translation allow-list (UX13.3-4)", () => {
   it("covers every t(\"literal\") key in the login/signup view tree (regenerate with scanAuthKeys.mjs --write)", () => {

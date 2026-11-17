@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../../../..");
+export const REPO_ROOT = root;
 
 // Everything the two pages render on the client. Directories are scanned recursively.
 export const SCAN_PATHS = [
