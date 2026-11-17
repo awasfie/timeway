@@ -1,9 +1,8 @@
 import { headers } from "next/headers";
 import Script from "next/script";
 
-import PageWrapper from "@components/PageWrapperAppDir";
-
-import { AppProviders } from "../AppProviders";
+import { AuthProviders } from "./AuthProviders";
+import AuthPageWrapper from "./AuthPageWrapper";
 import { getAppProviderProps } from "../AppProvidersServer";
 import "../../styles/app.css";
 
@@ -25,8 +24,11 @@ export default async function AuthPageWrapperLayout({ children }: { children: Re
   const appProviderProps = await getAppProviderProps();
 
   return (
-    <AppProviders {...appProviderProps}>
-      <PageWrapper requiresLicense={false} nonce={nonce}>
+    <AuthProviders
+      locale={appProviderProps.locale}
+      ns={appProviderProps.ns}
+      translations={appProviderProps.translations}>
+      <AuthPageWrapper requiresLicense={false} nonce={nonce}>
         {children}
         {scripts.map((script) => (
           // biome-ignore lint/security/noDangerouslySetInnerHtml: Injected scripts from env vars
@@ -39,7 +41,7 @@ export default async function AuthPageWrapperLayout({ children }: { children: Re
             }}
           />
         ))}
-      </PageWrapper>
-    </AppProviders>
+      </AuthPageWrapper>
+    </AuthProviders>
   );
 }

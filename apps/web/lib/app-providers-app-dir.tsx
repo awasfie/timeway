@@ -120,4 +120,24 @@ const AppProviders = (props: PageWrapperProps) => {
   return RemainingProviders;
 };
 
+/**
+ * UX13.3-4 (t_823c75d4): signed-out /auth/login and /signup. Same theme and tooltip providers, without the
+ * feature-flag provider, whose useFlags() needs tRPC + react-query (SessionProvider/TrpcProvider are not
+ * mounted on these two routes either); neither form reads flags, the session or tRPC.
+ */
+export const AuthAppProviders = (props: PageWrapperProps) => {
+  const isBookingPage = useIsBookingPage();
+  const isThemeSupported = useIsThemeSupported();
+  return (
+    <TooltipProvider>
+      <CalcomThemeProvider
+        nonce={props.nonce}
+        isThemeSupported={isThemeSupported}
+        isBookingPage={props.isBookingPage || isBookingPage}>
+        {props.children}
+      </CalcomThemeProvider>
+    </TooltipProvider>
+  );
+};
+
 export default AppProviders;
