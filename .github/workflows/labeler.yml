@@ -13,13 +13,13 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     steps:
       - uses: actions/labeler@v5
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
   apply-labels-from-issue:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
 
     permissions:
       contents: none

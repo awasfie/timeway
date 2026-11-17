@@ -16,7 +16,7 @@ jobs:
     name: Build Atoms
     permissions:
       contents: read
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4

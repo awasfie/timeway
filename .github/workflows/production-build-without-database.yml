@@ -48,7 +48,7 @@ concurrency:
 jobs:
   build:
     name: Build Web App
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4

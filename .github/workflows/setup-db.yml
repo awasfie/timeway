@@ -35,7 +35,7 @@ concurrency:
 jobs:
   setup-db:
     name: Setup Database
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 15
     services:
       postgres:
