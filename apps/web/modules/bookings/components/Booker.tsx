@@ -428,6 +428,12 @@ const BookerComponent = ({
             // UX.13.3 CLS: below md the shells are full width; keep the grid full width too so it cannot
             // re-centre as content widens it (run 43351994617: CLS 0.125 left on this node).
             !isEmbed && "max-md:w-full",
+            // PERF-5b-a: the inline grid template from useBookerResizeAnimation lands ~1 s after the lazy
+            // booker's first paint on a throttled phone (container painted with style=null), so the meta
+            // column sat at 322px then widened to 412px (CLS 0.079). Same template as resizeAnimationConfig.mobile
+            // as classes, so the first paint already has it; the inline style then sets identical values.
+            layout === "mobile" &&
+              '[grid-template-areas:"meta"_"header"_"main"_"timeslots"] grid-cols-[100%] grid-rows-[minmax(min-content,max-content)_1fr]',
             isEmbed && layout === BookerLayouts.MONTH_VIEW && "border-booker sm:border-booker-width",
             !isEmbed && layout === BookerLayouts.MONTH_VIEW && `border-subtle border`,
             `${customClassNames?.bookerContainer}`
