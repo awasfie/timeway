@@ -2,6 +2,7 @@ import process from "node:process";
 import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
 import { WEBSITE_URL } from "@calcom/lib/constants";
 import { getSafeRedirectUrl } from "@calcom/lib/getSafeRedirectUrl";
+import { DEFAULT_LOGIN_LANDING_PATH, resolveLoginCallbackUrl } from "@calcom/lib/loginCallbackUrl";
 import { IS_GOOGLE_LOGIN_ENABLED } from "@server/lib/constants";
 import { jwtVerify } from "jose";
 import type { GetServerSidePropsContext } from "next";
@@ -51,7 +52,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
     if (callbackUrl) {
       try {
-        const destination = getSafeRedirectUrl(callbackUrl as string);
+        const destination = resolveLoginCallbackUrl(callbackUrl as string);
         if (destination) {
           return {
             redirect: {
@@ -67,7 +68,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
     return {
       redirect: {
-        destination: "/",
+        // never "/": the marketing site owns / on timeway.co
+        destination: DEFAULT_LOGIN_LANDING_PATH,
         permanent: false,
       },
     };

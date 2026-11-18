@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - "packages/prisma/**"
+      - "packages/kysely/**"
       - "vitest.rls.config.mts"
       - "scripts/tw-t9/**"
       - ".github/workflows/rls.yml"
@@ -14,6 +15,7 @@ on:
     branches: [main]
     paths:
       - "packages/prisma/**"
+      - "packages/kysely/**"
   workflow_dispatch:
 
 permissions:
