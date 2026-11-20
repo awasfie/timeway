@@ -14,8 +14,8 @@
   },
   "ci": {
     "marketing-home": {
-      "lcp_ms": 2921,
-      "source": "UX.13.3-3b (#295): providers + common.json out of the root layout. Design QA 43361024007 (78f04b60) LCP 3538 / TBT 21 and 43363660478 (c1d82c4d) LCP 3481 / TBT 53 / CLS 0 / JS 153; lcp_ms = max of the two medians. TBT, CLS and JS are under budget and assert outright (was 4331/160/0/193).; LCP lowered to 2921 by UX.13.3-2 (#289): max of Design QA runs 43351061895 (head 4dd62065f1, fast runner) and 43353810740 (head 1df7189388, slow runner) 5-run medians"
+      "lcp_ms": 2027,
+      "source": "UX.13.3-3d (t_67885034): root not-found passes only its 14 strings, / HTML 359131 -> 36568 bytes. Design QA 43373014341 (head 485f06f1, slow runner bi 2415) 5-run median LCP 2027 (1874/2027/2273/2316/1866), TBT 46, CLS 0, JS 153; was 2921. Observed FCP = observed LCP = 105 ms; the simulated gap is the JS chunks that finish before first paint (Lantern LCP graph). TBT, CLS and JS assert outright."
     },
     "app-login": {
       "lcp_ms": 4363,
