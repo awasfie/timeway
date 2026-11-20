@@ -1,0 +1,219 @@
+{
+  "runId": "20261103t1835",
+  "base": "https://timeway.co",
+  "expectOrganizer": "bookings@notify.timeway.co",
+  "expectDomain": "notify.timeway.co",
+  "skipped": [
+    "outlook"
+  ],
+  "rows": [
+    {
+      "provider": "gmail",
+      "locale": "en",
+      "check": "invite-chain",
+      "pass": true,
+      "detail": "METHOD REQUEST,REQUEST,CANCEL ok; UID same; SEQUENCE 0→1→2 ok; ORGANIZER bookings@notify.timeway.co"
+    },
+    {
+      "provider": "gmail",
+      "locale": "en",
+      "check": "auth-aligned",
+      "pass": true,
+      "detail": "spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass"
+    },
+    {
+      "provider": "gmail",
+      "locale": "ar",
+      "check": "invite-chain",
+      "pass": true,
+      "detail": "METHOD REQUEST,REQUEST,CANCEL ok; UID same; SEQUENCE 0→1→2 ok; ORGANIZER bookings@notify.timeway.co"
+    },
+    {
+      "provider": "gmail",
+      "locale": "ar",
+      "check": "auth-aligned",
+      "pass": true,
+      "detail": "spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass / spf=pass dkim=pass dmarc=pass"
+    }
+  ],
+  "cells": [
+    {
+      "provider": "gmail",
+      "locale": "en",
+      "attendee": "timeway.cc66+cc66-20261103t1835-en@gmail.com",
+      "bookings": [
+        {
+          "step": "create",
+          "bookingUid": "kXhEBr9LzVALQ5Lpusek7j",
+          "bookingId": 585,
+          "at": "2026-11-03T18:35:25.756Z"
+        },
+        {
+          "step": "reschedule",
+          "bookingUid": "51JUFQMaz6bbzzYLWQK2Yu",
+          "bookingId": 586,
+          "at": "2026-11-03T18:35:58.155Z"
+        },
+        {
+          "step": "cancel",
+          "bookingUid": "51JUFQMaz6bbzzYLWQK2Yu",
+          "at": "2026-11-03T18:36:31.844Z"
+        }
+      ],
+      "invites": {
+        "create": {
+          "imapUid": 58,
+          "date": "Tue, 03 Nov 2026 18:35:27 +0000 (UTC)",
+          "subject": "30 min meeting between WC-DX-10c Synthetic EN and CC-66 matrix",
+          "from": "WC-DX-10c Synthetic EN <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "kXhEBr9LzVALQ5Lpusek7j@Timeway",
+          "sequence": 0,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T090000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=q7FklqpI; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=\"DKczYW/+\"; spf=pass (google.com: domain of bounces+47995021-30f2-timeway.cc66+cc66-20261103t1835-en=…@em5498.notify.timeway.co designates 167.89.18.14 as permitted sender) smtp.mailfrom=\"bounces+47995021-30f2-timeway.cc66+cc66-20261103t1835-en=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        },
+        "reschedule": {
+          "imapUid": 61,
+          "date": "Tue, 03 Nov 2026 18:36:00 +0000 (UTC)",
+          "subject": "Your 30 min meeting between WC-DX-10c Synthetic EN and CC-66 matrix has been rescheduled to 1:30pm - 2:00pm, Wednesday, November 4, 2026.",
+          "from": "WC-DX-10c Synthetic EN <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "kXhEBr9LzVALQ5Lpusek7j@Timeway",
+          "sequence": 1,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T093000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=EU6LzHRC; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=bX5rtMsN; spf=pass (google.com: domain of bounces+47995021-30f2-timeway.cc66+cc66-20261103t1835-en=…@em5498.notify.timeway.co designates 167.89.18.14 as permitted sender) smtp.mailfrom=\"bounces+47995021-30f2-timeway.cc66+cc66-20261103t1835-en=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        },
+        "cancel": {
+          "imapUid": 62,
+          "date": "Tue, 03 Nov 2026 18:36:33 +0000 (UTC)",
+          "subject": "Canceled: 30 min meeting between WC-DX-10c Synthetic EN and CC-66 matrix between WC-DX-10c Synthetic EN and CC-66 matrix at 1:30pm - 2:00pm, Wednesday, November 4, 2026",
+          "from": "WC-DX-10c Synthetic EN <bookings@notify.timeway.co>",
+          "method": "CANCEL",
+          "uid": "kXhEBr9LzVALQ5Lpusek7j@Timeway",
+          "sequence": 2,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T093000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=sbbR3o87; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=mths8QGw; spf=pass (google.com: domain of bounces+47995021-30f2-timeway.cc66+cc66-20261103t1835-en=…@em5498.notify.timeway.co designates 159.183.233.119 as permitted sender) smtp.mailfrom=\"bounces+47995021-30f2-timeway.cc66+cc66-20261103t1835-en=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        }
+      }
+    },
+    {
+      "provider": "gmail",
+      "locale": "ar",
+      "attendee": "timeway.cc66+cc66-20261103t1835-ar@gmail.com",
+      "bookings": [
+        {
+          "step": "create",
+          "bookingUid": "5dfnzqXyDiphXDzjGtnhJp",
+          "bookingId": 587,
+          "at": "2026-11-03T18:37:07.069Z"
+        },
+        {
+          "step": "reschedule",
+          "bookingUid": "xbJ3xZtcr8X3FP8e1jhUyE",
+          "bookingId": 588,
+          "at": "2026-11-03T18:37:46.296Z"
+        },
+        {
+          "step": "cancel",
+          "bookingUid": "xbJ3xZtcr8X3FP8e1jhUyE",
+          "at": "2026-11-03T18:38:19.190Z"
+        }
+      ],
+      "invites": {
+        "create": {
+          "imapUid": 65,
+          "date": "Tue, 03 Nov 2026 18:37:14 +0000 (UTC)",
+          "subject": "اجتماع لمدة 30 دقيقة بين WC-DX-10c Synthetic AR واختبار CC-66",
+          "from": "WC-DX-10c Synthetic AR <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "5dfnzqXyDiphXDzjGtnhJp@Timeway",
+          "sequence": 0,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T100000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=Y7YjOkld; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=UPzfLAt1; spf=pass (google.com: domain of bounces+47995021-92a0-timeway.cc66+cc66-20261103t1835-ar=…@em5498.notify.timeway.co designates 50.31.63.70 as permitted sender) smtp.mailfrom=\"bounces+47995021-92a0-timeway.cc66+cc66-20261103t1835-ar=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        },
+        "reschedule": {
+          "imapUid": 68,
+          "date": "Tue, 03 Nov 2026 18:37:48 +0000 (UTC)",
+          "subject": "تم إعادة جدولة  اجتماع لمدة 30 دقيقة between WC-DX-10c Synthetic AR and اختبار CC-66 إلى 2:30pm - 3:00pm, الأربعاء, نوفمبر 4, 2026.",
+          "from": "WC-DX-10c Synthetic AR <bookings@notify.timeway.co>",
+          "method": "REQUEST",
+          "uid": "5dfnzqXyDiphXDzjGtnhJp@Timeway",
+          "sequence": 1,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T103000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=fdZdG1Oq; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=SKmcgtqa; spf=pass (google.com: domain of bounces+47995021-92a0-timeway.cc66+cc66-20261103t1835-ar=…@em5498.notify.timeway.co designates 50.31.63.70 as permitted sender) smtp.mailfrom=\"bounces+47995021-92a0-timeway.cc66+cc66-20261103t1835-ar=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        },
+        "cancel": {
+          "imapUid": 71,
+          "date": "Tue, 03 Nov 2026 18:38:22 +0000 (UTC)",
+          "subject": "تم الإلغاء: اجتماع  لمدة 30 دقيقة between WC-DX-10c Synthetic AR and اختبار CC-66 بين WC-DX-10c Synthetic AR واختبار CC-66 في 2:30pm - 3:00pm, الأربعاء, نوفمبر 4, 2026",
+          "from": "WC-DX-10c Synthetic AR <bookings@notify.timeway.co>",
+          "method": "CANCEL",
+          "uid": "5dfnzqXyDiphXDzjGtnhJp@Timeway",
+          "sequence": 2,
+          "organizer": "bookings@notify.timeway.co",
+          "dtstart": "20261104T103000",
+          "partKinds": [
+            "text/calendar",
+            "application/ics"
+          ],
+          "auth": {
+            "dkim": true,
+            "spf": true,
+            "dmarc": true,
+            "raw": "mx.google.com; dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=2ueiBVrc; dkim=pass header.i=@sendgrid.info header.s=smtpapi header.b=TjdoQJBl; spf=pass (google.com: domain of bounces+47995021-92a0-timeway.cc66+cc66-20261103t1835-ar=…@em5498.notify.timeway.co designates 167.89.20.171 as permitted sender) smtp.mailfrom=\"bounces+47995021-92a0-timeway.cc66+cc66-20261103t1835-ar=…@em5498.notify.timeway.co\"; dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co"
+          }
+        }
+      }
+    }
+  ]
+}
