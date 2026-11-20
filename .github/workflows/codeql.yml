@@ -49,5 +49,5 @@ jobs:
         with:
           name: codeql-sarif-${{ matrix.language }}
           path: sarif-results
-          retention-days: 30
+          retention-days: 7
           if-no-files-found: ignore
