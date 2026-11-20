@@ -17,7 +17,7 @@ concurrency:
 jobs:
   check-prisma-migrations:
     name: Check migrations match schema
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     services:
       postgres:
         image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336

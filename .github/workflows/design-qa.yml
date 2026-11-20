@@ -27,7 +27,7 @@ concurrency:
 jobs:
   design-qa:
     name: axe + screenshot diff + Lighthouse UX.13.3
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 60
     services:
       postgres:

@@ -32,7 +32,7 @@ concurrency:
 jobs:
   tzdata:
     name: tzdata pin (Node/ICU = OS = Postgres)
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 20
     services:
       postgres:
