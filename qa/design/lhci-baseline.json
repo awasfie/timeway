@@ -18,18 +18,12 @@
       "source": "UX.13.3-3b (#295): providers + common.json out of the root layout. Design QA 43361024007 (78f04b60) LCP 3538 / TBT 21 and 43363660478 (c1d82c4d) LCP 3481 / TBT 53 / CLS 0 / JS 153; lcp_ms = max of the two medians. TBT, CLS and JS are under budget and assert outright (was 4331/160/0/193).; LCP lowered to 2921 by UX.13.3-2 (#289): max of Design QA runs 43351061895 (head 4dd62065f1, fast runner) and 43353810740 (head 1df7189388, slow runner) 5-run medians"
     },
     "app-login": {
-      "lcp_ms": 4363,
-      "tbt_ms": 245,
-      "cls": 0,
-      "js_kb": 349,
-      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912); js_kb 349 = Design QA run 43349375745 median (root error/not-found lazy, same change as #256; was 380); LCP lowered to 4363 by UX.13.3-2 (#289): max of Design QA runs 43351061895 (head 4dd62065f1, fast runner) and 43353810740 (head 1df7189388, slow runner) 5-run medians"
+      "lcp_ms": 3994,
+      "source": "PR #315 (t_823c75d4) Design QA run 44180750385 (head 1e608140, fast runner) 5-run medians: LCP 3994, TBT 98, CLS 0, JS 290. LCP is the only metric still over budget; TBT, CLS and JS assert outright."
     },
     "app-signup": {
-      "lcp_ms": 5583,
-      "tbt_ms": 229,
-      "cls": 0,
-      "js_kb": 452,
-      "source": "Design QA run 43300247360 (5-run median, head 8d65a60912); js_kb 452 = Design QA run 43349375745 median (root error/not-found lazy, same change as #256; was 483); LCP lowered to 5583 by UX.13.3-2 (#289): max of Design QA runs 43351061895 (head 4dd62065f1, fast runner) and 43353810740 (head 1df7189388, slow runner) 5-run medians"
+      "lcp_ms": 3921,
+      "source": "PR #315 (t_823c75d4) Design QA run 44180750385 (head 1e608140, fast runner) 5-run medians: LCP 3921, TBT 78, CLS 0.001, JS 300. LCP is the only metric still over budget; TBT, CLS and JS assert outright."
     },
     "booking-page": {
       "lcp_ms": 5895,
