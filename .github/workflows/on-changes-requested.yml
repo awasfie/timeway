@@ -27,3 +27,4 @@ jobs:
         with:
           name: context.json
           path: ./
+          retention-days: 7

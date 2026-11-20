@@ -94,3 +94,4 @@ jobs:
         with:
           name: blob-report-embed-react
           path: blob-report
+          retention-days: 7

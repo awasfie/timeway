@@ -123,6 +123,7 @@ jobs:
             qa/design/out/
             qa/design/tests/__screens__/
           if-no-files-found: error
+          retention-days: 7
       - name: Gate verdict
         if: always()
         run: |

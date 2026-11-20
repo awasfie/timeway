@@ -139,6 +139,7 @@ jobs:
           name: booking-perf-gh-runner
           path: perf/out/
           if-no-files-found: error
+          retention-days: 7
       - name: Gate verdict
         if: always()
         run: |
@@ -169,3 +170,4 @@ jobs:
           name: booking-perf-regions
           path: perf/out/
           if-no-files-found: error
+          retention-days: 7

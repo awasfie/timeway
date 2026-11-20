@@ -98,3 +98,4 @@ jobs:
         with:
           name: blob-report-embed-core
           path: blob-report
+          retention-days: 7
