@@ -105,3 +105,4 @@ jobs:
         with:
           name: blob-report-app-store
           path: blob-report
+          retention-days: 7
