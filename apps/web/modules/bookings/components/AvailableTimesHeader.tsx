@@ -5,7 +5,7 @@ import dayjs from "@calcom/dayjs";
 import { useBookerStoreContext } from "@calcom/features/bookings/Booker/BookerStoreProvider";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { nameOfDay } from "@calcom/lib/weekday";
-import { BookerLayouts } from "@calcom/prisma/zod-utils";
+import { BookerLayouts } from "@calcom/prisma/booker-layouts";
 import classNames from "@calcom/ui/classNames";
 
 import { TimeFormatToggle } from "@calcom/features/bookings/components/TimeFormatToggle";

@@ -33,7 +33,7 @@ const ServerPage = async ({ params, searchParams }: _PageProps) => {
   const legacyCtx = buildLegacyCtx(await headers(), await cookies(), await params, await searchParams);
   const pageProps = await getData(legacyCtx);
 
-  return <Type {...pageProps} />;
+  return <Type {...pageProps} shellNow={Date.now()} />;
 };
 
 export default ServerPage;

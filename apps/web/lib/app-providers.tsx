@@ -26,12 +26,21 @@ import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/pages";
 import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+
+import { PagesRouterI18nContext } from "@calcom/lib/i18n/PagesRouterI18nContext";
+
+// WC-TW-6n-4b: useLocale no longer imports react-i18next; Pages Router hands it the instance here.
+function PagesRouterI18nBridge({ children }: { children: React.ReactNode }) {
+  const { t, i18n } = useTranslation("common");
+  return <PagesRouterI18nContext.Provider value={{ t, i18n }}>{children}</PagesRouterI18nContext.Provider>;
+}
 
 const I18nextAdapter = appWithTranslation<
   NextJsAppProps<SSRConfig> & {
     children: React.ReactNode;
   }
->(({ children }) => <>{children}</>);
+>(({ children }) => <PagesRouterI18nBridge>{children}</PagesRouterI18nBridge>);
 
 // Workaround for https://github.com/vercel/next.js/issues/8592
 export type AppProps = Omit<

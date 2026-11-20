@@ -6,6 +6,7 @@ import {
   useEmbedStyles,
   useIsEmbed,
 } from "@calcom/embed-core/embed-iframe";
+import { TrpcProvider } from "app/_trpc/trpc-provider";
 import { useRouterQuery } from "@calcom/lib/hooks/useRouterQuery";
 import useTheme from "@calcom/lib/hooks/useTheme";
 import { UserAvatar } from "@calcom/ui/components/avatar";
@@ -155,4 +156,13 @@ export function UserPage(props: PageProps) {
   );
 }
 
-export default UserPage;
+// WC-TW-6n-4c: TrpcProvider left the root layout; mounted here for anything below that uses tRPC.
+function UserPageWithTrpc(props: Parameters<typeof UserPage>[0]) {
+  return (
+    <TrpcProvider>
+      <UserPage {...props} />
+    </TrpcProvider>
+  );
+}
+
+export default UserPageWithTrpc;

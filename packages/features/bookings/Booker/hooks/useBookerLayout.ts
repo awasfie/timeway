@@ -1,6 +1,3 @@
-import { useEffect, useRef } from "react";
-import { shallow } from "zustand/shallow";
-
 import {
   useEmbedType,
   useEmbedUiConfig,
@@ -13,9 +10,12 @@ import type { BookerLayout } from "@calcom/features/bookings/Booker/types";
 import { validateLayout } from "@calcom/features/bookings/Booker/utils/layout";
 import { getQueryParam } from "@calcom/features/bookings/Booker/utils/query-param";
 import type { BookerEvent } from "@calcom/features/bookings/types";
+import { useIsomorphicLayoutEffect } from "@calcom/lib/hooks/useIsomorphicLayoutEffect";
 import useMediaQuery from "@calcom/lib/hooks/useMediaQuery";
-import type { BookerLayouts } from "@calcom/prisma/zod-utils";
-import { defaultBookerLayoutSettings } from "@calcom/prisma/zod-utils";
+import type { BookerLayouts } from "@calcom/prisma/booker-layouts";
+import { defaultBookerLayoutSettings } from "@calcom/prisma/booker-layouts";
+import { useEffect, useRef } from "react";
+import { shallow } from "zustand/shallow";
 
 export type UseBookerLayoutType = ReturnType<typeof useBookerLayout>;
 
@@ -29,7 +29,9 @@ export const useBookerLayout = (
   const embedUiConfig = useEmbedUiConfig();
   // In Embed we give preference to embed configuration for the layout.If that's not set, we use the App configuration for the event layout
   // But if it's mobile view, there is only one layout supported which is 'mobile'
-  const layout = isEmbed ? (isMobile ? "mobile" : validateLayout(embedUiConfig.layout) || _layout) : _layout;
+  // UX.13.3 CLS: on a phone the layout is "mobile" in the same render, not after the store catches up
+  // (initializeStore re-sets month_view, which painted a narrow desktop grid for a frame).
+  const layout = isMobile ? "mobile" : isEmbed ? validateLayout(embedUiConfig.layout) || _layout : _layout;
   const extraDays = isTablet ? extraDaysConfig[layout].tablet : extraDaysConfig[layout].desktop;
   const embedType = useEmbedType();
   // Floating Button and Element Click both are modal and thus have dark background
@@ -42,7 +44,10 @@ export const useBookerLayout = (
     ? validateLayout(embedUiConfig.layout) || bookerLayouts.defaultLayout
     : bookerLayouts.defaultLayout;
 
-  useEffect(() => {
+  // UX.13.3 CLS: a layout effect, so the store holds "mobile" before the booker's first paint. With a
+  // passive effect the lazy booker painted one frame in month_view on a phone (narrow grid, then a
+  // jump to the full-width mobile grid: CLS 0.073 on /pro/30min, Design QA run 43410448547).
+  useIsomorphicLayoutEffect(() => {
     if (isMobile && layout !== "mobile") {
       setLayout("mobile");
     } else if (!isMobile && layout === "mobile") {

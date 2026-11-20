@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 
-import { Frequency } from "@calcom/prisma/zod-utils";
+import { Frequency } from "@calcom/prisma/booker-layouts";
 import type { RecurringEvent } from "@calcom/types/Calendar";
 
 export const getRecurringFreq = ({
