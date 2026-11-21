@@ -7,7 +7,6 @@ import logger from "@calcom/lib/logger";
 import { BookingStatus } from "@calcom/prisma/enums";
 import type { Ensure, Optional } from "@calcom/types/utils";
 import type { TFunction } from "i18next";
-import { z } from "zod";
 
 import type { EventLocationTypeFromAppMeta } from "../types/App";
 import {
@@ -492,7 +491,7 @@ export const getTranslatedLocation = (
   t: TFunction
 ) => {
   if (!eventLocationType) return null;
-  const locationKey = z.string().default("").parse(locationKeyToString(location));
+  const locationKey = locationKeyToString(location) ?? "";
   const translatedLocation = location.type.startsWith("integrations:")
     ? eventLocationType.label
     : translateAbleKeys.includes(locationKey)

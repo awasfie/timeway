@@ -1,9 +1,15 @@
 import { AVATAR_FALLBACK, CAL_URL } from "@calcom/lib/constants";
 import type { User } from "@calcom/prisma/client";
-import { z } from "zod";
 
 export const getAbsoluteAvatarUrl = (url: string): string => {
-  const isAbsolute = z.string().url().safeParse(url).success;
+  // Same check zod's .url() does (WHATWG URL parse), without shipping zod to the booker (WC-TW-6n-4a).
+  let isAbsolute = false;
+  try {
+    new URL(url);
+    isAbsolute = true;
+  } catch {
+    isAbsolute = false;
+  }
   return isAbsolute ? url : CAL_URL + url;
 };
 

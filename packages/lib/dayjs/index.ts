@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import type { Dayjs } from "@calcom/dayjs";
 import dayjs from "@calcom/dayjs";
 
@@ -256,4 +254,3 @@ export const stringToDayjs = (val: string) => {
   return dayjs(val).utcOffset(timezone);
 };
 
-export const stringToDayjsZod = z.string().transform(stringToDayjs);
