@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { generateKeyPair, SignJWT, exportJWK, createLocalJWKSet } from "jose";
 import { describe, expect, it, vi } from "vitest";
 
