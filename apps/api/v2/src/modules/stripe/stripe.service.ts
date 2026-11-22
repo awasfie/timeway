@@ -3,6 +3,7 @@ import { AppsRepository } from "@/modules/apps/apps.repository";
 import { CredentialsRepository } from "@/modules/credentials/credentials.repository";
 import { MembershipsRepository } from "@/modules/memberships/memberships.repository";
 import { stripeInstance } from "@/modules/stripe/utils/newStripeInstance";
+import { gateStripe, assertStripeAllowed } from "@/modules/stripe/utils/identityGate";
 import { StripeData } from "@/modules/stripe/utils/stripeDataSchemas";
 import { UsersRepository } from "@/modules/users/users.repository";
 import {
@@ -48,12 +49,15 @@ export class StripeService {
     private readonly membershipRepository: MembershipsRepository,
     private readonly usersRepository: UsersRepository
   ) {
-    this.stripe = new Stripe(configService.get("stripe.apiKey", { infer: true }) ?? "", {
-      apiVersion: "2020-08-27",
-    });
+    this.stripe = gateStripe(
+      new Stripe(configService.get("stripe.apiKey", { infer: true }) ?? "", {
+        apiVersion: "2020-08-27",
+      })
+    );
   }
 
   getStripe() {
+    assertStripeAllowed("StripeService.getStripe");
     return this.stripe;
   }
 
