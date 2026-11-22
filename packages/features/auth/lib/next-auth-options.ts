@@ -42,7 +42,7 @@ import prisma from "@calcom/prisma";
 import type { Membership, Team } from "@calcom/prisma/client";
 import { CreationSource, IdentityProvider, MembershipRole, UserPermissionRole } from "@calcom/prisma/enums";
 import { runWithTwPlatform } from "@calcom/prisma/tw-org-context";
-import { resolveIdentityMode } from "@calcom/features/tw-identity/mode";
+import { assertIdentityConfig } from "@calcom/features/tw-identity/mode";
 import { authorizePassportGrant } from "@calcom/features/tw-identity/passportAuth";
 import { teamMetadataSchema, userMetadata } from "@calcom/prisma/zod-utils";
 import type { UserProfile } from "@calcom/types/UserProfile";
@@ -347,7 +347,7 @@ export const CalComCredentialsProvider = CredentialsProvider({
 
 // TW-T14: identity mode. `local` = unchanged local accounts; `passport` = sign-in only via a Passport
 // session grant (provider id "passport"); local password, Google and magic-link logins are not offered.
-const IDENTITY_MODE = resolveIdentityMode();
+const IDENTITY_MODE = assertIdentityConfig();
 /** TW-T14: Passport handoff sign-in. Credentials field `grant` = Passport session grant (aud=timeway). */
 export async function authorizePassport(credentials: Record<"grant", string> | undefined): Promise<User | null> {
   const userRepo = new UserRepository(prisma);
@@ -412,7 +412,7 @@ if (IS_GOOGLE_LOGIN_ENABLED && IDENTITY_MODE === "local") {
   );
 }
 
-if (OUTLOOK_LOGIN_ENABLED && OUTLOOK_CLIENT_ID && OUTLOOK_CLIENT_SECRET) {
+if (IDENTITY_MODE === "local" && OUTLOOK_LOGIN_ENABLED && OUTLOOK_CLIENT_ID && OUTLOOK_CLIENT_SECRET) {
   providers.push(
     AzureADProvider({
       clientId: OUTLOOK_CLIENT_ID,
