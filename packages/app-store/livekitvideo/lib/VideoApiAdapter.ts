@@ -65,7 +65,19 @@ const LiveKitVideoApiAdapter = (): VideoApiAdapter => {
       // may explicitly close the room via the LiveKit Room Service API here.
       return Promise.resolve();
     },
-    updateMeeting: (bookingRef: PartialReference): Promise<VideoCallData> => {
+    updateMeeting: (bookingRef: PartialReference, eventData?: CalendarEvent): Promise<VideoCallData> => {
+      // A reschedule creates a NEW booking uid and cancels the old one. The Camv token endpoint
+      // rejects cancelled bookings, so the room must follow the CURRENT booking uid; reusing the
+      // old reference would send guests to a dead room (invite-integrity probe t_bb76cf1f).
+      const bookingUid = eventData?.uid;
+      if (bookingUid) {
+        return Promise.resolve({
+          type: metadata.type,
+          id: roomNameForBooking(bookingUid),
+          password: "",
+          url: camvRoomUrlForBooking(bookingUid),
+        });
+      }
       return Promise.resolve({
         type: metadata.type,
         id: bookingRef.meetingId as string,
