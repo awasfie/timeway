@@ -5,6 +5,7 @@ import logger from "@calcom/lib/logger";
 import { safeStringify } from "@calcom/lib/safeStringify";
 import prisma from "@calcom/prisma";
 import type { Prisma } from "@calcom/prisma/client";
+import { gateStripe } from "@calcom/features/tw-identity/stripeGate";
 import Stripe from "stripe";
 
 const log = logger.getSubLogger({ prefix: ["stripepayment:webhook"] });
@@ -58,7 +59,7 @@ const defaultDeps: Deps = {
 };
 
 // Signature check does not use the API key; constructEvent only needs the endpoint secret.
-const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY || "", { apiVersion: "2020-08-27" });
+const stripe = gateStripe(new Stripe(process.env.STRIPE_PRIVATE_KEY || "", { apiVersion: "2020-08-27" }));
 
 function recordedStripeAccount(data: Prisma.JsonValue | null): string | null {
   if (!data || typeof data !== "object" || Array.isArray(data)) return null;
