@@ -1,6 +1,6 @@
 "use client";
 
-import { BookerWebWrapper as Booker } from "@calcom/web/modules/bookings/components/BookerWebWrapper";
+import { BookerWebWrapperLazy as Booker } from "@calcom/web/modules/bookings/components/BookerWebWrapperLazy";
 import { getBookerWrapperClasses } from "@calcom/features/bookings/Booker/utils/getBookerWrapperClasses";
 
 import { type PageProps } from "@lib/d/[link]/[slug]/getServerSideProps";
@@ -20,11 +20,14 @@ export default function Type({
   durationConfig,
   eventData,
   useApiV2,
-}: PageProps) {
+  shellNow,
+}: PageProps & { shellNow?: number }) {
   return (
     <BookingPageErrorBoundary>
       <main className={getBookerWrapperClasses({ isEmbed: !!isEmbed })}>
         <Booker
+          isEmbed={!!isEmbed}
+          shellNow={shellNow}
           eventData={eventData}
           username={user}
           eventSlug={slug}

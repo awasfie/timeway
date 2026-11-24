@@ -1,7 +1,7 @@
 "use client";
 
 import { getBookerWrapperClasses } from "@calcom/features/bookings/Booker/utils/getBookerWrapperClasses";
-import { BookerWebWrapper as Booker } from "@calcom/web/modules/bookings/components/BookerWebWrapper";
+import { BookerWebWrapperLazy as Booker } from "@calcom/web/modules/bookings/components/BookerWebWrapperLazy";
 import BookingPageErrorBoundary from "@components/error/BookingPageErrorBoundary";
 import type { getServerSideProps } from "@lib/team/[slug]/[type]/getServerSideProps";
 import type { inferSSRProps } from "@lib/types/inferSSRProps";
@@ -33,13 +33,17 @@ function Type({
   crmRecordId,
   isEmbed,
   useApiV2,
-}: PageProps) {
+  shellNow,
+}: PageProps & { shellNow?: number }) {
   const searchParams = useSearchParams();
 
   return (
     <BookingPageErrorBoundary>
       <main className={getBookerWrapperClasses({ isEmbed: !!isEmbed })}>
         <Booker
+          isEmbed={!!isEmbed}
+          shellNow={shellNow}
+          shellEvent={eventData}
           useApiV2={useApiV2}
           username={user}
           eventSlug={slug}

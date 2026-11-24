@@ -2,7 +2,7 @@
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import classNames from "classnames";
-import { useSession } from "next-auth/react";
+import { useLazySession } from "@lib/hooks/useLazySession";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
@@ -47,6 +47,7 @@ import { AssignmentReasonEnum, BookingStatus, SchedulingType } from "@calcom/pri
 import assignmentReasonBadgeTitleMap from "@calcom/web/lib/booking/assignmentReasonBadgeTitleMap";
 import { bookingMetadataSchema } from "@calcom/prisma/zod-utils";
 import { trpc } from "@calcom/trpc/react";
+import { TrpcProvider } from "app/_trpc/trpc-provider";
 import { Alert } from "@calcom/ui/components/alert";
 import { Avatar } from "@calcom/ui/components/avatar";
 import { Badge } from "@calcom/ui/components/badge";
@@ -105,7 +106,17 @@ const useBrandColors = ({
   useCalcomTheme(brandTheme);
 };
 
+// WC-TW-6n-4c: the root layout no longer mounts TrpcProvider (it kept tRPC, react-query and superjson on
+// the public booker's first load); the booking views that use tRPC mount it themselves.
 export default function Success(props: PageProps) {
+  return (
+    <TrpcProvider>
+      <SuccessInner {...props} />
+    </TrpcProvider>
+  );
+}
+
+function SuccessInner(props: PageProps) {
   const { t } = useLocale();
   const router = useRouter();
   const routerQuery = useRouterQuery();
@@ -171,7 +182,7 @@ export default function Success(props: PageProps) {
   const [is24h, setIs24h] = useState(
     props?.userTimeFormat ? props.userTimeFormat === 24 : isBrowserLocale24h()
   );
-  const { data: session } = useSession();
+  const { data: session } = useLazySession();
   const isHost = props.isLoggedInUserHost;
 
   const [showUtmParams, setShowUtmParams] = useState(false);
