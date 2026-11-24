@@ -1,0 +1,47 @@
+Received: from o1.notify.timeway.co (o1.notify.timeway.co. [192.0.2.10])
+        by mx.google.com; Tue, 03 Nov 2026 08:00:00 -0800 (PST)
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@notify.timeway.co header.s=s1 header.b=AAAAAAAA;
+       spf=pass (google.com: domain of bounces+0@notify.timeway.co designates 192.0.2.10 as permitted sender) smtp.mailfrom="bounces+0@notify.timeway.co";
+       dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=notify.timeway.co
+From: Timeway <bookings@notify.timeway.co>
+To: guest+cc66-fixture@example.com
+Subject: Cancelled: CC-66 fixture
+Date: Tue, 03 Nov 2026 16:00:02 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="mix-b"
+
+--mix-b
+Content-Type: multipart/alternative; boundary="alt-b"
+
+--alt-b
+Content-Type: text/plain; charset=utf-8
+
+CC-66 fixture body.
+--alt-b
+Content-Type: text/calendar; charset=utf-8; method=CANCEL
+Content-Transfer-Encoding: base64
+
+QkVHSU46VkNBTEVOREFSDQpQUk9ESUQ6LS8vY2M2Ni1maXh0dXJlLy9FTg0KVkVSU0lPTjoyLjAN
+Ck1FVEhPRDpDQU5DRUwNCkJFR0lOOlZFVkVOVA0KVUlEOnN5bnRoZXRpYy0wMDAwLTQwMDAtODAw
+MC1jYzY2Zml4dHVyZQ0KU0VRVUVOQ0U6Mg0KRFRTVEFNUDoyMDI2MTEwM1QwODAwMDBaDQpEVFNU
+QVJUOjIwMjYxMTExVDA5MDAwMFoNCkRURU5EOjIwMjYxMTExVDA5MDAwMFoNClNVTU1BUlk6Q0Mt
+NjYgZml4dHVyZQ0KT1JHQU5JWkVSO0NOPVRpbWV3YXk6bWFpbHRvOmJvb2tpbmdzQG5vdGlmeS50
+aW1ld2F5LmNvDQpBVFRFTkRFRTtDTj1GaXh0dXJlIEd1ZXN0O1JPTEU9UkVRLVBBUlRJQ0lQQU5U
+O1JTVlA9VFJVRTptYWlsdG86Z3Vlc3QrY2M2Ni1maXh0dXJlQGV4YW1wbGUuY29tDQpTVEFUVVM6
+Q0FOQ0VMTEVEDQpFTkQ6VkVWRU5UDQpFTkQ6VkNBTEVOREFSDQo=
+--alt-b--
+--mix-b
+Content-Type: application/ics; name="invite.ics"
+Content-Disposition: attachment; filename="invite.ics"
+Content-Transfer-Encoding: base64
+
+QkVHSU46VkNBTEVOREFSDQpQUk9ESUQ6LS8vY2M2Ni1maXh0dXJlLy9FTg0KVkVSU0lPTjoyLjAN
+Ck1FVEhPRDpDQU5DRUwNCkJFR0lOOlZFVkVOVA0KVUlEOnN5bnRoZXRpYy0wMDAwLTQwMDAtODAw
+MC1jYzY2Zml4dHVyZQ0KU0VRVUVOQ0U6Mg0KRFRTVEFNUDoyMDI2MTEwM1QwODAwMDBaDQpEVFNU
+QVJUOjIwMjYxMTExVDA5MDAwMFoNCkRURU5EOjIwMjYxMTExVDA5MDAwMFoNClNVTU1BUlk6Q0Mt
+NjYgZml4dHVyZQ0KT1JHQU5JWkVSO0NOPVRpbWV3YXk6bWFpbHRvOmJvb2tpbmdzQG5vdGlmeS50
+aW1ld2F5LmNvDQpBVFRFTkRFRTtDTj1GaXh0dXJlIEd1ZXN0O1JPTEU9UkVRLVBBUlRJQ0lQQU5U
+O1JTVlA9VFJVRTptYWlsdG86Z3Vlc3QrY2M2Ni1maXh0dXJlQGV4YW1wbGUuY29tDQpTVEFUVVM6
+Q0FOQ0VMTEVEDQpFTkQ6VkVWRU5UDQpFTkQ6VkNBTEVOREFSDQo=
+--mix-b--
