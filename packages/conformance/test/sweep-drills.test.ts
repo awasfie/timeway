@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseCounter, runGraphSubscriptionRemoved, verifyGoogle410 } from "../src/drills.ts";
+import { parseCounter, readTokenInvalidatedTotal, runGraphSubscriptionRemoved, verifyGoogle410 } from "../src/drills.ts";
 import type { SoakHost } from "../src/load.ts";
 import type { GraphSubscription } from "../src/providers/graph.ts";
 import { graphDrillDue, parseHosts, providerKind, soakDayIndex } from "../src/run.ts";
@@ -288,6 +288,47 @@ describe("drills (S6)", () => {
       7
     );
     expect(parseCounter("", "timeway_sync_token_invalidated_total", {})).toBeNull();
+  });
+});
+
+describe("readTokenInvalidatedTotal", () => {
+  const NAME = "timeway_sync_token_invalidated_total";
+  const scrape = (body: string, status = 200) =>
+    (async () => new Response(body, { status })) as unknown as typeof fetch;
+  const read = (f: typeof fetch) => readTokenInvalidatedTotal({ baseUrl: "https://x", token: "t", fetch: f });
+
+  it("reads the Google series value", async () => {
+    const body = `# TYPE ${NAME} counter\n${NAME}{provider="google_calendar"} 5\n`;
+    expect(await read(scrape(body))).toBe(5);
+  });
+
+  it("is 0, not null, before the first 410 (counter declared, no series yet)", async () => {
+    const body = `# HELP ${NAME} h\n# TYPE ${NAME} counter\n# TYPE timeway_stale_calendars gauge\n`;
+    expect(await read(scrape(body))).toBe(0);
+  });
+
+  it("stays null when the metric is missing or the scrape fails", async () => {
+    expect(await read(scrape("timeway_sync_metrics_db_up 1\n"))).toBeNull();
+    expect(await read(scrape("not found", 404))).toBeNull();
+  });
+
+  it("410 verify: counter 0 -> 1 reads as moved", async () => {
+    const bodies = [
+      `# TYPE ${NAME} counter\n`,
+      `# TYPE ${NAME} counter\n`,
+      `# TYPE ${NAME} counter\n${NAME}{provider="google_calendar"} 1\n`,
+    ];
+    const f = (async () => new Response(bodies.shift() ?? bodies[2] ?? "", { status: 200 })) as unknown as typeof fetch;
+    const store = new SoakStore(mkdtempSync(join(tmpdir(), "soak-drill-")));
+    const d = await verifyGoogle410({
+      store,
+      host: { ...host, username: "soak-g1" },
+      probe: async () => [sample("2026-11-06T12:00:20.000Z"), sample("2026-11-06T12:00:40.000Z")],
+      clock: fakeClock(),
+      readCounter: () => readTokenInvalidatedTotal({ baseUrl: "https://x", token: "t", fetch: f }),
+    });
+    expect(d.details).toMatchObject({ counterBefore: 0, counterAfter: 1, counterMoved: true });
+    expect(d.pass).toBe(true);
   });
 });
 
