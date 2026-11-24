@@ -54,6 +54,13 @@ Image: `packages/conformance/Dockerfile` (build context `packages/conformance`),
     docker run -v soak:/data/soak timeway-soak report
     docker run -v soak:/data/soak --env-file ... timeway-soak drill410 --verify
 
+Live container (`docker exec` bypasses the image ENTRYPOINT, and the bundles are `.mjs`, not `dist/run.js`):
+
+    docker exec <ctr> node dist/run.mjs report          # prints per-day rows, streak, drills, verdict
+    docker exec <ctr> node dist/run.mjs drill410 --verify
+
+`report` exits 1 while the CC-64 verdict is not yet a pass; the output is still complete.
+
 Env by name: `SOAK_HOSTS` (JSON array: username, eventTypeId, calendarId[, eventTypeSlug, provider]),
 `SOAK_GOOGLE_CLIENT_ID`/`_SECRET`/`_REFRESH_TOKEN`, `SOAK_MS_CLIENT_ID`/`_SECRET`/`_REFRESH_TOKEN`, `SOAK_HC_URL`,
 `SOAK_HOST_LOGINS` (JSON: username -> email/password), `SOAK_START_DAY` (soak day 0, YYYY-MM-DD),

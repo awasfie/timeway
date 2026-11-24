@@ -20,9 +20,13 @@ export async function readTokenInvalidatedTotal(opts: {
     headers: { authorization: `Bearer ${opts.token}` },
   });
   if (!res.ok) return null;
-  return parseCounter(await res.text(), "timeway_sync_token_invalidated_total", {
-    provider: "google_calendar",
-  });
+  const body = await res.text();
+  const name = "timeway_sync_token_invalidated_total";
+  const value = parseCounter(body, name, { provider: "google_calendar" });
+  // Timeway renders a counter series only after its first increment (HELP/TYPE lines alone before that), so an
+  // exposed-but-empty counter is 0, not unreadable. Null stays for a failed scrape or a body without the metric.
+  if (value === null && body.includes(`# TYPE ${name} counter`)) return 0;
+  return value;
 }
 
 export function parseCounter(body: string, name: string, labels: Record<string, string>): number | null {
