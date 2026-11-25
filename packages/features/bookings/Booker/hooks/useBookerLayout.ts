@@ -14,8 +14,8 @@ import { validateLayout } from "@calcom/features/bookings/Booker/utils/layout";
 import { getQueryParam } from "@calcom/features/bookings/Booker/utils/query-param";
 import type { BookerEvent } from "@calcom/features/bookings/types";
 import useMediaQuery from "@calcom/lib/hooks/useMediaQuery";
-import type { BookerLayouts } from "@calcom/prisma/zod-utils";
-import { defaultBookerLayoutSettings } from "@calcom/prisma/zod-utils";
+import type { BookerLayouts } from "@calcom/prisma/booker-layouts";
+import { defaultBookerLayoutSettings } from "@calcom/prisma/booker-layouts";
 
 export type UseBookerLayoutType = ReturnType<typeof useBookerLayout>;
 

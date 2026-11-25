@@ -13,7 +13,7 @@ import { useNonEmptyScheduleDays } from "@calcom/web/modules/schedules/hooks/use
 import { useSlotsForAvailableDates } from "@calcom/web/modules/schedules/hooks/useSlotsForDate";
 import { PUBLIC_INVALIDATE_AVAILABLE_SLOTS_ON_BOOKING_FORM } from "@calcom/lib/constants";
 import { localStorage } from "@calcom/lib/webstorage";
-import { BookerLayouts } from "@calcom/prisma/zod-utils";
+import { BookerLayouts } from "@calcom/prisma/booker-layouts";
 import classNames from "@calcom/ui/classNames";
 
 import { AvailableTimesHeader } from "@calcom/web/modules/bookings/components/AvailableTimesHeader";

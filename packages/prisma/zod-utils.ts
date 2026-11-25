@@ -77,28 +77,9 @@ export const intervalLimitsType: z.Schema<IntervalLimit | null> = z
   })
   .nullable();
 
-// Let's not import 118kb just to get an enum
-export enum Frequency {
-  YEARLY = 0,
-  MONTHLY = 1,
-  WEEKLY = 2,
-  DAILY = 3,
-  HOURLY = 4,
-  MINUTELY = 5,
-  SECONDLY = 6,
-}
+import { BookerLayouts, Frequency, bookerLayoutOptions } from "./booker-layouts";
 
-export enum BookerLayouts {
-  MONTH_VIEW = "month_view",
-  WEEK_VIEW = "week_view",
-  COLUMN_VIEW = "column_view",
-}
-
-export const bookerLayoutOptions = [
-  BookerLayouts.MONTH_VIEW,
-  BookerLayouts.WEEK_VIEW,
-  BookerLayouts.COLUMN_VIEW,
-];
+export { BookerLayouts, Frequency, bookerLayoutOptions, defaultBookerLayoutSettings } from "./booker-layouts";
 
 const layoutOptions = z.union([
   z.literal(bookerLayoutOptions[0]),
@@ -132,12 +113,6 @@ export const orgOnboardingTeamsSchema = z.array(
     slug: z.string().nullable(),
   })
 );
-
-export const defaultBookerLayoutSettings = {
-  defaultLayout: BookerLayouts.MONTH_VIEW,
-  // if the user has no explicit layouts set (not in user profile and not in event settings), all layouts are enabled.
-  enabledLayouts: bookerLayoutOptions,
-};
 
 export type BookerLayoutSettings = z.infer<typeof bookerLayouts>;
 
