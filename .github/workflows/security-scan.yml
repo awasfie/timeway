@@ -27,7 +27,7 @@ env:
 
 jobs:
   semgrep:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -43,7 +43,7 @@ jobs:
           --exclude '**/tests/**' --exclude '**/playwright/**' .
 
   trivy-deps:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -58,7 +58,7 @@ jobs:
 
   trivy-image:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 90
     env:
       IMG: timeway-secscan:${{ github.sha }}

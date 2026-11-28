@@ -23,7 +23,7 @@ concurrency:
 jobs:
   cc13:
     name: CC-13 (DB layer)
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     timeout-minutes: 20
     services:
       postgres:

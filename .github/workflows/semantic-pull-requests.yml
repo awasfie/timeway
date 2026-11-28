@@ -22,7 +22,7 @@ concurrency:
 jobs:
   validate-pr:
     name: Validate PR title
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     steps:
       - uses: amannn/action-semantic-pull-request@v5
         id: lint_pr_title

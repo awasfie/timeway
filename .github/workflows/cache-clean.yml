@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   cleanup:
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     steps:
       - name: Check out code
         uses: actions/checkout@v4

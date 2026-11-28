@@ -31,7 +31,7 @@ jobs:
   e2e-atoms:
     timeout-minutes: 15
     name: E2E Atoms
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, aw-selfhosted]
     steps:
       # Timeway (Q1-R7, D-R74 D2): no registry login; public images pull anonymously.
       - uses: actions/checkout@v4
@@ -49,11 +49,11 @@ jobs:
         with:
           name: e2e-atoms-test-results
           path: test-results
-          retention-days: 7
+          retention-days: 1
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-atoms-playwright-report
           path: playwright-report
-          retention-days: 7
+          retention-days: 1

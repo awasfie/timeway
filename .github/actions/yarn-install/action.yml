@@ -27,6 +27,11 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node_version }}
+    # Self-hosted runners (CI-SELFHOSTED-3) have no preinstalled yarn; setup-node's fresh Node ships corepack only.
+    - name: Enable corepack (yarn from packageManager)
+      shell: bash
+      run: corepack enable
+
     - name: Expose yarn config as "$GITHUB_OUTPUT"
       id: yarn-config
       shell: bash
